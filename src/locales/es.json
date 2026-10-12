@@ -1,5 +1,12 @@
 {
-  "home": {
-    "greeting": "¡Hola! Esto es Pretty Strong."
+  "preview": {
+    "title": "Vista previa",
+    "card": "Tarjeta",
+    "raisedCard": "Tarjeta destacada",
+    "muted": "Texto secundario",
+    "start": "Empezar",
+    "swap": "Cambiar",
+    "skip": "Saltar",
+    "disabled": "Desactivado"
   }
 }
