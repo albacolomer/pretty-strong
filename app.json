@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "pretty-strong",
+    "name": "Pretty Strong",
     "slug": "pretty-strong",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -28,9 +28,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FFF7FA",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 76,
+          "dark": {
+            "backgroundColor": "#0F0B0E",
+            "image": "./assets/images/splash-icon.png"
+          }
         }
       ]
     ],
