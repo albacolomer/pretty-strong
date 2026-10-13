@@ -1,12 +1,14 @@
 {
-  "preview": {
-    "title": "Preview",
-    "card": "Card",
-    "raisedCard": "Raised card",
-    "muted": "Secondary text",
-    "start": "Start",
-    "swap": "Swap",
-    "skip": "Skip",
-    "disabled": "Disabled"
+  "tabs": {
+    "today": "Today",
+    "history": "History",
+    "plan": "Plan",
+    "profile": "Profile"
+  },
+  "placeholder": {
+    "today": "Today's workout will show up here.",
+    "history": "Your past workouts will show up here.",
+    "plan": "This is where you'll build routines and your weekly plan.",
+    "profile": "Your profile, language and settings will live here."
   }
 }

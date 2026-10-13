@@ -1,7 +1,16 @@
 import '@/lib/i18n';
 
-import { Stack } from 'expo-router';
+import { Stack, ThemeProvider } from 'expo-router';
+
+import { useTheme } from '@/theme';
+import { navigationThemes } from '@/theme/navigation';
 
 export default function RootLayout() {
-  return <Stack screenOptions={{ headerShown: false }} />;
+  const { scheme } = useTheme();
+
+  return (
+    <ThemeProvider value={navigationThemes[scheme]}>
+      <Stack screenOptions={{ headerShown: false }} />
+    </ThemeProvider>
+  );
 }

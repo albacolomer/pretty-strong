@@ -1,12 +1,14 @@
 {
-  "preview": {
-    "title": "Vista prèvia",
-    "card": "Targeta",
-    "raisedCard": "Targeta destacada",
-    "muted": "Text secundari",
-    "start": "Començar",
-    "swap": "Canviar",
-    "skip": "Saltar",
-    "disabled": "Desactivat"
+  "tabs": {
+    "today": "Avui",
+    "history": "Historial",
+    "plan": "Pla",
+    "profile": "Perfil"
+  },
+  "placeholder": {
+    "today": "Aquí veuràs l'entrenament d'avui.",
+    "history": "Aquí veuràs els teus entrenaments passats.",
+    "plan": "Aquí crearàs les rutines i el pla setmanal.",
+    "profile": "Aquí tindràs el perfil, l'idioma i els ajustos."
   }
 }

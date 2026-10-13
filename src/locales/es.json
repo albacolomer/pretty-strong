@@ -1,12 +1,14 @@
 {
-  "preview": {
-    "title": "Vista previa",
-    "card": "Tarjeta",
-    "raisedCard": "Tarjeta destacada",
-    "muted": "Texto secundario",
-    "start": "Empezar",
-    "swap": "Cambiar",
-    "skip": "Saltar",
-    "disabled": "Desactivado"
+  "tabs": {
+    "today": "Hoy",
+    "history": "Historial",
+    "plan": "Plan",
+    "profile": "Perfil"
+  },
+  "placeholder": {
+    "today": "Aquí verás el entrenamiento de hoy.",
+    "history": "Aquí verás tus entrenamientos anteriores.",
+    "plan": "Aquí crearás las rutinas y el plan semanal.",
+    "profile": "Aquí tendrás el perfil, el idioma y los ajustes."
   }
 }
