@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 
+import { queryClient } from '@/lib/queryClient';
 import { supabase } from '@/lib/supabase';
 
 type AuthState = {
@@ -18,7 +19,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Fires once straight away with the saved session (or null), then on
     // every sign-in, sign-out and token refresh. Only set state in here:
     // calling other Supabase methods inside this callback can deadlock.
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      // Forget the previous user's cached data, so the next person to sign
+      // in on this phone never sees it.
+      if (event === 'SIGNED_OUT') queryClient.clear();
       setState({ session, isLoading: false });
     });
     return () => data.subscription.unsubscribe();

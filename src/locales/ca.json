@@ -46,6 +46,6 @@
     }
   },
   "profile": {
-    "signedInAs": "Sessió iniciada com a"
+    "loadError": "No s'ha pogut carregar el perfil."
   }
 }

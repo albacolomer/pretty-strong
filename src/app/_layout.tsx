@@ -1,9 +1,11 @@
 import '@/lib/i18n';
 
+import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, ThemeProvider } from 'expo-router';
 
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { SplashScreenController } from '@/features/auth/SplashScreenController';
+import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
 import { navigationThemes } from '@/theme/navigation';
 
@@ -11,12 +13,14 @@ export default function RootLayout() {
   const { scheme } = useTheme();
 
   return (
-    <AuthProvider>
-      <SplashScreenController />
-      <ThemeProvider value={navigationThemes[scheme]}>
-        <RootNavigator />
-      </ThemeProvider>
-    </AuthProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SplashScreenController />
+        <ThemeProvider value={navigationThemes[scheme]}>
+          <RootNavigator />
+        </ThemeProvider>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

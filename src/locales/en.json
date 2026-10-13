@@ -46,6 +46,6 @@
     }
   },
   "profile": {
-    "signedInAs": "Signed in as"
+    "loadError": "Couldn't load your profile."
   }
 }

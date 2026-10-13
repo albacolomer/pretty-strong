@@ -35,7 +35,7 @@ Phase 1, release V1.0 (spec: "MVP scope"). Never build anything listed under "Ou
 ## Layout
  
 - Router folder: screens only, kept thin; logic lives in `src/features`
-- `src/features/<domain>/`: components, hooks, store, logic. Domains: workout, routines, exercises, schedule, history, auth
+- `src/features/<domain>/`: components, hooks, store, logic. Domains: workout, routines, exercises, schedule, history, auth, profile
 - `src/components/ui/`: design-system primitives (Button, Card, NumberInput, Sheet, Toast)
 - `src/lib/`: Supabase client, query client, i18n setup, notifications
 - `src/theme/`: colour tokens, typography, spacing (spec: "Design system and visual direction")
