@@ -14,16 +14,31 @@
     "plan": "Aquí crearás las rutinas y el plan semanal."
   },
   "auth": {
+    "username": "Nombre de usuario",
+    "usernameHint": "De 3 a 20 caracteres: minúsculas, números o _.",
     "email": "Correo electrónico",
     "password": "Contraseña",
+    "passwordHint": "Al menos {{min}} caracteres.",
     "signIn": {
       "title": "Inicia sesión",
-      "submit": "Entrar"
+      "submit": "Entrar",
+      "noAccount": "¿No tienes cuenta? Crea una"
+    },
+    "signUp": {
+      "title": "Crea tu cuenta",
+      "submit": "Crear cuenta",
+      "haveAccount": "¿Ya tienes cuenta? Inicia sesión",
+      "checkEmail": "Te hemos enviado un correo. Abre el enlace para activar la cuenta y luego inicia sesión."
     },
     "signOut": "Cerrar sesión",
     "errors": {
       "required": "Este campo es obligatorio.",
       "invalidEmail": "Este correo no parece válido.",
+      "invalidUsername": "Usa de 3 a 20 minúsculas, números o _.",
+      "passwordTooShort": "Debe tener al menos {{min}} caracteres.",
+      "usernameTaken": "Este nombre de usuario ya está cogido.",
+      "emailTaken": "Ya hay una cuenta con este correo.",
+      "weakPassword": "Esta contraseña es demasiado débil. Prueba otra.",
       "invalidCredentials": "El correo o la contraseña no son correctos.",
       "rateLimited": "Demasiados intentos. Espera un poco y vuelve a intentarlo.",
       "network": "No hay conexión. Compruébala y vuelve a intentarlo.",

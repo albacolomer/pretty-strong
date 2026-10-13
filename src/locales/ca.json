@@ -14,16 +14,31 @@
     "plan": "Aquí crearàs les rutines i el pla setmanal."
   },
   "auth": {
+    "username": "Nom d'usuari",
+    "usernameHint": "De 3 a 20 caràcters: minúscules, números o _.",
     "email": "Correu electrònic",
     "password": "Contrasenya",
+    "passwordHint": "Almenys {{min}} caràcters.",
     "signIn": {
       "title": "Inicia la sessió",
-      "submit": "Entra"
+      "submit": "Entra",
+      "noAccount": "No tens compte? Crea'n un"
+    },
+    "signUp": {
+      "title": "Crea el teu compte",
+      "submit": "Crea el compte",
+      "haveAccount": "Ja tens compte? Inicia la sessió",
+      "checkEmail": "T'hem enviat un correu. Obre l'enllaç per activar el compte i després inicia la sessió."
     },
     "signOut": "Tanca la sessió",
     "errors": {
       "required": "Aquest camp és obligatori.",
       "invalidEmail": "Aquest correu no sembla vàlid.",
+      "invalidUsername": "Fes servir de 3 a 20 minúscules, números o _.",
+      "passwordTooShort": "Ha de tenir almenys {{min}} caràcters.",
+      "usernameTaken": "Aquest nom d'usuari ja està agafat.",
+      "emailTaken": "Ja hi ha un compte amb aquest correu.",
+      "weakPassword": "Aquesta contrasenya és massa feble. Prova'n una altra.",
       "invalidCredentials": "El correu o la contrasenya no són correctes.",
       "rateLimited": "Massa intents. Espera una mica i torna-ho a provar.",
       "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",

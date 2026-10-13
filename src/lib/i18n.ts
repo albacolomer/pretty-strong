@@ -9,6 +9,10 @@ export const languages = ['ca', 'es', 'en'] as const;
 export type Language = (typeof languages)[number];
 export const defaultLanguage: Language = 'ca';
 
+export function isLanguage(code: string): code is Language {
+  return (languages as readonly string[]).includes(code);
+}
+
 // Catalan is the source of truth: if es or en is missing a key that ca has,
 // `satisfies` makes the type check fail.
 type Translations = typeof ca;

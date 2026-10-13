@@ -7,12 +7,14 @@ import { Text } from './Text';
 
 export type TextFieldProps = TextInputProps & {
   label: string;
+  // Already translated help text shown under the input, unless there is an error.
+  hint?: string;
   // Already translated message shown under the input.
   error?: string;
   ref?: Ref<TextInput>;
 };
 
-export function TextField({ label, error, style, ref, ...rest }: TextFieldProps) {
+export function TextField({ label, hint, error, style, ref, ...rest }: TextFieldProps) {
   const { colors } = useTheme();
 
   return (
@@ -39,6 +41,10 @@ export function TextField({ label, error, style, ref, ...rest }: TextFieldProps)
       {error ? (
         <Text variant="caption" color="danger">
           {error}
+        </Text>
+      ) : hint ? (
+        <Text variant="caption" color="textMuted">
+          {hint}
         </Text>
       ) : null}
     </View>

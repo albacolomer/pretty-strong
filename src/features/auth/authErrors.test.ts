@@ -8,6 +8,17 @@ describe('authErrorReason', () => {
     expect(authErrorReason(error)).toBe('invalidCredentials');
   });
 
+  test.each(['email_exists', 'user_already_exists'])('%s → emailTaken', (code) => {
+    expect(authErrorReason(new AuthApiError('User already registered', 422, code))).toBe(
+      'emailTaken',
+    );
+  });
+
+  test('weak password', () => {
+    const error = new AuthApiError('Password is too weak', 422, 'weak_password');
+    expect(authErrorReason(error)).toBe('weakPassword');
+  });
+
   test.each(['over_request_rate_limit', 'over_email_send_rate_limit'])('%s → rateLimited', (code) => {
     expect(authErrorReason(new AuthApiError('Too many requests', 429, code))).toBe('rateLimited');
   });
@@ -18,6 +29,16 @@ describe('authErrorReason', () => {
 
   test('no signal (raw fetch error from React Native)', () => {
     expect(authErrorReason(new TypeError('Network request failed'))).toBe('network');
+  });
+
+  test('no signal (database call, e.g. the username check)', () => {
+    const postgrestError = {
+      message: 'TypeError: Network request failed',
+      details: '',
+      hint: '',
+      code: '',
+    };
+    expect(authErrorReason(postgrestError)).toBe('network');
   });
 
   test('anything else', () => {
