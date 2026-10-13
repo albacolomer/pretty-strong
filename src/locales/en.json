@@ -8,7 +8,27 @@
   "placeholder": {
     "today": "Today's workout will show up here.",
     "history": "Your past workouts will show up here.",
-    "plan": "This is where you'll build routines and your weekly plan.",
-    "profile": "Your profile, language and settings will live here."
+    "plan": "This is where you'll build routines and your weekly plan."
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "signIn": {
+      "title": "Sign in",
+      "subtitle": "Sign in to your Pretty Strong account.",
+      "submit": "Sign in"
+    },
+    "signOut": "Sign out",
+    "errors": {
+      "required": "This field is required.",
+      "invalidEmail": "This email doesn't look right.",
+      "invalidCredentials": "Wrong email or password.",
+      "rateLimited": "Too many attempts. Wait a moment and try again.",
+      "network": "No connection. Check it and try again.",
+      "unknown": "Something went wrong. Try again."
+    }
+  },
+  "profile": {
+    "signedInAs": "Signed in as"
   }
 }

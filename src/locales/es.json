@@ -8,7 +8,27 @@
   "placeholder": {
     "today": "Aquí verás el entrenamiento de hoy.",
     "history": "Aquí verás tus entrenamientos anteriores.",
-    "plan": "Aquí crearás las rutinas y el plan semanal.",
-    "profile": "Aquí tendrás el perfil, el idioma y los ajustes."
+    "plan": "Aquí crearás las rutinas y el plan semanal."
+  },
+  "auth": {
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "signIn": {
+      "title": "Inicia sesión",
+      "subtitle": "Entra en tu cuenta de Pretty Strong.",
+      "submit": "Entrar"
+    },
+    "signOut": "Cerrar sesión",
+    "errors": {
+      "required": "Este campo es obligatorio.",
+      "invalidEmail": "Este correo no parece válido.",
+      "invalidCredentials": "El correo o la contraseña no son correctos.",
+      "rateLimited": "Demasiados intentos. Espera un poco y vuelve a intentarlo.",
+      "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
+      "unknown": "Algo ha fallado. Vuelve a intentarlo."
+    }
+  },
+  "profile": {
+    "signedInAs": "Sesión iniciada como"
   }
 }

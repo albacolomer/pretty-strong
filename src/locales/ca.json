@@ -8,7 +8,27 @@
   "placeholder": {
     "today": "Aquí veuràs l'entrenament d'avui.",
     "history": "Aquí veuràs els teus entrenaments passats.",
-    "plan": "Aquí crearàs les rutines i el pla setmanal.",
-    "profile": "Aquí tindràs el perfil, l'idioma i els ajustos."
+    "plan": "Aquí crearàs les rutines i el pla setmanal."
+  },
+  "auth": {
+    "email": "Correu electrònic",
+    "password": "Contrasenya",
+    "signIn": {
+      "title": "Inicia la sessió",
+      "subtitle": "Entra al teu compte de Pretty Strong.",
+      "submit": "Entra"
+    },
+    "signOut": "Tanca la sessió",
+    "errors": {
+      "required": "Aquest camp és obligatori.",
+      "invalidEmail": "Aquest correu no sembla vàlid.",
+      "invalidCredentials": "El correu o la contrasenya no són correctes.",
+      "rateLimited": "Massa intents. Espera una mica i torna-ho a provar.",
+      "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
+      "unknown": "Alguna cosa ha fallat. Torna-ho a provar."
+    }
+  },
+  "profile": {
+    "signedInAs": "Sessió iniciada com a"
   }
 }

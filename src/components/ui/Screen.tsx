@@ -20,7 +20,12 @@ export function Screen({ title, children }: ScreenProps) {
     <ScrollView
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={styles.content}
-      contentInsetAdjustmentBehavior="automatic">
+      contentInsetAdjustmentBehavior="automatic"
+      // Scrolls the focused input above the keyboard, lets a button be
+      // tapped while the keyboard is open, and drag down to hide it.
+      automaticallyAdjustKeyboardInsets
+      keyboardShouldPersistTaps="handled"
+      keyboardDismissMode="interactive">
       {title ? (
         <Text variant="title" accessibilityRole="header">
           {title}
