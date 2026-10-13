@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "Pretty Strong"
+  },
   "tabs": {
     "today": "Today",
     "history": "History",
@@ -15,7 +18,6 @@
     "password": "Password",
     "signIn": {
       "title": "Sign in",
-      "subtitle": "Sign in to your Pretty Strong account.",
       "submit": "Sign in"
     },
     "signOut": "Sign out",

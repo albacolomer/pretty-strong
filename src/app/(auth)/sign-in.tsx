@@ -1,14 +1,15 @@
 import { useTranslation } from 'react-i18next';
 
-import { Screen, Text } from '@/components/ui';
+import { Screen } from '@/components/ui';
+import { AuthHeader } from '@/features/auth/AuthHeader';
 import { SignInForm } from '@/features/auth/SignInForm';
 
 export default function SignInScreen() {
   const { t } = useTranslation();
 
   return (
-    <Screen title={t('auth.signIn.title')}>
-      <Text color="textMuted">{t('auth.signIn.subtitle')}</Text>
+    <Screen centered>
+      <AuthHeader subtitle={t('auth.signIn.title')} />
       <SignInForm />
     </Screen>
   );

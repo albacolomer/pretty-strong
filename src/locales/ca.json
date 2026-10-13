@@ -1,4 +1,7 @@
 {
+  "app": {
+    "name": "Pretty Strong"
+  },
   "tabs": {
     "today": "Avui",
     "history": "Historial",
@@ -15,7 +18,6 @@
     "password": "Contrasenya",
     "signIn": {
       "title": "Inicia la sessió",
-      "subtitle": "Entra al teu compte de Pretty Strong.",
       "submit": "Entra"
     },
     "signOut": "Tanca la sessió",
