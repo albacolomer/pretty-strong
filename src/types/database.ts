@@ -39,13 +39,33 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          language?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      is_username_available: { Args: { candidate: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
