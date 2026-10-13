@@ -1,8 +1,7 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
 
 import { useAuth } from '@/features/auth/AuthProvider';
+import { createQueryWrapper } from '@/test-utils/queryWrapper';
 
 import { fetchProfile, type Profile } from './api';
 import { useProfile } from './useProfile';
@@ -18,16 +17,6 @@ const profile: Profile = {
   language: 'ca',
   created_at: '2026-10-13T10:00:00Z',
 };
-
-// A fresh cache for each test, with no retries so a failure shows at once.
-// The client is created once here, not inside the wrapper, so re-renders
-// keep the same cache.
-function createQueryWrapper() {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return function QueryWrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-  };
-}
 
 function signedInAs(userId: string | null) {
   const session = userId ? { user: { id: userId } } : null;

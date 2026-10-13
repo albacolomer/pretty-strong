@@ -1,9 +1,8 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, userEvent } from '@testing-library/react-native';
-import type { ReactNode } from 'react';
 
 import { useAuth } from '@/features/auth/AuthProvider';
 import { appLanguage, setAppLanguage } from '@/lib/i18n';
+import { createQueryWrapper } from '@/test-utils/queryWrapper';
 
 import { updateProfileLanguage, type Profile } from './api';
 import { LanguagePicker } from './LanguagePicker';
@@ -11,13 +10,6 @@ import { LanguagePicker } from './LanguagePicker';
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('./api', () => ({ updateProfileLanguage: jest.fn() }));
 const mockUpdateProfileLanguage = jest.mocked(updateProfileLanguage);
-
-function createQueryWrapper() {
-  const client = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
-  return function QueryWrapper({ children }: { children: ReactNode }) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
-  };
-}
 
 const savedProfile = (language: Profile['language']): Profile => ({
   id: 'user-1',

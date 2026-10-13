@@ -3,6 +3,7 @@
 import 'expo-sqlite/localStorage/install';
 
 import { createInstance } from 'i18next';
+import { useSyncExternalStore } from 'react';
 import { initReactI18next } from 'react-i18next';
 
 import ca from '@/locales/ca.json';
@@ -63,8 +64,21 @@ i18n.use(initReactI18next).init({
   },
 });
 
+// The current language, for code outside components (event handlers etc.).
 export function appLanguage(): Language {
   return isLanguage(i18n.language) ? i18n.language : defaultLanguage;
+}
+
+function subscribeToLanguage(onChange: () => void) {
+  i18n.on('languageChanged', onChange);
+  return () => i18n.off('languageChanged', onChange);
+}
+
+// The current language inside a component, re-rendering when it changes.
+// Don't call appLanguage() while rendering: the React Compiler sees a plain
+// function call with no inputs and may compute it only once.
+export function useAppLanguage(): Language {
+  return useSyncExternalStore(subscribeToLanguage, appLanguage);
 }
 
 // Switches the whole interface and remembers the choice on this phone.

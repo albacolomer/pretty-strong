@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
 import { SegmentedControl, Text } from '@/components/ui';
-import { appLanguage, languages } from '@/lib/i18n';
+import { languages, useAppLanguage } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
 import { useUpdateLanguage } from './useUpdateLanguage';
@@ -10,11 +10,12 @@ import { useUpdateLanguage } from './useUpdateLanguage';
 // Language setting on the Profile tab; saved to the profile.
 export function LanguagePicker() {
   const { t } = useTranslation();
+  const language = useAppLanguage();
   const updateLanguage = useUpdateLanguage();
 
-  const options = languages.map((language) => ({
-    value: language,
-    label: t(`languages.${language}`),
+  const options = languages.map((option) => ({
+    value: option,
+    label: t(`languages.${option}`),
   }));
 
   return (
@@ -25,8 +26,8 @@ export function LanguagePicker() {
       <SegmentedControl
         label={t('profile.language')}
         options={options}
-        value={appLanguage()}
-        onChange={(language) => updateLanguage.mutate(language)}
+        value={language}
+        onChange={(picked) => updateLanguage.mutate(picked)}
       />
       {updateLanguage.isError ? (
         <Text variant="caption" color="danger" role="alert">
