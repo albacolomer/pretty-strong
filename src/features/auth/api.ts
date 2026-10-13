@@ -1,3 +1,5 @@
+import { AuthApiError } from '@supabase/supabase-js';
+
 import type { Language } from '@/lib/i18n';
 import { supabase } from '@/lib/supabase';
 
@@ -32,6 +34,12 @@ export async function signUp({ username, email, password, language }: SignUpInpu
     options: { data: { username, language } },
   });
   if (error) throw error;
+  // With email confirmation on, Supabase hides that an email is already
+  // registered: no error, just a fake user with no identities. Report it the
+  // same way as when confirmation is off.
+  if (data.user?.identities?.length === 0) {
+    throw new AuthApiError('User already registered', 422, 'user_already_exists');
+  }
   return { needsEmailConfirmation: data.session === null };
 }
 
