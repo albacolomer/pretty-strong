@@ -46,6 +46,13 @@
     }
   },
   "profile": {
-    "loadError": "Couldn't load your profile."
+    "loadError": "Couldn't load your profile.",
+    "language": "Language",
+    "languageSaveError": "Couldn't save the language. Try again."
+  },
+  "languages": {
+    "ca": "Català",
+    "es": "Español",
+    "en": "English"
   }
 }

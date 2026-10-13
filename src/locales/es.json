@@ -46,6 +46,13 @@
     }
   },
   "profile": {
-    "loadError": "No se ha podido cargar el perfil."
+    "loadError": "No se ha podido cargar el perfil.",
+    "language": "Idioma",
+    "languageSaveError": "No se ha podido guardar el idioma. Vuelve a intentarlo."
+  },
+  "languages": {
+    "ca": "Català",
+    "es": "Español",
+    "en": "English"
   }
 }

@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { View, type TextInput } from 'react-native';
 
 import { Button, Text, TextField } from '@/components/ui';
-import { defaultLanguage, isLanguage } from '@/lib/i18n';
+import { appLanguage } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
 import { isUsernameAvailable, signUp } from './api';
@@ -23,7 +23,7 @@ type FieldError = ValidationError | 'usernameTaken' | 'emailTaken' | 'weakPasswo
 type FieldErrors = Partial<Record<keyof SignUpValues, FieldError>>;
 
 export function SignUpForm() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -54,7 +54,7 @@ export function SignUpForm() {
         username: normalizedUsername,
         email,
         password,
-        language: isLanguage(i18n.language) ? i18n.language : defaultLanguage,
+        language: appLanguage(),
       });
       // With a session, the router swaps this screen for the tabs.
       setNeedsEmailConfirmation(result.needsEmailConfirmation);
