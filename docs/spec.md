@@ -269,7 +269,7 @@ V1.1 adds ConsistencyCalendar, ProgressChart, MuscleSetsBar and VideoPlayer.
 
 ## Design system and visual direction
 
-Dark-first, following the iPhone's light/dark setting, with a soft rose-pink accent: calm, rounded and a little girly, readable at a glance between sets.
+Dark by default, whatever the iPhone's light/dark setting, with a soft rose-pink accent: calm, rounded and a little girly, readable at a glance between sets. The light tokens are kept so a light option can be added later.
 
 ### Colour tokens
 
