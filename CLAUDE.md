@@ -59,7 +59,7 @@ Phase 1, release V1.0 (spec: "MVP scope"). Never build anything listed under "Ou
 - Rest timer: store the timestamp when rest ends, derive the countdown from it, and schedule a local notification for that moment. Never count with `setInterval` alone.
 - The active workout lives in the persisted store and is saved on every change. It must survive an app kill and work with no signal.
 - Gym UX: touch targets at least 48 pt (the ✓ at least 56 pt), main actions in the bottom half, numeric keypad for numbers, an undo toast instead of "Are you sure?" for reversible actions, every swipe action also in a menu.
-- Colours, type and spacing come only from `src/theme`. Dark by default, whatever the iPhone is set to (`Appearance.setColorScheme('dark')` in the root layout); keep the light tokens defined for a possible light option later.
+- Colours, type and spacing come only from `src/theme`. Dark-first, light supported.
 - No secrets in the app. Only `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` go in `.env` (gitignored); keep `.env.example` up to date.
 ## How to work with me
  

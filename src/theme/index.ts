@@ -20,8 +20,7 @@ const themes: Record<ColorScheme, Theme> = {
   light: makeTheme('light'),
 };
 
-// The root layout forces dark, so this returns the dark theme. The light
-// tokens stay so a light option can be added later.
+// Dark-first: only an explicit light setting gives the light theme.
 export function useTheme(): Theme {
   return themes[useColorScheme() === 'light' ? 'light' : 'dark'];
 }
