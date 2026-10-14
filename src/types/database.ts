@@ -39,6 +39,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      exercises: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          equipment: string
+          id: string
+          is_unilateral: boolean
+          name: string | null
+          name_i18n: Json | null
+          owner_id: string | null
+          primary_muscles: string[]
+          secondary_muscles: string[]
+          slug: string | null
+          tracking_type: string
+          video_url: string | null
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          equipment: string
+          id?: string
+          is_unilateral?: boolean
+          name?: string | null
+          name_i18n?: Json | null
+          owner_id?: string | null
+          primary_muscles?: string[]
+          secondary_muscles?: string[]
+          slug?: string | null
+          tracking_type: string
+          video_url?: string | null
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          equipment?: string
+          id?: string
+          is_unilateral?: boolean
+          name?: string | null
+          name_i18n?: Json | null
+          owner_id?: string | null
+          primary_muscles?: string[]
+          secondary_muscles?: string[]
+          slug?: string | null
+          tracking_type?: string
+          video_url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
