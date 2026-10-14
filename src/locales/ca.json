@@ -11,7 +11,62 @@
   "placeholder": {
     "today": "Aquí veuràs l'entrenament d'avui.",
     "history": "Aquí veuràs els teus entrenaments passats.",
-    "plan": "Aquí crearàs les rutines i el pla setmanal."
+    "routines": "Aquí crearàs les teves rutines.",
+    "week": "Aquí assignaràs una rutina, o descans, a cada dia."
+  },
+  "plan": {
+    "routines": "Rutines",
+    "exercises": "Exercicis",
+    "week": "Setmana"
+  },
+  "exercises": {
+    "search": "Cerca",
+    "searchPlaceholder": "Nom de l'exercici",
+    "muscle": "Múscul",
+    "equipment": "Material",
+    "count_one": "{{count}} exercici",
+    "count_other": "{{count}} exercicis",
+    "noResults": "Cap exercici coincideix amb la cerca.",
+    "clearFilters": "Esborra els filtres",
+    "loadError": "No s'han pogut carregar els exercicis."
+  },
+  "muscles": {
+    "chest": "Pit",
+    "shoulders": "Espatlles",
+    "biceps": "Bíceps",
+    "triceps": "Tríceps",
+    "forearms": "Avantbraços",
+    "lats": "Dorsals",
+    "upper_back": "Esquena alta",
+    "traps": "Trapezis",
+    "lower_back": "Lumbars",
+    "abs": "Abdominals",
+    "obliques": "Oblics",
+    "glutes": "Glutis",
+    "quads": "Quàdriceps",
+    "hamstrings": "Isquiotibials",
+    "adductors": "Adductors",
+    "abductors": "Abductors",
+    "calves": "Bessons"
+  },
+  "equipment": {
+    "barbell": "Barra",
+    "dumbbell": "Manuelles",
+    "kettlebell": "Kettlebell",
+    "machine": "Màquina",
+    "cable": "Politja",
+    "smith_machine": "Multipower",
+    "band": "Goma",
+    "medicine_ball": "Pilota medicinal",
+    "sandbag": "Sac",
+    "sled": "Trineu",
+    "plate": "Disc",
+    "ski_erg": "SkiErg",
+    "rower": "Rem",
+    "treadmill": "Cinta",
+    "stair_climber": "Escales",
+    "bike": "Bicicleta",
+    "none": "Sense material"
   },
   "auth": {
     "username": "Nom d'usuari",

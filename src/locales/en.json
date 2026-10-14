@@ -11,7 +11,62 @@
   "placeholder": {
     "today": "Today's workout will show up here.",
     "history": "Your past workouts will show up here.",
-    "plan": "This is where you'll build routines and your weekly plan."
+    "routines": "This is where you'll build your routines.",
+    "week": "This is where you'll give each day a routine, or rest."
+  },
+  "plan": {
+    "routines": "Routines",
+    "exercises": "Exercises",
+    "week": "Week"
+  },
+  "exercises": {
+    "search": "Search",
+    "searchPlaceholder": "Exercise name",
+    "muscle": "Muscle",
+    "equipment": "Equipment",
+    "count_one": "{{count}} exercise",
+    "count_other": "{{count}} exercises",
+    "noResults": "No exercises match your search.",
+    "clearFilters": "Clear filters",
+    "loadError": "Couldn't load the exercises."
+  },
+  "muscles": {
+    "chest": "Chest",
+    "shoulders": "Shoulders",
+    "biceps": "Biceps",
+    "triceps": "Triceps",
+    "forearms": "Forearms",
+    "lats": "Lats",
+    "upper_back": "Upper back",
+    "traps": "Traps",
+    "lower_back": "Lower back",
+    "abs": "Abs",
+    "obliques": "Obliques",
+    "glutes": "Glutes",
+    "quads": "Quads",
+    "hamstrings": "Hamstrings",
+    "adductors": "Adductors",
+    "abductors": "Abductors",
+    "calves": "Calves"
+  },
+  "equipment": {
+    "barbell": "Barbell",
+    "dumbbell": "Dumbbells",
+    "kettlebell": "Kettlebell",
+    "machine": "Machine",
+    "cable": "Cable",
+    "smith_machine": "Smith machine",
+    "band": "Band",
+    "medicine_ball": "Medicine ball",
+    "sandbag": "Sandbag",
+    "sled": "Sled",
+    "plate": "Plate",
+    "ski_erg": "SkiErg",
+    "rower": "Rower",
+    "treadmill": "Treadmill",
+    "stair_climber": "Stair climber",
+    "bike": "Bike",
+    "none": "No equipment"
   },
   "auth": {
     "username": "Username",

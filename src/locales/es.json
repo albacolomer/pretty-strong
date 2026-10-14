@@ -11,7 +11,62 @@
   "placeholder": {
     "today": "Aquí verás el entrenamiento de hoy.",
     "history": "Aquí verás tus entrenamientos anteriores.",
-    "plan": "Aquí crearás las rutinas y el plan semanal."
+    "routines": "Aquí crearás tus rutinas.",
+    "week": "Aquí asignarás una rutina, o descanso, a cada día."
+  },
+  "plan": {
+    "routines": "Rutinas",
+    "exercises": "Ejercicios",
+    "week": "Semana"
+  },
+  "exercises": {
+    "search": "Buscar",
+    "searchPlaceholder": "Nombre del ejercicio",
+    "muscle": "Músculo",
+    "equipment": "Material",
+    "count_one": "{{count}} ejercicio",
+    "count_other": "{{count}} ejercicios",
+    "noResults": "Ningún ejercicio coincide con la búsqueda.",
+    "clearFilters": "Borrar filtros",
+    "loadError": "No se han podido cargar los ejercicios."
+  },
+  "muscles": {
+    "chest": "Pecho",
+    "shoulders": "Hombros",
+    "biceps": "Bíceps",
+    "triceps": "Tríceps",
+    "forearms": "Antebrazos",
+    "lats": "Dorsales",
+    "upper_back": "Espalda alta",
+    "traps": "Trapecios",
+    "lower_back": "Lumbares",
+    "abs": "Abdominales",
+    "obliques": "Oblicuos",
+    "glutes": "Glúteos",
+    "quads": "Cuádriceps",
+    "hamstrings": "Isquiotibiales",
+    "adductors": "Aductores",
+    "abductors": "Abductores",
+    "calves": "Gemelos"
+  },
+  "equipment": {
+    "barbell": "Barra",
+    "dumbbell": "Mancuernas",
+    "kettlebell": "Kettlebell",
+    "machine": "Máquina",
+    "cable": "Polea",
+    "smith_machine": "Multipower",
+    "band": "Banda elástica",
+    "medicine_ball": "Balón medicinal",
+    "sandbag": "Saco",
+    "sled": "Trineo",
+    "plate": "Disco",
+    "ski_erg": "SkiErg",
+    "rower": "Remo",
+    "treadmill": "Cinta",
+    "stair_climber": "Escaladora",
+    "bike": "Bicicleta",
+    "none": "Sin material"
   },
   "auth": {
     "username": "Nombre de usuario",
