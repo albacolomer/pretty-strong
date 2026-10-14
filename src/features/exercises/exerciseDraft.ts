@@ -8,37 +8,46 @@ export type ExerciseDraft = {
   trackingType: TrackingType;
   primaryMuscles: Muscle[];
   secondaryMuscles: Muscle[];
-  equipment: Equipment | null;
+  equipment: Equipment;
   isUnilateral: boolean;
 };
 
 export const EXERCISE_NAME_MAX_LENGTH = 60;
 
+// "Sense material" until you pick something else.
 export function emptyDraft(name = ''): ExerciseDraft {
   return {
     name,
     trackingType: 'weight_reps',
     primaryMuscles: [],
     secondaryMuscles: [],
-    equipment: null,
+    equipment: 'none',
     isUnilateral: false,
   };
 }
 
+// Strength exercises need a main muscle: it drives the muscle filter and,
+// later, sets per muscle group. Cardio is counted by type instead, so
+// muscles are optional there.
+const MUSCLES_OPTIONAL: readonly TrackingType[] = ['cardio_machine', 'run'];
+
+export function needsMuscles(trackingType: TrackingType): boolean {
+  return !MUSCLES_OPTIONAL.includes(trackingType);
+}
+
 // Each error is also the last part of its translation key:
 // exercises.form.errors.<error>.
-export type DraftFieldError = 'required' | 'nameTooLong' | 'musclesRequired' | 'equipmentRequired';
-export type DraftErrors = Partial<
-  Record<'name' | 'primaryMuscles' | 'equipment', DraftFieldError>
->;
+export type DraftFieldError = 'required' | 'nameTooLong' | 'musclesRequired';
+export type DraftErrors = Partial<Record<'name' | 'primaryMuscles', DraftFieldError>>;
 
 export function validateDraft(draft: ExerciseDraft): DraftErrors {
   const errors: DraftErrors = {};
   const name = draft.name.trim();
   if (name === '') errors.name = 'required';
   else if (name.length > EXERCISE_NAME_MAX_LENGTH) errors.name = 'nameTooLong';
-  if (draft.primaryMuscles.length === 0) errors.primaryMuscles = 'musclesRequired';
-  if (draft.equipment === null) errors.equipment = 'equipmentRequired';
+  if (needsMuscles(draft.trackingType) && draft.primaryMuscles.length === 0) {
+    errors.primaryMuscles = 'musclesRequired';
+  }
   return errors;
 }
 

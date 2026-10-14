@@ -8,6 +8,7 @@ import { Button, Card, Text, TextField } from '@/components/ui';
 import { useAppLanguage, type Language } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
+import { EquipmentIcon } from './EquipmentIcon';
 import { exerciseName, type Exercise } from './exercise';
 import { EXERCISE_IMAGES } from './exerciseImages';
 import { MuscleFigure } from './MuscleFigure';
@@ -207,7 +208,8 @@ function ExerciseRow({ exercise, language }: { exercise: Exercise; language: Lan
 }
 
 // The RepDB picture when there is one; otherwise (custom exercises, and the
-// few built-ins RepDB doesn't have) the body figure with the main muscle.
+// few built-ins RepDB doesn't have) the body figure with the main muscle,
+// or the equipment icon for cardio saved without muscles.
 // Decorative: the name is written next to it.
 function ExerciseThumbnail({ exercise }: { exercise: Exercise }) {
   const { colors } = useTheme();
@@ -219,7 +221,11 @@ function ExerciseThumbnail({ exercise }: { exercise: Exercise }) {
   }
   return (
     <View style={[styles.thumbnail, styles.fallback, { backgroundColor: colors.surfaceRaised }]}>
-      {muscle ? <MuscleFigure muscle={muscle} height={52} /> : null}
+      {muscle ? (
+        <MuscleFigure muscle={muscle} height={52} />
+      ) : (
+        <EquipmentIcon equipment={exercise.equipment} color={colors.accent} />
+      )}
     </View>
   );
 }

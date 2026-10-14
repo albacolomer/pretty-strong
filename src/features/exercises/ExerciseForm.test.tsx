@@ -45,16 +45,35 @@ async function pick(user: ReturnType<typeof userEvent.setup>, field: string, opt
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<ExerciseForm />', () => {
-  test('shows what is missing and does not save', async () => {
+  test('starts with no equipment, shows what is missing and does not save', async () => {
     const user = userEvent.setup();
     await render(<ExerciseForm onCreated={jest.fn()} />, { wrapper: createQueryWrapper() });
+
+    expect(screen.getByRole('button', { name: 'Material' })).toHaveTextContent(/Sense material/);
 
     await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
 
     expect(screen.getByText('Aquest camp és obligatori.')).toBeOnTheScreen();
     expect(screen.getByText('Tria almenys un múscul principal.')).toBeOnTheScreen();
-    expect(screen.getByText('Tria el material.')).toBeOnTheScreen();
     expect(mockCreateExercise).not.toHaveBeenCalled();
+  });
+
+  test('a run can be saved without muscles or equipment', async () => {
+    const user = userEvent.setup();
+    mockCreateExercise.mockResolvedValue({ ...saved, trackingType: 'run' });
+    await render(<ExerciseForm initialName="Cursa de muntanya" onCreated={jest.fn()} />, {
+      wrapper: createQueryWrapper(),
+    });
+
+    await user.press(screen.getByRole('radio', { name: 'Córrer' }));
+
+    expect(screen.getByRole('button', { name: 'Músculs principals (opcional)' })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
+
+    expect(mockCreateExercise).toHaveBeenCalledWith(
+      expect.objectContaining({ trackingType: 'run', primaryMuscles: [], equipment: 'none' }),
+    );
   });
 
   test('saves a complete exercise and reports it', async () => {

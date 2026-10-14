@@ -9,6 +9,7 @@ import type { Exercise } from './exercise';
 import {
   emptyDraft,
   EXERCISE_NAME_MAX_LENGTH,
+  needsMuscles,
   saveErrorReason,
   toggleSecondaryMuscle,
   togglePrimaryMuscle,
@@ -46,11 +47,16 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
   const saveError = createExercise.isError ? saveErrorReason(createExercise.error) : null;
   const errorText = (key: DraftFieldError | SaveErrorReason | undefined) =>
     key ? t(`exercises.form.errors.${key}`, { max: EXERCISE_NAME_MAX_LENGTH }) : undefined;
+  // Cardio and runs can skip muscles; the label says so.
+  const musclesRequired = needsMuscles(draft.trackingType);
+  const primaryLabel = musclesRequired
+    ? t('exercises.form.primaryMuscles')
+    : t('exercises.form.primaryMusclesOptional');
 
   function handleSave() {
     const found = validateDraft(draft);
     setErrors(found);
-    if (Object.keys(found).length > 0 || draft.equipment === null) return;
+    if (Object.keys(found).length > 0) return;
 
     createExercise.mutate(
       {
@@ -96,10 +102,14 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
       </View>
 
       <SelectField
-        label={t('exercises.form.primaryMuscles')}
+        label={primaryLabel}
         value={draft.primaryMuscles.map((m) => t(`muscles.${m}`)).join(', ')}
-        placeholder={t('exercises.form.primaryPlaceholder')}
-        error={errorText(errors.primaryMuscles)}
+        placeholder={
+          musclesRequired
+            ? t('exercises.form.primaryPlaceholder')
+            : t('exercises.form.secondaryPlaceholder')
+        }
+        error={musclesRequired ? errorText(errors.primaryMuscles) : undefined}
         onPress={() => setOpenSheet('primary')}
       />
       <SelectField
@@ -110,9 +120,9 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
       />
       <SelectField
         label={t('exercises.form.equipment')}
-        value={draft.equipment ? t(`equipment.${draft.equipment}`) : ''}
-        placeholder={t('exercises.form.equipmentPlaceholder')}
-        error={errorText(errors.equipment)}
+        // Always set: "Sense material" until you pick something else.
+        value={t(`equipment.${draft.equipment}`)}
+        placeholder=""
         onPress={() => setOpenSheet('equipment')}
       />
 
@@ -146,7 +156,7 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
 
       <OptionSheet
         visible={openSheet === 'primary'}
-        title={t('exercises.form.primaryMuscles')}
+        title={primaryLabel}
         groups={muscleGroups}
         selected={draft.primaryMuscles}
         onToggle={(muscle) => setDraft((current) => togglePrimaryMuscle(current, muscle))}
@@ -166,7 +176,7 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
         visible={openSheet === 'equipment'}
         title={t('exercises.form.equipment')}
         groups={equipmentGroups}
-        selected={draft.equipment ? [draft.equipment] : []}
+        selected={[draft.equipment]}
         multiple={false}
         onToggle={(equipment) => setDraft((current) => ({ ...current, equipment }))}
         doneLabel={t('common.done')}

@@ -14,11 +14,11 @@ const valid: ExerciseDraft = {
 };
 
 describe('emptyDraft', () => {
-  test('starts with weight and reps and an optional name', () => {
+  test('starts with weight and reps, no equipment and an optional name', () => {
     expect(emptyDraft('Press raro')).toMatchObject({
       name: 'Press raro',
       trackingType: 'weight_reps',
-      equipment: null,
+      equipment: 'none',
     });
   });
 });
@@ -28,12 +28,18 @@ describe('validateDraft', () => {
     expect(validateDraft(valid)).toEqual({});
   });
 
-  test('needs a name, a main muscle and equipment', () => {
+  test('a strength exercise needs a name and a main muscle', () => {
     expect(validateDraft(emptyDraft('   '))).toEqual({
       name: 'required',
       primaryMuscles: 'musclesRequired',
-      equipment: 'equipmentRequired',
     });
+    expect(validateDraft({ ...emptyDraft('Plank amb pes'), trackingType: 'duration' })).toEqual({
+      primaryMuscles: 'musclesRequired',
+    });
+  });
+
+  test.each(['cardio_machine', 'run'] as const)('%s works without muscles', (trackingType) => {
+    expect(validateDraft({ ...emptyDraft('Cursa de muntanya'), trackingType })).toEqual({});
   });
 
   test('keeps names to 60 characters, ignoring surrounding spaces', () => {
