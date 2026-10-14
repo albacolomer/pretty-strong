@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
@@ -8,6 +9,7 @@ import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { EquipmentIcon } from './EquipmentIcon';
 import { exerciseName, type Exercise } from './exercise';
+import { EXERCISE_IMAGES } from './exerciseImages';
 import { FilterSheet, type FilterGroup } from './FilterSheet';
 import { MuscleFigure } from './MuscleFigure';
 import { NO_FILTERS, searchExercises, type ExerciseFilters } from './searchExercises';
@@ -15,6 +17,8 @@ import { useExercises } from './useExercises';
 import { EQUIPMENT, MUSCLE_GROUPS, type Equipment, type Muscle } from './vocabulary';
 
 type Sheet = 'muscles' | 'equipment';
+
+const THUMBNAIL_SIZE = 56;
 
 // Plan → Exercicis: search the library by name and filter by muscles and
 // equipment (US-03).
@@ -178,7 +182,7 @@ function FilterButton({
   );
 }
 
-// Name, then its main muscles and equipment, e.g. "Glutis · Barra".
+// Picture, name, then its main muscles and equipment, e.g. "Glutis · Barra".
 function ExerciseRow({ exercise, language }: { exercise: Exercise; language: Language }) {
   const { t } = useTranslation();
   const details = [
@@ -187,11 +191,32 @@ function ExerciseRow({ exercise, language }: { exercise: Exercise; language: Lan
   ].join(' · ');
 
   return (
-    <View>
-      <Text variant="bodyStrong">{exerciseName(exercise, language)}</Text>
-      <Text variant="caption" color="textMuted">
-        {details}
-      </Text>
+    <View style={styles.row}>
+      <ExerciseThumbnail exercise={exercise} />
+      <View style={styles.rowText}>
+        <Text variant="bodyStrong">{exerciseName(exercise, language)}</Text>
+        <Text variant="caption" color="textMuted">
+          {details}
+        </Text>
+      </View>
+    </View>
+  );
+}
+
+// The RepDB picture when there is one; otherwise (custom exercises, and the
+// few built-ins RepDB doesn't have) the body figure with the main muscle.
+// Decorative: the name is written next to it.
+function ExerciseThumbnail({ exercise }: { exercise: Exercise }) {
+  const { colors } = useTheme();
+  const source = exercise.slug ? EXERCISE_IMAGES[exercise.slug] : undefined;
+  const muscle = exercise.primaryMuscles[0];
+
+  if (source) {
+    return <Image source={source} style={styles.thumbnail} contentFit="cover" aria-hidden />;
+  }
+  return (
+    <View style={[styles.thumbnail, styles.fallback, { backgroundColor: colors.surfaceRaised }]}>
+      {muscle ? <MuscleFigure muscle={muscle} height={52} /> : null}
     </View>
   );
 }
@@ -222,5 +247,24 @@ const styles = StyleSheet.create({
   },
   list: {
     gap: spacing.md,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  rowText: {
+    flex: 1,
+  },
+  thumbnail: {
+    width: THUMBNAIL_SIZE,
+    height: THUMBNAIL_SIZE,
+    borderRadius: radius.input,
+    borderCurve: 'continuous',
+    overflow: 'hidden',
+  },
+  fallback: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });

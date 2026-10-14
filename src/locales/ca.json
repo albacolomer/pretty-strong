@@ -112,7 +112,9 @@
   "profile": {
     "loadError": "No s'ha pogut carregar el perfil.",
     "language": "Idioma",
-    "languageSaveError": "No s'ha pogut desar l'idioma. Torna-ho a provar."
+    "languageSaveError": "No s'ha pogut desar l'idioma. Torna-ho a provar.",
+    "credits": "Crèdits",
+    "repdbCredit": "Exercise data by RepDB (repdb.co)"
   },
   "languages": {
     "ca": "Català",

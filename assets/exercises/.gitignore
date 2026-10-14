@@ -1,0 +1,3 @@
+# RepDB pictures: their licence forbids republishing them, and this
+# repository is public. scripts/exercise-images.mjs downloads them.
+*.webp

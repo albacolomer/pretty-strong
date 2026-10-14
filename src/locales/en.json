@@ -112,7 +112,9 @@
   "profile": {
     "loadError": "Couldn't load your profile.",
     "language": "Language",
-    "languageSaveError": "Couldn't save the language. Try again."
+    "languageSaveError": "Couldn't save the language. Try again.",
+    "credits": "Credits",
+    "repdbCredit": "Exercise data by RepDB (repdb.co)"
   },
   "languages": {
     "ca": "Català",

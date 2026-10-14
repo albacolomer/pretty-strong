@@ -112,7 +112,9 @@
   "profile": {
     "loadError": "No se ha podido cargar el perfil.",
     "language": "Idioma",
-    "languageSaveError": "No se ha podido guardar el idioma. Vuelve a intentarlo."
+    "languageSaveError": "No se ha podido guardar el idioma. Vuelve a intentarlo.",
+    "credits": "Créditos",
+    "repdbCredit": "Exercise data by RepDB (repdb.co)"
   },
   "languages": {
     "ca": "Català",
