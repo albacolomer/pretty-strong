@@ -1,11 +1,13 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
+import { useSyncProfileLanguage } from '@/features/profile/useSyncProfileLanguage';
 import { useTheme } from '@/theme';
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { colors } = useTheme();
+  useSyncProfileLanguage();
 
   return (
     <NativeTabs tintColor={colors.accent}>

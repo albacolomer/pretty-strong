@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Button, Screen } from '@/components/ui';
 import { AuthHeader } from '@/features/auth/AuthHeader';
 import { SignUpForm } from '@/features/auth/SignUpForm';
+import { LanguageSelector } from '@/features/profile/LanguageSelector';
+import { setAppLanguage } from '@/lib/i18n';
 
 export default function SignUpScreen() {
   const { t } = useTranslation();
@@ -18,6 +20,8 @@ export default function SignUpScreen() {
         // Goes back to sign-in if it's underneath, otherwise opens it.
         onPress={() => router.dismissTo('/sign-in')}
       />
+      {/* The language picked here is saved to the new profile at sign-up. */}
+      <LanguageSelector onChange={setAppLanguage} />
     </Screen>
   );
 }
