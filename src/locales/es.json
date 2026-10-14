@@ -3,7 +3,9 @@
     "name": "Pretty Strong"
   },
   "common": {
-    "done": "Hecho"
+    "done": "Hecho",
+    "cancel": "Cancelar",
+    "undo": "Deshacer"
   },
   "tabs": {
     "today": "Hoy",
@@ -64,18 +66,49 @@
         "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
         "unknown": "No se ha podido guardar. Vuelve a intentarlo."
       }
+    },
+    "menu": {
+      "label": "Opciones de «{{name}}»",
+      "archive": "Archivar"
+    },
+    "archived": "Se ha archivado «{{name}}»",
+    "archiveError": "No se ha podido archivar. Vuelve a intentarlo.",
+    "archivedLink": "Ejercicios archivados ({{count}})",
+    "archivedTitle": "Archivados",
+    "noArchived": "No tienes ningún ejercicio archivado.",
+    "restore": "Recuperar",
+    "restored": "Se ha recuperado «{{name}}»",
+    "restoreErrors": {
+      "nameTaken": "Ya tienes un ejercicio activo con este nombre.",
+      "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
+      "unknown": "No se ha podido recuperar. Vuelve a intentarlo."
     }
   },
   "trackingTypes": {
-    "weight_reps": { "label": "Peso y repeticiones", "detail": "kg · reps" },
-    "bodyweight_reps": { "label": "Repeticiones", "detail": "reps · kg opcional" },
-    "duration": { "label": "Tiempo", "detail": "min:s" },
-    "weight_distance": { "label": "Peso y distancia", "detail": "kg · metros" },
+    "weight_reps": {
+      "label": "Peso y repeticiones",
+      "detail": "kg · reps"
+    },
+    "bodyweight_reps": {
+      "label": "Repeticiones",
+      "detail": "reps · kg opcional"
+    },
+    "duration": {
+      "label": "Tiempo",
+      "detail": "min:s"
+    },
+    "weight_distance": {
+      "label": "Peso y distancia",
+      "detail": "kg · metros"
+    },
     "cardio_machine": {
       "label": "Máquina de cardio",
       "detail": "tiempo · distancia · velocidad · inclinación · nivel"
     },
-    "run": { "label": "Correr", "detail": "distancia · tiempo · ritmo" }
+    "run": {
+      "label": "Correr",
+      "detail": "distancia · tiempo · ritmo"
+    }
   },
   "muscles": {
     "chest": "Pecho",

@@ -3,7 +3,9 @@
     "name": "Pretty Strong"
   },
   "common": {
-    "done": "Fet"
+    "done": "Fet",
+    "cancel": "Cancel·la",
+    "undo": "Desfés"
   },
   "tabs": {
     "today": "Avui",
@@ -64,18 +66,49 @@
         "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
         "unknown": "No s'ha pogut desar. Torna-ho a provar."
       }
+    },
+    "menu": {
+      "label": "Opcions de «{{name}}»",
+      "archive": "Arxiva"
+    },
+    "archived": "S'ha arxivat «{{name}}»",
+    "archiveError": "No s'ha pogut arxivar. Torna-ho a provar.",
+    "archivedLink": "Exercicis arxivats ({{count}})",
+    "archivedTitle": "Arxivats",
+    "noArchived": "No tens cap exercici arxivat.",
+    "restore": "Recupera",
+    "restored": "S'ha recuperat «{{name}}»",
+    "restoreErrors": {
+      "nameTaken": "Ja tens un exercici actiu amb aquest nom.",
+      "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
+      "unknown": "No s'ha pogut recuperar. Torna-ho a provar."
     }
   },
   "trackingTypes": {
-    "weight_reps": { "label": "Pes i repeticions", "detail": "kg · reps" },
-    "bodyweight_reps": { "label": "Repeticions", "detail": "reps · kg opcional" },
-    "duration": { "label": "Temps", "detail": "min:s" },
-    "weight_distance": { "label": "Pes i distància", "detail": "kg · metres" },
+    "weight_reps": {
+      "label": "Pes i repeticions",
+      "detail": "kg · reps"
+    },
+    "bodyweight_reps": {
+      "label": "Repeticions",
+      "detail": "reps · kg opcional"
+    },
+    "duration": {
+      "label": "Temps",
+      "detail": "min:s"
+    },
+    "weight_distance": {
+      "label": "Pes i distància",
+      "detail": "kg · metres"
+    },
     "cardio_machine": {
       "label": "Màquina de cardio",
       "detail": "temps · distància · velocitat · inclinació · nivell"
     },
-    "run": { "label": "Córrer", "detail": "distància · temps · ritme" }
+    "run": {
+      "label": "Córrer",
+      "detail": "distància · temps · ritme"
+    }
   },
   "muscles": {
     "chest": "Pit",

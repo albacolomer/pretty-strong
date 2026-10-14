@@ -1,25 +1,26 @@
-import { Image } from 'expo-image';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text, TextField } from '@/components/ui';
-import { useAppLanguage, type Language } from '@/lib/i18n';
+import { Button, Card, Text, TextField, useToast } from '@/components/ui';
+import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
-import { EquipmentIcon } from './EquipmentIcon';
-import { exerciseName, type Exercise } from './exercise';
-import { EXERCISE_IMAGES } from './exerciseImages';
-import { MuscleFigure } from './MuscleFigure';
+import { exerciseName, isCustomExercise, type Exercise } from './exercise';
+import { saveErrorReason } from './exerciseDraft';
+import { ExerciseRow } from './ExerciseRow';
 import { OptionSheet } from './OptionSheet';
 import { NO_FILTERS, searchExercises, type ExerciseFilters } from './searchExercises';
+import {
+  useArchiveExercise,
+  useArchivedExercises,
+  useRestoreExercise,
+} from './useArchiveExercise';
 import { useExercises } from './useExercises';
 import { useEquipmentGroups, useMuscleGroups } from './useSheetOptions';
 
 type Sheet = 'muscles' | 'equipment';
-
-const THUMBNAIL_SIZE = 56;
 
 // Opens the "new exercise" screen, optionally with a name already filled in.
 function openNewExercise(name?: string) {
@@ -30,9 +31,13 @@ function openNewExercise(name?: string) {
 // equipment (US-03).
 export function ExerciseLibrary() {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const language = useAppLanguage();
+  const showToast = useToast();
   const { data: exercises = [], isPending, isError } = useExercises();
+  const { data: archived = [] } = useArchivedExercises();
+  const archive = useArchiveExercise();
+  const restore = useRestoreExercise();
   const [filters, setFilters] = useState<ExerciseFilters>(NO_FILTERS);
   const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
   // Only offer options that would find something.
@@ -52,6 +57,42 @@ export function ExerciseLibrary() {
 
   const muscleLabels = filters.muscles.map((muscle) => t(`muscles.${muscle}`));
   const equipmentLabels = filters.equipment.map((item) => t(`equipment.${item}`));
+
+  // Archive with an undo toast instead of "Are you sure?" (it's reversible).
+  function archiveExercise(exercise: Exercise) {
+    const name = exerciseName(exercise, language);
+    archive.mutate(exercise.id, {
+      onSuccess: () =>
+        showToast({
+          message: t('exercises.archived', { name }),
+          action: {
+            label: t('common.undo'),
+            onPress: () =>
+              restore.mutate(exercise.id, {
+                onError: (error) =>
+                  showToast({ message: t(`exercises.restoreErrors.${saveErrorReason(error)}`) }),
+              }),
+          },
+        }),
+      onError: () => showToast({ message: t('exercises.archiveError') }),
+    });
+  }
+
+  // The native iOS action sheet. Archiving isn't shown as destructive: it
+  // can always be undone.
+  function openMenu(exercise: Exercise) {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: exerciseName(exercise, language),
+        options: [t('exercises.menu.archive'), t('common.cancel')],
+        cancelButtonIndex: 1,
+        userInterfaceStyle: scheme,
+      },
+      (index) => {
+        if (index === 0) archiveExercise(exercise);
+      },
+    );
+  }
 
   return (
     <View style={styles.library}>
@@ -112,10 +153,31 @@ export function ExerciseLibrary() {
       ) : (
         <Card style={styles.list}>
           {results.map((exercise) => (
-            <ExerciseRow key={exercise.id} exercise={exercise} language={language} />
+            <ExerciseRow
+              key={exercise.id}
+              exercise={exercise}
+              language={language}
+              // Only your own exercises can be archived; built-ins are shared.
+              accessory={
+                isCustomExercise(exercise) ? (
+                  <MenuButton
+                    label={t('exercises.menu.label', { name: exerciseName(exercise, language) })}
+                    onPress={() => openMenu(exercise)}
+                  />
+                ) : null
+              }
+            />
           ))}
         </Card>
       )}
+
+      {archived.length > 0 ? (
+        <Button
+          label={t('exercises.archivedLink', { count: archived.length })}
+          variant="ghost"
+          onPress={() => router.push('/plan/exercises/archived')}
+        />
+      ) : null}
 
       <OptionSheet
         visible={openSheet === 'muscles'}
@@ -155,6 +217,21 @@ function toggle<T>(list: readonly T[], value: T): T[] {
   return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
 }
 
+// ⋯ next to your own exercises; opens the actions menu.
+function MenuButton({ label, onPress }: { label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      role="button"
+      aria-label={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.menuButton, pressed && styles.pressed]}>
+      <Text variant="cardTitle" color="textMuted">
+        ⋯
+      </Text>
+    </Pressable>
+  );
+}
+
 // "Tots els músculs", or the picked ones, e.g. "Glutis, Isquiotibials".
 function FilterButton({
   label,
@@ -186,50 +263,6 @@ function FilterButton({
   );
 }
 
-// Picture, name, then its main muscles and equipment, e.g. "Glutis · Barra".
-function ExerciseRow({ exercise, language }: { exercise: Exercise; language: Language }) {
-  const { t } = useTranslation();
-  const details = [
-    ...exercise.primaryMuscles.map((muscle) => t(`muscles.${muscle}`)),
-    t(`equipment.${exercise.equipment}`),
-  ].join(' · ');
-
-  return (
-    <View style={styles.row}>
-      <ExerciseThumbnail exercise={exercise} />
-      <View style={styles.rowText}>
-        <Text variant="bodyStrong">{exerciseName(exercise, language)}</Text>
-        <Text variant="caption" color="textMuted">
-          {details}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-// The RepDB picture when there is one; otherwise (custom exercises, and the
-// few built-ins RepDB doesn't have) the body figure with the main muscle,
-// or the equipment icon for cardio saved without muscles.
-// Decorative: the name is written next to it.
-function ExerciseThumbnail({ exercise }: { exercise: Exercise }) {
-  const { colors } = useTheme();
-  const source = exercise.slug ? EXERCISE_IMAGES[exercise.slug] : undefined;
-  const muscle = exercise.primaryMuscles[0];
-
-  if (source) {
-    return <Image source={source} style={styles.thumbnail} contentFit="cover" aria-hidden />;
-  }
-  return (
-    <View style={[styles.thumbnail, styles.fallback, { backgroundColor: colors.surfaceRaised }]}>
-      {muscle ? (
-        <MuscleFigure muscle={muscle} height={52} />
-      ) : (
-        <EquipmentIcon equipment={exercise.equipment} color={colors.accent} />
-      )}
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   library: {
     gap: spacing.lg,
@@ -251,29 +284,16 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.75,
   },
+  menuButton: {
+    width: touch.min,
+    height: touch.min,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   empty: {
     gap: spacing.md,
   },
   list: {
     gap: spacing.md,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  rowText: {
-    flex: 1,
-  },
-  thumbnail: {
-    width: THUMBNAIL_SIZE,
-    height: THUMBNAIL_SIZE,
-    borderRadius: radius.input,
-    borderCurve: 'continuous',
-    overflow: 'hidden',
-  },
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });

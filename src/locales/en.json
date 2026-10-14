@@ -3,7 +3,9 @@
     "name": "Pretty Strong"
   },
   "common": {
-    "done": "Done"
+    "done": "Done",
+    "cancel": "Cancel",
+    "undo": "Undo"
   },
   "tabs": {
     "today": "Today",
@@ -64,18 +66,49 @@
         "network": "No connection. Check it and try again.",
         "unknown": "Couldn't save it. Try again."
       }
+    },
+    "menu": {
+      "label": "Options for “{{name}}”",
+      "archive": "Archive"
+    },
+    "archived": "“{{name}}” archived",
+    "archiveError": "Couldn't archive it. Try again.",
+    "archivedLink": "Archived exercises ({{count}})",
+    "archivedTitle": "Archived",
+    "noArchived": "You have no archived exercises.",
+    "restore": "Restore",
+    "restored": "“{{name}}” restored",
+    "restoreErrors": {
+      "nameTaken": "You already have an active exercise with this name.",
+      "network": "No connection. Check it and try again.",
+      "unknown": "Couldn't restore it. Try again."
     }
   },
   "trackingTypes": {
-    "weight_reps": { "label": "Weight and reps", "detail": "kg · reps" },
-    "bodyweight_reps": { "label": "Reps", "detail": "reps · optional kg" },
-    "duration": { "label": "Time", "detail": "min:s" },
-    "weight_distance": { "label": "Weight and distance", "detail": "kg · metres" },
+    "weight_reps": {
+      "label": "Weight and reps",
+      "detail": "kg · reps"
+    },
+    "bodyweight_reps": {
+      "label": "Reps",
+      "detail": "reps · optional kg"
+    },
+    "duration": {
+      "label": "Time",
+      "detail": "min:s"
+    },
+    "weight_distance": {
+      "label": "Weight and distance",
+      "detail": "kg · metres"
+    },
     "cardio_machine": {
       "label": "Cardio machine",
       "detail": "time · distance · speed · incline · level"
     },
-    "run": { "label": "Run", "detail": "distance · time · pace" }
+    "run": {
+      "label": "Run",
+      "detail": "distance · time · pace"
+    }
   },
   "muscles": {
     "chest": "Chest",

@@ -10,3 +10,4 @@ export {
 } from './SegmentedControl';
 export { Text, type TextProps } from './Text';
 export { TextField, type TextFieldProps } from './TextField';
+export { ToastProvider, useToast, type ToastOptions } from './Toast';
