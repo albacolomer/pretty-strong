@@ -2,6 +2,9 @@
   "app": {
     "name": "Pretty Strong"
   },
+  "common": {
+    "done": "Hecho"
+  },
   "tabs": {
     "today": "Hoy",
     "history": "Historial",
@@ -37,7 +40,43 @@
     "count_other": "{{count}} ejercicios",
     "noResults": "Ningún ejercicio coincide con la búsqueda.",
     "clearFilters": "Borrar filtros",
-    "loadError": "No se han podido cargar los ejercicios."
+    "loadError": "No se han podido cargar los ejercicios.",
+    "create": "Crear un ejercicio",
+    "createNamed": "Crear «{{name}}»",
+    "form": {
+      "title": "Nuevo ejercicio",
+      "name": "Nombre",
+      "trackingType": "¿Qué registrarás?",
+      "primaryMuscles": "Músculos principales",
+      "primaryPlaceholder": "Elige al menos uno",
+      "secondaryMuscles": "Músculos secundarios (opcional)",
+      "secondaryPlaceholder": "Ninguno",
+      "equipment": "Material",
+      "equipmentPlaceholder": "Elige uno",
+      "unilateral": "Un lado cada vez",
+      "unilateralHint": "10 repeticiones significa 10 por lado.",
+      "save": "Guardar ejercicio",
+      "errors": {
+        "required": "Este campo es obligatorio.",
+        "nameTooLong": "Que tenga {{max}} caracteres como máximo.",
+        "musclesRequired": "Elige al menos un músculo principal.",
+        "equipmentRequired": "Elige el material.",
+        "nameTaken": "Ya tienes un ejercicio con este nombre.",
+        "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
+        "unknown": "No se ha podido guardar. Vuelve a intentarlo."
+      }
+    }
+  },
+  "trackingTypes": {
+    "weight_reps": { "label": "Peso y repeticiones", "detail": "kg · reps" },
+    "bodyweight_reps": { "label": "Repeticiones", "detail": "reps · kg opcional" },
+    "duration": { "label": "Tiempo", "detail": "min:s" },
+    "weight_distance": { "label": "Peso y distancia", "detail": "kg · metros" },
+    "cardio_machine": {
+      "label": "Máquina de cardio",
+      "detail": "tiempo · distancia · velocidad · inclinación · nivel"
+    },
+    "run": { "label": "Correr", "detail": "distancia · tiempo · ritmo" }
   },
   "muscles": {
     "chest": "Pecho",

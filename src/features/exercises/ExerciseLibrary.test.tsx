@@ -1,12 +1,14 @@
 import '@/lib/i18n';
 
 import { render, screen, userEvent } from '@testing-library/react-native';
+import { router } from 'expo-router';
 
 import type { Exercise } from './exercise';
 import { ExerciseLibrary } from './ExerciseLibrary';
 import { useExercises } from './useExercises';
 
 jest.mock('./useExercises', () => ({ useExercises: jest.fn() }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 
 function builtIn(slug: string, ca: string, overrides: Partial<Exercise>): Exercise {
   return {
@@ -35,6 +37,7 @@ const exercises: Exercise[] = [
 ];
 
 beforeEach(() => {
+  jest.mocked(router.push).mockReset();
   jest
     .mocked(useExercises)
     .mockReturnValue({ data: exercises, isPending: false, isError: false } as ReturnType<
@@ -87,6 +90,28 @@ describe('<ExerciseLibrary />', () => {
 
     expect(screen.getByRole('checkbox', { name: 'Barra' })).toBeOnTheScreen();
     expect(screen.queryByRole('checkbox', { name: 'Trineu' })).not.toBeOnTheScreen();
+  });
+
+  test('opens the new exercise screen', async () => {
+    const user = userEvent.setup();
+    await render(<ExerciseLibrary />);
+
+    await user.press(screen.getByRole('button', { name: 'Crea un exercici' }));
+
+    expect(router.push).toHaveBeenCalledWith({ pathname: '/plan/exercises/new', params: {} });
+  });
+
+  test('offers to create an exercise it could not find, with that name', async () => {
+    const user = userEvent.setup();
+    await render(<ExerciseLibrary />);
+
+    await user.type(screen.getByLabelText('Cerca'), 'Hip thrust unilateral ');
+    await user.press(screen.getByRole('button', { name: 'Crea «Hip thrust unilateral»' }));
+
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/plan/exercises/new',
+      params: { name: 'Hip thrust unilateral' },
+    });
   });
 
   test('explains when nothing matches and clears the filters', async () => {

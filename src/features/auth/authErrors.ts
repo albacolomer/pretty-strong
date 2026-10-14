@@ -1,4 +1,6 @@
-import { isAuthError, isAuthRetryableFetchError } from '@supabase/supabase-js';
+import { isAuthError } from '@supabase/supabase-js';
+
+import { isNetworkError } from '@/lib/errors';
 
 // Each reason is also the last part of its translation key: auth.errors.<reason>.
 export type AuthErrorReason =
@@ -9,19 +11,9 @@ export type AuthErrorReason =
   | 'network'
   | 'unknown';
 
-// No signal, or the request timed out. Auth calls wrap this in their own
-// error class; database calls return an object whose message is the
-// original "TypeError: Network request failed".
-function isNetworkFailure(error: unknown): boolean {
-  if (isAuthRetryableFetchError(error)) return true;
-  const message =
-    typeof error === 'object' && error !== null && 'message' in error ? String(error.message) : '';
-  return /network request failed|failed to fetch/i.test(message);
-}
-
 // Turns whatever Supabase threw into a reason we can show to the user.
 export function authErrorReason(error: unknown): AuthErrorReason {
-  if (isNetworkFailure(error)) return 'network';
+  if (isNetworkError(error)) return 'network';
 
   if (isAuthError(error)) {
     switch (error.code) {

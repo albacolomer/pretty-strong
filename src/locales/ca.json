@@ -2,6 +2,9 @@
   "app": {
     "name": "Pretty Strong"
   },
+  "common": {
+    "done": "Fet"
+  },
   "tabs": {
     "today": "Avui",
     "history": "Historial",
@@ -37,7 +40,43 @@
     "count_other": "{{count}} exercicis",
     "noResults": "Cap exercici coincideix amb la cerca.",
     "clearFilters": "Esborra els filtres",
-    "loadError": "No s'han pogut carregar els exercicis."
+    "loadError": "No s'han pogut carregar els exercicis.",
+    "create": "Crea un exercici",
+    "createNamed": "Crea «{{name}}»",
+    "form": {
+      "title": "Nou exercici",
+      "name": "Nom",
+      "trackingType": "Què registraràs?",
+      "primaryMuscles": "Músculs principals",
+      "primaryPlaceholder": "Tria'n almenys un",
+      "secondaryMuscles": "Músculs secundaris (opcional)",
+      "secondaryPlaceholder": "Cap",
+      "equipment": "Material",
+      "equipmentPlaceholder": "Tria'n un",
+      "unilateral": "Un costat cada vegada",
+      "unilateralHint": "10 repeticions vol dir 10 per costat.",
+      "save": "Desa l'exercici",
+      "errors": {
+        "required": "Aquest camp és obligatori.",
+        "nameTooLong": "Fes-lo de {{max}} caràcters com a màxim.",
+        "musclesRequired": "Tria almenys un múscul principal.",
+        "equipmentRequired": "Tria el material.",
+        "nameTaken": "Ja tens un exercici amb aquest nom.",
+        "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
+        "unknown": "No s'ha pogut desar. Torna-ho a provar."
+      }
+    }
+  },
+  "trackingTypes": {
+    "weight_reps": { "label": "Pes i repeticions", "detail": "kg · reps" },
+    "bodyweight_reps": { "label": "Repeticions", "detail": "reps · kg opcional" },
+    "duration": { "label": "Temps", "detail": "min:s" },
+    "weight_distance": { "label": "Pes i distància", "detail": "kg · metres" },
+    "cardio_machine": {
+      "label": "Màquina de cardio",
+      "detail": "temps · distància · velocitat · inclinació · nivell"
+    },
+    "run": { "label": "Córrer", "detail": "distància · temps · ritme" }
   },
   "muscles": {
     "chest": "Pit",

@@ -1,39 +1,41 @@
 import type { ReactNode } from 'react';
-import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Text } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
-export type FilterOption<T extends string> = { value: T; label: string; icon: ReactNode };
-export type FilterGroup<T extends string> = { title?: string; options: FilterOption<T>[] };
+export type SheetOption<T extends string> = { value: T; label: string; icon: ReactNode };
+export type SheetGroup<T extends string> = { title?: string; options: SheetOption<T>[] };
 
-type FilterSheetProps<T extends string> = {
+type OptionSheetProps<T extends string> = {
   visible: boolean;
   title: string;
-  groups: FilterGroup<T>[];
+  groups: SheetGroup<T>[];
   selected: readonly T[];
   onToggle: (value: T) => void;
-  onClear: () => void;
-  // How many exercises the current filters find, shown on the close button.
-  resultCount: number;
   onClose: () => void;
+  // Several options (checkboxes) or exactly one (radio buttons).
+  multiple?: boolean;
+  // The main button closes the sheet, e.g. "Mostra 12 resultats" or "Fet".
+  doneLabel: string;
+  // Optional secondary button, e.g. "Esborra els filtres".
+  clear?: { label: string; onPress: () => void };
 };
 
-// A native iOS sheet (swipe down to close) with a grid of options to tick.
-// Changes apply straight away; the bottom button just closes the sheet.
-export function FilterSheet<T extends string>({
+// A native iOS sheet (swipe down to close) with a grid of options to pick.
+// Changes apply straight away; the main button just closes the sheet.
+export function OptionSheet<T extends string>({
   visible,
   title,
   groups,
   selected,
   onToggle,
-  onClear,
-  resultCount,
   onClose,
-}: FilterSheetProps<T>) {
-  const { t } = useTranslation();
+  multiple = true,
+  doneLabel,
+  clear,
+}: OptionSheetProps<T>) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -66,6 +68,7 @@ export function FilterSheet<T extends string>({
                       key={option.value}
                       option={option}
                       selected={selected.includes(option.value)}
+                      multiple={multiple}
                       onPress={() => onToggle(option.value)}
                     />
                   ))}
@@ -82,17 +85,15 @@ export function FilterSheet<T extends string>({
             styles.footer,
             { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
           ]}>
-          <Button
-            label={t('exercises.clearFilters')}
-            variant="secondary"
-            onPress={onClear}
-            style={styles.cell}
-          />
-          <Button
-            label={t('exercises.showResults', { count: resultCount })}
-            onPress={onClose}
-            style={styles.cell}
-          />
+          {clear ? (
+            <Button
+              label={clear.label}
+              variant="secondary"
+              onPress={clear.onPress}
+              style={styles.cell}
+            />
+          ) : null}
+          <Button label={doneLabel} onPress={onClose} style={styles.cell} />
         </View>
       </View>
     </Modal>
@@ -102,17 +103,19 @@ export function FilterSheet<T extends string>({
 function OptionCard<T extends string>({
   option,
   selected,
+  multiple,
   onPress,
 }: {
-  option: FilterOption<T>;
+  option: SheetOption<T>;
   selected: boolean;
+  multiple: boolean;
   onPress: () => void;
 }) {
   const { colors } = useTheme();
 
   return (
     <Pressable
-      role="checkbox"
+      role={multiple ? 'checkbox' : 'radio'}
       aria-checked={selected}
       // Just the name: the body figure has its own built-in label, which
       // screen readers would otherwise read out too.

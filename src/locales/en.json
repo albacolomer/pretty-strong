@@ -2,6 +2,9 @@
   "app": {
     "name": "Pretty Strong"
   },
+  "common": {
+    "done": "Done"
+  },
   "tabs": {
     "today": "Today",
     "history": "History",
@@ -37,7 +40,43 @@
     "count_other": "{{count}} exercises",
     "noResults": "No exercises match your search.",
     "clearFilters": "Clear filters",
-    "loadError": "Couldn't load the exercises."
+    "loadError": "Couldn't load the exercises.",
+    "create": "Create an exercise",
+    "createNamed": "Create “{{name}}”",
+    "form": {
+      "title": "New exercise",
+      "name": "Name",
+      "trackingType": "What will you log?",
+      "primaryMuscles": "Main muscles",
+      "primaryPlaceholder": "Pick at least one",
+      "secondaryMuscles": "Secondary muscles (optional)",
+      "secondaryPlaceholder": "None",
+      "equipment": "Equipment",
+      "equipmentPlaceholder": "Pick one",
+      "unilateral": "One side at a time",
+      "unilateralHint": "10 reps means 10 on each side.",
+      "save": "Save exercise",
+      "errors": {
+        "required": "This field is required.",
+        "nameTooLong": "Keep it to {{max}} characters.",
+        "musclesRequired": "Pick at least one main muscle.",
+        "equipmentRequired": "Pick the equipment.",
+        "nameTaken": "You already have an exercise with this name.",
+        "network": "No connection. Check it and try again.",
+        "unknown": "Couldn't save it. Try again."
+      }
+    }
+  },
+  "trackingTypes": {
+    "weight_reps": { "label": "Weight and reps", "detail": "kg · reps" },
+    "bodyweight_reps": { "label": "Reps", "detail": "reps · optional kg" },
+    "duration": { "label": "Time", "detail": "min:s" },
+    "weight_distance": { "label": "Weight and distance", "detail": "kg · metres" },
+    "cardio_machine": {
+      "label": "Cardio machine",
+      "detail": "time · distance · speed · incline · level"
+    },
+    "run": { "label": "Run", "detail": "distance · time · pace" }
   },
   "muscles": {
     "chest": "Chest",

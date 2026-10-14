@@ -1,4 +1,5 @@
 import { Image } from 'expo-image';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
@@ -7,18 +8,22 @@ import { Button, Card, Text, TextField } from '@/components/ui';
 import { useAppLanguage, type Language } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
-import { EquipmentIcon } from './EquipmentIcon';
 import { exerciseName, type Exercise } from './exercise';
 import { EXERCISE_IMAGES } from './exerciseImages';
-import { FilterSheet, type FilterGroup } from './FilterSheet';
 import { MuscleFigure } from './MuscleFigure';
+import { OptionSheet } from './OptionSheet';
 import { NO_FILTERS, searchExercises, type ExerciseFilters } from './searchExercises';
 import { useExercises } from './useExercises';
-import { EQUIPMENT, MUSCLE_GROUPS, type Equipment, type Muscle } from './vocabulary';
+import { useEquipmentGroups, useMuscleGroups } from './useSheetOptions';
 
 type Sheet = 'muscles' | 'equipment';
 
 const THUMBNAIL_SIZE = 56;
+
+// Opens the "new exercise" screen, optionally with a name already filled in.
+function openNewExercise(name?: string) {
+  router.push({ pathname: '/plan/exercises/new', params: name ? { name } : {} });
+}
 
 // Plan → Exercicis: search the library by name and filter by muscles and
 // equipment (US-03).
@@ -26,44 +31,23 @@ export function ExerciseLibrary() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const language = useAppLanguage();
-  const { data: exercises, isPending, isError } = useExercises();
+  const { data: exercises = [], isPending, isError } = useExercises();
   const [filters, setFilters] = useState<ExerciseFilters>(NO_FILTERS);
   const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
+  // Only offer options that would find something.
+  const muscleGroups = useMuscleGroups((muscle) =>
+    exercises.some((e) => e.primaryMuscles.includes(muscle) || e.secondaryMuscles.includes(muscle)),
+  );
+  const equipmentGroups = useEquipmentGroups((item) =>
+    exercises.some((e) => e.equipment === item),
+  );
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('exercises.loadError')}</Text>;
 
   const results = searchExercises(exercises, filters, language);
-  const hasFilters =
-    filters.query !== '' || filters.muscles.length > 0 || filters.equipment.length > 0;
-
-  // Only offer options that would find something.
-  const muscleGroups: FilterGroup<Muscle>[] = MUSCLE_GROUPS.map((group) => ({
-    title: t(`exercises.groups.${group.key}`),
-    options: group.muscles
-      .filter((muscle) =>
-        exercises.some(
-          (e) => e.primaryMuscles.includes(muscle) || e.secondaryMuscles.includes(muscle),
-        ),
-      )
-      .map((muscle) => ({
-        value: muscle,
-        label: t(`muscles.${muscle}`),
-        icon: <MuscleFigure muscle={muscle} />,
-      })),
-  })).filter((group) => group.options.length > 0);
-
-  const equipmentGroups: FilterGroup<Equipment>[] = [
-    {
-      options: EQUIPMENT.filter((item) => exercises.some((e) => e.equipment === item)).map(
-        (item) => ({
-          value: item,
-          label: t(`equipment.${item}`),
-          icon: <EquipmentIcon equipment={item} color={colors.accent} />,
-        }),
-      ),
-    },
-  ];
+  const query = filters.query.trim();
+  const hasFilters = query !== '' || filters.muscles.length > 0 || filters.equipment.length > 0;
 
   const muscleLabels = filters.muscles.map((muscle) => t(`muscles.${muscle}`));
   const equipmentLabels = filters.equipment.map((item) => t(`equipment.${item}`));
@@ -96,6 +80,12 @@ export function ExerciseLibrary() {
         />
       </View>
 
+      <Button
+        label={t('exercises.create')}
+        variant="secondary"
+        onPress={() => openNewExercise()}
+      />
+
       <Text variant="caption" color="textMuted">
         {t('exercises.count', { count: results.length })}
       </Text>
@@ -103,6 +93,13 @@ export function ExerciseLibrary() {
       {results.length === 0 ? (
         <View style={styles.empty}>
           <Text color="textMuted">{t('exercises.noResults')}</Text>
+          {query !== '' ? (
+            // Not in the library? Create it with the searched name.
+            <Button
+              label={t('exercises.createNamed', { name: query })}
+              onPress={() => openNewExercise(query)}
+            />
+          ) : null}
           {hasFilters ? (
             <Button
               label={t('exercises.clearFilters')}
@@ -119,7 +116,7 @@ export function ExerciseLibrary() {
         </Card>
       )}
 
-      <FilterSheet
+      <OptionSheet
         visible={openSheet === 'muscles'}
         title={t('exercises.muscleGroup')}
         groups={muscleGroups}
@@ -127,11 +124,14 @@ export function ExerciseLibrary() {
         onToggle={(muscle) =>
           setFilters((current) => ({ ...current, muscles: toggle(current.muscles, muscle) }))
         }
-        onClear={() => setFilters((current) => ({ ...current, muscles: [] }))}
-        resultCount={results.length}
+        clear={{
+          label: t('exercises.clearFilters'),
+          onPress: () => setFilters((current) => ({ ...current, muscles: [] })),
+        }}
+        doneLabel={t('exercises.showResults', { count: results.length })}
         onClose={() => setOpenSheet(null)}
       />
-      <FilterSheet
+      <OptionSheet
         visible={openSheet === 'equipment'}
         title={t('exercises.equipment')}
         groups={equipmentGroups}
@@ -139,8 +139,11 @@ export function ExerciseLibrary() {
         onToggle={(item) =>
           setFilters((current) => ({ ...current, equipment: toggle(current.equipment, item) }))
         }
-        onClear={() => setFilters((current) => ({ ...current, equipment: [] }))}
-        resultCount={results.length}
+        clear={{
+          label: t('exercises.clearFilters'),
+          onPress: () => setFilters((current) => ({ ...current, equipment: [] })),
+        }}
+        doneLabel={t('exercises.showResults', { count: results.length })}
         onClose={() => setOpenSheet(null)}
       />
     </View>
