@@ -51,6 +51,12 @@ export function toExercise(row: ExerciseRow): Exercise {
   };
 }
 
+// Custom exercises are the user's own (and the only ones they can archive);
+// built-ins always have a slug.
+export function isCustomExercise(exercise: Exercise): boolean {
+  return exercise.slug === null;
+}
+
 export function exerciseName(exercise: Exercise, language: Language): string {
   return exercise.names?.[language] ?? exercise.name ?? '';
 }

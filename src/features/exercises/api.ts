@@ -14,6 +14,33 @@ export async function fetchExercises(): Promise<Exercise[]> {
   return data.map(toExercise);
 }
 
+// Your own archived exercises, most recently archived first. Built-ins are
+// never archived by users, so they're left out.
+export async function fetchArchivedExercises(): Promise<Exercise[]> {
+  const { data, error } = await supabase
+    .from('exercises')
+    .select(EXERCISE_COLUMNS)
+    .not('archived_at', 'is', null)
+    .not('owner_id', 'is', null)
+    .order('archived_at', { ascending: false });
+  if (error) throw error;
+  return data.map(toExercise);
+}
+
+// Archiving only sets archived_at; nothing is ever deleted, so past
+// workouts keep pointing at the exercise (data rule 3). RLS only allows it
+// on your own exercises.
+export async function setExerciseArchived(id: string, archived: boolean): Promise<Exercise> {
+  const { data, error } = await supabase
+    .from('exercises')
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq('id', id)
+    .select(EXERCISE_COLUMNS)
+    .single();
+  if (error) throw error;
+  return toExercise(data);
+}
+
 export type NewExercise = {
   ownerId: string;
   name: string;
