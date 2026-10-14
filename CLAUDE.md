@@ -40,6 +40,7 @@ Phase 1, release V1.0 (spec: "MVP scope"). Never build anything listed under "Ou
 - `src/lib/`: Supabase client, query client, i18n setup, notifications
 - `src/theme/`: colour tokens, typography, spacing (spec: "Design system and visual direction")
 - `src/locales/`: `ca.json`, `es.json`, `en.json`
+- `src/test-utils/`: shared test helpers (e.g. `createQueryWrapper()`)
 - `supabase/migrations/`, `supabase/seed.sql` (built-in exercise library)
 - Pure logic (e.g. `compareToLastTime.ts`) has no React imports and has tests
 ## Data rules (never break these)
@@ -60,6 +61,7 @@ Phase 1, release V1.0 (spec: "MVP scope"). Never build anything listed under "Ou
 - The active workout lives in the persisted store and is saved on every change. It must survive an app kill and work with no signal.
 - Gym UX: touch targets at least 48 pt (the ✓ at least 56 pt), main actions in the bottom half, numeric keypad for numbers, an undo toast instead of "Are you sure?" for reversible actions, every swipe action also in a menu.
 - Colours, type and spacing come only from `src/theme`. Dark-first, light supported.
+- Inside components, read outside state (e.g. the current language) through a hook, never a plain function call during render: the React Compiler may compute it only once. Tests run with the compiler too.
 - No secrets in the app. Only `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` go in `.env` (gitignored); keep `.env.example` up to date.
 ## How to work with me
  
