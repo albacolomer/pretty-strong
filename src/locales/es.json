@@ -22,8 +22,17 @@
   "exercises": {
     "search": "Buscar",
     "searchPlaceholder": "Nombre del ejercicio",
-    "muscle": "Músculo",
+    "muscleGroup": "Grupo muscular",
     "equipment": "Material",
+    "allMuscles": "Todos los músculos",
+    "allEquipment": "Todo el material",
+    "groups": {
+      "upper": "Tren superior",
+      "core": "Core",
+      "lower": "Tren inferior"
+    },
+    "showResults_one": "Mostrar {{count}} resultado",
+    "showResults_other": "Mostrar {{count}} resultados",
     "count_one": "{{count}} ejercicio",
     "count_other": "{{count}} ejercicios",
     "noResults": "Ningún ejercicio coincide con la búsqueda.",

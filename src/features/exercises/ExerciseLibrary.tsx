@@ -1,17 +1,22 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Chip, Text, TextField } from '@/components/ui';
+import { Button, Card, Text, TextField } from '@/components/ui';
 import { useAppLanguage, type Language } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { radius, spacing, touch, useTheme } from '@/theme';
 
+import { EquipmentIcon } from './EquipmentIcon';
 import { exerciseName, type Exercise } from './exercise';
+import { FilterSheet, type FilterGroup } from './FilterSheet';
+import { MuscleFigure } from './MuscleFigure';
 import { NO_FILTERS, searchExercises, type ExerciseFilters } from './searchExercises';
 import { useExercises } from './useExercises';
-import { EQUIPMENT, MUSCLES } from './vocabulary';
+import { EQUIPMENT, MUSCLE_GROUPS, type Equipment, type Muscle } from './vocabulary';
 
-// Plan → Exercicis: search the library by name and filter by muscle and
+type Sheet = 'muscles' | 'equipment';
+
+// Plan → Exercicis: search the library by name and filter by muscles and
 // equipment (US-03).
 export function ExerciseLibrary() {
   const { t } = useTranslation();
@@ -19,19 +24,45 @@ export function ExerciseLibrary() {
   const language = useAppLanguage();
   const { data: exercises, isPending, isError } = useExercises();
   const [filters, setFilters] = useState<ExerciseFilters>(NO_FILTERS);
+  const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('exercises.loadError')}</Text>;
 
   const results = searchExercises(exercises, filters, language);
-  // Only offer chips that would find something.
-  const muscles = MUSCLES.filter((muscle) =>
-    exercises.some(
-      (e) => e.primaryMuscles.includes(muscle) || e.secondaryMuscles.includes(muscle),
-    ),
-  );
-  const equipmentInUse = EQUIPMENT.filter((item) => exercises.some((e) => e.equipment === item));
-  const hasFilters = filters.query !== '' || filters.muscle !== null || filters.equipment !== null;
+  const hasFilters =
+    filters.query !== '' || filters.muscles.length > 0 || filters.equipment.length > 0;
+
+  // Only offer options that would find something.
+  const muscleGroups: FilterGroup<Muscle>[] = MUSCLE_GROUPS.map((group) => ({
+    title: t(`exercises.groups.${group.key}`),
+    options: group.muscles
+      .filter((muscle) =>
+        exercises.some(
+          (e) => e.primaryMuscles.includes(muscle) || e.secondaryMuscles.includes(muscle),
+        ),
+      )
+      .map((muscle) => ({
+        value: muscle,
+        label: t(`muscles.${muscle}`),
+        icon: <MuscleFigure muscle={muscle} />,
+      })),
+  })).filter((group) => group.options.length > 0);
+
+  const equipmentGroups: FilterGroup<Equipment>[] = [
+    {
+      options: EQUIPMENT.filter((item) => exercises.some((e) => e.equipment === item)).map(
+        (item) => ({
+          value: item,
+          label: t(`equipment.${item}`),
+          icon: <EquipmentIcon equipment={item} color={colors.accent} />,
+        }),
+      ),
+    },
+  ];
+
+  const muscleLabels = filters.muscles.map((muscle) => t(`muscles.${muscle}`));
+  const equipmentLabels = filters.equipment.map((item) => t(`equipment.${item}`));
 
   return (
     <View style={styles.library}>
@@ -46,30 +77,20 @@ export function ExerciseLibrary() {
         clearButtonMode="while-editing"
       />
 
-      <ChipRow
-        label={t('exercises.muscle')}
-        options={muscles}
-        selected={filters.muscle}
-        getLabel={(muscle) => t(`muscles.${muscle}`)}
-        onToggle={(muscle) =>
-          setFilters((current) => ({
-            ...current,
-            muscle: current.muscle === muscle ? null : muscle,
-          }))
-        }
-      />
-      <ChipRow
-        label={t('exercises.equipment')}
-        options={equipmentInUse}
-        selected={filters.equipment}
-        getLabel={(item) => t(`equipment.${item}`)}
-        onToggle={(item) =>
-          setFilters((current) => ({
-            ...current,
-            equipment: current.equipment === item ? null : item,
-          }))
-        }
-      />
+      <View style={styles.filterButtons}>
+        <FilterButton
+          label={muscleLabels.length > 0 ? muscleLabels.join(', ') : t('exercises.allMuscles')}
+          active={muscleLabels.length > 0}
+          onPress={() => setOpenSheet('muscles')}
+        />
+        <FilterButton
+          label={
+            equipmentLabels.length > 0 ? equipmentLabels.join(', ') : t('exercises.allEquipment')
+          }
+          active={equipmentLabels.length > 0}
+          onPress={() => setOpenSheet('equipment')}
+        />
+      </View>
 
       <Text variant="caption" color="textMuted">
         {t('exercises.count', { count: results.length })}
@@ -93,40 +114,67 @@ export function ExerciseLibrary() {
           ))}
         </Card>
       )}
+
+      <FilterSheet
+        visible={openSheet === 'muscles'}
+        title={t('exercises.muscleGroup')}
+        groups={muscleGroups}
+        selected={filters.muscles}
+        onToggle={(muscle) =>
+          setFilters((current) => ({ ...current, muscles: toggle(current.muscles, muscle) }))
+        }
+        onClear={() => setFilters((current) => ({ ...current, muscles: [] }))}
+        resultCount={results.length}
+        onClose={() => setOpenSheet(null)}
+      />
+      <FilterSheet
+        visible={openSheet === 'equipment'}
+        title={t('exercises.equipment')}
+        groups={equipmentGroups}
+        selected={filters.equipment}
+        onToggle={(item) =>
+          setFilters((current) => ({ ...current, equipment: toggle(current.equipment, item) }))
+        }
+        onClear={() => setFilters((current) => ({ ...current, equipment: [] }))}
+        resultCount={results.length}
+        onClose={() => setOpenSheet(null)}
+      />
     </View>
   );
 }
 
-type ChipRowProps<T extends string> = {
-  label: string;
-  options: readonly T[];
-  selected: T | null;
-  getLabel: (option: T) => string;
-  onToggle: (option: T) => void;
-};
+function toggle<T>(list: readonly T[], value: T): T[] {
+  return list.includes(value) ? list.filter((item) => item !== value) : [...list, value];
+}
 
-// A labelled, sideways-scrolling row of filter chips; tap again to clear.
-function ChipRow<T extends string>({ label, options, selected, getLabel, onToggle }: ChipRowProps<T>) {
+// "Tots els músculs", or the picked ones, e.g. "Glutis, Isquiotibials".
+function FilterButton({
+  label,
+  active,
+  onPress,
+}: {
+  label: string;
+  active: boolean;
+  onPress: () => void;
+}) {
+  const { colors } = useTheme();
+
   return (
-    <View style={styles.chipRow}>
-      <Text variant="caption" color="textMuted">
+    <Pressable
+      role="button"
+      onPress={onPress}
+      style={({ pressed }) => [
+        styles.filterButton,
+        {
+          backgroundColor: active ? colors.accentSoft : colors.surfaceRaised,
+          borderColor: active ? colors.accent : 'transparent',
+        },
+        pressed && styles.pressed,
+      ]}>
+      <Text variant="bodyStrong" color={active ? 'accent' : 'text'} numberOfLines={1}>
         {label}
       </Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-        contentContainerStyle={styles.chips}>
-        {options.map((option) => (
-          <Chip
-            key={option}
-            label={getLabel(option)}
-            selected={option === selected}
-            onPress={() => onToggle(option)}
-          />
-        ))}
-      </ScrollView>
-    </View>
+    </Pressable>
   );
 }
 
@@ -152,11 +200,22 @@ const styles = StyleSheet.create({
   library: {
     gap: spacing.lg,
   },
-  chipRow: {
-    gap: spacing.xs,
-  },
-  chips: {
+  filterButtons: {
+    flexDirection: 'row',
     gap: spacing.sm,
+  },
+  filterButton: {
+    flex: 1,
+    minHeight: touch.min,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.input,
+    borderCurve: 'continuous',
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: {
+    opacity: 0.75,
   },
   empty: {
     gap: spacing.md,

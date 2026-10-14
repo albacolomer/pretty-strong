@@ -22,8 +22,17 @@
   "exercises": {
     "search": "Cerca",
     "searchPlaceholder": "Nom de l'exercici",
-    "muscle": "Múscul",
+    "muscleGroup": "Grup muscular",
     "equipment": "Material",
+    "allMuscles": "Tots els músculs",
+    "allEquipment": "Tot el material",
+    "groups": {
+      "upper": "Tren superior",
+      "core": "Core",
+      "lower": "Tren inferior"
+    },
+    "showResults_one": "Mostra {{count}} resultat",
+    "showResults_other": "Mostra {{count}} resultats",
     "count_one": "{{count}} exercici",
     "count_other": "{{count}} exercicis",
     "noResults": "Cap exercici coincideix amb la cerca.",

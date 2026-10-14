@@ -24,6 +24,17 @@ export const MUSCLES = [
 ] as const;
 export type Muscle = (typeof MUSCLES)[number];
 
+// How the muscle filter groups them. Each group key is also the last part
+// of its translation key: exercises.groups.<key>.
+export const MUSCLE_GROUPS = [
+  {
+    key: 'upper',
+    muscles: ['chest', 'shoulders', 'biceps', 'triceps', 'forearms', 'lats', 'upper_back', 'traps'],
+  },
+  { key: 'core', muscles: ['abs', 'obliques', 'lower_back'] },
+  { key: 'lower', muscles: ['glutes', 'quads', 'hamstrings', 'adductors', 'abductors', 'calves'] },
+] as const satisfies readonly { key: string; muscles: readonly Muscle[] }[];
+
 export const EQUIPMENT = [
   'barbell',
   'dumbbell',

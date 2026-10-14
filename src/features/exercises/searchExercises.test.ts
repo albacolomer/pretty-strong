@@ -83,20 +83,40 @@ describe('searchExercises', () => {
     ]);
   });
 
-  test('a muscle filter lists primary matches before secondary ones', () => {
-    const results = searchExercises(all, { ...NO_FILTERS, muscle: 'glutes' }, 'ca');
+  test('one muscle: primary matches before secondary ones', () => {
+    const results = searchExercises(all, { ...NO_FILTERS, muscles: ['glutes'] }, 'ca');
     expect(slugsOrIds(results)).toEqual(['hip_thrust', 'back_squat']);
   });
 
-  test('filters by equipment, combined with the other filters', () => {
-    const barbell = { ...NO_FILTERS, equipment: 'barbell' } as const;
-    expect(slugsOrIds(searchExercises(all, barbell, 'en'))).toEqual([
+  test('several muscles: any of them, exercises mainly training more of them first', () => {
+    const romanianDeadlift = builtIn('romanian_deadlift', ['Pes mort romanès', '', ''], {
+      primaryMuscles: ['hamstrings', 'glutes'],
+    });
+    const legCurl = builtIn('lying_leg_curl', ['Curl femoral estirat', '', ''], {
+      primaryMuscles: ['hamstrings'],
+    });
+    const lowerBody = [squat, legCurl, hipThrust, latPulldown, romanianDeadlift];
+
+    const results = searchExercises(lowerBody, { ...NO_FILTERS, muscles: ['glutes', 'hamstrings'] }, 'ca');
+
+    expect(slugsOrIds(results)).toEqual([
+      'romanian_deadlift', // both, as primary
+      'lying_leg_curl', // one primary: Curl femoral…
+      'hip_thrust', // one primary: Hip thrust…
+      'back_squat', // glutes only as a secondary muscle
+    ]);
+  });
+
+  test('equipment: any of the picked ones, combined with the other filters', () => {
+    const barbellOrCable = { ...NO_FILTERS, equipment: ['barbell', 'cable'] } satisfies typeof NO_FILTERS;
+    expect(slugsOrIds(searchExercises(all, barbellOrCable, 'en'))).toEqual([
       'back_squat', // Barbell back squat
       'barbell_bench_press', // Barbell bench press
       'hip_thrust', // Barbell hip thrust
+      'lat_pulldown', // Lat pulldown
     ]);
-    expect(slugsOrIds(searchExercises(all, { ...barbell, muscle: 'chest' }, 'en'))).toEqual([
-      'barbell_bench_press',
-    ]);
+    expect(
+      slugsOrIds(searchExercises(all, { ...barbellOrCable, muscles: ['chest', 'lats'] }, 'en')),
+    ).toEqual(['barbell_bench_press', 'lat_pulldown']);
   });
 });

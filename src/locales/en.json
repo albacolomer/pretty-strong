@@ -22,8 +22,17 @@
   "exercises": {
     "search": "Search",
     "searchPlaceholder": "Exercise name",
-    "muscle": "Muscle",
+    "muscleGroup": "Muscle group",
     "equipment": "Equipment",
+    "allMuscles": "All muscles",
+    "allEquipment": "All equipment",
+    "groups": {
+      "upper": "Upper body",
+      "core": "Core",
+      "lower": "Lower body"
+    },
+    "showResults_one": "Show {{count}} result",
+    "showResults_other": "Show {{count}} results",
     "count_one": "{{count}} exercise",
     "count_other": "{{count}} exercises",
     "noResults": "No exercises match your search.",

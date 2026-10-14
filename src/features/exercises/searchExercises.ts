@@ -3,22 +3,24 @@ import type { Language } from '@/lib/i18n';
 import { exerciseName, type Exercise } from './exercise';
 import type { Equipment, Muscle } from './vocabulary';
 
+// Empty lists mean "any". Within a list, an exercise matches if it has any
+// of the picked values (glutes OR hamstrings); across lists it must match
+// all of them (… AND barbell).
 export type ExerciseFilters = {
   query: string;
-  muscle: Muscle | null;
-  equipment: Equipment | null;
+  muscles: Muscle[];
+  equipment: Equipment[];
 };
 
-export const NO_FILTERS: ExerciseFilters = { query: '', muscle: null, equipment: null };
+export const NO_FILTERS: ExerciseFilters = { query: '', muscles: [], equipment: [] };
+
+// Combining accent marks (U+0300 to U+036F) and the Catalan middle dot.
+const MARKS = /[\u0300-\u036f\u00b7]/g;
 
 // Lowercase, without accents or the Catalan middle dot, so "jalo" finds
 // "Jalón" and "ellip" finds "El·líptica".
 export function normalizeForSearch(text: string): string {
-  return text
-    .normalize('NFD')
-    .replace(/[̀-ͯ·]/g, '')
-    .toLowerCase()
-    .trim();
+  return text.normalize('NFD').replace(MARKS, '').toLowerCase().trim();
 }
 
 // Every word of the query must appear in the same name, in any of the
@@ -33,36 +35,42 @@ function matchesQuery(exercise: Exercise, query: string): boolean {
   });
 }
 
-function matchesMuscle(exercise: Exercise, muscle: Muscle | null): boolean {
+function worksAnyOf(exercise: Exercise, muscles: readonly Muscle[]): boolean {
   return (
-    muscle === null ||
-    exercise.primaryMuscles.includes(muscle) ||
-    exercise.secondaryMuscles.includes(muscle)
+    muscles.length === 0 ||
+    muscles.some(
+      (muscle) =>
+        exercise.primaryMuscles.includes(muscle) || exercise.secondaryMuscles.includes(muscle),
+    )
   );
 }
 
-// Filters by name, muscle and equipment. With a muscle picked, exercises
-// where it is a primary muscle come first; otherwise alphabetical in the
-// app language.
+// How many of the picked muscles this exercise mainly trains.
+function primaryHits(exercise: Exercise, muscles: readonly Muscle[]): number {
+  return muscles.filter((muscle) => exercise.primaryMuscles.includes(muscle)).length;
+}
+
+// Filters by name, muscles and equipment. With muscles picked, exercises
+// that mainly train more of them come first (Romanian deadlift before hip
+// thrust for glutes + hamstrings), and ones that only work them as a
+// secondary muscle come last. Ties are alphabetical in the app language.
 export function searchExercises(
   exercises: readonly Exercise[],
   filters: ExerciseFilters,
   language: Language,
 ): Exercise[] {
-  const { muscle, equipment } = filters;
-  const isSecondaryOnly = (exercise: Exercise) =>
-    muscle !== null && !exercise.primaryMuscles.includes(muscle) ? 1 : 0;
+  const { muscles, equipment } = filters;
 
   return exercises
     .filter(
       (exercise) =>
         matchesQuery(exercise, filters.query) &&
-        matchesMuscle(exercise, muscle) &&
-        (equipment === null || exercise.equipment === equipment),
+        worksAnyOf(exercise, muscles) &&
+        (equipment.length === 0 || equipment.includes(exercise.equipment)),
     )
     .sort(
       (a, b) =>
-        isSecondaryOnly(a) - isSecondaryOnly(b) ||
+        primaryHits(b, muscles) - primaryHits(a, muscles) ||
         exerciseName(a, language).localeCompare(exerciseName(b, language), language),
     );
 }
