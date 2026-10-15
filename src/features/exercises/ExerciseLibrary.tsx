@@ -3,20 +3,16 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text, TextField, useToast } from '@/components/ui';
+import { Button, Card, Text, TextField } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { exerciseName, isCustomExercise, type Exercise } from './exercise';
-import { saveErrorReason } from './exerciseDraft';
 import { ExerciseRow } from './ExerciseRow';
 import { OptionSheet } from './OptionSheet';
 import { NO_FILTERS, searchExercises, type ExerciseFilters } from './searchExercises';
-import {
-  useArchiveExercise,
-  useArchivedExercises,
-  useRestoreExercise,
-} from './useArchiveExercise';
+import { useArchivedExercises } from './useArchiveExercise';
+import { useArchiveWithUndo } from './useArchiveWithUndo';
 import { useExercises } from './useExercises';
 import { useEquipmentGroups, useMuscleGroups } from './useSheetOptions';
 
@@ -33,11 +29,9 @@ export function ExerciseLibrary() {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
   const language = useAppLanguage();
-  const showToast = useToast();
   const { data: exercises = [], isPending, isError } = useExercises();
   const { data: archived = [] } = useArchivedExercises();
-  const archive = useArchiveExercise();
-  const restore = useRestoreExercise();
+  const archiveExercise = useArchiveWithUndo();
   const [filters, setFilters] = useState<ExerciseFilters>(NO_FILTERS);
   const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
   // Only offer options that would find something.
@@ -57,26 +51,6 @@ export function ExerciseLibrary() {
 
   const muscleLabels = filters.muscles.map((muscle) => t(`muscles.${muscle}`));
   const equipmentLabels = filters.equipment.map((item) => t(`equipment.${item}`));
-
-  // Archive with an undo toast instead of "Are you sure?" (it's reversible).
-  function archiveExercise(exercise: Exercise) {
-    const name = exerciseName(exercise, language);
-    archive.mutate(exercise.id, {
-      onSuccess: () =>
-        showToast({
-          message: t('exercises.archived', { name }),
-          action: {
-            label: t('common.undo'),
-            onPress: () =>
-              restore.mutate(exercise.id, {
-                onError: (error) =>
-                  showToast({ message: t(`exercises.restoreErrors.${saveErrorReason(error)}`) }),
-              }),
-          },
-        }),
-      onError: () => showToast({ message: t('exercises.archiveError') }),
-    });
-  }
 
   // The native iOS action sheet. Archiving isn't shown as destructive: it
   // can always be undone.
@@ -157,6 +131,9 @@ export function ExerciseLibrary() {
               key={exercise.id}
               exercise={exercise}
               language={language}
+              onPress={() =>
+                router.push({ pathname: '/plan/exercises/[id]', params: { id: exercise.id } })
+              }
               // Only your own exercises can be archived; built-ins are shared.
               accessory={
                 isCustomExercise(exercise) ? (

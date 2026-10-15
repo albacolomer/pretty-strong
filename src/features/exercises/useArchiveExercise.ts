@@ -1,9 +1,12 @@
 import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useTranslation } from 'react-i18next';
 
+import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 
 import { fetchArchivedExercises, setExerciseArchived } from './api';
 import type { Exercise } from './exercise';
+import { saveErrorReason } from './exerciseDraft';
 import { exercisesQueryKey } from './useExercises';
 
 export function archivedExercisesQueryKey(userId: string | undefined) {
@@ -21,9 +24,12 @@ export function useArchivedExercises() {
 }
 
 // Archive: the exercise leaves the library straight away (optimistic) and
-// comes back if saving fails.
+// comes back if saving fails. Error messages live here, not in mutate()
+// callbacks, because the screen that archived may already have closed.
 export function useArchiveExercise() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const showToast = useToast();
   const { session } = useAuth();
   const activeKey = exercisesQueryKey(session?.user.id);
   const archivedKey = archivedExercisesQueryKey(session?.user.id);
@@ -41,6 +47,7 @@ export function useArchiveExercise() {
     },
     onError: (_error, _id, context) => {
       queryClient.setQueryData(activeKey, context?.previous);
+      showToast({ message: t('exercises.archiveError') });
     },
     onSuccess: (exercise) => {
       queryClient.setQueryData<Exercise[]>(archivedKey, (current) =>
@@ -53,6 +60,8 @@ export function useArchiveExercise() {
 // Restore (also "Desfés" after archiving): back into the library.
 export function useRestoreExercise() {
   const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const showToast = useToast();
   const { session } = useAuth();
   const activeKey = exercisesQueryKey(session?.user.id);
   const archivedKey = archivedExercisesQueryKey(session?.user.id);
@@ -67,5 +76,8 @@ export function useRestoreExercise() {
         current && !current.some((e) => e.id === exercise.id) ? [...current, exercise] : current,
       );
     },
+    // E.g. an active exercise already has that name.
+    onError: (error) =>
+      showToast({ message: t(`exercises.restoreErrors.${saveErrorReason(error)}`) }),
   });
 }

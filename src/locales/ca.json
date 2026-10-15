@@ -82,6 +82,14 @@
       "nameTaken": "Ja tens un exercici actiu amb aquest nom.",
       "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
       "unknown": "No s'ha pogut recuperar. Torna-ho a provar."
+    },
+    "detail": {
+      "title": "Exercici",
+      "notFound": "No s'ha trobat aquest exercici.",
+      "tracking": "Què registres",
+      "primaryMuscles": "Músculs principals",
+      "secondaryMuscles": "Músculs secundaris",
+      "archive": "Arxiva l'exercici"
     }
   },
   "trackingTypes": {

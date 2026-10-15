@@ -2,6 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { renderHook, waitFor } from '@testing-library/react-native';
 import type { ReactNode } from 'react';
 
+import '@/lib/i18n';
+
+import { ToastProvider } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 
 import { setExerciseArchived } from './api';
@@ -44,7 +47,9 @@ function setup() {
   client.setQueryData(active, [exercise('a'), exercise('b')]);
   client.setQueryData(archived, [exercise('old')]);
   const wrapper = ({ children }: { children: ReactNode }) => (
-    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    <QueryClientProvider client={client}>
+      <ToastProvider>{children}</ToastProvider>
+    </QueryClientProvider>
   );
   return { client, wrapper };
 }

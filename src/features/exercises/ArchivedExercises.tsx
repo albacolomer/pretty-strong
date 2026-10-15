@@ -6,7 +6,6 @@ import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
 import { exerciseName, type Exercise } from './exercise';
-import { saveErrorReason } from './exerciseDraft';
 import { ExerciseRow } from './ExerciseRow';
 import { useArchivedExercises, useRestoreExercise } from './useArchiveExercise';
 
@@ -23,12 +22,11 @@ export function ArchivedExercises() {
   if (isError) return <Text color="danger">{t('exercises.loadError')}</Text>;
   if (archived.length === 0) return <Text color="textMuted">{t('exercises.noArchived')}</Text>;
 
+  // Errors (e.g. name taken) are shown by the restore hook itself.
   function restoreExercise(exercise: Exercise) {
     const name = exerciseName(exercise, language);
     restore.mutate(exercise.id, {
       onSuccess: () => showToast({ message: t('exercises.restored', { name }) }),
-      onError: (error) =>
-        showToast({ message: t(`exercises.restoreErrors.${saveErrorReason(error)}`) }),
     });
   }
 

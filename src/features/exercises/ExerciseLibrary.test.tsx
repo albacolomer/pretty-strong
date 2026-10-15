@@ -130,6 +130,18 @@ describe('<ExerciseLibrary />', () => {
     expect(screen.queryByRole('checkbox', { name: 'Trineu' })).not.toBeOnTheScreen();
   });
 
+  test('tapping an exercise opens it', async () => {
+    const user = userEvent.setup();
+    await renderLibrary();
+
+    await user.press(screen.getByRole('button', { name: /Tracció al pit/ }));
+
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/plan/exercises/[id]',
+      params: { id: 'lat_pulldown' },
+    });
+  });
+
   test('only your own exercises have the ⋯ menu', async () => {
     libraryShows([...exercises, custom]);
     await renderLibrary();

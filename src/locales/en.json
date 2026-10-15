@@ -82,6 +82,14 @@
       "nameTaken": "You already have an active exercise with this name.",
       "network": "No connection. Check it and try again.",
       "unknown": "Couldn't restore it. Try again."
+    },
+    "detail": {
+      "title": "Exercise",
+      "notFound": "This exercise wasn't found.",
+      "tracking": "What you log",
+      "primaryMuscles": "Main muscles",
+      "secondaryMuscles": "Secondary muscles",
+      "archive": "Archive exercise"
     }
   },
   "trackingTypes": {

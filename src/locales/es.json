@@ -82,6 +82,14 @@
       "nameTaken": "Ya tienes un ejercicio activo con este nombre.",
       "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
       "unknown": "No se ha podido recuperar. Vuelve a intentarlo."
+    },
+    "detail": {
+      "title": "Ejercicio",
+      "notFound": "No se ha encontrado este ejercicio.",
+      "tracking": "Qué registras",
+      "primaryMuscles": "Músculos principales",
+      "secondaryMuscles": "Músculos secundarios",
+      "archive": "Archivar ejercicio"
     }
   },
   "trackingTypes": {
