@@ -16,7 +16,6 @@
   "placeholder": {
     "today": "Aquí verás el entrenamiento de hoy.",
     "history": "Aquí verás tus entrenamientos anteriores.",
-    "routines": "Aquí crearás tus rutinas.",
     "week": "Aquí asignarás una rutina, o descanso, a cada día."
   },
   "plan": {
@@ -213,5 +212,41 @@
     "ca": "Català",
     "es": "Español",
     "en": "English"
+  },
+  "routines": {
+    "new": "Nueva rutina",
+    "loadError": "No se han podido cargar las rutinas.",
+    "empty": {
+      "title": "Todavía no tienes rutinas",
+      "hint": "Crea una con los ejercicios que haces cada semana."
+    },
+    "noExercises": "Todavía sin ejercicios",
+    "exerciseCount_one": "{{count}} ejercicio",
+    "exerciseCount_other": "{{count}} ejercicios",
+    "labels": {
+      "strength": "Fuerza",
+      "hyrox": "HYROX",
+      "run": "Correr",
+      "other": "Otros"
+    },
+    "editor": {
+      "newTitle": "Nueva rutina",
+      "editTitle": "Rutina",
+      "notFound": "No se ha encontrado esta rutina.",
+      "name": "Nombre",
+      "namePlaceholder": "P. ej. Tren superior 1",
+      "label": "Tipo",
+      "notes": "Notas (opcional)",
+      "save": "Guardar rutina",
+      "discardTitle": "Tienes cambios sin guardar.",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando",
+      "errors": {
+        "required": "Este campo es obligatorio.",
+        "nameTooLong": "Que tenga {{max}} caracteres como máximo.",
+        "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
+        "unknown": "No se ha podido guardar. Vuelve a intentarlo."
+      }
+    }
   }
 }

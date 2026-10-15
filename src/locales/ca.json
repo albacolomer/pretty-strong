@@ -16,7 +16,6 @@
   "placeholder": {
     "today": "Aquí veuràs l'entrenament d'avui.",
     "history": "Aquí veuràs els teus entrenaments passats.",
-    "routines": "Aquí crearàs les teves rutines.",
     "week": "Aquí assignaràs una rutina, o descans, a cada dia."
   },
   "plan": {
@@ -213,5 +212,41 @@
     "ca": "Català",
     "es": "Español",
     "en": "English"
+  },
+  "routines": {
+    "new": "Nova rutina",
+    "loadError": "No s'han pogut carregar les rutines.",
+    "empty": {
+      "title": "Encara no tens rutines",
+      "hint": "Crea'n una amb els exercicis que fas cada setmana."
+    },
+    "noExercises": "Encara sense exercicis",
+    "exerciseCount_one": "{{count}} exercici",
+    "exerciseCount_other": "{{count}} exercicis",
+    "labels": {
+      "strength": "Força",
+      "hyrox": "HYROX",
+      "run": "Córrer",
+      "other": "Altres"
+    },
+    "editor": {
+      "newTitle": "Nova rutina",
+      "editTitle": "Rutina",
+      "notFound": "No s'ha trobat aquesta rutina.",
+      "name": "Nom",
+      "namePlaceholder": "P. ex. Tren superior 1",
+      "label": "Tipus",
+      "notes": "Notes (opcional)",
+      "save": "Desa la rutina",
+      "discardTitle": "Tens canvis sense desar.",
+      "discard": "Descarta els canvis",
+      "keepEditing": "Continua editant",
+      "errors": {
+        "required": "Aquest camp és obligatori.",
+        "nameTooLong": "Fes-lo de {{max}} caràcters com a màxim.",
+        "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
+        "unknown": "No s'ha pogut desar. Torna-ho a provar."
+      }
+    }
   }
 }

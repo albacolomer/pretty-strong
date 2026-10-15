@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 
 import { Card, Screen, SegmentedControl, Text } from '@/components/ui';
 import { ExerciseLibrary } from '@/features/exercises/ExerciseLibrary';
+import { RoutineList } from '@/features/routines/RoutineList';
 
 type Section = 'routines' | 'exercises' | 'week';
 
@@ -24,16 +25,14 @@ export default function PlanScreen() {
         value={section}
         onChange={setSection}
       />
-      {section === 'exercises' ? (
-        <ExerciseLibrary />
-      ) : (
-        // Routines and the weekly plan come with their own stories.
+      {section === 'routines' ? <RoutineList /> : null}
+      {section === 'exercises' ? <ExerciseLibrary /> : null}
+      {section === 'week' ? (
+        // The weekly plan comes with US-09.
         <Card>
-          <Text color="textMuted">
-            {section === 'routines' ? t('placeholder.routines') : t('placeholder.week')}
-          </Text>
+          <Text color="textMuted">{t('placeholder.week')}</Text>
         </Card>
-      )}
+      ) : null}
     </Screen>
   );
 }

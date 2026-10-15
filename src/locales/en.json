@@ -16,7 +16,6 @@
   "placeholder": {
     "today": "Today's workout will show up here.",
     "history": "Your past workouts will show up here.",
-    "routines": "This is where you'll build your routines.",
     "week": "This is where you'll give each day a routine, or rest."
   },
   "plan": {
@@ -213,5 +212,41 @@
     "ca": "Català",
     "es": "Español",
     "en": "English"
+  },
+  "routines": {
+    "new": "New routine",
+    "loadError": "Couldn't load your routines.",
+    "empty": {
+      "title": "No routines yet",
+      "hint": "Create one with the exercises you do each week."
+    },
+    "noExercises": "No exercises yet",
+    "exerciseCount_one": "{{count}} exercise",
+    "exerciseCount_other": "{{count}} exercises",
+    "labels": {
+      "strength": "Strength",
+      "hyrox": "HYROX",
+      "run": "Run",
+      "other": "Other"
+    },
+    "editor": {
+      "newTitle": "New routine",
+      "editTitle": "Routine",
+      "notFound": "This routine wasn't found.",
+      "name": "Name",
+      "namePlaceholder": "E.g. Upper body 1",
+      "label": "Type",
+      "notes": "Notes (optional)",
+      "save": "Save routine",
+      "discardTitle": "You have unsaved changes.",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing",
+      "errors": {
+        "required": "This field is required.",
+        "nameTooLong": "Keep it to {{max}} characters.",
+        "network": "No connection. Check it and try again.",
+        "unknown": "Couldn't save it. Try again."
+      }
+    }
   }
 }
