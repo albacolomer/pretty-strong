@@ -108,6 +108,38 @@ export type Database = {
         }
         Relationships: []
       }
+      user_exercise_settings: {
+        Row: {
+          created_at: string
+          default_rest_s: number | null
+          exercise_id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          default_rest_s?: number | null
+          exercise_id: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          default_rest_s?: number | null
+          exercise_id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_exercise_settings_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
