@@ -5,14 +5,25 @@ import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button, SegmentedControl, Text, TextField } from '@/components/ui';
+import type { Exercise } from '@/features/exercises/exercise';
+import { ExercisePicker } from '@/features/exercises/ExercisePicker';
+import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
+import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
+import { useExercises } from '@/features/exercises/useExercises';
 import { isNetworkError } from '@/lib/errors';
 import { spacing, useTheme } from '@/theme';
 
 import { ROUTINE_LABELS, ROUTINE_NAME_MAX_LENGTH, type Routine } from './routine';
+import { RoutineExerciseCard } from './RoutineExerciseCard';
 import {
+  addExercises,
   draftFromRoutine,
   emptyRoutineDraft,
   hasChanges,
+  moveExercise,
+  removeExercise,
+  setPlannedSets,
+  setRest,
   toSaveInput,
   validateRoutineDraft,
   type RoutineDraftErrors,
@@ -50,6 +61,20 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
   const [errors, setErrors] = useState<RoutineDraftErrors>({});
   // Set just before leaving after a save, so leaving isn't questioned.
   const leavingAfterSave = useRef(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const { data: library = [] } = useExercises();
+  const { data: settings } = useExerciseSettings();
+
+  // Exercises by id: the library, plus the routine's own (which may have
+  // been archived since and so aren't in the library).
+  const exercisesById = new Map<string, Exercise>(
+    [...library, ...(routine?.exercises.map((item) => item.exercise) ?? [])].map((exercise) => [
+      exercise.id,
+      exercise,
+    ]),
+  );
+  const exerciseRest = (exerciseId: string) =>
+    settings?.[exerciseId]?.defaultRestS ?? APP_DEFAULT_REST_S;
 
   // Losing unsaved work can't be undone, so this is the one place that asks.
   usePreventRemove(hasChanges(draft, saved), ({ data }) => {
@@ -118,6 +143,37 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         />
       </View>
 
+      <View style={styles.section}>
+        <Text variant="caption" color="textMuted">
+          {t('routines.editor.exercises')}
+        </Text>
+        {draft.exercises.length === 0 ? (
+          <Text color="textMuted">{t('routines.editor.noExercises')}</Text>
+        ) : (
+          draft.exercises.map((item, index) => (
+            <RoutineExerciseCard
+              key={item.key}
+              item={item}
+              exercise={exercisesById.get(item.exerciseId)}
+              exerciseRestS={exerciseRest(item.exerciseId)}
+              isFirst={index === 0}
+              isLast={index === draft.exercises.length - 1}
+              onSetsChange={(sets) => setDraft((current) => setPlannedSets(current, item.key, sets))}
+              onRestChange={(restS) => setDraft((current) => setRest(current, item.key, restS))}
+              onMove={(direction) =>
+                setDraft((current) => moveExercise(current, item.key, direction))
+              }
+              onRemove={() => setDraft((current) => removeExercise(current, item.key))}
+            />
+          ))
+        )}
+        <Button
+          label={t('routines.editor.addExercises')}
+          variant="secondary"
+          onPress={() => setPickerOpen(true)}
+        />
+      </View>
+
       <TextField
         label={t('routines.editor.notes')}
         value={draft.notes}
@@ -139,6 +195,15 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         label={t('routines.editor.save')}
         onPress={handleSave}
         disabled={save.isPending}
+      />
+
+      <ExercisePicker
+        visible={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        onAdd={(exerciseIds) => {
+          setDraft((current) => addExercises(current, exerciseIds));
+          setPickerOpen(false);
+        }}
       />
     </View>
   );

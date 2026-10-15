@@ -103,6 +103,10 @@
       "restValue": "Descans per defecte: {{time}}",
       "settingsLoadError": "No s'han pogut carregar les teves notes.",
       "edit": "Edita l'exercici"
+    },
+    "picker": {
+      "title": "Afegeix exercicis",
+      "add": "Afegeix ({{count}})"
     }
   },
   "trackingTypes": {
@@ -246,6 +250,25 @@
         "nameTooLong": "Fes-lo de {{max}} caràcters com a màxim.",
         "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
         "unknown": "No s'ha pogut desar. Torna-ho a provar."
+      },
+      "exercises": "Exercicis",
+      "noExercises": "Encara no hi ha exercicis. Afegeix els que faràs en aquesta rutina.",
+      "addExercises": "Afegeix exercicis",
+      "sets": "Sèries",
+      "setsValue_one": "{{count}} sèrie",
+      "setsValue_other": "{{count}} sèries",
+      "setsMinus": "Treu una sèrie",
+      "setsPlus": "Afegeix una sèrie",
+      "rest": "Descans",
+      "restValue": "Descans: {{time}}",
+      "restMinus": "Treu 15 segons",
+      "restPlus": "Afegeix 15 segons",
+      "restFromExercise": "Fa servir el descans de l'exercici.",
+      "useExerciseRest": "Usa el descans de l'exercici",
+      "menu": {
+        "moveUp": "Mou amunt",
+        "moveDown": "Mou avall",
+        "remove": "Treu de la rutina"
       }
     }
   }

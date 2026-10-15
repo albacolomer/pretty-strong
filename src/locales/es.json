@@ -103,6 +103,10 @@
       "restValue": "Descanso por defecto: {{time}}",
       "settingsLoadError": "No se han podido cargar tus notas.",
       "edit": "Editar ejercicio"
+    },
+    "picker": {
+      "title": "Añadir ejercicios",
+      "add": "Añadir ({{count}})"
     }
   },
   "trackingTypes": {
@@ -246,6 +250,25 @@
         "nameTooLong": "Que tenga {{max}} caracteres como máximo.",
         "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
         "unknown": "No se ha podido guardar. Vuelve a intentarlo."
+      },
+      "exercises": "Ejercicios",
+      "noExercises": "Todavía no hay ejercicios. Añade los que harás en esta rutina.",
+      "addExercises": "Añadir ejercicios",
+      "sets": "Series",
+      "setsValue_one": "{{count}} serie",
+      "setsValue_other": "{{count}} series",
+      "setsMinus": "Quitar una serie",
+      "setsPlus": "Añadir una serie",
+      "rest": "Descanso",
+      "restValue": "Descanso: {{time}}",
+      "restMinus": "Quitar 15 segundos",
+      "restPlus": "Añadir 15 segundos",
+      "restFromExercise": "Usa el descanso del ejercicio.",
+      "useExerciseRest": "Usar el descanso del ejercicio",
+      "menu": {
+        "moveUp": "Subir",
+        "moveDown": "Bajar",
+        "remove": "Quitar de la rutina"
       }
     }
   }

@@ -17,6 +17,8 @@ type ExerciseRowProps = {
   language: Language;
   // Opens the exercise; without it the row is just information.
   onPress?: () => void;
+  // In a picker: whether it's ticked. The row then acts as a checkbox.
+  selected?: boolean;
   // Shown on the right, e.g. the ⋯ menu or a "Recupera" button.
   accessory?: ReactNode;
 };
@@ -24,7 +26,13 @@ type ExerciseRowProps = {
 // Picture, name, then its main muscles and equipment, e.g. "Glutis · Barra".
 // The accessory sits beside the tappable part, not inside it, so screen
 // readers can reach both.
-export function ExerciseRow({ exercise, language, onPress, accessory }: ExerciseRowProps) {
+export function ExerciseRow({
+  exercise,
+  language,
+  onPress,
+  selected,
+  accessory,
+}: ExerciseRowProps) {
   const { t } = useTranslation();
   const details = [
     ...exercise.primaryMuscles.map((muscle) => t(`muscles.${muscle}`)),
@@ -47,7 +55,8 @@ export function ExerciseRow({ exercise, language, onPress, accessory }: Exercise
     <View style={styles.row}>
       {onPress ? (
         <Pressable
-          role="button"
+          role={selected === undefined ? 'button' : 'checkbox'}
+          aria-checked={selected}
           onPress={onPress}
           style={({ pressed }) => [styles.main, pressed && styles.pressed]}>
           {content}

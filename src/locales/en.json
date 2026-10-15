@@ -103,6 +103,10 @@
       "restValue": "Default rest: {{time}}",
       "settingsLoadError": "Couldn't load your notes.",
       "edit": "Edit exercise"
+    },
+    "picker": {
+      "title": "Add exercises",
+      "add": "Add ({{count}})"
     }
   },
   "trackingTypes": {
@@ -246,6 +250,25 @@
         "nameTooLong": "Keep it to {{max}} characters.",
         "network": "No connection. Check it and try again.",
         "unknown": "Couldn't save it. Try again."
+      },
+      "exercises": "Exercises",
+      "noExercises": "No exercises yet. Add the ones you'll do in this routine.",
+      "addExercises": "Add exercises",
+      "sets": "Sets",
+      "setsValue_one": "{{count}} set",
+      "setsValue_other": "{{count}} sets",
+      "setsMinus": "One set fewer",
+      "setsPlus": "One set more",
+      "rest": "Rest",
+      "restValue": "Rest: {{time}}",
+      "restMinus": "15 seconds less",
+      "restPlus": "15 seconds more",
+      "restFromExercise": "Using the exercise's own rest.",
+      "useExerciseRest": "Use the exercise's rest",
+      "menu": {
+        "moveUp": "Move up",
+        "moveDown": "Move down",
+        "remove": "Remove from routine"
       }
     }
   }
