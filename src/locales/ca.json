@@ -89,7 +89,18 @@
       "tracking": "Què registres",
       "primaryMuscles": "Músculs principals",
       "secondaryMuscles": "Músculs secundaris",
-      "archive": "Arxiva l'exercici"
+      "archive": "Arxiva l'exercici",
+      "notes": "Les teves notes",
+      "notesPlaceholder": "P. ex. seient al 4, peus amples",
+      "defaultRest": "Descans per defecte",
+      "restMinus": "−15 s",
+      "restPlus": "+15 s",
+      "usingAppDefault": "Fa servir el de l'app ({{time}}).",
+      "useAppDefault": "Usa el de l'app",
+      "saved": "Desat ✓",
+      "saveError": "No s'ha pogut desar. Torna-ho a provar.",
+      "restValue": "Descans per defecte: {{time}}",
+      "settingsLoadError": "No s'han pogut carregar les teves notes."
     }
   },
   "trackingTypes": {

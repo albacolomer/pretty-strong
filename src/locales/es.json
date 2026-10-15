@@ -89,7 +89,18 @@
       "tracking": "Qué registras",
       "primaryMuscles": "Músculos principales",
       "secondaryMuscles": "Músculos secundarios",
-      "archive": "Archivar ejercicio"
+      "archive": "Archivar ejercicio",
+      "notes": "Tus notas",
+      "notesPlaceholder": "P. ej. asiento en el 4, pies abiertos",
+      "defaultRest": "Descanso por defecto",
+      "restMinus": "−15 s",
+      "restPlus": "+15 s",
+      "usingAppDefault": "Usa el de la app ({{time}}).",
+      "useAppDefault": "Usar el de la app",
+      "saved": "Guardado ✓",
+      "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
+      "restValue": "Descanso por defecto: {{time}}",
+      "settingsLoadError": "No se han podido cargar tus notas."
     }
   },
   "trackingTypes": {

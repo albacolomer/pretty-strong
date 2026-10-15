@@ -1,4 +1,5 @@
 import { supabase } from '@/lib/supabase';
+import type { TablesInsert } from '@/types/database';
 
 import { EXERCISE_COLUMNS, toExercise, type Exercise } from './exercise';
 import type { Equipment, Muscle, TrackingType } from './vocabulary';
@@ -69,4 +70,37 @@ export async function createExercise(input: NewExercise): Promise<Exercise> {
     .single();
   if (error) throw error;
   return toExercise(data);
+}
+
+// Your personal layer on an exercise (US-05): notes and default rest.
+export type ExerciseSettings = { notes: string | null; defaultRestS: number | null };
+export type ExerciseSettingsChange = Partial<ExerciseSettings>;
+
+// All your settings at once (one small row per exercise you've annotated),
+// by exercise id. A workout can then read every default rest without
+// extra requests.
+export async function fetchExerciseSettings(): Promise<Record<string, ExerciseSettings>> {
+  const { data, error } = await supabase
+    .from('user_exercise_settings')
+    .select('exercise_id, notes, default_rest_s');
+  if (error) throw error;
+  return Object.fromEntries(
+    data.map((row) => [row.exercise_id, { notes: row.notes, defaultRestS: row.default_rest_s }]),
+  );
+}
+
+// Creates or updates your row for this exercise. Only the fields in
+// `change` are written, so saving the notes leaves the rest untouched.
+export async function saveExerciseSettings(
+  userId: string,
+  exerciseId: string,
+  change: ExerciseSettingsChange,
+): Promise<void> {
+  const row: TablesInsert<'user_exercise_settings'> = { user_id: userId, exercise_id: exerciseId };
+  if ('notes' in change) row.notes = change.notes;
+  if ('defaultRestS' in change) row.default_rest_s = change.defaultRestS;
+  const { error } = await supabase
+    .from('user_exercise_settings')
+    .upsert(row, { onConflict: 'user_id,exercise_id' });
+  if (error) throw error;
 }

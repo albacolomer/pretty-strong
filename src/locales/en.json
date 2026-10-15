@@ -89,7 +89,18 @@
       "tracking": "What you log",
       "primaryMuscles": "Main muscles",
       "secondaryMuscles": "Secondary muscles",
-      "archive": "Archive exercise"
+      "archive": "Archive exercise",
+      "notes": "Your notes",
+      "notesPlaceholder": "E.g. seat at 4, wide stance",
+      "defaultRest": "Default rest",
+      "restMinus": "−15 s",
+      "restPlus": "+15 s",
+      "usingAppDefault": "Using the app default ({{time}}).",
+      "useAppDefault": "Use the app default",
+      "saved": "Saved ✓",
+      "saveError": "Couldn't save it. Try again.",
+      "restValue": "Default rest: {{time}}",
+      "settingsLoadError": "Couldn't load your notes."
     }
   },
   "trackingTypes": {

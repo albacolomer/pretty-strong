@@ -7,6 +7,7 @@ import { spacing, useTheme } from '@/theme';
 
 import { exerciseName, isCustomExercise } from './exercise';
 import { ExercisePicture } from './ExerciseRow';
+import { ExerciseSettingsEditor } from './ExerciseSettingsEditor';
 import { MuscleFigure } from './MuscleFigure';
 import { useArchiveWithUndo } from './useArchiveWithUndo';
 import { useExercises } from './useExercises';
@@ -57,6 +58,8 @@ export function ExerciseDetail({ exerciseId, onArchived }: ExerciseDetailProps) 
         title={t('exercises.detail.secondaryMuscles')}
         muscles={exercise.secondaryMuscles}
       />
+
+      <ExerciseSettingsEditor exerciseId={exercise.id} />
 
       {/* Only your own exercises can be archived; built-ins are shared. */}
       {isCustomExercise(exercise) ? (

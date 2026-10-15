@@ -5,13 +5,17 @@ import { render, screen, userEvent } from '@testing-library/react-native';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { setExerciseArchived } from './api';
+import { fetchExerciseSettings, setExerciseArchived } from './api';
 import type { Exercise } from './exercise';
 import { ExerciseDetail } from './ExerciseDetail';
 import { useExercises } from './useExercises';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
-jest.mock('./api', () => ({ setExerciseArchived: jest.fn() }));
+jest.mock('./api', () => ({
+  setExerciseArchived: jest.fn(),
+  fetchExerciseSettings: jest.fn(),
+  saveExerciseSettings: jest.fn(),
+}));
 // Fake only the library data; keep the real query keys.
 jest.mock('./useExercises', () => ({
   ...jest.requireActual('./useExercises'),
@@ -50,6 +54,7 @@ beforeEach(() => {
       typeof useExercises
     >);
   jest.mocked(setExerciseArchived).mockReset().mockResolvedValue(custom);
+  jest.mocked(fetchExerciseSettings).mockResolvedValue({});
 });
 
 // The app starts in Catalan, so the tests use the Catalan texts.
@@ -58,6 +63,8 @@ describe('<ExerciseDetail />', () => {
     await render(<ExerciseDetail exerciseId="hip_thrust" onArchived={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
+    // Your notes and rest load just after; wait like a user would.
+    await screen.findByText('Descans per defecte');
 
     expect(screen.getByRole('header', { name: 'Hip thrust amb barra' })).toBeOnTheScreen();
     expect(screen.getByText('Pes i repeticions · kg · reps')).toBeOnTheScreen();
@@ -73,6 +80,7 @@ describe('<ExerciseDetail />', () => {
     await render(<ExerciseDetail exerciseId="custom-1" onArchived={onArchived} />, {
       wrapper: createAppWrapper(),
     });
+    await screen.findByText('Descans per defecte');
 
     expect(screen.getByText('10 repeticions vol dir 10 per costat.')).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: "Arxiva l'exercici" }));
