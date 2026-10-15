@@ -108,6 +108,87 @@ export type Database = {
         }
         Relationships: []
       }
+      routine_exercises: {
+        Row: {
+          created_at: string
+          exercise_id: string
+          group_key: string | null
+          id: string
+          notes: string | null
+          planned_sets: number
+          position: number
+          rest_s: number | null
+          routine_id: string
+        }
+        Insert: {
+          created_at?: string
+          exercise_id: string
+          group_key?: string | null
+          id?: string
+          notes?: string | null
+          planned_sets?: number
+          position: number
+          rest_s?: number | null
+          routine_id: string
+        }
+        Update: {
+          created_at?: string
+          exercise_id?: string
+          group_key?: string | null
+          id?: string
+          notes?: string | null
+          planned_sets?: number
+          position?: number
+          rest_s?: number | null
+          routine_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "routine_exercises_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routines: {
+        Row: {
+          archived_at: string | null
+          created_at: string
+          id: string
+          label: string
+          name: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          name: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          archived_at?: string | null
+          created_at?: string
+          id?: string
+          label?: string
+          name?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_exercise_settings: {
         Row: {
           created_at: string
@@ -146,6 +227,16 @@ export type Database = {
     }
     Functions: {
       is_username_available: { Args: { candidate: string }; Returns: boolean }
+      save_routine: {
+        Args: {
+          p_exercises: Json
+          p_id: string
+          p_label: string
+          p_name: string
+          p_notes: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
