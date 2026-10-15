@@ -5,12 +5,12 @@ import { fireEvent, render, screen, userEvent } from '@testing-library/react-nat
 import { useAuth } from '@/features/auth/AuthProvider';
 import { createQueryWrapper } from '@/test-utils/queryWrapper';
 
-import { createExercise } from './api';
+import { createExercise, updateExercise } from './api';
 import type { Exercise } from './exercise';
 import { ExerciseForm } from './ExerciseForm';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
-jest.mock('./api', () => ({ createExercise: jest.fn() }));
+jest.mock('./api', () => ({ createExercise: jest.fn(), updateExercise: jest.fn() }));
 const mockCreateExercise = jest.mocked(createExercise);
 
 const saved: Exercise = {
@@ -47,7 +47,7 @@ async function pick(user: ReturnType<typeof userEvent.setup>, field: string, opt
 describe('<ExerciseForm />', () => {
   test('starts with no equipment, shows what is missing and does not save', async () => {
     const user = userEvent.setup();
-    await render(<ExerciseForm onCreated={jest.fn()} />, { wrapper: createQueryWrapper() });
+    await render(<ExerciseForm onSaved={jest.fn()} />, { wrapper: createQueryWrapper() });
 
     expect(screen.getByRole('button', { name: 'Material' })).toHaveTextContent(/Sense material/);
 
@@ -61,7 +61,7 @@ describe('<ExerciseForm />', () => {
   test('a run can be saved without muscles or equipment', async () => {
     const user = userEvent.setup();
     mockCreateExercise.mockResolvedValue({ ...saved, trackingType: 'run' });
-    await render(<ExerciseForm initialName="Cursa de muntanya" onCreated={jest.fn()} />, {
+    await render(<ExerciseForm initialName="Cursa de muntanya" onSaved={jest.fn()} />, {
       wrapper: createQueryWrapper(),
     });
 
@@ -78,9 +78,9 @@ describe('<ExerciseForm />', () => {
 
   test('saves a complete exercise and reports it', async () => {
     const user = userEvent.setup();
-    const onCreated = jest.fn();
+    const onSaved = jest.fn();
     mockCreateExercise.mockResolvedValue(saved);
-    await render(<ExerciseForm initialName="Hip thrust unilateral" onCreated={onCreated} />, {
+    await render(<ExerciseForm initialName="Hip thrust unilateral" onSaved={onSaved} />, {
       wrapper: createQueryWrapper(),
     });
 
@@ -109,13 +109,45 @@ describe('<ExerciseForm />', () => {
       equipment: 'barbell',
       isUnilateral: true,
     });
-    expect(onCreated).toHaveBeenCalledWith(saved);
+    expect(onSaved).toHaveBeenCalledWith(saved);
+  });
+
+  test('edits one of your exercises, starting from what is saved', async () => {
+    const user = userEvent.setup();
+    const onSaved = jest.fn();
+    const updated = { ...saved, name: 'Hip thrust a una cama' };
+    jest.mocked(updateExercise).mockResolvedValue(updated);
+    await render(<ExerciseForm exercise={saved} onSaved={onSaved} />, {
+      wrapper: createQueryWrapper(),
+    });
+
+    const name = screen.getByLabelText('Nom');
+    expect(name).toHaveDisplayValue('Hip thrust unilateral');
+    expect(screen.getByRole('radio', { name: 'Temps' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Músculs principals' })).toHaveTextContent(
+      /Glutis, Isquiotibials/,
+    );
+
+    await user.clear(name);
+    await user.type(name, 'Hip thrust a una cama');
+    await user.press(screen.getByRole('button', { name: 'Desa els canvis' }));
+
+    expect(updateExercise).toHaveBeenCalledWith('new-1', {
+      name: 'Hip thrust a una cama',
+      trackingType: 'duration',
+      primaryMuscles: ['glutes', 'hamstrings'],
+      secondaryMuscles: ['calves'],
+      equipment: 'barbell',
+      isUnilateral: true,
+    });
+    expect(mockCreateExercise).not.toHaveBeenCalled();
+    expect(onSaved).toHaveBeenCalledWith(updated);
   });
 
   test('explains a name you already use', async () => {
     const user = userEvent.setup();
     mockCreateExercise.mockRejectedValue({ code: '23505', message: 'duplicate key value' });
-    await render(<ExerciseForm initialName="Press raro" onCreated={jest.fn()} />, {
+    await render(<ExerciseForm initialName="Press raro" onSaved={jest.fn()} />, {
       wrapper: createQueryWrapper(),
     });
 

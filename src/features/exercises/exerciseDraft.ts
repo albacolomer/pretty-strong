@@ -1,5 +1,6 @@
 import { isNetworkError, postgresErrorCode } from '@/lib/errors';
 
+import type { Exercise } from './exercise';
 import type { Equipment, Muscle, TrackingType } from './vocabulary';
 
 // What the "new exercise" form holds while it is being filled in.
@@ -23,6 +24,18 @@ export function emptyDraft(name = ''): ExerciseDraft {
     secondaryMuscles: [],
     equipment: 'none',
     isUnilateral: false,
+  };
+}
+
+// Editing one of your exercises starts from what's saved.
+export function draftFromExercise(exercise: Exercise): ExerciseDraft {
+  return {
+    name: exercise.name ?? '',
+    trackingType: exercise.trackingType,
+    primaryMuscles: [...exercise.primaryMuscles],
+    secondaryMuscles: [...exercise.secondaryMuscles],
+    equipment: exercise.equipment,
+    isUnilateral: exercise.isUnilateral,
   };
 }
 

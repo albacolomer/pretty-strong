@@ -15,6 +15,8 @@ import type { Muscle } from './vocabulary';
 
 type ExerciseDetailProps = {
   exerciseId: string;
+  // Opens the edit screen (your own exercises only).
+  onEdit: () => void;
   // Called when the exercise is archived from here, e.g. to go back.
   onArchived: () => void;
 };
@@ -22,7 +24,7 @@ type ExerciseDetailProps = {
 const PICTURE_SIZE = 200;
 
 // Plan → Exercicis → an exercise (US-05): what it is and trains.
-export function ExerciseDetail({ exerciseId, onArchived }: ExerciseDetailProps) {
+export function ExerciseDetail({ exerciseId, onEdit, onArchived }: ExerciseDetailProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const language = useAppLanguage();
@@ -61,16 +63,19 @@ export function ExerciseDetail({ exerciseId, onArchived }: ExerciseDetailProps) 
 
       <ExerciseSettingsEditor exerciseId={exercise.id} />
 
-      {/* Only your own exercises can be archived; built-ins are shared. */}
+      {/* Only your own exercises can be changed or archived; built-ins are shared. */}
       {isCustomExercise(exercise) ? (
-        <Button
-          label={t('exercises.detail.archive')}
-          variant="secondary"
-          onPress={() => {
-            onArchived();
-            archiveExercise(exercise);
-          }}
-        />
+        <View style={styles.actions}>
+          <Button label={t('exercises.detail.edit')} variant="secondary" onPress={onEdit} />
+          <Button
+            label={t('exercises.detail.archive')}
+            variant="ghost"
+            onPress={() => {
+              onArchived();
+              archiveExercise(exercise);
+            }}
+          />
+        </View>
       ) : null}
     </View>
   );
@@ -126,6 +131,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   section: {
+    gap: spacing.sm,
+  },
+  actions: {
     gap: spacing.sm,
   },
   muscles: {

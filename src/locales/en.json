@@ -65,7 +65,9 @@
         "nameTaken": "You already have an exercise with this name.",
         "network": "No connection. Check it and try again.",
         "unknown": "Couldn't save it. Try again."
-      }
+      },
+      "editTitle": "Edit exercise",
+      "saveChanges": "Save changes"
     },
     "menu": {
       "label": "Options for “{{name}}”",
@@ -100,7 +102,8 @@
       "saved": "Saved ✓",
       "saveError": "Couldn't save it. Try again.",
       "restValue": "Default rest: {{time}}",
-      "settingsLoadError": "Couldn't load your notes."
+      "settingsLoadError": "Couldn't load your notes.",
+      "edit": "Edit exercise"
     }
   },
   "trackingTypes": {

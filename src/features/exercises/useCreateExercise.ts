@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 import { useAuth } from '@/features/auth/AuthProvider';
 
-import { createExercise, type NewExercise } from './api';
+import { createExercise, type ExerciseInput } from './api';
 import type { Exercise } from './exercise';
 import { exercisesQueryKey } from './useExercises';
 
@@ -14,7 +14,7 @@ export function useCreateExercise() {
   const userId = session?.user.id;
 
   return useMutation({
-    mutationFn: (input: Omit<NewExercise, 'ownerId'>) => {
+    mutationFn: (input: ExerciseInput) => {
       if (!userId) throw new Error('Not signed in.');
       return createExercise({ ...input, ownerId: userId });
     },

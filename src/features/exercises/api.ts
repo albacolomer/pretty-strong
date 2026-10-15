@@ -42,8 +42,8 @@ export async function setExerciseArchived(id: string, archived: boolean): Promis
   return toExercise(data);
 }
 
-export type NewExercise = {
-  ownerId: string;
+// What the form edits on a custom exercise.
+export type ExerciseInput = {
   name: string;
   trackingType: TrackingType;
   primaryMuscles: Muscle[];
@@ -52,20 +52,38 @@ export type NewExercise = {
   isUnilateral: boolean;
 };
 
+export type NewExercise = ExerciseInput & { ownerId: string };
+
+function toRowFields(input: ExerciseInput) {
+  return {
+    name: input.name.trim(),
+    tracking_type: input.trackingType,
+    primary_muscles: input.primaryMuscles,
+    secondary_muscles: input.secondaryMuscles,
+    equipment: input.equipment,
+    is_unilateral: input.isUnilateral,
+  };
+}
+
 // Saves a custom exercise and returns it as stored. RLS only lets users
 // create exercises they own.
 export async function createExercise(input: NewExercise): Promise<Exercise> {
   const { data, error } = await supabase
     .from('exercises')
-    .insert({
-      owner_id: input.ownerId,
-      name: input.name.trim(),
-      tracking_type: input.trackingType,
-      primary_muscles: input.primaryMuscles,
-      secondary_muscles: input.secondaryMuscles,
-      equipment: input.equipment,
-      is_unilateral: input.isUnilateral,
-    })
+    .insert({ owner_id: input.ownerId, ...toRowFields(input) })
+    .select(EXERCISE_COLUMNS)
+    .single();
+  if (error) throw error;
+  return toExercise(data);
+}
+
+// Changes one of your own exercises (RLS refuses built-ins and other
+// people's) and returns it as stored.
+export async function updateExercise(id: string, input: ExerciseInput): Promise<Exercise> {
+  const { data, error } = await supabase
+    .from('exercises')
+    .update(toRowFields(input))
+    .eq('id', id)
     .select(EXERCISE_COLUMNS)
     .single();
   if (error) throw error;

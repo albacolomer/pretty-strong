@@ -60,7 +60,7 @@ beforeEach(() => {
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<ExerciseDetail />', () => {
   test('shows what a built-in exercise is and trains, without an archive button', async () => {
-    await render(<ExerciseDetail exerciseId="hip_thrust" onArchived={jest.fn()} />, {
+    await render(<ExerciseDetail exerciseId="hip_thrust" onEdit={jest.fn()} onArchived={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
     // Your notes and rest load just after; wait like a user would.
@@ -72,12 +72,13 @@ describe('<ExerciseDetail />', () => {
     expect(screen.getByText('Glutis')).toBeOnTheScreen();
     expect(screen.getByText('Isquiotibials')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: "Arxiva l'exercici" })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: "Edita l'exercici" })).not.toBeOnTheScreen();
   });
 
   test('archives your own exercise, goes back and offers undo', async () => {
     const user = userEvent.setup();
     const onArchived = jest.fn();
-    await render(<ExerciseDetail exerciseId="custom-1" onArchived={onArchived} />, {
+    await render(<ExerciseDetail exerciseId="custom-1" onEdit={jest.fn()} onArchived={onArchived} />, {
       wrapper: createAppWrapper(),
     });
     await screen.findByText('Descans per defecte');
@@ -90,8 +91,21 @@ describe('<ExerciseDetail />', () => {
     expect(screen.getByText("S'ha arxivat «Hip thrust unilateral»")).toBeOnTheScreen();
   });
 
+  test('opens the edit screen for your own exercise', async () => {
+    const user = userEvent.setup();
+    const onEdit = jest.fn();
+    await render(<ExerciseDetail exerciseId="custom-1" onEdit={onEdit} onArchived={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    await screen.findByText('Descans per defecte');
+
+    await user.press(screen.getByRole('button', { name: "Edita l'exercici" }));
+
+    expect(onEdit).toHaveBeenCalled();
+  });
+
   test('says so when the exercise is not in the library', async () => {
-    await render(<ExerciseDetail exerciseId="missing" onArchived={jest.fn()} />, {
+    await render(<ExerciseDetail exerciseId="missing" onEdit={jest.fn()} onArchived={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
 

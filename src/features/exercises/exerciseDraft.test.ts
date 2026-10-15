@@ -1,4 +1,5 @@
 import {
+  draftFromExercise,
   emptyDraft,
   saveErrorReason,
   togglePrimaryMuscle,
@@ -19,6 +20,31 @@ describe('emptyDraft', () => {
       name: 'Press raro',
       trackingType: 'weight_reps',
       equipment: 'none',
+    });
+  });
+});
+
+describe('draftFromExercise', () => {
+  test('starts editing from the saved exercise', () => {
+    const draft = draftFromExercise({
+      id: 'custom-1',
+      slug: null,
+      names: null,
+      name: 'Press raro',
+      trackingType: 'weight_reps',
+      primaryMuscles: ['chest'],
+      secondaryMuscles: ['triceps'],
+      equipment: 'dumbbell',
+      isUnilateral: true,
+    });
+
+    expect(draft).toEqual({
+      name: 'Press raro',
+      trackingType: 'weight_reps',
+      primaryMuscles: ['chest'],
+      secondaryMuscles: ['triceps'],
+      equipment: 'dumbbell',
+      isUnilateral: true,
     });
   });
 });

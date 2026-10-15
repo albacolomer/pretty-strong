@@ -65,7 +65,9 @@
         "nameTaken": "Ya tienes un ejercicio con este nombre.",
         "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
         "unknown": "No se ha podido guardar. Vuelve a intentarlo."
-      }
+      },
+      "editTitle": "Editar ejercicio",
+      "saveChanges": "Guardar cambios"
     },
     "menu": {
       "label": "Opciones de «{{name}}»",
@@ -100,7 +102,8 @@
       "saved": "Guardado ✓",
       "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
       "restValue": "Descanso por defecto: {{time}}",
-      "settingsLoadError": "No se han podido cargar tus notas."
+      "settingsLoadError": "No se han podido cargar tus notas.",
+      "edit": "Editar ejercicio"
     }
   },
   "trackingTypes": {

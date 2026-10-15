@@ -7,6 +7,7 @@ import { radius, spacing, touch, useTheme } from '@/theme';
 
 import type { Exercise } from './exercise';
 import {
+  draftFromExercise,
   emptyDraft,
   EXERCISE_NAME_MAX_LENGTH,
   needsMuscles,
@@ -20,6 +21,7 @@ import {
 } from './exerciseDraft';
 import { OptionSheet } from './OptionSheet';
 import { useCreateExercise } from './useCreateExercise';
+import { useUpdateExercise } from './useUpdateExercise';
 import { useEquipmentGroups, useMuscleGroups } from './useSheetOptions';
 import { TRACKING_TYPES, type TrackingType } from './vocabulary';
 
@@ -28,23 +30,29 @@ type Sheet = 'primary' | 'secondary' | 'equipment';
 type ExerciseFormProps = {
   // Pre-filled from the library search, e.g. "Hip thrust unilateral".
   initialName?: string;
-  onCreated: (exercise: Exercise) => void;
+  // Given when editing one of your exercises; otherwise a new one is created.
+  exercise?: Exercise;
+  onSaved: (exercise: Exercise) => void;
 };
 
-// Create a custom exercise (US-04).
-export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps) {
+// Create a custom exercise (US-04), or edit one of yours (US-05).
+export function ExerciseForm({ initialName = '', exercise, onSaved }: ExerciseFormProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const [draft, setDraft] = useState(() => emptyDraft(initialName));
+  const [draft, setDraft] = useState(() =>
+    exercise ? draftFromExercise(exercise) : emptyDraft(initialName),
+  );
   const [errors, setErrors] = useState<DraftErrors>({});
   const [openSheet, setOpenSheet] = useState<Sheet | null>(null);
   const createExercise = useCreateExercise();
+  const updateExercise = useUpdateExercise(exercise?.id ?? '');
+  const save = exercise ? updateExercise : createExercise;
   const muscleGroups = useMuscleGroups();
   // A muscle that is already a main one can't also be secondary.
   const secondaryGroups = useMuscleGroups((muscle) => !draft.primaryMuscles.includes(muscle));
   const equipmentGroups = useEquipmentGroups();
 
-  const saveError = createExercise.isError ? saveErrorReason(createExercise.error) : null;
+  const saveError = save.isError ? saveErrorReason(save.error) : null;
   const errorText = (key: DraftFieldError | SaveErrorReason | undefined) =>
     key ? t(`exercises.form.errors.${key}`, { max: EXERCISE_NAME_MAX_LENGTH }) : undefined;
   // Cardio and runs can skip muscles; the label says so.
@@ -58,7 +66,7 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
-    createExercise.mutate(
+    save.mutate(
       {
         name: draft.name,
         trackingType: draft.trackingType,
@@ -67,7 +75,7 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
         equipment: draft.equipment,
         isUnilateral: draft.isUnilateral,
       },
-      { onSuccess: (exercise) => onCreated(exercise) },
+      { onSuccess: (saved) => onSaved(saved) },
     );
   }
 
@@ -79,7 +87,7 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
         onChangeText={(name) => {
           setDraft((current) => ({ ...current, name }));
           // A "name taken" message no longer applies once the name changes.
-          if (createExercise.isError) createExercise.reset();
+          if (save.isError) save.reset();
         }}
         error={errorText(errors.name ?? (saveError === 'nameTaken' ? 'nameTaken' : undefined))}
         maxLength={EXERCISE_NAME_MAX_LENGTH}
@@ -149,9 +157,9 @@ export function ExerciseForm({ initialName = '', onCreated }: ExerciseFormProps)
       ) : null}
 
       <Button
-        label={t('exercises.form.save')}
+        label={exercise ? t('exercises.form.saveChanges') : t('exercises.form.save')}
         onPress={handleSave}
-        disabled={createExercise.isPending}
+        disabled={save.isPending}
       />
 
       <OptionSheet

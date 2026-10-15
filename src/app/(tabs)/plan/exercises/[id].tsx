@@ -18,7 +18,11 @@ export default function ExerciseDetailScreen() {
           headerBackButtonDisplayMode: 'minimal',
         }}
       />
-      <ExerciseDetail exerciseId={id} onArchived={() => router.back()} />
+      <ExerciseDetail
+        exerciseId={id}
+        onEdit={() => router.push({ pathname: '/plan/exercises/[id]/edit', params: { id } })}
+        onArchived={() => router.back()}
+      />
     </Screen>
   );
 }

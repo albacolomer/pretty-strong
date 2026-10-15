@@ -65,7 +65,9 @@
         "nameTaken": "Ja tens un exercici amb aquest nom.",
         "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
         "unknown": "No s'ha pogut desar. Torna-ho a provar."
-      }
+      },
+      "editTitle": "Edita l'exercici",
+      "saveChanges": "Desa els canvis"
     },
     "menu": {
       "label": "Opcions de «{{name}}»",
@@ -100,7 +102,8 @@
       "saved": "Desat ✓",
       "saveError": "No s'ha pogut desar. Torna-ho a provar.",
       "restValue": "Descans per defecte: {{time}}",
-      "settingsLoadError": "No s'han pogut carregar les teves notes."
+      "settingsLoadError": "No s'han pogut carregar les teves notes.",
+      "edit": "Edita l'exercici"
     }
   },
   "trackingTypes": {

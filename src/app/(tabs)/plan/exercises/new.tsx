@@ -19,7 +19,7 @@ export default function NewExerciseScreen() {
           headerBackButtonDisplayMode: 'minimal',
         }}
       />
-      <ExerciseForm initialName={name ?? ''} onCreated={() => router.back()} />
+      <ExerciseForm initialName={name ?? ''} onSaved={() => router.back()} />
     </Screen>
   );
 }
