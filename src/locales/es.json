@@ -419,6 +419,42 @@
     "restToday": "Hoy toca descansar. ¡Recupérate bien!",
     "restOther": "Día de descanso.",
     "backToToday": "Hoy",
-    "noWeek": "Esta semana todavía no tienes nada. Elige los días de cada rutina en Plan → Semana."
+    "noWeek": "Esta semana todavía no tienes nada. Elige los días de cada rutina en Plan → Semana.",
+    "done": "Hecho",
+    "swap": "Cambiar",
+    "skip": "Saltar",
+    "doneFor": "Marcar «{{name}}» como hecho",
+    "swapFor": "Cambiar «{{name}}»",
+    "skipFor": "Saltar «{{name}}»",
+    "insteadOf": "En lugar de «{{name}}»",
+    "statusDone": "✓ Hecho",
+    "statusSkipped": "Saltado",
+    "backToPlanned": "Volver a «{{name}}»",
+    "swapTitle": "¿Qué haces hoy en lugar de «{{name}}»?",
+    "swapReasonTitle": "¿Por qué la cambias?",
+    "skipReasonTitle": "¿Por qué la saltas?",
+    "skipped": "Se ha saltado «{{name}}»",
+    "logged": "«{{name}}»: hecho ✓",
+    "stripState": {
+      "done": "hecho",
+      "skipped": "saltado"
+    }
+  },
+  "workout": {
+    "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
+    "reasons": {
+      "tired": "Cansancio",
+      "unwell": "Enfermedad o lesión",
+      "no_time": "Falta de tiempo",
+      "other": "Otros"
+    },
+    "noReason": "Sin motivo",
+    "quickLog": {
+      "title": "Hecho: {{name}}",
+      "duration": "Duración (min)",
+      "notes": "Nota (opcional)",
+      "notesPlaceholder": "¿Cómo ha ido?",
+      "save": "Guardar"
+    }
   }
 }

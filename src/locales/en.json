@@ -419,6 +419,42 @@
     "restToday": "Rest day today. Recover well!",
     "restOther": "Rest day.",
     "backToToday": "Today",
-    "noWeek": "Nothing planned this week yet. Choose each routine's days in Plan → Week."
+    "noWeek": "Nothing planned this week yet. Choose each routine's days in Plan → Week.",
+    "done": "Done",
+    "swap": "Swap",
+    "skip": "Skip",
+    "doneFor": "Mark “{{name}}” as done",
+    "swapFor": "Swap “{{name}}”",
+    "skipFor": "Skip “{{name}}”",
+    "insteadOf": "Instead of “{{name}}”",
+    "statusDone": "✓ Done",
+    "statusSkipped": "Skipped",
+    "backToPlanned": "Back to “{{name}}”",
+    "swapTitle": "What are you doing instead of “{{name}}”?",
+    "swapReasonTitle": "Why the swap?",
+    "skipReasonTitle": "Why skip it?",
+    "skipped": "“{{name}}” skipped",
+    "logged": "“{{name}}”: done ✓",
+    "stripState": {
+      "done": "done",
+      "skipped": "skipped"
+    }
+  },
+  "workout": {
+    "saveError": "Couldn't save it. Try again.",
+    "reasons": {
+      "tired": "Tired",
+      "unwell": "Ill or injured",
+      "no_time": "No time",
+      "other": "Other"
+    },
+    "noReason": "No reason",
+    "quickLog": {
+      "title": "Done: {{name}}",
+      "duration": "Duration (min)",
+      "notes": "Note (optional)",
+      "notesPlaceholder": "How did it go?",
+      "save": "Save"
+    }
   }
 }

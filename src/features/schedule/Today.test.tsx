@@ -2,17 +2,26 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { ActionSheetIOS } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
 import { fetchRoutines } from '@/features/routines/api';
 import type { Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
+import { deleteSession, fetchSessions, logQuickSession } from '@/features/workout/api';
+import type { WorkoutSession } from '@/features/workout/session';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { Today } from './Today';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('@/features/routines/api', () => ({ fetchRoutines: jest.fn() }));
+jest.mock('@/features/workout/api', () => ({
+  fetchSessions: jest.fn(),
+  logQuickSession: jest.fn(),
+  deleteSession: jest.fn(),
+}));
+jest.mock('expo-crypto', () => ({ randomUUID: () => 'session-1' }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 // Today is Tuesday 20 October 2026.
 jest.mock('./useToday', () => ({ useToday: () => new Date(2026, 9, 20) }));
@@ -33,13 +42,32 @@ const routine = (
   ...extra,
 });
 
-// Tuesday: a morning class, then the upper-body routine. Thursday: rest.
+// Tuesday: a morning class, then the upper-body routine. Friday: upper body.
+// Legs: on no day.
 const upper = routine('upper', 'Tren superior 1', { 2: 1, 5: 0 });
 const spinning = routine('spinning', 'Spinning', { 2: 0 }, {
   label: 'class',
   plannedDurationS: 2700,
   exercises: [],
 });
+const legs = routine('legs', 'Cames', {});
+
+const session = (fields: Partial<WorkoutSession>): WorkoutSession => ({
+  id: 'session-1',
+  date: '2026-10-20',
+  plannedRoutineId: 'upper',
+  routineId: 'upper',
+  status: 'completed',
+  logMode: 'quick',
+  durationS: null,
+  notes: null,
+  changeReason: null,
+  ...fields,
+});
+
+// Each native action sheet picks the next of these labels.
+const sheetChoices: string[] = [];
+let actionSheet: jest.SpyInstance;
 
 beforeEach(() => {
   jest
@@ -47,8 +75,20 @@ beforeEach(() => {
     .mockReturnValue({ session: { user: { id: 'user-1' } }, isLoading: false } as ReturnType<
       typeof useAuth
     >);
-  jest.mocked(fetchRoutines).mockResolvedValue([upper, spinning]);
+  jest.mocked(fetchRoutines).mockResolvedValue([upper, spinning, legs]);
+  jest.mocked(fetchSessions).mockReset().mockResolvedValue([]);
+  jest.mocked(logQuickSession).mockReset().mockResolvedValue();
+  jest.mocked(deleteSession).mockReset().mockResolvedValue();
+  localStorage.clear();
+  sheetChoices.length = 0;
+  actionSheet = jest
+    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .mockImplementation((options, callback) =>
+      callback(options.options.indexOf(sheetChoices.shift() ?? '')),
+    );
 });
+
+afterEach(() => actionSheet.mockRestore());
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<Today />', () => {
@@ -61,8 +101,11 @@ describe('<Today />', () => {
     expect(screen.getByRole('radio', { name: 'Dijous 22, descans' })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: 'Divendres 23, 1 rutina' })).toBeOnTheScreen();
 
+    // Asked for this week's sessions, Monday to Sunday.
+    expect(fetchSessions).toHaveBeenCalledWith('2026-10-19', '2026-10-25');
+
     // In their order on the day: the class first, with its duration.
-    const cards = screen.getAllByRole('button', { name: /Spinning|Tren superior 1/ });
+    const cards = screen.getAllByRole('button', { name: /^(Spinning|Tren superior 1)/ });
     expect(cards[0]).toHaveTextContent(/Spinning.*45 min/);
     expect(cards[1]).toHaveTextContent(/Tren superior 1.*4 exercicis · Tracció al pit/);
 
@@ -73,7 +116,7 @@ describe('<Today />', () => {
     });
   });
 
-  test('looks at another day of the week, then back to today', async () => {
+  test('looks at another day of the week, then back to today; days ahead can’t be logged', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
@@ -81,9 +124,99 @@ describe('<Today />', () => {
     expect(screen.getByRole('header', { name: 'Dijous, 22 d’octubre' })).toBeOnTheScreen();
     expect(screen.getByText('Dia de descans.')).toBeOnTheScreen();
 
+    await user.press(screen.getByRole('radio', { name: 'Divendres 23, 1 rutina' }));
+    expect(screen.getByText('Tren superior 1')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /com a fet/ })).not.toBeOnTheScreen();
+
     await user.press(screen.getByRole('button', { name: 'Avui' }));
-    expect(screen.queryByText('Dia de descans.')).not.toBeOnTheScreen();
     expect(screen.getByRole('radio', { name: 'Dimarts 20, 2 rutines' })).toBeChecked();
+  });
+
+  test('marks a class done with its planned duration and a note', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    await user.press(await screen.findByRole('button', { name: 'Marca «Spinning» com a fet' }));
+    expect(screen.getByRole('header', { name: 'Fet: Spinning' })).toBeOnTheScreen();
+    expect(screen.getByLabelText('Durada (min)')).toHaveDisplayValue('45');
+    await user.type(screen.getByLabelText('Nota (opcional)'), 'Bona classe');
+
+    const done = session({
+      plannedRoutineId: 'spinning',
+      routineId: 'spinning',
+      durationS: 2700,
+      notes: 'Bona classe',
+    });
+    jest.mocked(fetchSessions).mockResolvedValue([done]);
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(done);
+    expect(await screen.findByText('✓ Fet · 45 min')).toBeOnTheScreen();
+    expect(screen.getByText('«Spinning»: fet ✓')).toBeOnTheScreen();
+    expect(screen.getByRole('radio', { name: 'Dimarts 20, fet' })).toBeOnTheScreen();
+  });
+
+  test('skips a routine with a reason, and Desfés takes it back', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    const skipped = session({ routineId: null, status: 'skipped', changeReason: 'no_time' });
+    jest.mocked(fetchSessions).mockResolvedValue([skipped]);
+    sheetChoices.push('Falta de temps');
+    await user.press(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(skipped);
+    expect(await screen.findByText('Saltat · Falta de temps')).toBeOnTheScreen();
+
+    jest.mocked(fetchSessions).mockResolvedValue([]);
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(deleteSession).toHaveBeenCalledWith('session-1');
+    expect(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' })).toBeOnTheScreen();
+  });
+
+  test('swaps a routine for today, keeps the swap after closing, and logs both', async () => {
+    const user = userEvent.setup();
+    const { unmount } = await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Cames', 'Cansament');
+    await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
+    expect(screen.getByText('En lloc de «Tren superior 1»')).toBeOnTheScreen();
+
+    // Closing and opening the app keeps it.
+    await unmount();
+    await render(<Today />, { wrapper: createAppWrapper() });
+    expect(await screen.findByText('En lloc de «Tren superior 1»')).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Marca «Cames» com a fet' }));
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+    expect(logQuickSession).toHaveBeenCalledWith(
+      session({ plannedRoutineId: 'upper', routineId: 'legs', changeReason: 'tired' }),
+    );
+  });
+
+  test('a swap can go back to the plan from ⋯', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Cames', 'Sense motiu');
+    await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
+    sheetChoices.push('Torna a «Tren superior 1»');
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Cames»' }));
+
+    expect(screen.queryByText('En lloc de «Tren superior 1»')).not.toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Canvia «Tren superior 1»' })).toBeOnTheScreen();
+  });
+
+  test('a session already logged shows as done, and ⋯ → Desfés deletes it', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchSessions).mockResolvedValue([session({ durationS: 3600 })]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('✓ Fet · 1 h')).toBeOnTheScreen();
+    sheetChoices.push('Desfés');
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Tren superior 1»' }));
+
+    expect(deleteSession).toHaveBeenCalledWith('session-1');
   });
 
   test('a rest day today says so', async () => {

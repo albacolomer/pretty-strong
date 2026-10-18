@@ -306,6 +306,78 @@ export type Database = {
           },
         ]
       }
+      workout_sessions: {
+        Row: {
+          change_reason: string | null
+          created_at: string
+          date: string
+          duration_s: number | null
+          ended_at: string | null
+          energy: number | null
+          external_id: string | null
+          id: string
+          log_mode: string
+          notes: string | null
+          planned_routine_id: string | null
+          routine_id: string | null
+          source: string
+          started_at: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          change_reason?: string | null
+          created_at?: string
+          date: string
+          duration_s?: number | null
+          ended_at?: string | null
+          energy?: number | null
+          external_id?: string | null
+          id: string
+          log_mode?: string
+          notes?: string | null
+          planned_routine_id?: string | null
+          routine_id?: string | null
+          source?: string
+          started_at?: string | null
+          status: string
+          user_id?: string
+        }
+        Update: {
+          change_reason?: string | null
+          created_at?: string
+          date?: string
+          duration_s?: number | null
+          ended_at?: string | null
+          energy?: number | null
+          external_id?: string | null
+          id?: string
+          log_mode?: string
+          notes?: string | null
+          planned_routine_id?: string | null
+          routine_id?: string | null
+          source?: string
+          started_at?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workout_sessions_planned_routine_id_fkey"
+            columns: ["planned_routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_sessions_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

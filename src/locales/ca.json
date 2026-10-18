@@ -419,6 +419,42 @@
     "restToday": "Avui toca descans. Recupera bé!",
     "restOther": "Dia de descans.",
     "backToToday": "Avui",
-    "noWeek": "Aquesta setmana encara no hi tens res. Tria els dies de cada rutina a Pla → Setmana."
+    "noWeek": "Aquesta setmana encara no hi tens res. Tria els dies de cada rutina a Pla → Setmana.",
+    "done": "Fet",
+    "swap": "Canvia",
+    "skip": "Salta",
+    "doneFor": "Marca «{{name}}» com a fet",
+    "swapFor": "Canvia «{{name}}»",
+    "skipFor": "Salta «{{name}}»",
+    "insteadOf": "En lloc de «{{name}}»",
+    "statusDone": "✓ Fet",
+    "statusSkipped": "Saltat",
+    "backToPlanned": "Torna a «{{name}}»",
+    "swapTitle": "Què fas avui en lloc de «{{name}}»?",
+    "swapReasonTitle": "Per què la canvies?",
+    "skipReasonTitle": "Per què la saltes?",
+    "skipped": "S'ha saltat «{{name}}»",
+    "logged": "«{{name}}»: fet ✓",
+    "stripState": {
+      "done": "fet",
+      "skipped": "saltat"
+    }
+  },
+  "workout": {
+    "saveError": "No s'ha pogut desar. Torna-ho a provar.",
+    "reasons": {
+      "tired": "Cansament",
+      "unwell": "Malaltia o lesió",
+      "no_time": "Falta de temps",
+      "other": "Altres"
+    },
+    "noReason": "Sense motiu",
+    "quickLog": {
+      "title": "Fet: {{name}}",
+      "duration": "Durada (min)",
+      "notes": "Nota (opcional)",
+      "notesPlaceholder": "Com ha anat?",
+      "save": "Desa"
+    }
   }
 }
