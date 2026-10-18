@@ -15,8 +15,7 @@
   },
   "placeholder": {
     "today": "Today's workout will show up here.",
-    "history": "Your past workouts will show up here.",
-    "week": "This is where you'll give each day a routine, or rest."
+    "history": "Your past workouts will show up here."
   },
   "plan": {
     "routines": "Routines",
@@ -396,5 +395,19 @@
         "intervals": "Add the distance or time of each repetition."
       }
     }
+  },
+  "schedule": {
+    "hint": "A day can have more than one routine. Tap one to open it.",
+    "today": "Today",
+    "rest": "Rest",
+    "add": "+ Add",
+    "addFor": "{{day}}: add a routine",
+    "pickRoutine": "Which routine?",
+    "menuFor": "Options for “{{name}}”, {{day}}",
+    "open": "Open routine",
+    "remove": "Take it off this day",
+    "removed": "{{day}}: “{{name}}” taken off",
+    "saveError": "Couldn't save it. Try again.",
+    "noRoutines": "You don't have any routines yet. Create one in Routines, then choose the days you do it."
   }
 }

@@ -50,6 +50,7 @@ const upperBody: Routine = {
   plannedDurationS: null,
   notes: null,
   weekdays: [1, 4],
+  dayPositions: { 1: 0, 4: 0 },
   exercises: [
     // 4 × 10 at 42,5 kg.
     {

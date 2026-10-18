@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Card, Screen, SegmentedControl, Text } from '@/components/ui';
+import { Screen, SegmentedControl } from '@/components/ui';
 import { ExerciseLibrary } from '@/features/exercises/ExerciseLibrary';
 import { RoutineList } from '@/features/routines/RoutineList';
+import { WeekSchedule } from '@/features/schedule/WeekSchedule';
 
 type Section = 'routines' | 'exercises' | 'week';
 
@@ -27,12 +28,7 @@ export default function PlanScreen() {
       />
       {section === 'routines' ? <RoutineList /> : null}
       {section === 'exercises' ? <ExerciseLibrary /> : null}
-      {section === 'week' ? (
-        // The weekly plan comes with US-09.
-        <Card>
-          <Text color="textMuted">{t('placeholder.week')}</Text>
-        </Card>
-      ) : null}
+      {section === 'week' ? <WeekSchedule /> : null}
     </Screen>
   );
 }

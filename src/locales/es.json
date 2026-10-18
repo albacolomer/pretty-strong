@@ -15,8 +15,7 @@
   },
   "placeholder": {
     "today": "Aquí verás el entrenamiento de hoy.",
-    "history": "Aquí verás tus entrenamientos anteriores.",
-    "week": "Aquí asignarás una rutina, o descanso, a cada día."
+    "history": "Aquí verás tus entrenamientos anteriores."
   },
   "plan": {
     "routines": "Rutinas",
@@ -396,5 +395,19 @@
         "intervals": "Pon la distancia o el tiempo de cada repetición."
       }
     }
+  },
+  "schedule": {
+    "hint": "Un día puede tener más de una rutina. Toca una para abrirla.",
+    "today": "Hoy",
+    "rest": "Descanso",
+    "add": "+ Añadir",
+    "addFor": "{{day}}: añadir una rutina",
+    "pickRoutine": "¿Qué rutina añades?",
+    "menuFor": "Opciones de «{{name}}», {{day}}",
+    "open": "Abrir la rutina",
+    "remove": "Quitarla de este día",
+    "removed": "{{day}}: se ha quitado «{{name}}»",
+    "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
+    "noRoutines": "Todavía no tienes rutinas. Crea una en Rutinas y luego elige los días que la haces."
   }
 }

@@ -25,6 +25,7 @@ export const upperBody: Routine = {
   plannedDurationS: null,
   notes: null,
   weekdays: [],
+  dayPositions: {},
   exercises: ['Tracció al pit', 'Rem assegut amb politja', 'Face pull', 'Curl martell'].map(
     (ca, index) => ({
       id: `re-${index + 1}`,

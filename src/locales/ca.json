@@ -15,8 +15,7 @@
   },
   "placeholder": {
     "today": "Aquí veuràs l'entrenament d'avui.",
-    "history": "Aquí veuràs els teus entrenaments passats.",
-    "week": "Aquí assignaràs una rutina, o descans, a cada dia."
+    "history": "Aquí veuràs els teus entrenaments passats."
   },
   "plan": {
     "routines": "Rutines",
@@ -396,5 +395,19 @@
         "intervals": "Posa la distància o el temps de cada repetició."
       }
     }
+  },
+  "schedule": {
+    "hint": "Un dia pot tenir més d'una rutina. Toca'n una per obrir-la.",
+    "today": "Avui",
+    "rest": "Descans",
+    "add": "+ Afegeix",
+    "addFor": "{{day}}: afegeix una rutina",
+    "pickRoutine": "Quina rutina hi afegeixes?",
+    "menuFor": "Opcions de «{{name}}», {{day}}",
+    "open": "Obre la rutina",
+    "remove": "Treu-la d'aquest dia",
+    "removed": "{{day}}: s'ha tret «{{name}}»",
+    "saveError": "No s'ha pogut desar. Torna-ho a provar.",
+    "noRoutines": "Encara no tens rutines. Crea'n una a Rutines i després tria els dies que la fas."
   }
 }

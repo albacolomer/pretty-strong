@@ -11,7 +11,7 @@ function selectRoutines() {
   return supabase
     .from('routines')
     .select(
-      `id, name, label, custom_label, planned_duration_s, notes, weekly_schedule(weekday), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}))`,
+      `id, name, label, custom_label, planned_duration_s, notes, weekly_schedule(weekday, position), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}))`,
     )
     .order('position', { referencedTable: 'routine_exercises' });
 }
@@ -58,6 +58,9 @@ function toRoutine(row: RoutineRow): Routine {
     notes: row.notes,
     // Monday first; the check constraint guarantees 1–7.
     weekdays: WEEKDAYS.filter((day) => row.weekly_schedule.some((item) => item.weekday === day)),
+    dayPositions: Object.fromEntries(
+      row.weekly_schedule.map((item) => [item.weekday, item.position]),
+    ),
     exercises: row.routine_exercises.map((item) => ({
       id: item.id,
       exerciseId: item.exercise_id,

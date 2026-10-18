@@ -85,6 +85,8 @@ export type Routine = {
   notes: string | null;
   // The days it's planned on, Monday first.
   weekdays: Weekday[];
+  // Its place on each of those days, which can hold several routines.
+  dayPositions: Partial<Record<Weekday, number>>;
   // In order.
   exercises: RoutineExercise[];
 };
