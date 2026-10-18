@@ -8,6 +8,7 @@ import {
   hasChanges,
   moveExercise,
   removeExercise,
+  setExerciseNotes,
   setPlannedSets,
   setRest,
   toSaveInput,
@@ -116,6 +117,13 @@ describe('editing the exercise list', () => {
 
     expect(setPlannedSets(draft, 're-1', 0).exercises[0].plannedSets).toBe(1);
     expect(setPlannedSets(draft, 're-1', 25).exercises[0].plannedSets).toBe(20);
+  });
+
+  test('keeps this routine’s note on an exercise, trimmed, and empty as null', () => {
+    const draft = setExerciseNotes(draftFromRoutine(upperBody), 're-2', '  Agafada ampla ');
+    const saved = toSaveInput(setExerciseNotes(draft, 're-1', '   '), 'routine-1');
+
+    expect(saved.exercises.map((e) => e.notes)).toEqual([null, 'Agafada ampla']);
   });
 
   test('sets or clears an exercise’s own rest', () => {

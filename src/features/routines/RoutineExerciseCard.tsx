@@ -1,14 +1,15 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MenuButton, Stepper, Text } from '@/components/ui';
+import { Button, Card, MenuButton, Stepper, Text, TextField } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { adjustRest, formatRest, REST_MAX_S, REST_STEP_S } from '@/features/exercises/rest';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
-import { PLANNED_SETS_MAX, PLANNED_SETS_MIN } from './routine';
+import { EXERCISE_NOTES_MAX_LENGTH, PLANNED_SETS_MAX, PLANNED_SETS_MIN } from './routine';
 import type { DraftExercise } from './routineDraft';
 
 type RoutineExerciseCardProps = {
@@ -21,12 +22,13 @@ type RoutineExerciseCardProps = {
   isLast: boolean;
   onSetsChange: (sets: number) => void;
   onRestChange: (restS: number | null) => void;
+  onNotesChange: (notes: string) => void;
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 };
 
-// One exercise in the routine editor: planned sets, rest, and a ⋯ menu to
-// move or remove it (every action in a menu, gym UX rule 8).
+// One exercise in the routine editor: planned sets, rest, this routine's
+// note on it, and a ⋯ menu to move or remove it.
 export function RoutineExerciseCard({
   item,
   exercise,
@@ -35,6 +37,7 @@ export function RoutineExerciseCard({
   isLast,
   onSetsChange,
   onRestChange,
+  onNotesChange,
   onMove,
   onRemove,
 }: RoutineExerciseCardProps) {
@@ -43,6 +46,8 @@ export function RoutineExerciseCard({
   const language = useAppLanguage();
   const name = exercise ? exerciseName(exercise, language) : '…';
   const rest = item.restS ?? exerciseRestS;
+  // The note field shows once asked for, or straight away if there's a note.
+  const [notesOpen, setNotesOpen] = useState(item.notes !== '');
 
   function openMenu() {
     const actions = [
@@ -118,6 +123,28 @@ export function RoutineExerciseCard({
           onPress={() => onRestChange(null)}
         />
       )}
+
+      {notesOpen ? (
+        <TextField
+          label={t('routines.editor.exerciseNotes')}
+          // Several cards have this field: VoiceOver also says which exercise.
+          aria-label={t('routines.editor.exerciseNotesFor', { name })}
+          placeholder={t('routines.editor.exerciseNotesPlaceholder')}
+          value={item.notes}
+          onChangeText={onNotesChange}
+          // Only when just asked for, not when the routine opens.
+          autoFocus={item.notes === ''}
+          multiline
+          maxLength={EXERCISE_NOTES_MAX_LENGTH}
+          style={styles.notes}
+        />
+      ) : (
+        <Button
+          label={t('routines.editor.addExerciseNotes')}
+          variant="ghost"
+          onPress={() => setNotesOpen(true)}
+        />
+      )}
     </Card>
   );
 }
@@ -139,5 +166,9 @@ const styles = StyleSheet.create({
   },
   control: {
     gap: spacing.xs,
+  },
+  notes: {
+    paddingTop: spacing.md,
+    paddingBottom: spacing.md,
   },
 });

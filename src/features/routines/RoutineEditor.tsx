@@ -22,6 +22,7 @@ import {
   hasChanges,
   moveExercise,
   removeExercise,
+  setExerciseNotes,
   setPlannedSets,
   setRest,
   toSaveInput,
@@ -160,6 +161,9 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
               isLast={index === draft.exercises.length - 1}
               onSetsChange={(sets) => setDraft((current) => setPlannedSets(current, item.key, sets))}
               onRestChange={(restS) => setDraft((current) => setRest(current, item.key, restS))}
+              onNotesChange={(notes) =>
+                setDraft((current) => setExerciseNotes(current, item.key, notes))
+              }
               onMove={(direction) =>
                 setDraft((current) => moveExercise(current, item.key, direction))
               }

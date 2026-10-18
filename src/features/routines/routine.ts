@@ -33,3 +33,5 @@ export const ROUTINE_NAME_MAX_LENGTH = 60;
 export const PLANNED_SETS_MIN = 1;
 export const PLANNED_SETS_MAX = 20;
 export const DEFAULT_PLANNED_SETS = 3;
+// Matches routine_exercises_notes_length in the create_routines migration.
+export const EXERCISE_NOTES_MAX_LENGTH = 500;

@@ -266,6 +266,10 @@
       "restPlus": "Afegeix 15 segons",
       "restFromExercise": "Fa servir el descans de l'exercici.",
       "useExerciseRest": "Usa el descans de l'exercici",
+      "addExerciseNotes": "Afegeix una nota",
+      "exerciseNotes": "Nota en aquesta rutina",
+      "exerciseNotesFor": "Nota en aquesta rutina per a «{{name}}»",
+      "exerciseNotesPlaceholder": "P. ex. agafada ampla",
       "menu": {
         "moveUp": "Mou amunt",
         "moveDown": "Mou avall",

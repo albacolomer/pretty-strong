@@ -266,6 +266,10 @@
       "restPlus": "Añadir 15 segundos",
       "restFromExercise": "Usa el descanso del ejercicio.",
       "useExerciseRest": "Usar el descanso del ejercicio",
+      "addExerciseNotes": "Añadir una nota",
+      "exerciseNotes": "Nota en esta rutina",
+      "exerciseNotesFor": "Nota en esta rutina para «{{name}}»",
+      "exerciseNotesPlaceholder": "P. ej. agarre abierto",
       "menu": {
         "moveUp": "Subir",
         "moveDown": "Bajar",

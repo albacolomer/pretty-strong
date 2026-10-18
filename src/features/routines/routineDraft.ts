@@ -17,7 +17,8 @@ export type DraftExercise = {
   plannedSets: number;
   restS: number | null;
   groupKey: string | null;
-  notes: string | null;
+  // As typed; saved as null when empty.
+  notes: string;
 };
 
 export type RoutineDraft = {
@@ -49,7 +50,7 @@ export function draftFromRoutine(routine: Routine): RoutineDraft {
       plannedSets: exercise.plannedSets,
       restS: exercise.restS,
       groupKey: exercise.groupKey,
-      notes: exercise.notes,
+      notes: exercise.notes ?? '',
     })),
   };
 }
@@ -69,21 +70,25 @@ export function validateRoutineDraft(draft: RoutineDraft): RoutineDraftErrors {
 // What save_routine() receives: trimmed text, empty notes as null, and an
 // id only for exercises that are already saved.
 export function toSaveInput(draft: RoutineDraft, routineId: string | null): SaveRoutineInput {
-  const notes = draft.notes.trim();
   return {
     id: routineId,
     name: draft.name.trim(),
     label: draft.label,
-    notes: notes === '' ? null : notes,
+    notes: emptyAsNull(draft.notes),
     exercises: draft.exercises.map((exercise) => ({
       ...(exercise.id ? { id: exercise.id } : {}),
       exercise_id: exercise.exerciseId,
       planned_sets: exercise.plannedSets,
       rest_s: exercise.restS,
       group_key: exercise.groupKey,
-      notes: exercise.notes,
+      notes: emptyAsNull(exercise.notes),
     })),
   };
+}
+
+function emptyAsNull(text: string): string | null {
+  const trimmed = text.trim();
+  return trimmed === '' ? null : trimmed;
 }
 
 // True when saving would change something, i.e. there are unsaved changes.
@@ -105,7 +110,7 @@ export function addExercises(draft: RoutineDraft, exerciseIds: readonly string[]
         plannedSets: DEFAULT_PLANNED_SETS,
         restS: null,
         groupKey: null,
-        notes: null,
+        notes: '',
       })),
     ],
   };
@@ -140,6 +145,16 @@ export function setRest(draft: RoutineDraft, key: string, restS: number | null):
     ...draft,
     exercises: draft.exercises.map((exercise) =>
       exercise.key === key ? { ...exercise, restS } : exercise,
+    ),
+  };
+}
+
+// This routine's note on one exercise, e.g. "agafada ampla".
+export function setExerciseNotes(draft: RoutineDraft, key: string, notes: string): RoutineDraft {
+  return {
+    ...draft,
+    exercises: draft.exercises.map((exercise) =>
+      exercise.key === key ? { ...exercise, notes } : exercise,
     ),
   };
 }

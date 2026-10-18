@@ -151,6 +151,41 @@ describe('<RoutineEditor />', () => {
     actionSheet.mockRestore();
   });
 
+  test('adds and edits this routine’s note on each exercise', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchRoutines).mockResolvedValue([
+      {
+        ...upperBody,
+        exercises: upperBody.exercises.map((item) =>
+          item.id === 're-2' ? { ...item, notes: 'Agafada ampla' } : item,
+        ),
+      },
+    ]);
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createQueryWrapper(),
+    });
+
+    // A saved note shows straight away; the others offer to add one.
+    expect(await screen.findByDisplayValue('Agafada ampla')).toBeOnTheScreen();
+    expect(screen.getAllByRole('button', { name: 'Afegeix una nota' })).toHaveLength(3);
+    expect(guardsUnsavedChanges()).toBe(false);
+
+    await user.press(screen.getAllByRole('button', { name: 'Afegeix una nota' })[0]);
+    await user.type(screen.getByLabelText('Nota en aquesta rutina per a «Tracció al pit»'), 'Agafada neutra');
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+
+    expect(mockSaveRoutine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        exercises: [
+          expect.objectContaining({ id: 're-1', notes: 'Agafada neutra' }),
+          expect.objectContaining({ id: 're-2', notes: 'Agafada ampla' }),
+          expect.objectContaining({ id: 're-3', notes: null }),
+          expect.objectContaining({ id: 're-4', notes: null }),
+        ],
+      }),
+    );
+  });
+
   test('says so when the routine does not exist', async () => {
     await render(<RoutineEditor routineId="missing" onSaved={jest.fn()} />, {
       wrapper: createQueryWrapper(),

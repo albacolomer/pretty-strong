@@ -266,6 +266,10 @@
       "restPlus": "15 seconds more",
       "restFromExercise": "Using the exercise's own rest.",
       "useExerciseRest": "Use the exercise's rest",
+      "addExerciseNotes": "Add a note",
+      "exerciseNotes": "Note for this routine",
+      "exerciseNotesFor": "Note for this routine on “{{name}}”",
+      "exerciseNotesPlaceholder": "E.g. wide grip",
       "menu": {
         "moveUp": "Move up",
         "moveDown": "Move down",
