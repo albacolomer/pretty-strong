@@ -271,14 +271,35 @@
       "exerciseNotesFor": "Nota en esta rutina para «{{name}}»",
       "exerciseNotesPlaceholder": "P. ej. agarre abierto",
       "menu": {
+        "superset": "Hacer un superset con…",
+        "addTo": {
+          "superset": "Añadir un ejercicio al superset",
+          "circuit": "Añadir un ejercicio al circuito"
+        },
+        "leave": {
+          "superset": "Quitar del superset",
+          "circuit": "Quitar del circuito"
+        },
+        "pickPartner": "¿Con qué ejercicio?",
         "remove": "Quitar de la rutina"
       }
     },
     "reorder": {
       "open": "Reordenar",
       "title": "Reordenar los ejercicios",
-      "hint": "Arrastra ≡ para cambiar el orden.",
+      "hint": "Arrastra ≡ para cambiar el orden. Deja un ejercicio entre dos de un superset para añadirlo, o sácalo para separarlo.",
       "handle": "Mover «{{name}}»"
+    },
+    "group": {
+      "superset": "Superset",
+      "circuit": "Circuito",
+      "hint": "Haz uno de cada seguido, sin descanso, y descansa al acabar la ronda.",
+      "rounds": "Rondas",
+      "roundsValue_one": "{{count}} ronda",
+      "roundsValue_other": "{{count}} rondas",
+      "roundsMinus": "Una ronda menos",
+      "roundsPlus": "Una ronda más",
+      "rest": "Descanso tras cada ronda"
     }
   }
 }

@@ -271,14 +271,35 @@
       "exerciseNotesFor": "Note for this routine on “{{name}}”",
       "exerciseNotesPlaceholder": "E.g. wide grip",
       "menu": {
+        "superset": "Superset with…",
+        "addTo": {
+          "superset": "Add an exercise to the superset",
+          "circuit": "Add an exercise to the circuit"
+        },
+        "leave": {
+          "superset": "Remove from superset",
+          "circuit": "Remove from circuit"
+        },
+        "pickPartner": "With which exercise?",
         "remove": "Remove from routine"
       }
     },
     "reorder": {
       "open": "Reorder",
       "title": "Reorder exercises",
-      "hint": "Drag ≡ to change the order.",
+      "hint": "Drag ≡ to change the order. Drop an exercise between two in a superset to add it, or drag it out to separate it.",
       "handle": "Move “{{name}}”"
+    },
+    "group": {
+      "superset": "Superset",
+      "circuit": "Circuit",
+      "hint": "Do one of each back to back, then rest at the end of the round.",
+      "rounds": "Rounds",
+      "roundsValue_one": "{{count}} round",
+      "roundsValue_other": "{{count}} rounds",
+      "roundsMinus": "One round fewer",
+      "roundsPlus": "One round more",
+      "rest": "Rest after each round"
     }
   }
 }

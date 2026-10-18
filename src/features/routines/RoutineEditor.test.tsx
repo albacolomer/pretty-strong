@@ -212,6 +212,51 @@ describe('<RoutineEditor />', () => {
     expect(saved?.exercises.map((item) => item.id)).toEqual(['re-4', 're-1', 're-2', 're-3']);
   });
 
+  test('makes a superset from the menu, then a circuit by dragging a third exercise in', async () => {
+    const user = userEvent.setup();
+    // Each action sheet picks the next label in the list.
+    const choices: string[] = [];
+    const actionSheet = jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation((options, callback) =>
+        callback(options.options.indexOf(choices.shift() ?? '')),
+      );
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createQueryWrapper(),
+    });
+
+    choices.push('Fes un superset amb…', 'Curl martell');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de «Face pull»' }));
+
+    // One box for the pair, with the rounds and rest they share.
+    expect(screen.getByRole('header', { name: 'Superset' })).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Una ronda més' }));
+    expect(screen.getByLabelText('4 rondes')).toBeOnTheScreen();
+
+    // Drag "Tracció al pit" (first) between Face pull and Curl martell.
+    await user.press(screen.getByRole('button', { name: 'Reordena' }));
+    await drop(0, 2);
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(screen.getByRole('header', { name: 'Circuit' })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    const saved = mockSaveRoutine.mock.lastCall?.[0];
+    expect(
+      saved?.exercises.map(({ id, group_key, planned_sets }) => [id, group_key, planned_sets]),
+    ).toEqual([
+      ['re-2', null, 3],
+      ['re-3', 'g1', 4],
+      ['re-1', 'g1', 4],
+      ['re-4', 'g1', 4],
+    ]);
+
+    // And out again: a circuit of three becomes a superset of two.
+    choices.push('Treu del circuit');
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Tracció al pit»' }));
+    expect(screen.getByRole('header', { name: 'Superset' })).toBeOnTheScreen();
+    actionSheet.mockRestore();
+  });
+
   test('says so when the routine does not exist', async () => {
     await render(<RoutineEditor routineId="missing" onSaved={jest.fn()} />, {
       wrapper: createQueryWrapper(),

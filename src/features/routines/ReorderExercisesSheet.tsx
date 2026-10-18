@@ -12,23 +12,22 @@ import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage, type Language } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
-export type ReorderItem = {
-  key: string;
-  exercise: Exercise | undefined;
-};
+import { dropExercise, type DraftExercise } from './routineDraft';
 
 type ReorderExercisesSheetProps = {
   visible: boolean;
   // In the routine's current order.
-  items: ReorderItem[];
+  exercises: DraftExercise[];
+  exercisesById: ReadonlyMap<string, Exercise>;
   onClose: () => void;
-  // The keys in their new order.
-  onDone: (keys: string[]) => void;
+  // In their new order, with their supersets updated.
+  onDone: (exercises: DraftExercise[]) => void;
 };
 
 // A sheet listing the routine's exercises as short rows, to drag them into a
 // new order by their ≡ handle. Short rows because the editor's cards are
-// too tall to drag through a long form.
+// too tall to drag through a long form. Dropping an exercise inside a
+// superset adds it; dragging it out takes it out (see dropExercise).
 export function ReorderExercisesSheet({ visible, ...props }: ReorderExercisesSheetProps) {
   const { colors } = useTheme();
 
@@ -47,12 +46,17 @@ export function ReorderExercisesSheet({ visible, ...props }: ReorderExercisesShe
   );
 }
 
-function SheetContent({ items, onClose, onDone }: Omit<ReorderExercisesSheetProps, 'visible'>) {
+function SheetContent({
+  exercises,
+  exercisesById,
+  onClose,
+  onDone,
+}: Omit<ReorderExercisesSheetProps, 'visible'>) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const language = useAppLanguage();
-  const [order, setOrder] = useState(items);
+  const [order, setOrder] = useState(exercises);
   // Lets the list scroll by itself while an exercise is dragged to an edge.
   const scrollableRef = useAnimatedRef<Animated.ScrollView>();
 
@@ -72,8 +76,16 @@ function SheetContent({ items, onClose, onDone }: Omit<ReorderExercisesSheetProp
         <Sortable.Grid
           data={order}
           keyExtractor={(item) => item.key}
-          renderItem={({ item }) => <ReorderRow item={item} language={language} />}
-          onDragEnd={({ data }) => setOrder(data)}
+          renderItem={({ item }) => (
+            <ReorderRow
+              exercise={exercisesById.get(item.exerciseId)}
+              grouped={item.groupKey !== null}
+              language={language}
+            />
+          )}
+          onDragEnd={({ fromIndex, toIndex }) =>
+            setOrder((current) => dropExercise(current, fromIndex, toIndex))
+          }
           // Only the ≡ starts a drag, so scrolling the list never moves anything.
           customHandle
           scrollableRef={scrollableRef}
@@ -94,7 +106,7 @@ function SheetContent({ items, onClose, onDone }: Omit<ReorderExercisesSheetProp
         />
         <Button
           label={t('common.done')}
-          onPress={() => onDone(order.map((item) => item.key))}
+          onPress={() => onDone(order)}
           style={styles.footerButton}
         />
       </View>
@@ -102,14 +114,28 @@ function SheetContent({ items, onClose, onDone }: Omit<ReorderExercisesSheetProp
   );
 }
 
-function ReorderRow({ item, language }: { item: ReorderItem; language: Language }) {
+type ReorderRowProps = {
+  exercise: Exercise | undefined;
+  // In a superset or circuit: a pink bar, like the editor's bracket.
+  grouped: boolean;
+  language: Language;
+};
+
+function ReorderRow({ exercise, grouped, language }: ReorderRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const name = item.exercise ? exerciseName(item.exercise, language) : '…';
+  const name = exercise ? exerciseName(exercise, language) : '…';
 
   return (
-    <View style={[styles.row, { backgroundColor: colors.surface }]}>
-      {item.exercise ? <ExercisePicture exercise={item.exercise} size={40} /> : null}
+    <View
+      style={[
+        styles.row,
+        {
+          backgroundColor: colors.surface,
+          borderLeftColor: grouped ? colors.accent : colors.surface,
+        },
+      ]}>
+      {exercise ? <ExercisePicture exercise={exercise} size={40} /> : null}
       <Text variant="bodyStrong" style={styles.name} numberOfLines={2}>
         {name}
       </Text>
@@ -159,6 +185,7 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     minHeight: touch.min + spacing.md,
     paddingLeft: spacing.md,
+    borderLeftWidth: 4,
     borderRadius: radius.card,
     borderCurve: 'continuous',
   },

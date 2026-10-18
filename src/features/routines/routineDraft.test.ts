@@ -4,10 +4,14 @@ import type { Routine } from './routine';
 import {
   addExercises,
   draftFromRoutine,
+  dropExercise,
   emptyRoutineDraft,
+  exerciseSegments,
   hasChanges,
+  leaveSuperset,
+  makeSuperset,
   removeExercise,
-  reorderExercises,
+  type RoutineDraft,
   setExerciseNotes,
   setPlannedSets,
   setRest,
@@ -81,7 +85,9 @@ describe('hasChanges', () => {
     expect(hasChanges(draftFromRoutine(upperBody), saved)).toBe(false);
     expect(hasChanges({ ...saved, name: 'Tren superior 2' }, saved)).toBe(true);
     expect(hasChanges(setPlannedSets(saved, 're-1', 5), saved)).toBe(true);
-    expect(hasChanges(reorderExercises(saved, ['re-2', 're-1']), saved)).toBe(true);
+    expect(hasChanges({ ...saved, exercises: dropExercise(saved.exercises, 1, 0) }, saved)).toBe(
+      true,
+    );
   });
 
   test('ignores spaces that saving would trim anyway', () => {
@@ -103,16 +109,14 @@ describe('editing the exercise list', () => {
     expect(exerciseIds(removeExercise(draftFromRoutine(upperBody), 're-1'))).toEqual(['row']);
   });
 
-  test('reorders to the dragged order, keeping any missing exercise at the end', () => {
+  test('a drag moves one exercise to its new place', () => {
     const draft = addExercises(draftFromRoutine(upperBody), ['curl']);
-    const curlKey = draft.exercises[2].key;
 
-    expect(exerciseIds(reorderExercises(draft, [curlKey, 're-2', 're-1']))).toEqual([
+    expect(dropExercise(draft.exercises, 2, 0).map((e) => e.exerciseId)).toEqual([
       'curl',
-      'row',
       'lat',
+      'row',
     ]);
-    expect(exerciseIds(reorderExercises(draft, ['re-2']))).toEqual(['row', 'lat', 'curl']);
   });
 
   test('keeps planned sets between 1 and 20', () => {
@@ -134,5 +138,78 @@ describe('editing the exercise list', () => {
 
     expect(setRest(draft, 're-2', 90).exercises[1].restS).toBe(90);
     expect(setRest(draft, 're-1', null).exercises[0].restS).toBeNull();
+  });
+});
+
+describe('supersets and circuits', () => {
+  // lat, row, face, curl, dip: five exercises, none grouped.
+  const fiveExercises = (): RoutineDraft =>
+    addExercises(draftFromRoutine(upperBody), ['face', 'curl', 'dip']);
+  const keyOf = (draft: RoutineDraft, exerciseId: string) =>
+    draft.exercises.find((e) => e.exerciseId === exerciseId)!.key;
+  const groups = (draft: RoutineDraft) =>
+    exerciseSegments(draft.exercises).map((segment) =>
+      segment.items.map((e) => e.exerciseId).join('+'),
+    );
+
+  test('makes a superset: the other exercise moves right after, with the same rounds and rest', () => {
+    let draft = fiveExercises();
+    draft = setPlannedSets(draft, keyOf(draft, 'face'), 4);
+    draft = setRest(draft, keyOf(draft, 'face'), 60);
+    draft = makeSuperset(draft, keyOf(draft, 'face'), 're-1');
+
+    expect(groups(draft)).toEqual(['row', 'face+lat', 'curl', 'dip']);
+    const lat = draft.exercises.find((e) => e.exerciseId === 'lat')!;
+    expect(lat).toMatchObject({ plannedSets: 4, restS: 60 });
+  });
+
+  test('a third exercise makes it a circuit; rounds and rest change for the whole group', () => {
+    let draft = fiveExercises();
+    draft = makeSuperset(draft, keyOf(draft, 'face'), keyOf(draft, 'curl'));
+    draft = makeSuperset(draft, keyOf(draft, 'curl'), keyOf(draft, 'dip'));
+    draft = setPlannedSets(draft, keyOf(draft, 'dip'), 5);
+    draft = setRest(draft, keyOf(draft, 'face'), 90);
+
+    expect(groups(draft)).toEqual(['lat', 'row', 'face+curl+dip']);
+    expect(draft.exercises.slice(2).map((e) => [e.plannedSets, e.restS])).toEqual([
+      [5, 90],
+      [5, 90],
+      [5, 90],
+    ]);
+    // Group keys are only unique within the routine.
+    expect(draft.exercises[2].groupKey).toBe('g1');
+  });
+
+  test('leaving a group puts the exercise after it; a group of one is no group', () => {
+    let draft = fiveExercises();
+    draft = makeSuperset(draft, 're-1', 're-2');
+    draft = makeSuperset(draft, 're-1', keyOf(draft, 'face'));
+
+    const circuitLeft = leaveSuperset(draft, 're-1');
+    expect(groups(circuitLeft)).toEqual(['row+face', 'lat', 'curl', 'dip']);
+
+    expect(groups(leaveSuperset(circuitLeft, 're-2'))).toEqual(['face', 'row', 'lat', 'curl', 'dip']);
+    expect(groups(removeExercise(circuitLeft, 're-2'))).toEqual(['face', 'lat', 'curl', 'dip']);
+  });
+
+  test('a drag between two exercises of a group joins it; away from its group leaves it', () => {
+    let draft = fiveExercises();
+    draft = makeSuperset(draft, 're-1', 're-2'); // lat+row, face, curl, dip
+
+    // dip (index 4) dropped between lat and row: joins them.
+    const joined = { ...draft, exercises: dropExercise(draft.exercises, 4, 1) };
+    expect(groups(joined)).toEqual(['lat+dip+row', 'face', 'curl']);
+
+    // row (index 1) dragged to the end: leaves, and lat is on its own again.
+    const left = { ...draft, exercises: dropExercise(draft.exercises, 1, 4) };
+    expect(groups(left)).toEqual(['lat', 'face', 'curl', 'dip', 'row']);
+
+    // Swapping the two inside the superset keeps it.
+    const swapped = { ...draft, exercises: dropExercise(draft.exercises, 1, 0) };
+    expect(groups(swapped)).toEqual(['row+lat', 'face', 'curl', 'dip']);
+
+    // Dropped right after a group (not between two of it): stays on its own.
+    const after = { ...draft, exercises: dropExercise(draft.exercises, 4, 2) };
+    expect(groups(after)).toEqual(['lat+row', 'dip', 'face', 'curl']);
   });
 });

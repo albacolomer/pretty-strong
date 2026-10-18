@@ -117,40 +117,140 @@ export function addExercises(draft: RoutineDraft, exerciseIds: readonly string[]
 }
 
 export function removeExercise(draft: RoutineDraft, key: string): RoutineDraft {
-  return { ...draft, exercises: draft.exercises.filter((exercise) => exercise.key !== key) };
-}
-
-// Puts the exercises in the order of `keys` (from the reorder sheet). Any
-// exercise missing from `keys` keeps its place at the end.
-export function reorderExercises(draft: RoutineDraft, keys: readonly string[]): RoutineDraft {
-  const position = (key: string) => {
-    const index = keys.indexOf(key);
-    return index === -1 ? keys.length : index;
+  return {
+    ...draft,
+    exercises: withoutLoneGroups(draft.exercises.filter((exercise) => exercise.key !== key)),
   };
-  const exercises = draft.exercises
-    .map((exercise, index) => ({ exercise, index }))
-    .sort((a, b) => position(a.exercise.key) - position(b.exercise.key) || a.index - b.index)
-    .map(({ exercise }) => exercise);
-  return { ...draft, exercises };
 }
 
+// Planned sets; in a superset or circuit, the rounds of the whole group.
 export function setPlannedSets(draft: RoutineDraft, key: string, sets: number): RoutineDraft {
   const plannedSets = Math.min(PLANNED_SETS_MAX, Math.max(PLANNED_SETS_MIN, sets));
+  return updateWithGroup(draft, key, (exercise) => ({ ...exercise, plannedSets }));
+}
+
+// Rest; in a superset or circuit, the rest after each round of the group.
+export function setRest(draft: RoutineDraft, key: string, restS: number | null): RoutineDraft {
+  return updateWithGroup(draft, key, (exercise) => ({ ...exercise, restS }));
+}
+
+function updateWithGroup(
+  draft: RoutineDraft,
+  key: string,
+  change: (exercise: DraftExercise) => DraftExercise,
+): RoutineDraft {
+  const item = draft.exercises.find((exercise) => exercise.key === key);
+  if (!item) return draft;
   return {
     ...draft,
     exercises: draft.exercises.map((exercise) =>
-      exercise.key === key ? { ...exercise, plannedSets } : exercise,
+      exercise.key === key || (item.groupKey !== null && exercise.groupKey === item.groupKey)
+        ? change(exercise)
+        : exercise,
     ),
   };
 }
 
-export function setRest(draft: RoutineDraft, key: string, restS: number | null): RoutineDraft {
-  return {
-    ...draft,
-    exercises: draft.exercises.map((exercise) =>
-      exercise.key === key ? { ...exercise, restS } : exercise,
-    ),
-  };
+// Supersets and circuits (US-08). Exercises with the same groupKey are a
+// superset (2) or a circuit (3 or more). They always sit next to each other,
+// and share their rounds (plannedSets) and the rest after each round.
+
+// One exercise on its own (groupKey null), or a whole group, in order.
+export type ExerciseSegment = { groupKey: string | null; items: DraftExercise[] };
+
+export function exerciseSegments(exercises: readonly DraftExercise[]): ExerciseSegment[] {
+  const segments: ExerciseSegment[] = [];
+  for (const exercise of exercises) {
+    const last = segments.at(-1);
+    if (exercise.groupKey !== null && last?.groupKey === exercise.groupKey) {
+      last.items.push(exercise);
+    } else {
+      segments.push({ groupKey: exercise.groupKey, items: [exercise] });
+    }
+  }
+  return segments;
+}
+
+// Puts `otherKey` in a superset with `key`: right after `key`'s group (or
+// `key` itself), with the group's rounds and rest. Grouped with a third,
+// it becomes a circuit.
+export function makeSuperset(draft: RoutineDraft, key: string, otherKey: string): RoutineDraft {
+  const target = draft.exercises.find((exercise) => exercise.key === key);
+  const other = draft.exercises.find((exercise) => exercise.key === otherKey);
+  if (!target || !other || key === otherKey) return draft;
+  if (target.groupKey !== null && other.groupKey === target.groupKey) return draft;
+
+  const groupKey = target.groupKey ?? newGroupKey(draft.exercises);
+  const exercises = draft.exercises
+    .filter((exercise) => exercise.key !== otherKey)
+    .map((exercise) => (exercise.key === key ? { ...exercise, groupKey } : exercise));
+  const lastInGroup = exercises.findLastIndex((exercise) => exercise.groupKey === groupKey);
+  exercises.splice(lastInGroup + 1, 0, joinGroup(other, target, groupKey));
+  return { ...draft, exercises: withoutLoneGroups(exercises) };
+}
+
+// Takes an exercise out of its group, to just after it, so the group stays
+// together.
+export function leaveSuperset(draft: RoutineDraft, key: string): RoutineDraft {
+  const item = draft.exercises.find((exercise) => exercise.key === key);
+  if (!item?.groupKey) return draft;
+
+  const exercises = draft.exercises.filter((exercise) => exercise.key !== key);
+  const lastInGroup = exercises.findLastIndex((exercise) => exercise.groupKey === item.groupKey);
+  exercises.splice(lastInGroup + 1, 0, { ...item, groupKey: null });
+  return { ...draft, exercises: withoutLoneGroups(exercises) };
+}
+
+// Moves one exercise to a new place, as a drag in the reorder sheet does.
+// Dropped between two exercises of a group, it joins that group; moved away
+// from its own group, it leaves it.
+export function dropExercise(
+  exercises: readonly DraftExercise[],
+  fromIndex: number,
+  toIndex: number,
+): DraftExercise[] {
+  const list = [...exercises];
+  const [moved] = list.splice(fromIndex, 1);
+  if (!moved) return list;
+  list.splice(toIndex, 0, moved);
+
+  const above = list[toIndex - 1];
+  const below = list[toIndex + 1];
+  if (above?.groupKey && above.groupKey === below?.groupKey) {
+    list[toIndex] = joinGroup(moved, above, above.groupKey);
+  } else if (
+    moved.groupKey === null ||
+    (above?.groupKey !== moved.groupKey && below?.groupKey !== moved.groupKey)
+  ) {
+    list[toIndex] = { ...moved, groupKey: null };
+  }
+  return withoutLoneGroups(list);
+}
+
+// `item` joins `groupKey`, taking the rounds and rest of `member`.
+function joinGroup(item: DraftExercise, member: DraftExercise, groupKey: string): DraftExercise {
+  return { ...item, groupKey, plannedSets: member.plannedSets, restS: member.restS };
+}
+
+// A group needs at least two exercises; one left on its own is ungrouped.
+function withoutLoneGroups(exercises: DraftExercise[]): DraftExercise[] {
+  const sizes = new Map<string, number>();
+  for (const { groupKey } of exercises) {
+    if (groupKey !== null) sizes.set(groupKey, (sizes.get(groupKey) ?? 0) + 1);
+  }
+  return exercises.map((exercise) =>
+    exercise.groupKey !== null && sizes.get(exercise.groupKey) === 1
+      ? { ...exercise, groupKey: null }
+      : exercise,
+  );
+}
+
+// "g1", "g2"…: the first one this routine doesn't use yet.
+function newGroupKey(exercises: readonly DraftExercise[]): string {
+  const used = new Set(exercises.map((exercise) => exercise.groupKey));
+  let number = 1;
+  while (used.has(`g${number}`)) number += 1;
+  return `g${number}`;
 }
 
 // This routine's note on one exercise, e.g. "agafada ampla".

@@ -271,14 +271,35 @@
       "exerciseNotesFor": "Nota en aquesta rutina per a «{{name}}»",
       "exerciseNotesPlaceholder": "P. ex. agafada ampla",
       "menu": {
+        "superset": "Fes un superset amb…",
+        "addTo": {
+          "superset": "Afegeix un exercici al superset",
+          "circuit": "Afegeix un exercici al circuit"
+        },
+        "leave": {
+          "superset": "Treu del superset",
+          "circuit": "Treu del circuit"
+        },
+        "pickPartner": "Amb quin exercici?",
         "remove": "Treu de la rutina"
       }
     },
     "reorder": {
       "open": "Reordena",
       "title": "Reordena els exercicis",
-      "hint": "Arrossega ≡ per canviar l'ordre.",
+      "hint": "Arrossega ≡ per canviar l'ordre. Deixa un exercici entre dos d'un superset per afegir-l'hi, o treu-lo'n per separar-lo.",
       "handle": "Mou «{{name}}»"
+    },
+    "group": {
+      "superset": "Superset",
+      "circuit": "Circuit",
+      "hint": "Fes un de cada seguit, sense descans, i descansa en acabar la ronda.",
+      "rounds": "Rondes",
+      "roundsValue_one": "{{count}} ronda",
+      "roundsValue_other": "{{count}} rondes",
+      "roundsMinus": "Una ronda menys",
+      "roundsPlus": "Una ronda més",
+      "rest": "Descans després de cada ronda"
     }
   }
 }
