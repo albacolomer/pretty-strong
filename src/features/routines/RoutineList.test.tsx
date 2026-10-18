@@ -52,13 +52,20 @@ describe('<RoutineList />', () => {
         { ...upperBody.exercises[1], plannedSets: 1, targets: { ...upperBody.exercises[1].targets, distanceM: 2000 } },
       ],
     };
-    mockFetchRoutines.mockResolvedValue([upperBody, hyrox, swim, spinning, intervals]);
+    mockFetchRoutines.mockResolvedValue([
+      { ...upperBody, weekdays: [1, 4] },
+      hyrox,
+      swim,
+      spinning,
+      intervals,
+    ]);
     await render(<RoutineList />, { wrapper: createQueryWrapper() });
 
     expect(await screen.findByText('Tren superior 1')).toBeOnTheScreen();
     expect(screen.getByText('Força')).toBeOnTheScreen();
     expect(
-      screen.getByText('4 exercicis · Tracció al pit, Rem assegut amb politja, Face pull…'),
+      // Its days come first.
+      screen.getByText('Dl, Dj · 4 exercicis · Tracció al pit, Rem assegut amb politja, Face pull…'),
     ).toBeOnTheScreen();
     expect(screen.getByText('Híbrid')).toBeOnTheScreen();
     // A custom type shows its own name.

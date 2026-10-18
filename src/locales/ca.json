@@ -218,6 +218,26 @@
     "es": "Español",
     "en": "English"
   },
+  "weekdays": {
+    "short": {
+      "1": "Dl",
+      "2": "Dt",
+      "3": "Dc",
+      "4": "Dj",
+      "5": "Dv",
+      "6": "Ds",
+      "7": "Dg"
+    },
+    "long": {
+      "1": "Dilluns",
+      "2": "Dimarts",
+      "3": "Dimecres",
+      "4": "Dijous",
+      "5": "Divendres",
+      "6": "Dissabte",
+      "7": "Diumenge"
+    }
+  },
   "routines": {
     "new": "Nova rutina",
     "loadError": "No s'han pogut carregar les rutines.",
@@ -259,6 +279,8 @@
       "durationPlus": "5 minuts més",
       "addDuration": "Afegeix una durada",
       "noDuration": "Sense durada",
+      "weekdays": "Dies (opcional)",
+      "weekdaysHint": "Un mateix dia pot tenir més d'una rutina.",
       "exercisesOptional": {
         "hybrid": "Si l'entrenament canvia cada setmana, deixa-la sense exercicis i afegeix-los el dia que entrenis.",
         "custom": "Opcional: afegeix-hi exercicis, o deixa-la sense i marca-la com a feta."

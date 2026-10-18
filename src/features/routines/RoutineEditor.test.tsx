@@ -414,6 +414,25 @@ describe('<RoutineEditor />', () => {
     expect(screen.getByRole('button', { name: 'Opcions de «Face pull»' })).toBeOnTheScreen();
   });
 
+  test('chooses the days of the week, all optional', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchRoutines).mockResolvedValue([{ ...upperBody, weekdays: [1] }]);
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    const monday = await screen.findByRole('checkbox', { name: 'Dilluns' });
+    expect(monday).toBeChecked();
+    expect(screen.getByRole('checkbox', { name: 'Dijous' })).not.toBeChecked();
+
+    await user.press(screen.getByRole('checkbox', { name: 'Dijous' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Dissabte' }));
+    await user.press(monday);
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+
+    expect(mockSaveRoutine).toHaveBeenCalledWith(expect.objectContaining({ weekdays: [4, 6] }));
+  });
+
   test('says so when the routine does not exist', async () => {
     await render(<RoutineEditor routineId="missing" onSaved={jest.fn()} />, {
       wrapper: createAppWrapper(),

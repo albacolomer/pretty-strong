@@ -45,6 +45,7 @@ import {
   setPlannedDuration,
   setPlannedSets,
   setRest,
+  toggleWeekday,
   toSaveInput,
   updateTargets,
   validateRoutineDraft,
@@ -52,6 +53,7 @@ import {
   type RoutineDraftErrors,
 } from './routineDraft';
 import { useRoutines, useSaveRoutine } from './useRoutines';
+import { WeekdayPicker } from './WeekdayPicker';
 
 type RoutineEditorProps = {
   // Null for a new routine.
@@ -261,6 +263,19 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
           returnKeyType="done"
         />
       ) : null}
+
+      <View style={styles.section}>
+        <Text variant="caption" color="textMuted">
+          {t('routines.editor.weekdays')}
+        </Text>
+        <WeekdayPicker
+          selected={draft.weekdays}
+          onToggle={(day) => setDraft((current) => toggleWeekday(current, day))}
+        />
+        <Text variant="caption" color="textMuted">
+          {t('routines.editor.weekdaysHint')}
+        </Text>
+      </View>
 
       {usesPlannedDuration(draft.label) ? (
         <PlannedDurationField

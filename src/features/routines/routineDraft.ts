@@ -210,6 +210,16 @@ export function addRunBlock(
   };
 }
 
+// Adds or takes off a day of the week.
+export function toggleWeekday(draft: RoutineDraft, day: Weekday): RoutineDraft {
+  return {
+    ...draft,
+    weekdays: draft.weekdays.includes(day)
+      ? draft.weekdays.filter((other) => other !== day)
+      : [...draft.weekdays, day],
+  };
+}
+
 // Null: no planned duration.
 export function setPlannedDuration(draft: RoutineDraft, seconds: number | null): RoutineDraft {
   return {

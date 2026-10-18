@@ -20,6 +20,7 @@ import {
   setPlannedDuration,
   setPlannedSets,
   setRest,
+  toggleWeekday,
   toSaveInput,
   validateRoutineDraft,
 } from './routineDraft';
@@ -244,6 +245,16 @@ describe('supersets and circuits', () => {
     // Dropped right after a group (not between two of it): stays on its own.
     const after = { ...draft, exercises: dropExercise(draft.exercises, 4, 2) };
     expect(groups(after)).toEqual(['lat+row', 'dip', 'face', 'curl']);
+  });
+});
+
+describe('weekdays', () => {
+  test('tapping a day adds it, tapping it again takes it off; saved Monday first', () => {
+    let draft = toggleWeekday(emptyRoutineDraft(), 4);
+    draft = toggleWeekday(draft, 1);
+    expect(toSaveInput(draft, null).weekdays).toEqual([1, 4]);
+
+    expect(toggleWeekday(draft, 4).weekdays).toEqual([1]);
   });
 });
 

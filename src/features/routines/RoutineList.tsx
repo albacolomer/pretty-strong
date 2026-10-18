@@ -47,7 +47,7 @@ export function RoutineList() {
   );
 }
 
-// Name, type, and "1 h · 4 exercicis · Tracció al pit, Rem assegut…".
+// Name, type, and "Dl, Dj · 1 h · 4 exercicis · Tracció al pit, Rem assegut…".
 function RoutineCard({ routine, onPress }: { routine: Routine; onPress: () => void }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -67,8 +67,11 @@ function RoutineCard({ routine, onPress }: { routine: Routine; onPress: () => vo
     : t('routines.exerciseCount', { count: names.length });
   const exercisesSummary =
     names.length === 0 ? t('routines.noExercises') : `${count} · ${preview}`;
-  // E.g. "1 h · 4 exercicis · …"; a class shows only its duration.
+  // E.g. "Dl, Dj · 1 h · 4 exercicis · …"; a class shows no exercises.
   const summary = [
+    routine.weekdays.length > 0
+      ? routine.weekdays.map((day) => t(`weekdays.short.${day}`)).join(', ')
+      : null,
     usesPlannedDuration(routine.label) && routine.plannedDurationS !== null
       ? formatDuration(routine.plannedDurationS)
       : null,

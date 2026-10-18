@@ -218,6 +218,26 @@
     "es": "Español",
     "en": "English"
   },
+  "weekdays": {
+    "short": {
+      "1": "Mo",
+      "2": "Tu",
+      "3": "We",
+      "4": "Th",
+      "5": "Fr",
+      "6": "Sa",
+      "7": "Su"
+    },
+    "long": {
+      "1": "Monday",
+      "2": "Tuesday",
+      "3": "Wednesday",
+      "4": "Thursday",
+      "5": "Friday",
+      "6": "Saturday",
+      "7": "Sunday"
+    }
+  },
   "routines": {
     "new": "New routine",
     "loadError": "Couldn't load your routines.",
@@ -259,6 +279,8 @@
       "durationPlus": "5 minutes more",
       "addDuration": "Add a duration",
       "noDuration": "No duration",
+      "weekdays": "Days (optional)",
+      "weekdaysHint": "One day can have more than one routine.",
       "exercisesOptional": {
         "hybrid": "If the session changes every week, leave it without exercises and add them on the day.",
         "custom": "Optional: add exercises, or leave it without and mark it as done."

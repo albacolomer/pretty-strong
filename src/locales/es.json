@@ -218,6 +218,26 @@
     "es": "Español",
     "en": "English"
   },
+  "weekdays": {
+    "short": {
+      "1": "L",
+      "2": "M",
+      "3": "X",
+      "4": "J",
+      "5": "V",
+      "6": "S",
+      "7": "D"
+    },
+    "long": {
+      "1": "Lunes",
+      "2": "Martes",
+      "3": "Miércoles",
+      "4": "Jueves",
+      "5": "Viernes",
+      "6": "Sábado",
+      "7": "Domingo"
+    }
+  },
   "routines": {
     "new": "Nueva rutina",
     "loadError": "No se han podido cargar las rutinas.",
@@ -259,6 +279,8 @@
       "durationPlus": "5 minutos más",
       "addDuration": "Añadir una duración",
       "noDuration": "Sin duración",
+      "weekdays": "Días (opcional)",
+      "weekdaysHint": "Un mismo día puede tener más de una rutina.",
       "exercisesOptional": {
         "hybrid": "Si el entrenamiento cambia cada semana, déjala sin ejercicios y añádelos el día que entrenes.",
         "custom": "Opcional: añade ejercicios, o déjala sin ellos y márcala como hecha."
