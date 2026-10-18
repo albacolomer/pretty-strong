@@ -2,16 +2,21 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { ActionSheetIOS } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
-import { createQueryWrapper } from '@/test-utils/queryWrapper';
+import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { fetchRoutines } from './api';
+import { fetchArchivedRoutines, fetchRoutines, setRoutineArchived } from './api';
 import { RoutineList } from './RoutineList';
 import { upperBody } from './testData';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
-jest.mock('./api', () => ({ fetchRoutines: jest.fn() }));
+jest.mock('./api', () => ({
+  fetchRoutines: jest.fn(),
+  fetchArchivedRoutines: jest.fn(),
+  setRoutineArchived: jest.fn(),
+}));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 const mockFetchRoutines = jest.mocked(fetchRoutines);
 
@@ -22,6 +27,8 @@ beforeEach(() => {
       typeof useAuth
     >);
   jest.mocked(router.push).mockReset();
+  jest.mocked(fetchArchivedRoutines).mockResolvedValue([]);
+  jest.mocked(setRoutineArchived).mockReset().mockResolvedValue();
 });
 
 // The app starts in Catalan, so the tests use the Catalan texts.
@@ -29,7 +36,7 @@ describe('<RoutineList />', () => {
   test('invites you to create your first routine', async () => {
     const user = userEvent.setup();
     mockFetchRoutines.mockResolvedValue([]);
-    await render(<RoutineList />, { wrapper: createQueryWrapper() });
+    await render(<RoutineList />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('Encara no tens rutines')).toBeOnTheScreen();
 
@@ -59,7 +66,7 @@ describe('<RoutineList />', () => {
       spinning,
       intervals,
     ]);
-    await render(<RoutineList />, { wrapper: createQueryWrapper() });
+    await render(<RoutineList />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('Tren superior 1')).toBeOnTheScreen();
     expect(screen.getByText('Força')).toBeOnTheScreen();
@@ -77,11 +84,35 @@ describe('<RoutineList />', () => {
     // A class: just its duration, never its exercises.
     expect(screen.getByText('45 min')).toBeOnTheScreen();
 
-    await user.press(screen.getByRole('button', { name: /Tren superior 1/ }));
+    await user.press(screen.getByRole('button', { name: /^Tren superior 1/ }));
 
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/plan/routines/[id]',
       params: { id: 'routine-1' },
     });
+  });
+
+  test('archives a routine from its menu, with Desfés; archived ones have their own list', async () => {
+    const user = userEvent.setup();
+    const actionSheet = jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation((options, callback) => callback(options.options.indexOf('Arxiva')));
+    const legs = { ...upperBody, id: 'routine-2', name: 'Cames' };
+    mockFetchRoutines.mockResolvedValue([upperBody]);
+    jest.mocked(fetchArchivedRoutines).mockResolvedValue([legs]);
+    await render(<RoutineList />, { wrapper: createAppWrapper() });
+
+    await user.press(await screen.findByRole('button', { name: 'Opcions de «Tren superior 1»' }));
+
+    expect(setRoutineArchived).toHaveBeenCalledWith('routine-1', true);
+    expect(screen.queryByText('Tren superior 1')).not.toBeOnTheScreen();
+    expect(screen.getByText("S'ha arxivat «Tren superior 1»")).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(setRoutineArchived).toHaveBeenLastCalledWith('routine-1', false);
+
+    await user.press(await screen.findByRole('button', { name: /Rutines arxivades/ }));
+    expect(router.push).toHaveBeenCalledWith('/plan/routines/archived');
+    actionSheet.mockRestore();
   });
 });

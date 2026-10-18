@@ -9,12 +9,17 @@ import { fetchExercises, fetchExerciseSettings } from '@/features/exercises/api'
 import { createAppWrapper } from '@/test-utils/appWrapper';
 import { drop } from '@/test-utils/sortablesMock';
 
-import { fetchRoutines, saveRoutine } from './api';
+import { fetchRoutines, saveRoutine, setRoutineArchived } from './api';
 import { RoutineEditor } from './RoutineEditor';
 import { testExercise, upperBody } from './testData';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
-jest.mock('./api', () => ({ fetchRoutines: jest.fn(), saveRoutine: jest.fn() }));
+jest.mock('./api', () => ({
+  fetchRoutines: jest.fn(),
+  saveRoutine: jest.fn(),
+  fetchArchivedRoutines: jest.fn(),
+  setRoutineArchived: jest.fn(),
+}));
 jest.mock('@/features/exercises/api', () => ({
   fetchExercises: jest.fn(),
   fetchExerciseSettings: jest.fn(),
@@ -431,6 +436,32 @@ describe('<RoutineEditor />', () => {
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
 
     expect(mockSaveRoutine).toHaveBeenCalledWith(expect.objectContaining({ weekdays: [4, 6] }));
+  });
+
+  test('archives a saved routine and leaves, even with unsaved changes', async () => {
+    const user = userEvent.setup();
+    const onArchived = jest.fn();
+    jest.mocked(setRoutineArchived).mockResolvedValue();
+    await render(
+      <RoutineEditor routineId="routine-1" onSaved={jest.fn()} onArchived={onArchived} />,
+      { wrapper: createAppWrapper() },
+    );
+    await user.type(await screen.findByLabelText('Nom'), ' B');
+
+    await user.press(screen.getByRole('button', { name: 'Arxiva la rutina' }));
+
+    expect(setRoutineArchived).toHaveBeenCalledWith('routine-1', true);
+    expect(screen.getByText("S'ha arxivat «Tren superior 1»")).toBeOnTheScreen();
+    expect(onArchived).toHaveBeenCalled();
+    expect(mockSaveRoutine).not.toHaveBeenCalled();
+  });
+
+  test('a new routine has nothing to archive', async () => {
+    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} onArchived={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    expect(screen.queryByRole('button', { name: 'Arxiva la rutina' })).not.toBeOnTheScreen();
   });
 
   test('says so when the routine does not exist', async () => {

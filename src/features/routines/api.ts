@@ -7,21 +7,48 @@ import { WEEKDAYS, type Routine, type RoutineLabel, type Weekday } from './routi
 const ROUTINE_EXERCISE_COLUMNS =
   'id, exercise_id, position, planned_sets, rest_s, group_key, notes, target_weight_kg, target_reps, target_duration_s, target_distance_m, target_speed_kmh, target_incline_pct, target_level';
 
-// Your active routines, oldest first, each with its exercises in order (and
-// each exercise's details, archived ones included, so names never go
-// missing) and its weekdays. RLS only returns your own.
-export async function fetchRoutines(): Promise<Routine[]> {
-  const { data, error } = await supabase
+function selectRoutines() {
+  return supabase
     .from('routines')
     .select(
       `id, name, label, custom_label, planned_duration_s, notes, weekly_schedule(weekday), routine_exercises(${ROUTINE_EXERCISE_COLUMNS}, exercise:exercises(${EXERCISE_COLUMNS}))`,
     )
-    .is('archived_at', null)
-    .order('created_at')
     .order('position', { referencedTable: 'routine_exercises' });
-  if (error) throw error;
+}
 
-  return data.map((row) => ({
+type RoutineRow = NonNullable<Awaited<ReturnType<typeof selectRoutines>>['data']>[number];
+
+// Your active routines, oldest first, each with its exercises in order (and
+// each exercise's details, archived ones included, so names never go
+// missing) and its weekdays. RLS only returns your own.
+export async function fetchRoutines(): Promise<Routine[]> {
+  const { data, error } = await selectRoutines().is('archived_at', null).order('created_at');
+  if (error) throw error;
+  return data.map(toRoutine);
+}
+
+// Your archived routines, most recently archived first (US-06).
+export async function fetchArchivedRoutines(): Promise<Routine[]> {
+  const { data, error } = await selectRoutines()
+    .not('archived_at', 'is', null)
+    .order('archived_at', { ascending: false });
+  if (error) throw error;
+  return data.map(toRoutine);
+}
+
+// Archiving only sets archived_at; nothing is deleted, so past workouts keep
+// their routine (data rule 3). Its weekdays are kept too, for a restore;
+// Today and the week leave archived routines out.
+export async function setRoutineArchived(id: string, archived: boolean): Promise<void> {
+  const { error } = await supabase
+    .from('routines')
+    .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+function toRoutine(row: RoutineRow): Routine {
+  return {
     id: row.id,
     name: row.name,
     // The database's check constraint guarantees the code.
@@ -49,7 +76,7 @@ export async function fetchRoutines(): Promise<Routine[]> {
         level: item.target_level,
       },
     })),
-  }));
+  };
 }
 
 // What save_routine() takes for each exercise, in order. Leave `id` out

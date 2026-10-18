@@ -17,7 +17,11 @@ export default function RoutineScreen() {
           headerBackButtonDisplayMode: 'minimal',
         }}
       />
-      <RoutineEditor routineId={id} onSaved={() => router.back()} />
+      <RoutineEditor
+        routineId={id}
+        onSaved={() => router.back()}
+        onArchived={() => router.back()}
+      />
     </Screen>
   );
 }

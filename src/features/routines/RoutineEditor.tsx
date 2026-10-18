@@ -52,6 +52,7 @@ import {
   type DraftExercise,
   type RoutineDraftErrors,
 } from './routineDraft';
+import { useArchiveRoutineWithUndo } from './useArchiveRoutine';
 import { useRoutines, useSaveRoutine } from './useRoutines';
 import { WeekdayPicker } from './WeekdayPicker';
 
@@ -59,11 +60,13 @@ type RoutineEditorProps = {
   // Null for a new routine.
   routineId: string | null;
   onSaved: () => void;
+  // Given for a saved routine: offers "Arxiva la rutina", then leaves.
+  onArchived?: () => void;
 };
 
 // Create or edit a routine (US-07, US-10). Waits for the routine to load,
 // then edits a draft that is only saved with "Desa la rutina".
-export function RoutineEditor({ routineId, onSaved }: RoutineEditorProps) {
+export function RoutineEditor({ routineId, onSaved, onArchived }: RoutineEditorProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { data: routines, isPending } = useRoutines();
@@ -72,21 +75,25 @@ export function RoutineEditor({ routineId, onSaved }: RoutineEditorProps) {
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   const routine = routines?.find((r) => r.id === routineId);
   if (!routine) return <Text color="textMuted">{t('routines.editor.notFound')}</Text>;
-  return <RoutineForm routine={routine} onSaved={onSaved} />;
+  return <RoutineForm routine={routine} onSaved={onSaved} onArchived={onArchived} />;
 }
 
-function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: () => void }) {
+type RoutineFormProps = Omit<RoutineEditorProps, 'routineId'> & { routine: Routine | null };
+
+function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const { t } = useTranslation();
   const { scheme } = useTheme();
   const language = useAppLanguage();
   const navigation = useNavigation();
   const showToast = useToast();
   const save = useSaveRoutine();
+  const archiveRoutine = useArchiveRoutineWithUndo();
   // What's saved now; the draft is compared with it to spot changes.
   const [saved] = useState(() => (routine ? draftFromRoutine(routine) : emptyRoutineDraft()));
   const [draft, setDraft] = useState(saved);
   const [errors, setErrors] = useState<RoutineDraftErrors>({});
-  // Set just before leaving after a save, so leaving isn't questioned.
+  // Set just before leaving after a save or archive, so leaving isn't
+  // questioned.
   const leavingAfterSave = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [reorderOpen, setReorderOpen] = useState(false);
@@ -174,6 +181,15 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         onSaved();
       },
     });
+  }
+
+  // Unsaved edits go with it: archiving can be undone, and the routine is
+  // kept as it was last saved.
+  function handleArchive() {
+    if (!routine || !onArchived) return;
+    archiveRoutine(routine);
+    leavingAfterSave.current = true;
+    onArchived();
   }
 
   // A class holds no exercises and a run only run blocks: switching takes
@@ -416,6 +432,10 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         onPress={handleSave}
         disabled={save.isPending}
       />
+
+      {routine && onArchived ? (
+        <Button label={t('routines.archiveRoutine')} variant="ghost" onPress={handleArchive} />
+      ) : null}
 
       <ExercisePicker
         visible={pickerOpen}
