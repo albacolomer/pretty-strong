@@ -106,7 +106,8 @@
     },
     "picker": {
       "title": "Añadir ejercicios",
-      "add": "Añadir ({{count}})"
+      "add": "Añadir ({{count}})",
+      "backToList": "Volver a la lista"
     }
   },
   "trackingTypes": {

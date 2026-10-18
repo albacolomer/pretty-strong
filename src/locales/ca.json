@@ -106,7 +106,8 @@
     },
     "picker": {
       "title": "Afegeix exercicis",
-      "add": "Afegeix ({{count}})"
+      "add": "Afegeix ({{count}})",
+      "backToList": "Torna a la llista"
     }
   },
   "trackingTypes": {

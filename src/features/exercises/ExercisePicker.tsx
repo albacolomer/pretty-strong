@@ -7,8 +7,11 @@ import { Button, Card, Text } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
+import { exerciseName, type Exercise } from './exercise';
 import { ExerciseFilterBar, useExerciseSearch } from './ExerciseFilterBar';
+import { ExerciseForm } from './ExerciseForm';
 import { ExerciseRow } from './ExerciseRow';
+import { NO_FILTERS } from './searchExercises';
 import { useExercises } from './useExercises';
 
 type ExercisePickerProps = {
@@ -19,8 +22,9 @@ type ExercisePickerProps = {
 };
 
 // A sheet to pick one or more exercises from the library (spec: "Exercise
-// picker"), with the same search and filters. Used by the routine editor
-// now and by workouts later.
+// picker"), with the same search and filters. A missing exercise can be
+// created right here (US-04). Used by the routine editor now and by
+// workouts later.
 export function ExercisePicker({ visible, onClose, onAdd }: ExercisePickerProps) {
   const { colors } = useTheme();
 
@@ -46,6 +50,9 @@ function PickerContent({ onClose, onAdd }: Omit<ExercisePickerProps, 'visible'>)
   const { data: exercises = [], isPending } = useExercises();
   const search = useExerciseSearch(exercises);
   const [selected, setSelected] = useState<string[]>([]);
+  // Null while picking; while creating an exercise, the name it starts with.
+  const [newName, setNewName] = useState<string | null>(null);
+  const creating = newName !== null;
 
   function toggle(id: string) {
     setSelected((current) =>
@@ -53,26 +60,51 @@ function PickerContent({ onClose, onAdd }: Omit<ExercisePickerProps, 'visible'>)
     );
   }
 
+  // Back to the list, searching for the new exercise so it shows, ticked.
+  function handleCreated(exercise: Exercise) {
+    search.setFilters({ ...NO_FILTERS, query: exerciseName(exercise, language) });
+    setSelected((current) => [...current, exercise.id]);
+    setNewName(null);
+  }
+
   return (
     <>
       <View style={styles.header}>
         <View style={[styles.grabber, { backgroundColor: colors.surfaceRaised }]} />
         <Text variant="cardTitle" accessibilityRole="header">
-          {t('exercises.picker.title')}
+          {creating ? t('exercises.form.title') : t('exercises.picker.title')}
         </Text>
       </View>
 
       <ScrollView
+        // A new key starts the form, and the list again, scrolled to the top.
+        key={creating ? 'form' : 'list'}
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive">
-        {isPending ? (
+        {creating ? (
+          <ExerciseForm initialName={newName} onSaved={handleCreated} />
+        ) : isPending ? (
           <ActivityIndicator color={colors.accent} />
         ) : (
           <>
             <ExerciseFilterBar exercises={exercises} search={search} />
+            <Button
+              label={t('exercises.create')}
+              variant="secondary"
+              onPress={() => setNewName('')}
+            />
             {search.results.length === 0 ? (
-              <Text color="textMuted">{t('exercises.noResults')}</Text>
+              <View style={styles.empty}>
+                <Text color="textMuted">{t('exercises.noResults')}</Text>
+                {search.query !== '' ? (
+                  // Not in the library? Create it with the searched name.
+                  <Button
+                    label={t('exercises.createNamed', { name: search.query })}
+                    onPress={() => setNewName(search.query)}
+                  />
+                ) : null}
+              </View>
             ) : (
               <Card style={styles.list}>
                 {search.results.map((exercise) => {
@@ -99,18 +131,30 @@ function PickerContent({ onClose, onAdd }: Omit<ExercisePickerProps, 'visible'>)
           styles.footer,
           { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
         ]}>
-        <Button
-          label={t('common.cancel')}
-          variant="secondary"
-          onPress={onClose}
-          style={styles.footerButton}
-        />
-        <Button
-          label={t('exercises.picker.add', { count: selected.length })}
-          onPress={() => onAdd(selected)}
-          disabled={selected.length === 0}
-          style={styles.footerButton}
-        />
+        {creating ? (
+          // The form has its own save button; this one drops the new exercise.
+          <Button
+            label={t('exercises.picker.backToList')}
+            variant="secondary"
+            onPress={() => setNewName(null)}
+            style={styles.footerButton}
+          />
+        ) : (
+          <>
+            <Button
+              label={t('common.cancel')}
+              variant="secondary"
+              onPress={onClose}
+              style={styles.footerButton}
+            />
+            <Button
+              label={t('exercises.picker.add', { count: selected.length })}
+              onPress={() => onAdd(selected)}
+              disabled={selected.length === 0}
+              style={styles.footerButton}
+            />
+          </>
+        )}
       </View>
     </>
   );
@@ -162,6 +206,9 @@ const styles = StyleSheet.create({
     gap: spacing.lg,
   },
   list: {
+    gap: spacing.md,
+  },
+  empty: {
     gap: spacing.md,
   },
   badge: {
