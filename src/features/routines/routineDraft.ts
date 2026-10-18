@@ -120,13 +120,17 @@ export function removeExercise(draft: RoutineDraft, key: string): RoutineDraft {
   return { ...draft, exercises: draft.exercises.filter((exercise) => exercise.key !== key) };
 }
 
-// Moves an exercise one place up (-1) or down (+1); nothing at the ends.
-export function moveExercise(draft: RoutineDraft, key: string, direction: -1 | 1): RoutineDraft {
-  const from = draft.exercises.findIndex((exercise) => exercise.key === key);
-  const to = from + direction;
-  if (from === -1 || to < 0 || to >= draft.exercises.length) return draft;
-  const exercises = [...draft.exercises];
-  [exercises[from], exercises[to]] = [exercises[to], exercises[from]];
+// Puts the exercises in the order of `keys` (from the reorder sheet). Any
+// exercise missing from `keys` keeps its place at the end.
+export function reorderExercises(draft: RoutineDraft, keys: readonly string[]): RoutineDraft {
+  const position = (key: string) => {
+    const index = keys.indexOf(key);
+    return index === -1 ? keys.length : index;
+  };
+  const exercises = draft.exercises
+    .map((exercise, index) => ({ exercise, index }))
+    .sort((a, b) => position(a.exercise.key) - position(b.exercise.key) || a.index - b.index)
+    .map(({ exercise }) => exercise);
   return { ...draft, exercises };
 }
 

@@ -271,10 +271,14 @@
       "exerciseNotesFor": "Note for this routine on “{{name}}”",
       "exerciseNotesPlaceholder": "E.g. wide grip",
       "menu": {
-        "moveUp": "Move up",
-        "moveDown": "Move down",
         "remove": "Remove from routine"
       }
+    },
+    "reorder": {
+      "open": "Reorder",
+      "title": "Reorder exercises",
+      "hint": "Drag ≡ to change the order.",
+      "handle": "Move “{{name}}”"
     }
   }
 }

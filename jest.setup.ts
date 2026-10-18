@@ -7,6 +7,11 @@ jest.mock(
   () => require('react-native-safe-area-context/jest/mock').default,
 );
 
+// Reanimated and Gesture Handler run on the phone's UI thread, which Jest
+// doesn't have. Both ship official stand-ins for tests.
+jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
+require('react-native-gesture-handler/jestSetup');
+
 // expo-sqlite's localStorage needs the phone's native SQLite, which Jest
 // doesn't have. Skip installing it and use an in-memory one instead.
 jest.mock('expo-sqlite/localStorage/install', () => ({}));

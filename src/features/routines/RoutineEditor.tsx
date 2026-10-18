@@ -11,17 +11,18 @@ import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { useExercises } from '@/features/exercises/useExercises';
 import { isNetworkError } from '@/lib/errors';
-import { spacing, useTheme } from '@/theme';
+import { spacing, touch, useTheme } from '@/theme';
 
 import { ROUTINE_LABELS, ROUTINE_NAME_MAX_LENGTH, type Routine } from './routine';
+import { ReorderExercisesSheet } from './ReorderExercisesSheet';
 import { RoutineExerciseCard } from './RoutineExerciseCard';
 import {
   addExercises,
   draftFromRoutine,
   emptyRoutineDraft,
   hasChanges,
-  moveExercise,
   removeExercise,
+  reorderExercises,
   setExerciseNotes,
   setPlannedSets,
   setRest,
@@ -63,6 +64,7 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
   // Set just before leaving after a save, so leaving isn't questioned.
   const leavingAfterSave = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [reorderOpen, setReorderOpen] = useState(false);
   const { data: library = [] } = useExercises();
   const { data: settings } = useExerciseSettings();
 
@@ -145,27 +147,31 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
       </View>
 
       <View style={styles.section}>
-        <Text variant="caption" color="textMuted">
-          {t('routines.editor.exercises')}
-        </Text>
+        <View style={styles.sectionHeader}>
+          <Text variant="caption" color="textMuted">
+            {t('routines.editor.exercises')}
+          </Text>
+          {draft.exercises.length > 1 ? (
+            <Button
+              label={t('routines.reorder.open')}
+              variant="ghost"
+              onPress={() => setReorderOpen(true)}
+            />
+          ) : null}
+        </View>
         {draft.exercises.length === 0 ? (
           <Text color="textMuted">{t('routines.editor.noExercises')}</Text>
         ) : (
-          draft.exercises.map((item, index) => (
+          draft.exercises.map((item) => (
             <RoutineExerciseCard
               key={item.key}
               item={item}
               exercise={exercisesById.get(item.exerciseId)}
               exerciseRestS={exerciseRest(item.exerciseId)}
-              isFirst={index === 0}
-              isLast={index === draft.exercises.length - 1}
               onSetsChange={(sets) => setDraft((current) => setPlannedSets(current, item.key, sets))}
               onRestChange={(restS) => setDraft((current) => setRest(current, item.key, restS))}
               onNotesChange={(notes) =>
                 setDraft((current) => setExerciseNotes(current, item.key, notes))
-              }
-              onMove={(direction) =>
-                setDraft((current) => moveExercise(current, item.key, direction))
               }
               onRemove={() => setDraft((current) => removeExercise(current, item.key))}
             />
@@ -209,6 +215,18 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
           setPickerOpen(false);
         }}
       />
+      <ReorderExercisesSheet
+        visible={reorderOpen}
+        items={draft.exercises.map((item) => ({
+          key: item.key,
+          exercise: exercisesById.get(item.exerciseId),
+        }))}
+        onClose={() => setReorderOpen(false)}
+        onDone={(keys) => {
+          setDraft((current) => reorderExercises(current, keys));
+          setReorderOpen(false);
+        }}
+      />
     </View>
   );
 }
@@ -219,6 +237,13 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.sm,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // Same height with or without the button, so nothing jumps.
+    minHeight: touch.min,
   },
   notes: {
     minHeight: 72,

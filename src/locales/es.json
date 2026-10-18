@@ -271,10 +271,14 @@
       "exerciseNotesFor": "Nota en esta rutina para «{{name}}»",
       "exerciseNotesPlaceholder": "P. ej. agarre abierto",
       "menu": {
-        "moveUp": "Subir",
-        "moveDown": "Bajar",
         "remove": "Quitar de la rutina"
       }
+    },
+    "reorder": {
+      "open": "Reordenar",
+      "title": "Reordenar los ejercicios",
+      "hint": "Arrastra ≡ para cambiar el orden.",
+      "handle": "Mover «{{name}}»"
     }
   }
 }

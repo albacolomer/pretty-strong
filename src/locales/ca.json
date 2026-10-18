@@ -271,10 +271,14 @@
       "exerciseNotesFor": "Nota en aquesta rutina per a «{{name}}»",
       "exerciseNotesPlaceholder": "P. ex. agafada ampla",
       "menu": {
-        "moveUp": "Mou amunt",
-        "moveDown": "Mou avall",
         "remove": "Treu de la rutina"
       }
+    },
+    "reorder": {
+      "open": "Reordena",
+      "title": "Reordena els exercicis",
+      "hint": "Arrossega ≡ per canviar l'ordre.",
+      "handle": "Mou «{{name}}»"
     }
   }
 }

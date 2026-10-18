@@ -7,6 +7,7 @@ import { ActionSheetIOS } from 'react-native';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { fetchExercises, fetchExerciseSettings } from '@/features/exercises/api';
 import { createQueryWrapper } from '@/test-utils/queryWrapper';
+import { drop } from '@/test-utils/sortablesMock';
 
 import { fetchRoutines, saveRoutine } from './api';
 import { RoutineEditor } from './RoutineEditor';
@@ -20,6 +21,7 @@ jest.mock('@/features/exercises/api', () => ({
 }));
 jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }));
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
+jest.mock('react-native-sortables', () => jest.requireActual('@/test-utils/sortablesMock'));
 const mockSaveRoutine = jest.mocked(saveRoutine);
 const mockPreventRemove = jest.mocked(usePreventRemove);
 
@@ -104,7 +106,7 @@ describe('<RoutineEditor />', () => {
     );
   });
 
-  test('adds exercises from the picker, then adjusts, moves and removes them', async () => {
+  test('adds exercises from the picker, then adjusts, reorders and removes them', async () => {
     const user = userEvent.setup();
     // Pretend the user picks this label in the native action sheet.
     let choice = '';
@@ -132,9 +134,10 @@ describe('<RoutineEditor />', () => {
     await user.press(screen.getAllByRole('button', { name: 'Afegeix 15 segons' })[0]);
     expect(screen.getByLabelText('4 sèries')).toBeOnTheScreen();
 
-    // Move the squat up, then remove the Romanian deadlift.
-    choice = 'Mou amunt';
-    await user.press(screen.getByRole('button', { name: 'Opcions de «Esquat amb barra»' }));
+    // Drag the squat to the top, then remove the Romanian deadlift.
+    await user.press(screen.getByRole('button', { name: 'Reordena' }));
+    await drop(1, 0);
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
     choice = 'Treu de la rutina';
     await user.press(screen.getByRole('button', { name: 'Opcions de «Pes mort romanès»' }));
 
@@ -184,6 +187,29 @@ describe('<RoutineEditor />', () => {
         ],
       }),
     );
+  });
+
+  test('reorders by dragging; Cancel·la keeps the order', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createQueryWrapper(),
+    });
+    const reorder = await screen.findByRole('button', { name: 'Reordena' });
+
+    await user.press(reorder);
+    expect(screen.getByLabelText('Mou «Curl martell»')).toBeOnTheScreen();
+    await drop(3, 0);
+    await user.press(screen.getByRole('button', { name: 'Cancel·la' }));
+    expect(guardsUnsavedChanges()).toBe(false);
+
+    await user.press(reorder);
+    await drop(3, 0);
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(guardsUnsavedChanges()).toBe(true);
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+
+    const saved = mockSaveRoutine.mock.lastCall?.[0];
+    expect(saved?.exercises.map((item) => item.id)).toEqual(['re-4', 're-1', 're-2', 're-3']);
   });
 
   test('says so when the routine does not exist', async () => {

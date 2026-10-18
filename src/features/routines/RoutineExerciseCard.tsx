@@ -18,27 +18,21 @@ type RoutineExerciseCardProps = {
   // The exercise's own default rest (yours from its detail screen, or the
   // app's), used while this routine doesn't set one.
   exerciseRestS: number;
-  isFirst: boolean;
-  isLast: boolean;
   onSetsChange: (sets: number) => void;
   onRestChange: (restS: number | null) => void;
   onNotesChange: (notes: string) => void;
-  onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 };
 
 // One exercise in the routine editor: planned sets, rest, this routine's
-// note on it, and a ⋯ menu to move or remove it.
+// note on it, and a ⋯ menu to remove it.
 export function RoutineExerciseCard({
   item,
   exercise,
   exerciseRestS,
-  isFirst,
-  isLast,
   onSetsChange,
   onRestChange,
   onNotesChange,
-  onMove,
   onRemove,
 }: RoutineExerciseCardProps) {
   const { t } = useTranslation();
@@ -50,11 +44,7 @@ export function RoutineExerciseCard({
   const [notesOpen, setNotesOpen] = useState(item.notes !== '');
 
   function openMenu() {
-    const actions = [
-      ...(isFirst ? [] : [{ label: t('routines.editor.menu.moveUp'), run: () => onMove(-1) }]),
-      ...(isLast ? [] : [{ label: t('routines.editor.menu.moveDown'), run: () => onMove(1) }]),
-      { label: t('routines.editor.menu.remove'), run: onRemove },
-    ];
+    const actions = [{ label: t('routines.editor.menu.remove'), run: onRemove }];
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: name,

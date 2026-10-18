@@ -6,8 +6,8 @@ import {
   draftFromRoutine,
   emptyRoutineDraft,
   hasChanges,
-  moveExercise,
   removeExercise,
+  reorderExercises,
   setExerciseNotes,
   setPlannedSets,
   setRest,
@@ -81,7 +81,7 @@ describe('hasChanges', () => {
     expect(hasChanges(draftFromRoutine(upperBody), saved)).toBe(false);
     expect(hasChanges({ ...saved, name: 'Tren superior 2' }, saved)).toBe(true);
     expect(hasChanges(setPlannedSets(saved, 're-1', 5), saved)).toBe(true);
-    expect(hasChanges(moveExercise(saved, 're-2', -1), saved)).toBe(true);
+    expect(hasChanges(reorderExercises(saved, ['re-2', 're-1']), saved)).toBe(true);
   });
 
   test('ignores spaces that saving would trim anyway', () => {
@@ -103,13 +103,16 @@ describe('editing the exercise list', () => {
     expect(exerciseIds(removeExercise(draftFromRoutine(upperBody), 're-1'))).toEqual(['row']);
   });
 
-  test('moves up and down, but not past the ends', () => {
-    const draft = draftFromRoutine(upperBody);
+  test('reorders to the dragged order, keeping any missing exercise at the end', () => {
+    const draft = addExercises(draftFromRoutine(upperBody), ['curl']);
+    const curlKey = draft.exercises[2].key;
 
-    expect(exerciseIds(moveExercise(draft, 're-2', -1))).toEqual(['row', 'lat']);
-    expect(exerciseIds(moveExercise(draft, 're-1', 1))).toEqual(['row', 'lat']);
-    expect(moveExercise(draft, 're-1', -1)).toBe(draft);
-    expect(moveExercise(draft, 're-2', 1)).toBe(draft);
+    expect(exerciseIds(reorderExercises(draft, [curlKey, 're-2', 're-1']))).toEqual([
+      'curl',
+      'row',
+      'lat',
+    ]);
+    expect(exerciseIds(reorderExercises(draft, ['re-2']))).toEqual(['row', 'lat', 'curl']);
   });
 
   test('keeps planned sets between 1 and 20', () => {
