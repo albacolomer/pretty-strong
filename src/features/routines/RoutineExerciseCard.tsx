@@ -11,6 +11,7 @@ import { spacing, useTheme } from '@/theme';
 import { EXERCISE_NOTES_MAX_LENGTH } from './routine';
 import type { DraftExercise } from './routineDraft';
 import { SetsAndRest } from './SetsAndRest';
+import { TargetFields, type TargetsUpdate } from './TargetFields';
 
 export type GroupKind = 'superset' | 'circuit';
 
@@ -26,13 +27,14 @@ type RoutineExerciseCardProps = {
   onSetsChange: (sets: number) => void;
   onRestChange: (restS: number | null) => void;
   onNotesChange: (notes: string) => void;
+  onTargetsChange: (update: TargetsUpdate) => void;
   onMakeSuperset: (otherKey: string) => void;
   onLeaveGroup: () => void;
   onRemove: () => void;
 };
 
-// One exercise in the routine editor: planned sets, rest, this routine's
-// note on it, and a ⋯ menu for supersets and removing it.
+// One exercise in the routine editor: planned sets, rest, the first-time
+// plan, this routine's note on it, and a ⋯ menu for supersets and removing it.
 export function RoutineExerciseCard({
   item,
   exercise,
@@ -42,6 +44,7 @@ export function RoutineExerciseCard({
   onSetsChange,
   onRestChange,
   onNotesChange,
+  onTargetsChange,
   onMakeSuperset,
   onLeaveGroup,
   onRemove,
@@ -110,6 +113,15 @@ export function RoutineExerciseCard({
           exerciseRestS={exerciseRestS}
           onSetsChange={onSetsChange}
           onRestChange={onRestChange}
+        />
+      ) : null}
+
+      {exercise ? (
+        <TargetFields
+          trackingType={exercise.trackingType}
+          targets={item.targets}
+          exerciseName={name}
+          onChange={onTargetsChange}
         />
       ) : null}
 

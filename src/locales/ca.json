@@ -322,6 +322,22 @@
       "roundsMinus": "Una ronda menys",
       "roundsPlus": "Una ronda més",
       "rest": "Descans després de cada ronda"
+    },
+    "targets": {
+      "title": "Primera vegada (opcional)",
+      "hint": "Els números de cada exercici són per al primer entrenament d'aquesta rutina; després, cada sèrie comença amb el que vas fer l'últim cop.",
+      "inputs": {
+        "reps": "Reps",
+        "weightKg": "kg",
+        "distanceKm": "km",
+        "distanceM": "metres",
+        "minutes": "min",
+        "seconds": "s",
+        "speedKmh": "km/h",
+        "inclinePct": "% pendent",
+        "level": "Nivell"
+      },
+      "inputFor": "{{input}} · {{name}}"
     }
   }
 }

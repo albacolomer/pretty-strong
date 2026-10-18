@@ -318,6 +318,20 @@ function newGroupKey(exercises: readonly DraftExercise[]): string {
   return `g${number}`;
 }
 
+// The first-time plan for one exercise (see TargetFields).
+export function updateTargets(
+  draft: RoutineDraft,
+  key: string,
+  update: (targets: ExerciseTargets) => ExerciseTargets,
+): RoutineDraft {
+  return {
+    ...draft,
+    exercises: draft.exercises.map((exercise) =>
+      exercise.key === key ? { ...exercise, targets: update(exercise.targets) } : exercise,
+    ),
+  };
+}
+
 // This routine's note on one exercise, e.g. "agafada ampla".
 export function setExerciseNotes(draft: RoutineDraft, key: string, notes: string): RoutineDraft {
   return {

@@ -12,6 +12,13 @@ jest.mock(
 jest.mock('react-native-reanimated', () => require('react-native-reanimated/mock'));
 require('react-native-gesture-handler/jestSetup');
 
+// A bar above the keyboard only shows while the keyboard is open, and tests
+// have no keyboard: render nothing, or every number field's "Fet" would show.
+jest.mock('react-native/Libraries/Components/TextInput/InputAccessoryView', () => ({
+  __esModule: true,
+  default: () => null,
+}));
+
 // expo-sqlite's localStorage needs the phone's native SQLite, which Jest
 // doesn't have. Skip installing it and use an in-memory one instead.
 jest.mock('expo-sqlite/localStorage/install', () => ({}));

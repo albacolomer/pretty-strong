@@ -322,6 +322,22 @@
       "roundsMinus": "One round fewer",
       "roundsPlus": "One round more",
       "rest": "Rest after each round"
+    },
+    "targets": {
+      "title": "First time (optional)",
+      "hint": "Each exercise's numbers are for this routine's first workout; after that, every set starts from what you did last time.",
+      "inputs": {
+        "reps": "Reps",
+        "weightKg": "kg",
+        "distanceKm": "km",
+        "distanceM": "metres",
+        "minutes": "min",
+        "seconds": "s",
+        "speedKmh": "km/h",
+        "inclinePct": "% incline",
+        "level": "Level"
+      },
+      "inputFor": "{{input}} · {{name}}"
     }
   }
 }

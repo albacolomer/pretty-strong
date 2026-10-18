@@ -319,6 +319,37 @@ describe('<RoutineEditor />', () => {
     expect(guardsUnsavedChanges()).toBe(false);
   });
 
+  test('plans the first time per exercise, with the fields its tracking type logs', async () => {
+    const user = userEvent.setup();
+    const plank = { ...testExercise('plank', 'Planxa'), trackingType: 'duration' as const };
+    jest.mocked(fetchRoutines).mockResolvedValue([
+      {
+        ...upperBody,
+        exercises: [
+          { ...upperBody.exercises[0], targets: { ...upperBody.exercises[0].targets, reps: 12 } },
+          { ...upperBody.exercises[1], id: 're-plank', exerciseId: 'plank', exercise: plank },
+        ],
+      },
+    ]);
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    // A saved plan shows; a weight exercise asks for reps and kg.
+    expect(await screen.findByLabelText('Reps · Tracció al pit')).toHaveDisplayValue('12');
+    await user.type(screen.getByLabelText('kg · Tracció al pit'), '42,5');
+    // A plank asks for a time instead.
+    expect(screen.queryByLabelText('kg · Planxa')).not.toBeOnTheScreen();
+    await user.type(screen.getByLabelText('min · Planxa'), '1');
+    await user.type(screen.getByLabelText('s · Planxa'), '30');
+
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+
+    const saved = mockSaveRoutine.mock.lastCall?.[0];
+    expect(saved?.exercises[0]).toMatchObject({ target_reps: 12, target_weight_kg: 42.5 });
+    expect(saved?.exercises[1]).toMatchObject({ target_duration_s: 90, target_weight_kg: null });
+  });
+
   test('says so when the routine does not exist', async () => {
     await render(<RoutineEditor routineId="missing" onSaved={jest.fn()} />, {
       wrapper: createAppWrapper(),

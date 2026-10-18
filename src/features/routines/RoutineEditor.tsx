@@ -42,6 +42,7 @@ import {
   setPlannedSets,
   setRest,
   toSaveInput,
+  updateTargets,
   validateRoutineDraft,
   type DraftExercise,
   type RoutineDraftErrors,
@@ -120,6 +121,9 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         onSetsChange={(sets) => setDraft((current) => setPlannedSets(current, item.key, sets))}
         onRestChange={(restS) => setDraft((current) => setRest(current, item.key, restS))}
         onNotesChange={(notes) => setDraft((current) => setExerciseNotes(current, item.key, notes))}
+        onTargetsChange={(update) =>
+          setDraft((current) => updateTargets(current, item.key, update))
+        }
         onMakeSuperset={(otherKey) =>
           setDraft((current) => makeSuperset(current, item.key, otherKey))
         }
@@ -253,6 +257,11 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
             // Exercises are optional here: plan them, or log them on the day.
             <Text variant="caption" color="textMuted">
               {t(`routines.editor.exercisesOptional.${draft.label}`)}
+            </Text>
+          ) : null}
+          {draft.exercises.length > 0 ? (
+            <Text variant="caption" color="textMuted">
+              {t('routines.targets.hint')}
             </Text>
           ) : null}
           {draft.exercises.length === 0 ? (

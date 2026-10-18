@@ -3,6 +3,7 @@ export { Card, type CardProps } from './Card';
 export { ChoiceChips, type ChoiceChipsProps } from './ChoiceChips';
 export { Logo, type LogoProps } from './Logo';
 export { MenuButton } from './MenuButton';
+export { NumberInput, type NumberInputProps } from './NumberInput';
 export { Screen, type ScreenProps } from './Screen';
 export { SelectField, type SelectFieldProps } from './SelectField';
 export {
