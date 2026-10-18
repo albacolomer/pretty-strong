@@ -27,8 +27,12 @@ import { ExerciseGroup } from './ExerciseGroup';
 import { PlannedDurationField } from './PlannedDurationField';
 import { ReorderExercisesSheet } from './ReorderExercisesSheet';
 import { RoutineExerciseCard, type GroupKind } from './RoutineExerciseCard';
+import { RunBlockCard } from './RunBlockCard';
+import { RUN_BLOCK_KINDS, RUN_EXERCISE_SLUG, runBlockSummary, type RunBlockKind } from './runBlocks';
 import {
   addExercises,
+  addRunBlock,
+  blockKindOf,
   draftFromRoutine,
   emptyRoutineDraft,
   exerciseSegments,
@@ -97,6 +101,10 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
   );
   const exerciseRest = (exerciseId: string) =>
     settings?.[exerciseId]?.defaultRestS ?? APP_DEFAULT_REST_S;
+  const isRunExercise = (exerciseId: string) =>
+    exercisesById.get(exerciseId)?.trackingType === 'run';
+  // Run blocks are made of the built-in run exercise.
+  const runExerciseId = library.find((exercise) => exercise.slug === RUN_EXERCISE_SLUG)?.id;
 
   function renderCard(item: DraftExercise, group: GroupKind | null) {
     // Any exercise outside this one's own group.
@@ -166,21 +174,43 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
     });
   }
 
-  // A class holds no exercises: switching to it takes them out, with undo
-  // instead of "Are you sure?" (gym UX rule).
+  // A class holds no exercises and a run only run blocks: switching takes
+  // the others out, with undo instead of "Are you sure?" (gym UX rule).
   function changeLabel(label: RoutineLabel) {
-    const removed = draft.exercises;
-    const previousLabel = draft.label;
-    setDraft((current) => setLabel(current, label));
-    if (usesExercises(label) || removed.length === 0) return;
+    const previous = draft;
+    const next = setLabel(draft, label, isRunExercise);
+    setDraft(next);
+    const removed = previous.exercises.length - next.exercises.length;
+    if (removed === 0 || (label !== 'class' && label !== 'run')) return;
     showToast({
-      message: t('routines.editor.exercisesRemoved', { count: removed.length }),
+      message: t(`routines.editor.exercisesRemoved.${label}`, { count: removed }),
       action: {
         label: t('common.undo'),
         onPress: () =>
-          setDraft((current) => ({ ...current, label: previousLabel, exercises: removed })),
+          setDraft((current) => ({
+            ...current,
+            label: previous.label,
+            exercises: previous.exercises,
+          })),
       },
     });
+  }
+
+  function chooseRunBlock() {
+    if (!runExerciseId) return;
+    const kinds: readonly RunBlockKind[] = RUN_BLOCK_KINDS;
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: t('routines.blocks.add'),
+        options: [...kinds.map((kind) => t(`routines.blocks.kinds.${kind}`)), t('common.cancel')],
+        cancelButtonIndex: kinds.length,
+        userInterfaceStyle: scheme,
+      },
+      (index) => {
+        const kind = kinds[index];
+        if (kind) setDraft((current) => addRunBlock(current, kind, runExerciseId));
+      },
+    );
   }
 
   const labelOptions = ROUTINE_LABELS.map((label) => ({
@@ -239,7 +269,53 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         />
       ) : null}
 
-      {usesExercises(draft.label) ? (
+      {draft.label === 'run' ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text variant="caption" color="textMuted">
+              {t('routines.blocks.title')}
+            </Text>
+            {draft.exercises.length > 1 ? (
+              <Button
+                label={t('routines.reorder.open')}
+                variant="ghost"
+                onPress={() => setReorderOpen(true)}
+              />
+            ) : null}
+          </View>
+          <Text variant="caption" color="textMuted">
+            {t('routines.blocks.hint')}
+          </Text>
+          {draft.exercises.map((block, index) => (
+            <RunBlockCard
+              key={block.key}
+              block={block}
+              kind={blockKindOf(block)}
+              number={index + 1}
+              showIncomplete={errors.blocks !== undefined}
+              onRepetitionsChange={(sets) =>
+                setDraft((current) => setPlannedSets(current, block.key, sets))
+              }
+              onRecoveryChange={(restS) => setDraft((current) => setRest(current, block.key, restS))}
+              onTargetsChange={(update) =>
+                setDraft((current) => updateTargets(current, block.key, update))
+              }
+              onNotesChange={(notes) =>
+                setDraft((current) => setExerciseNotes(current, block.key, notes))
+              }
+              onRemove={() => setDraft((current) => removeExercise(current, block.key))}
+            />
+          ))}
+          <Button
+            label={t('routines.blocks.add')}
+            variant="secondary"
+            onPress={chooseRunBlock}
+            disabled={!runExerciseId}
+          />
+        </View>
+      ) : null}
+
+      {usesExercises(draft.label) && draft.label !== 'run' ? (
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text variant="caption" color="textMuted">
@@ -306,6 +382,12 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         style={styles.notes}
       />
 
+      {errors.blocks ? (
+        <Text color="danger" role="alert">
+          {t(`routines.editor.errors.${errors.blocks}`)}
+        </Text>
+      ) : null}
+
       {save.isError ? (
         <Text color="danger" role="alert">
           {isNetworkError(save.error)
@@ -332,6 +414,18 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         visible={reorderOpen}
         exercises={draft.exercises}
         exercisesById={exercisesById}
+        // Blocks all show the run exercise: name them by what they are.
+        labelFor={
+          draft.label === 'run'
+            ? (block) =>
+                [
+                  t(`routines.blocks.kinds.${blockKindOf(block)}`),
+                  runBlockSummary(blockKindOf(block), block, language),
+                ]
+                  .filter((part) => part !== '')
+                  .join(' · ')
+            : undefined
+        }
         onClose={() => setReorderOpen(false)}
         onDone={(exercises) => {
           setDraft((current) => ({ ...current, exercises }));

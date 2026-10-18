@@ -3,7 +3,6 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { NumberInput, Text } from '@/components/ui';
-import type { TrackingType } from '@/features/exercises/vocabulary';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
@@ -13,7 +12,6 @@ import {
   INPUT_SPECS,
   inputValue,
   parseInput,
-  TARGET_INPUTS,
   withInput,
   type TargetInput,
 } from './targets';
@@ -23,7 +21,10 @@ import {
 export type TargetsUpdate = (targets: ExerciseTargets) => ExerciseTargets;
 
 type TargetFieldsProps = {
-  trackingType: TrackingType;
+  // Which numbers to ask for, e.g. TARGET_INPUTS[trackingType].
+  inputs: readonly TargetInput[];
+  // Above the fields; "Primera vegada (opcional)" unless given.
+  title?: string;
   targets: ExerciseTargets;
   // The exercise's name, so VoiceOver says which exercise each field is for.
   exerciseName: string;
@@ -31,17 +32,17 @@ type TargetFieldsProps = {
 };
 
 // The first-time plan for one exercise: the numbers its tracking type logs,
-// e.g. reps and kg, or km and time for a run. All optional.
-export function TargetFields({ trackingType, targets, exerciseName, onChange }: TargetFieldsProps) {
+// e.g. reps and kg, or km and time for a run; or a run block's numbers.
+export function TargetFields({ inputs, title, targets, exerciseName, onChange }: TargetFieldsProps) {
   const { t } = useTranslation();
 
   return (
     <View style={styles.section}>
       <Text variant="caption" color="textMuted">
-        {t('routines.targets.title')}
+        {title ?? t('routines.targets.title')}
       </Text>
       <View style={styles.row}>
-        {TARGET_INPUTS[trackingType].map((input) => (
+        {inputs.map((input) => (
           <TargetInputField
             key={input}
             input={input}

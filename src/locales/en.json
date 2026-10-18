@@ -228,6 +228,8 @@
     "noExercises": "No exercises yet",
     "exerciseCount_one": "{{count}} exercise",
     "exerciseCount_other": "{{count}} exercises",
+    "blockCount_one": "{{count}} block",
+    "blockCount_other": "{{count}} blocks",
     "labels": {
       "strength": "Strength",
       "run": "Run",
@@ -261,8 +263,6 @@
         "hybrid": "If the session changes every week, leave it without exercises and add them on the day.",
         "custom": "Optional: add exercises, or leave it without and mark it as done."
       },
-      "exercisesRemoved_one": "A class has no exercises: {{count}} exercise was removed.",
-      "exercisesRemoved_other": "A class has no exercises: {{count}} exercises were removed.",
       "notes": "Notes (optional)",
       "save": "Save routine",
       "discardTitle": "You have unsaved changes.",
@@ -272,7 +272,8 @@
         "required": "This field is required.",
         "nameTooLong": "Keep it to {{max}} characters.",
         "network": "No connection. Check it and try again.",
-        "unknown": "Couldn't save it. Try again."
+        "unknown": "Couldn't save it. Try again.",
+        "blocksIncomplete": "Add the distance or time of each block."
       },
       "exercises": "Exercises",
       "noExercises": "No exercises yet. Add the ones you'll do in this routine.",
@@ -304,6 +305,12 @@
         },
         "pickPartner": "With which exercise?",
         "remove": "Remove from routine"
+      },
+      "exercisesRemoved": {
+        "class_one": "A class has no exercises: {{count}} exercise was removed.",
+        "class_other": "A class has no exercises: {{count}} exercises were removed.",
+        "run_one": "A run routine only has run blocks: {{count}} exercise was removed.",
+        "run_other": "A run routine only has run blocks: {{count}} exercises were removed."
       }
     },
     "reorder": {
@@ -338,6 +345,32 @@
         "level": "Level"
       },
       "inputFor": "{{input}} · {{name}}"
+    },
+    "blocks": {
+      "title": "Blocks",
+      "hint": "Combine them into a session of your own: warm-up, intervals and cool-down.",
+      "add": "Add a block",
+      "kinds": {
+        "distance": "Distance",
+        "time": "Time",
+        "intervals": "Intervals"
+      },
+      "name": "Block {{number}}: {{kind}}",
+      "remove": "Remove block",
+      "repetitions": "Repetitions",
+      "repetitionsValue_one": "{{count}} repetition",
+      "repetitionsValue_other": "{{count}} repetitions",
+      "repetitionsMinus": "One repetition fewer",
+      "repetitionsPlus": "One repetition more",
+      "recovery": "Recovery",
+      "recoveryValue": "Recovery: {{time}}",
+      "eachRepetition": "Each repetition",
+      "target": "Target",
+      "incomplete": {
+        "distance": "Add the distance.",
+        "time": "Add the time.",
+        "intervals": "Add the distance or time of each repetition."
+      }
     }
   }
 }

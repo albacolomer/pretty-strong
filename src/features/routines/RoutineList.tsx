@@ -8,6 +8,7 @@ import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
 import { formatDuration, usesExercises, usesPlannedDuration, type Routine } from './routine';
+import { runBlockKind, runBlockSummary } from './runBlocks';
 import { useRoutines } from './useRoutines';
 
 // How many exercise names a card shows before "…".
@@ -52,13 +53,20 @@ function RoutineCard({ routine, onPress }: { routine: Routine; onPress: () => vo
   const { colors } = useTheme();
   const language = useAppLanguage();
 
-  const names = routine.exercises.map((item) => exerciseName(item.exercise, language));
+  const isRun = routine.label === 'run';
+  // A run's blocks are all the run exercise: describe them, e.g. "6 × 400 m".
+  const names = routine.exercises.map((item) =>
+    isRun
+      ? runBlockSummary(runBlockKind(item), item, language)
+      : exerciseName(item.exercise, language),
+  );
   const preview =
     names.slice(0, PREVIEW_COUNT).join(', ') + (names.length > PREVIEW_COUNT ? '…' : '');
+  const count = isRun
+    ? t('routines.blockCount', { count: names.length })
+    : t('routines.exerciseCount', { count: names.length });
   const exercisesSummary =
-    names.length === 0
-      ? t('routines.noExercises')
-      : `${t('routines.exerciseCount', { count: names.length })} · ${preview}`;
+    names.length === 0 ? t('routines.noExercises') : `${count} · ${preview}`;
   // E.g. "1 h · 4 exercicis · …"; a class shows only its duration.
   const summary = [
     usesPlannedDuration(routine.label) && routine.plannedDurationS !== null

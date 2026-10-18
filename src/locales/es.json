@@ -228,6 +228,8 @@
     "noExercises": "Todavía sin ejercicios",
     "exerciseCount_one": "{{count}} ejercicio",
     "exerciseCount_other": "{{count}} ejercicios",
+    "blockCount_one": "{{count}} bloque",
+    "blockCount_other": "{{count}} bloques",
     "labels": {
       "strength": "Fuerza",
       "run": "Correr",
@@ -261,8 +263,6 @@
         "hybrid": "Si el entrenamiento cambia cada semana, déjala sin ejercicios y añádelos el día que entrenes.",
         "custom": "Opcional: añade ejercicios, o déjala sin ellos y márcala como hecha."
       },
-      "exercisesRemoved_one": "Una clase no tiene ejercicios: se ha quitado {{count}} ejercicio.",
-      "exercisesRemoved_other": "Una clase no tiene ejercicios: se han quitado {{count}} ejercicios.",
       "notes": "Notas (opcional)",
       "save": "Guardar rutina",
       "discardTitle": "Tienes cambios sin guardar.",
@@ -272,7 +272,8 @@
         "required": "Este campo es obligatorio.",
         "nameTooLong": "Que tenga {{max}} caracteres como máximo.",
         "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
-        "unknown": "No se ha podido guardar. Vuelve a intentarlo."
+        "unknown": "No se ha podido guardar. Vuelve a intentarlo.",
+        "blocksIncomplete": "Pon la distancia o el tiempo de cada bloque."
       },
       "exercises": "Ejercicios",
       "noExercises": "Todavía no hay ejercicios. Añade los que harás en esta rutina.",
@@ -304,6 +305,12 @@
         },
         "pickPartner": "¿Con qué ejercicio?",
         "remove": "Quitar de la rutina"
+      },
+      "exercisesRemoved": {
+        "class_one": "Una clase no tiene ejercicios: se ha quitado {{count}} ejercicio.",
+        "class_other": "Una clase no tiene ejercicios: se han quitado {{count}} ejercicios.",
+        "run_one": "Una rutina de correr solo tiene bloques de carrera: se ha quitado {{count}} ejercicio.",
+        "run_other": "Una rutina de correr solo tiene bloques de carrera: se han quitado {{count}} ejercicios."
       }
     },
     "reorder": {
@@ -338,6 +345,32 @@
         "level": "Nivel"
       },
       "inputFor": "{{input}} · {{name}}"
+    },
+    "blocks": {
+      "title": "Bloques",
+      "hint": "Combínalos para hacer una sesión a medida: calentamiento, series y vuelta a la calma.",
+      "add": "Añadir un bloque",
+      "kinds": {
+        "distance": "Distancia",
+        "time": "Tiempo",
+        "intervals": "Series"
+      },
+      "name": "Bloque {{number}}: {{kind}}",
+      "remove": "Quitar el bloque",
+      "repetitions": "Repeticiones",
+      "repetitionsValue_one": "{{count}} repetición",
+      "repetitionsValue_other": "{{count}} repeticiones",
+      "repetitionsMinus": "Una repetición menos",
+      "repetitionsPlus": "Una repetición más",
+      "recovery": "Recuperación",
+      "recoveryValue": "Recuperación: {{time}}",
+      "eachRepetition": "Cada repetición",
+      "target": "Objetivo",
+      "incomplete": {
+        "distance": "Pon la distancia.",
+        "time": "Pon el tiempo.",
+        "intervals": "Pon la distancia o el tiempo de cada repetición."
+      }
     }
   }
 }

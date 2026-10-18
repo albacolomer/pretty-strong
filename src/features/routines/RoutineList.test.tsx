@@ -42,7 +42,17 @@ describe('<RoutineList />', () => {
     const hyrox = { ...upperBody, id: 'routine-2', name: 'HYROX dimarts', label: 'hybrid' as const, plannedDurationS: 3600, exercises: [] };
     const spinning = { ...upperBody, id: 'routine-4', name: 'Spinning', label: 'class' as const, plannedDurationS: 2700 };
     const swim = { ...hyrox, id: 'routine-3', name: 'Piscina', label: 'custom' as const, customLabel: 'Natació' };
-    mockFetchRoutines.mockResolvedValue([upperBody, hyrox, swim, spinning]);
+    const intervals = {
+      ...upperBody,
+      id: 'routine-5',
+      name: 'Sèries',
+      label: 'run' as const,
+      exercises: [
+        { ...upperBody.exercises[0], plannedSets: 6, targets: { ...upperBody.exercises[0].targets, distanceM: 400 } },
+        { ...upperBody.exercises[1], plannedSets: 1, targets: { ...upperBody.exercises[1].targets, distanceM: 2000 } },
+      ],
+    };
+    mockFetchRoutines.mockResolvedValue([upperBody, hyrox, swim, spinning, intervals]);
     await render(<RoutineList />, { wrapper: createQueryWrapper() });
 
     expect(await screen.findByText('Tren superior 1')).toBeOnTheScreen();
@@ -55,6 +65,8 @@ describe('<RoutineList />', () => {
     expect(screen.getByText('Natació')).toBeOnTheScreen();
     // HYROX dimarts and Piscina: a duration, and no exercises yet.
     expect(screen.getAllByText('1 h · Encara sense exercicis')).toHaveLength(2);
+    // A run lists its blocks.
+    expect(screen.getByText('2 blocs · 6 × 400 m, 2 km')).toBeOnTheScreen();
     // A class: just its duration, never its exercises.
     expect(screen.getByText('45 min')).toBeOnTheScreen();
 

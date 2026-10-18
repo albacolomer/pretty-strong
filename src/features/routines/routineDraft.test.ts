@@ -3,6 +3,8 @@ import type { Exercise } from '@/features/exercises/exercise';
 import { formatDuration, NO_TARGETS, type Routine } from './routine';
 import {
   addExercises,
+  addRunBlock,
+  blockKindOf,
   draftFromRoutine,
   dropExercise,
   emptyRoutineDraft,
@@ -11,6 +13,7 @@ import {
   leaveSuperset,
   makeSuperset,
   removeExercise,
+  updateTargets,
   type RoutineDraft,
   setExerciseNotes,
   setLabel,
@@ -245,16 +248,63 @@ describe('supersets and circuits', () => {
 });
 
 describe('routine types', () => {
+  // In these tests, only the "run" exercise is a run.
+  const isRun = (exerciseId: string) => exerciseId === 'run';
+
   test('a type with a duration starts at 1 hour; a class takes the exercises out', () => {
     const draft = draftFromRoutine(upperBody);
 
-    expect(setLabel(draft, 'hybrid')).toMatchObject({ plannedDurationS: 3600, exercises: draft.exercises });
-    expect(setLabel(draft, 'class').exercises).toEqual([]);
-    expect(setLabel({ ...draft, plannedDurationS: 2700 }, 'class').plannedDurationS).toBe(2700);
+    expect(setLabel(draft, 'hybrid', isRun)).toMatchObject({
+      plannedDurationS: 3600,
+      exercises: draft.exercises,
+    });
+    expect(setLabel(draft, 'class', isRun).exercises).toEqual([]);
+    expect(setLabel({ ...draft, plannedDurationS: 2700 }, 'class', isRun).plannedDurationS).toBe(
+      2700,
+    );
+  });
+
+  test('a run keeps only run exercises, as blocks without supersets', () => {
+    let draft = addExercises(draftFromRoutine(upperBody), ['run', 'run']);
+    draft = makeSuperset(draft, draft.exercises[2].key, draft.exercises[3].key);
+
+    const run = setLabel(draft, 'run', isRun);
+
+    expect(run.exercises.map((e) => [e.exerciseId, e.groupKey])).toEqual([
+      ['run', null],
+      ['run', null],
+    ]);
+  });
+
+  test('adds run blocks: one repetition, or 6 with 1:30 recovery', () => {
+    const draft = addRunBlock(
+      addRunBlock({ ...emptyRoutineDraft(), label: 'run' }, 'distance', 'run'),
+      'intervals',
+      'run',
+    );
+
+    expect(draft.exercises.map((e) => [e.runBlock, e.plannedSets, e.restS])).toEqual([
+      ['distance', 1, null],
+      ['intervals', 6, 90],
+    ]);
+    expect(blockKindOf(draft.exercises[1])).toBe('intervals');
+  });
+
+  test('a run block needs its distance or time to be saved', () => {
+    const draft = addRunBlock(
+      { ...emptyRoutineDraft(), name: '10K', label: 'run' },
+      'time',
+      'run',
+    );
+    const key = draft.exercises[0].key;
+
+    expect(validateRoutineDraft(draft)).toEqual({ blocks: 'blocksIncomplete' });
+    const timed = updateTargets(draft, key, (targets) => ({ ...targets, durationS: 2700 }));
+    expect(validateRoutineDraft(timed)).toEqual({});
   });
 
   test('the duration is only saved for types that use it, between 5 minutes and 10 hours', () => {
-    const hybrid = setLabel(draftFromRoutine(upperBody), 'hybrid');
+    const hybrid = setLabel(draftFromRoutine(upperBody), 'hybrid', isRun);
 
     expect(toSaveInput(hybrid, null).plannedDurationS).toBe(3600);
     expect(toSaveInput({ ...hybrid, label: 'strength' }, null).plannedDurationS).toBeNull();

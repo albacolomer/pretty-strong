@@ -19,6 +19,8 @@ type ReorderExercisesSheetProps = {
   // In the routine's current order.
   exercises: DraftExercise[];
   exercisesById: ReadonlyMap<string, Exercise>;
+  // A row's name instead of the exercise's, e.g. "Sèries · 6 × 400 m".
+  labelFor?: (item: DraftExercise) => string;
   onClose: () => void;
   // In their new order, with their supersets updated.
   onDone: (exercises: DraftExercise[]) => void;
@@ -49,6 +51,7 @@ export function ReorderExercisesSheet({ visible, ...props }: ReorderExercisesShe
 function SheetContent({
   exercises,
   exercisesById,
+  labelFor,
   onClose,
   onDone,
 }: Omit<ReorderExercisesSheetProps, 'visible'>) {
@@ -79,6 +82,7 @@ function SheetContent({
           renderItem={({ item }) => (
             <ReorderRow
               exercise={exercisesById.get(item.exerciseId)}
+              label={labelFor?.(item)}
               grouped={item.groupKey !== null}
               language={language}
             />
@@ -116,15 +120,16 @@ function SheetContent({
 
 type ReorderRowProps = {
   exercise: Exercise | undefined;
+  label: string | undefined;
   // In a superset or circuit: a pink bar, like the editor's bracket.
   grouped: boolean;
   language: Language;
 };
 
-function ReorderRow({ exercise, grouped, language }: ReorderRowProps) {
+function ReorderRow({ exercise, label, grouped, language }: ReorderRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const name = exercise ? exerciseName(exercise, language) : '…';
+  const name = label ?? (exercise ? exerciseName(exercise, language) : '…');
 
   return (
     <View

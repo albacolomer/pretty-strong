@@ -350,6 +350,70 @@ describe('<RoutineEditor />', () => {
     expect(saved?.exercises[1]).toMatchObject({ target_duration_s: 90, target_weight_kg: null });
   });
 
+  test('a run routine is made of blocks, each needing its distance or time', async () => {
+    const user = userEvent.setup();
+    let choice = '';
+    const actionSheet = jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation((options, callback) => callback(options.options.indexOf(choice)));
+    const run = { ...testExercise('run', 'Córrer'), trackingType: 'run' as const };
+    jest.mocked(fetchExercises).mockResolvedValue([run, testExercise('squat', 'Esquat amb barra')]);
+    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    await user.type(screen.getByLabelText('Nom'), 'Sèries de dijous');
+    await user.press(screen.getByRole('radio', { name: 'Córrer' }));
+
+    // 6 × 400 m with 1:30 recovery, then a 2 km cool-down.
+    choice = 'Sèries';
+    await user.press(await screen.findByRole('button', { name: 'Afegeix un bloc' }));
+    expect(screen.getByLabelText('6 repeticions')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Recuperació: 1:30')).toBeOnTheScreen();
+    await user.type(screen.getByLabelText('metres · Bloc 1: Sèries'), '400');
+    choice = 'Distància';
+    await user.press(screen.getByRole('button', { name: 'Afegeix un bloc' }));
+
+    // The distance block is still empty.
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    expect(screen.getByText('Posa la distància o el temps de cada bloc.')).toBeOnTheScreen();
+    expect(screen.getByText('Posa la distància.')).toBeOnTheScreen();
+    expect(mockSaveRoutine).not.toHaveBeenCalled();
+
+    await user.type(screen.getByLabelText('km · Bloc 2: Distància'), '2');
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+
+    expect(mockSaveRoutine).toHaveBeenCalledWith(
+      expect.objectContaining({
+        label: 'run',
+        exercises: [
+          expect.objectContaining({
+            exercise_id: 'run',
+            planned_sets: 6,
+            rest_s: 90,
+            target_distance_m: 400,
+          }),
+          expect.objectContaining({ exercise_id: 'run', planned_sets: 1, target_distance_m: 2000 }),
+        ],
+      }),
+    );
+    actionSheet.mockRestore();
+  });
+
+  test('switching to Córrer takes out what isn’t a run, with Desfés', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    await user.press(await screen.findByRole('radio', { name: 'Córrer' }));
+
+    expect(
+      screen.getByText("Una rutina de córrer només té blocs de córrer: s'han tret 4 exercicis."),
+    ).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(screen.getByRole('button', { name: 'Opcions de «Face pull»' })).toBeOnTheScreen();
+  });
+
   test('says so when the routine does not exist', async () => {
     await render(<RoutineEditor routineId="missing" onSaved={jest.fn()} />, {
       wrapper: createAppWrapper(),

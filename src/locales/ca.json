@@ -228,6 +228,8 @@
     "noExercises": "Encara sense exercicis",
     "exerciseCount_one": "{{count}} exercici",
     "exerciseCount_other": "{{count}} exercicis",
+    "blockCount_one": "{{count}} bloc",
+    "blockCount_other": "{{count}} blocs",
     "labels": {
       "strength": "Força",
       "run": "Córrer",
@@ -261,8 +263,6 @@
         "hybrid": "Si l'entrenament canvia cada setmana, deixa-la sense exercicis i afegeix-los el dia que entrenis.",
         "custom": "Opcional: afegeix-hi exercicis, o deixa-la sense i marca-la com a feta."
       },
-      "exercisesRemoved_one": "Una classe no té exercicis: s'ha tret {{count}} exercici.",
-      "exercisesRemoved_other": "Una classe no té exercicis: s'han tret {{count}} exercicis.",
       "notes": "Notes (opcional)",
       "save": "Desa la rutina",
       "discardTitle": "Tens canvis sense desar.",
@@ -272,7 +272,8 @@
         "required": "Aquest camp és obligatori.",
         "nameTooLong": "Fes-lo de {{max}} caràcters com a màxim.",
         "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
-        "unknown": "No s'ha pogut desar. Torna-ho a provar."
+        "unknown": "No s'ha pogut desar. Torna-ho a provar.",
+        "blocksIncomplete": "Posa la distància o el temps de cada bloc."
       },
       "exercises": "Exercicis",
       "noExercises": "Encara no hi ha exercicis. Afegeix els que faràs en aquesta rutina.",
@@ -304,6 +305,12 @@
         },
         "pickPartner": "Amb quin exercici?",
         "remove": "Treu de la rutina"
+      },
+      "exercisesRemoved": {
+        "class_one": "Una classe no té exercicis: s'ha tret {{count}} exercici.",
+        "class_other": "Una classe no té exercicis: s'han tret {{count}} exercicis.",
+        "run_one": "Una rutina de córrer només té blocs de córrer: s'ha tret {{count}} exercici.",
+        "run_other": "Una rutina de córrer només té blocs de córrer: s'han tret {{count}} exercicis."
       }
     },
     "reorder": {
@@ -338,6 +345,32 @@
         "level": "Nivell"
       },
       "inputFor": "{{input}} · {{name}}"
+    },
+    "blocks": {
+      "title": "Blocs",
+      "hint": "Combina-los per fer una sessió a mida: escalfament, sèries i tornada a la calma.",
+      "add": "Afegeix un bloc",
+      "kinds": {
+        "distance": "Distància",
+        "time": "Temps",
+        "intervals": "Sèries"
+      },
+      "name": "Bloc {{number}}: {{kind}}",
+      "remove": "Treu el bloc",
+      "repetitions": "Repeticions",
+      "repetitionsValue_one": "{{count}} repetició",
+      "repetitionsValue_other": "{{count}} repeticions",
+      "repetitionsMinus": "Una repetició menys",
+      "repetitionsPlus": "Una repetició més",
+      "recovery": "Recuperació",
+      "recoveryValue": "Recuperació: {{time}}",
+      "eachRepetition": "Cada repetició",
+      "target": "Objectiu",
+      "incomplete": {
+        "distance": "Posa la distància.",
+        "time": "Posa el temps.",
+        "intervals": "Posa la distància o el temps de cada repetició."
+      }
     }
   }
 }

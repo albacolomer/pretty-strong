@@ -1,5 +1,12 @@
 import type { SaveRoutineInput } from './api';
 import {
+  DEFAULT_INTERVALS,
+  DEFAULT_RECOVERY_S,
+  isRunBlockComplete,
+  runBlockKind,
+  type RunBlockKind,
+} from './runBlocks';
+import {
   DEFAULT_PLANNED_DURATION_S,
   DEFAULT_PLANNED_SETS,
   NO_TARGETS,
@@ -28,6 +35,10 @@ export type DraftExercise = {
   // As typed; saved as null when empty.
   notes: string;
   targets: ExerciseTargets;
+  // In a run routine: the kind of block it was added as. Null: it follows
+  // from its numbers (see runBlockKind), as for blocks loaded from the
+  // database.
+  runBlock: RunBlockKind | null;
 };
 
 export type RoutineDraft = {
@@ -76,20 +87,33 @@ export function draftFromRoutine(routine: Routine): RoutineDraft {
       groupKey: exercise.groupKey,
       notes: exercise.notes ?? '',
       targets: exercise.targets,
+      runBlock: null,
     })),
   };
 }
 
 // Each error is also the last part of its translation key:
 // routines.editor.errors.<error>.
-export type RoutineDraftError = 'required' | 'nameTooLong';
-export type RoutineDraftErrors = Partial<Record<'name', RoutineDraftError>>;
+export type RoutineDraftError = 'required' | 'nameTooLong' | 'blocksIncomplete';
+export type RoutineDraftErrors = Partial<Record<'name' | 'blocks', RoutineDraftError>>;
 
 export function validateRoutineDraft(draft: RoutineDraft): RoutineDraftErrors {
+  const errors: RoutineDraftErrors = {};
   const name = draft.name.trim();
-  if (name === '') return { name: 'required' };
-  if (name.length > ROUTINE_NAME_MAX_LENGTH) return { name: 'nameTooLong' };
-  return {};
+  if (name === '') errors.name = 'required';
+  else if (name.length > ROUTINE_NAME_MAX_LENGTH) errors.name = 'nameTooLong';
+  if (
+    draft.label === 'run' &&
+    draft.exercises.some((block) => !isRunBlockComplete(blockKindOf(block), block.targets))
+  ) {
+    errors.blocks = 'blocksIncomplete';
+  }
+  return errors;
+}
+
+// The kind of a run block: as added, or from its numbers.
+export function blockKindOf(block: DraftExercise): RunBlockKind {
+  return block.runBlock ?? runBlockKind(block);
 }
 
 // What save_routine() receives: trimmed text, empty notes as null, and an
@@ -135,9 +159,20 @@ export function hasChanges(draft: RoutineDraft, saved: RoutineDraft): boolean {
 }
 
 // Changes the type. A type with a planned duration starts at 1 hour if it
-// has none yet. A class holds no exercises, so they're taken out (the
-// editor offers to undo it).
-export function setLabel(draft: RoutineDraft, label: RoutineLabel): RoutineDraft {
+// has none yet. A class holds no exercises, and a run only run blocks, so
+// anything else is taken out (the editor offers to undo it).
+export function setLabel(
+  draft: RoutineDraft,
+  label: RoutineLabel,
+  isRunExercise: (exerciseId: string) => boolean,
+): RoutineDraft {
+  let exercises = usesExercises(label) ? draft.exercises : [];
+  if (label === 'run') {
+    // Blocks follow each other: no supersets.
+    exercises = withoutLoneGroups(
+      exercises.filter((exercise) => isRunExercise(exercise.exerciseId)),
+    ).map((exercise) => ({ ...exercise, groupKey: null }));
+  }
   return {
     ...draft,
     label,
@@ -145,7 +180,33 @@ export function setLabel(draft: RoutineDraft, label: RoutineLabel): RoutineDraft
       usesPlannedDuration(label) && draft.plannedDurationS === null
         ? DEFAULT_PLANNED_DURATION_S
         : draft.plannedDurationS,
-    exercises: usesExercises(label) ? draft.exercises : [],
+    exercises,
+  };
+}
+
+// Adds a run block at the end: one repetition, or 6 with 1:30 recovery.
+export function addRunBlock(
+  draft: RoutineDraft,
+  kind: RunBlockKind,
+  runExerciseId: string,
+): RoutineDraft {
+  const intervals = kind === 'intervals';
+  return {
+    ...draft,
+    exercises: [
+      ...draft.exercises,
+      {
+        key: newKey(),
+        id: null,
+        exerciseId: runExerciseId,
+        plannedSets: intervals ? DEFAULT_INTERVALS : 1,
+        restS: intervals ? DEFAULT_RECOVERY_S : null,
+        groupKey: null,
+        notes: '',
+        targets: NO_TARGETS,
+        runBlock: kind,
+      },
+    ],
   };
 }
 
@@ -176,6 +237,7 @@ export function addExercises(draft: RoutineDraft, exerciseIds: readonly string[]
         groupKey: null,
         notes: '',
         targets: NO_TARGETS,
+        runBlock: null,
       })),
     ],
   };

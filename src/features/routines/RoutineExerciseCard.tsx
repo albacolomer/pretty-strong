@@ -1,17 +1,17 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MenuButton, Text, TextField } from '@/components/ui';
+import { Card, MenuButton, Text } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
-import { EXERCISE_NOTES_MAX_LENGTH } from './routine';
+import { ExerciseNoteField } from './ExerciseNoteField';
 import type { DraftExercise } from './routineDraft';
 import { SetsAndRest } from './SetsAndRest';
 import { TargetFields, type TargetsUpdate } from './TargetFields';
+import { TARGET_INPUTS } from './targets';
 
 export type GroupKind = 'superset' | 'circuit';
 
@@ -53,8 +53,6 @@ export function RoutineExerciseCard({
   const { scheme } = useTheme();
   const language = useAppLanguage();
   const name = exercise ? exerciseName(exercise, language) : '…';
-  // The note field shows once asked for, or straight away if there's a note.
-  const [notesOpen, setNotesOpen] = useState(item.notes !== '');
 
   function showSheet(
     title: string,
@@ -118,34 +116,14 @@ export function RoutineExerciseCard({
 
       {exercise ? (
         <TargetFields
-          trackingType={exercise.trackingType}
+          inputs={TARGET_INPUTS[exercise.trackingType]}
           targets={item.targets}
           exerciseName={name}
           onChange={onTargetsChange}
         />
       ) : null}
 
-      {notesOpen ? (
-        <TextField
-          label={t('routines.editor.exerciseNotes')}
-          // Several cards have this field: VoiceOver also says which exercise.
-          aria-label={t('routines.editor.exerciseNotesFor', { name })}
-          placeholder={t('routines.editor.exerciseNotesPlaceholder')}
-          value={item.notes}
-          onChangeText={onNotesChange}
-          // Only when just asked for, not when the routine opens.
-          autoFocus={item.notes === ''}
-          multiline
-          maxLength={EXERCISE_NOTES_MAX_LENGTH}
-          style={styles.notes}
-        />
-      ) : (
-        <Button
-          label={t('routines.editor.addExerciseNotes')}
-          variant="ghost"
-          onPress={() => setNotesOpen(true)}
-        />
-      )}
+      <ExerciseNoteField notes={item.notes} name={name} onChange={onNotesChange} />
     </Card>
   );
 }
@@ -158,9 +136,5 @@ const styles = StyleSheet.create({
   },
   name: {
     flex: 1,
-  },
-  notes: {
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
   },
 });
