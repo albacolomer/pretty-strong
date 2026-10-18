@@ -1,6 +1,6 @@
 import type { Exercise } from '@/features/exercises/exercise';
 
-import { NO_TARGETS, type Routine } from './routine';
+import { formatDuration, NO_TARGETS, type Routine } from './routine';
 import {
   addExercises,
   draftFromRoutine,
@@ -13,6 +13,8 @@ import {
   removeExercise,
   type RoutineDraft,
   setExerciseNotes,
+  setLabel,
+  setPlannedDuration,
   setPlannedSets,
   setRest,
   toSaveInput,
@@ -239,5 +241,31 @@ describe('supersets and circuits', () => {
     // Dropped right after a group (not between two of it): stays on its own.
     const after = { ...draft, exercises: dropExercise(draft.exercises, 4, 2) };
     expect(groups(after)).toEqual(['lat+row', 'dip', 'face', 'curl']);
+  });
+});
+
+describe('routine types', () => {
+  test('a type with a duration starts at 1 hour; a class takes the exercises out', () => {
+    const draft = draftFromRoutine(upperBody);
+
+    expect(setLabel(draft, 'hybrid')).toMatchObject({ plannedDurationS: 3600, exercises: draft.exercises });
+    expect(setLabel(draft, 'class').exercises).toEqual([]);
+    expect(setLabel({ ...draft, plannedDurationS: 2700 }, 'class').plannedDurationS).toBe(2700);
+  });
+
+  test('the duration is only saved for types that use it, between 5 minutes and 10 hours', () => {
+    const hybrid = setLabel(draftFromRoutine(upperBody), 'hybrid');
+
+    expect(toSaveInput(hybrid, null).plannedDurationS).toBe(3600);
+    expect(toSaveInput({ ...hybrid, label: 'strength' }, null).plannedDurationS).toBeNull();
+    expect(setPlannedDuration(hybrid, 0).plannedDurationS).toBe(300);
+    expect(setPlannedDuration(hybrid, 99 * 3600).plannedDurationS).toBe(36000);
+    expect(setPlannedDuration(hybrid, null).plannedDurationS).toBeNull();
+  });
+
+  test('formats durations as minutes and hours', () => {
+    expect(formatDuration(45 * 60)).toBe('45 min');
+    expect(formatDuration(3600)).toBe('1 h');
+    expect(formatDuration(75 * 60)).toBe('1 h 15 min');
   });
 });

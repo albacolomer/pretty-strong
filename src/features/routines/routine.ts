@@ -6,6 +6,34 @@ import type { Exercise } from '@/features/exercises/exercise';
 export const ROUTINE_LABELS = ['strength', 'run', 'hybrid', 'class', 'custom'] as const;
 export type RoutineLabel = (typeof ROUTINE_LABELS)[number];
 
+// What each type's editor offers (spec: "Routine types"). A class is just
+// a duration and notes; the others hold exercises.
+export function usesExercises(label: RoutineLabel): boolean {
+  return label !== 'class';
+}
+
+// Sessions whose length is known in advance: a 50-minute class, a 1-hour
+// HYROX session.
+export function usesPlannedDuration(label: RoutineLabel): boolean {
+  return label === 'hybrid' || label === 'class' || label === 'custom';
+}
+
+// Planned duration: starts at 1 hour, changes 5 minutes at a time, and fits
+// routines_planned_duration_check (1 minute to 10 hours).
+export const DEFAULT_PLANNED_DURATION_S = 60 * 60;
+export const PLANNED_DURATION_STEP_S = 5 * 60;
+export const PLANNED_DURATION_MIN_S = 5 * 60;
+export const PLANNED_DURATION_MAX_S = 10 * 60 * 60;
+
+// "45 min", "1 h", "1 h 15 min".
+export function formatDuration(seconds: number): string {
+  const minutes = Math.round(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  if (hours === 0) return `${rest} min`;
+  return rest === 0 ? `${hours} h` : `${hours} h ${rest} min`;
+}
+
 // Weekdays as the database stores them: 1 = Monday … 7 = Sunday.
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 export type Weekday = (typeof WEEKDAYS)[number];

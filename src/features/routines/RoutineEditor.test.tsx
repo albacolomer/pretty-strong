@@ -6,7 +6,7 @@ import { ActionSheetIOS } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
 import { fetchExercises, fetchExerciseSettings } from '@/features/exercises/api';
-import { createQueryWrapper } from '@/test-utils/queryWrapper';
+import { createAppWrapper } from '@/test-utils/appWrapper';
 import { drop } from '@/test-utils/sortablesMock';
 
 import { fetchRoutines, saveRoutine } from './api';
@@ -49,7 +49,7 @@ describe('<RoutineEditor />', () => {
   test('a new routine needs a name', async () => {
     const user = userEvent.setup();
     await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
@@ -62,7 +62,7 @@ describe('<RoutineEditor />', () => {
     const user = userEvent.setup();
     const onSaved = jest.fn();
     await render(<RoutineEditor routineId={null} onSaved={onSaved} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     expect(guardsUnsavedChanges()).toBe(false);
@@ -79,7 +79,8 @@ describe('<RoutineEditor />', () => {
       name: 'HYROX dimarts',
       label: 'hybrid',
       customLabel: null,
-      plannedDurationS: null,
+      // A hybrid session starts at 1 hour.
+      plannedDurationS: 3600,
       notes: 'Simulació curta',
       weekdays: [],
       exercises: [],
@@ -90,7 +91,7 @@ describe('<RoutineEditor />', () => {
   test('edits a saved routine, keeping its exercises and their ids', async () => {
     const user = userEvent.setup();
     await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     const name = await screen.findByLabelText('Nom');
@@ -120,7 +121,7 @@ describe('<RoutineEditor />', () => {
       callback(options.options.indexOf(choice)),
     );
     await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
     await user.type(screen.getByLabelText('Nom'), 'Cames');
 
@@ -176,7 +177,7 @@ describe('<RoutineEditor />', () => {
       },
     ]);
     await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     // A saved note shows straight away; the others offer to add one.
@@ -203,7 +204,7 @@ describe('<RoutineEditor />', () => {
   test('reorders by dragging; Cancel·la keeps the order', async () => {
     const user = userEvent.setup();
     await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
     const reorder = await screen.findByRole('button', { name: 'Reordena' });
 
@@ -233,7 +234,7 @@ describe('<RoutineEditor />', () => {
         callback(options.options.indexOf(choices.shift() ?? '')),
       );
     await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     choices.push('Fes un superset amb…', 'Curl martell');
@@ -268,9 +269,59 @@ describe('<RoutineEditor />', () => {
     actionSheet.mockRestore();
   });
 
+  test('a custom type has its own name and a duration you can change or take off', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    await user.type(screen.getByLabelText('Nom'), 'Piscina');
+
+    expect(screen.queryByLabelText('Nom del tipus')).not.toBeOnTheScreen();
+    expect(screen.queryByText('Durada prevista')).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole('radio', { name: 'Personalitzat' }));
+    await user.type(screen.getByLabelText('Nom del tipus'), 'Natació');
+    expect(screen.getByLabelText('Durada prevista: 1 h')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: '5 minuts menys' }));
+    expect(screen.getByLabelText('Durada prevista: 55 min')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+
+    expect(mockSaveRoutine).toHaveBeenLastCalledWith(
+      expect.objectContaining({ label: 'custom', customLabel: 'Natació', plannedDurationS: 3300 }),
+    );
+
+    // Taken off, then saved without a duration.
+    await user.press(screen.getByRole('button', { name: 'Sense durada' }));
+    expect(screen.getByRole('button', { name: 'Afegeix una durada' })).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    expect(mockSaveRoutine).toHaveBeenLastCalledWith(
+      expect.objectContaining({ plannedDurationS: null }),
+    );
+  });
+
+  test('a class has no exercises: switching takes them out, and Desfés brings them back', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    await user.press(await screen.findByRole('radio', { name: 'Classe' }));
+
+    expect(screen.queryByRole('button', { name: 'Afegeix exercicis' })).not.toBeOnTheScreen();
+    expect(
+      screen.getByText("Una classe no té exercicis: s'han tret 4 exercicis."),
+    ).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+
+    expect(screen.getByRole('radio', { name: 'Força' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Opcions de «Face pull»' })).toBeOnTheScreen();
+    expect(guardsUnsavedChanges()).toBe(false);
+  });
+
   test('says so when the routine does not exist', async () => {
     await render(<RoutineEditor routineId="missing" onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     expect(await screen.findByText("No s'ha trobat aquesta rutina.")).toBeOnTheScreen();

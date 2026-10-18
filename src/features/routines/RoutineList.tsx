@@ -7,7 +7,7 @@ import { exerciseName } from '@/features/exercises/exercise';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
-import type { Routine } from './routine';
+import { formatDuration, usesExercises, usesPlannedDuration, type Routine } from './routine';
 import { useRoutines } from './useRoutines';
 
 // How many exercise names a card shows before "…".
@@ -46,7 +46,7 @@ export function RoutineList() {
   );
 }
 
-// Name, label, and "4 exercicis · Tracció al pit, Rem assegut…".
+// Name, type, and "1 h · 4 exercicis · Tracció al pit, Rem assegut…".
 function RoutineCard({ routine, onPress }: { routine: Routine; onPress: () => void }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -55,10 +55,19 @@ function RoutineCard({ routine, onPress }: { routine: Routine; onPress: () => vo
   const names = routine.exercises.map((item) => exerciseName(item.exercise, language));
   const preview =
     names.slice(0, PREVIEW_COUNT).join(', ') + (names.length > PREVIEW_COUNT ? '…' : '');
-  const summary =
+  const exercisesSummary =
     names.length === 0
       ? t('routines.noExercises')
       : `${t('routines.exerciseCount', { count: names.length })} · ${preview}`;
+  // E.g. "1 h · 4 exercicis · …"; a class shows only its duration.
+  const summary = [
+    usesPlannedDuration(routine.label) && routine.plannedDurationS !== null
+      ? formatDuration(routine.plannedDurationS)
+      : null,
+    usesExercises(routine.label) ? exercisesSummary : null,
+  ]
+    .filter((part) => part !== null)
+    .join(' · ');
 
   return (
     <Pressable role="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
@@ -74,9 +83,11 @@ function RoutineCard({ routine, onPress }: { routine: Routine; onPress: () => vo
             </Text>
           </View>
         </View>
-        <Text variant="caption" color="textMuted" numberOfLines={2}>
-          {summary}
-        </Text>
+        {summary !== '' ? (
+          <Text variant="caption" color="textMuted" numberOfLines={2}>
+            {summary}
+          </Text>
+        ) : null}
       </Card>
     </Pressable>
   );

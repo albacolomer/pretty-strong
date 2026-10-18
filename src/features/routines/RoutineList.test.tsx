@@ -39,9 +39,10 @@ describe('<RoutineList />', () => {
 
   test('shows each routine with its label and first exercises, and opens it', async () => {
     const user = userEvent.setup();
-    const hyrox = { ...upperBody, id: 'routine-2', name: 'HYROX dimarts', label: 'hybrid' as const, exercises: [] };
+    const hyrox = { ...upperBody, id: 'routine-2', name: 'HYROX dimarts', label: 'hybrid' as const, plannedDurationS: 3600, exercises: [] };
+    const spinning = { ...upperBody, id: 'routine-4', name: 'Spinning', label: 'class' as const, plannedDurationS: 2700 };
     const swim = { ...hyrox, id: 'routine-3', name: 'Piscina', label: 'custom' as const, customLabel: 'Natació' };
-    mockFetchRoutines.mockResolvedValue([upperBody, hyrox, swim]);
+    mockFetchRoutines.mockResolvedValue([upperBody, hyrox, swim, spinning]);
     await render(<RoutineList />, { wrapper: createQueryWrapper() });
 
     expect(await screen.findByText('Tren superior 1')).toBeOnTheScreen();
@@ -52,7 +53,10 @@ describe('<RoutineList />', () => {
     expect(screen.getByText('Híbrid')).toBeOnTheScreen();
     // A custom type shows its own name.
     expect(screen.getByText('Natació')).toBeOnTheScreen();
-    expect(screen.getAllByText('Encara sense exercicis')).toHaveLength(2);
+    // HYROX dimarts and Piscina: a duration, and no exercises yet.
+    expect(screen.getAllByText('1 h · Encara sense exercicis')).toHaveLength(2);
+    // A class: just its duration, never its exercises.
+    expect(screen.getByText('45 min')).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: /Tren superior 1/ }));
 

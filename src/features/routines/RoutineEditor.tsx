@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, ChoiceChips, Text, TextField } from '@/components/ui';
+import { Button, ChoiceChips, Text, TextField, useToast } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
@@ -14,8 +14,17 @@ import { isNetworkError } from '@/lib/errors';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, touch, useTheme } from '@/theme';
 
-import { ROUTINE_LABELS, ROUTINE_NAME_MAX_LENGTH, type Routine } from './routine';
+import {
+  CUSTOM_LABEL_MAX_LENGTH,
+  ROUTINE_LABELS,
+  ROUTINE_NAME_MAX_LENGTH,
+  usesExercises,
+  usesPlannedDuration,
+  type Routine,
+  type RoutineLabel,
+} from './routine';
 import { ExerciseGroup } from './ExerciseGroup';
+import { PlannedDurationField } from './PlannedDurationField';
 import { ReorderExercisesSheet } from './ReorderExercisesSheet';
 import { RoutineExerciseCard, type GroupKind } from './RoutineExerciseCard';
 import {
@@ -28,6 +37,8 @@ import {
   makeSuperset,
   removeExercise,
   setExerciseNotes,
+  setLabel,
+  setPlannedDuration,
   setPlannedSets,
   setRest,
   toSaveInput,
@@ -62,6 +73,7 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
   const { scheme } = useTheme();
   const language = useAppLanguage();
   const navigation = useNavigation();
+  const showToast = useToast();
   const save = useSaveRoutine();
   // What's saved now; the draft is compared with it to spot changes.
   const [saved] = useState(() => (routine ? draftFromRoutine(routine) : emptyRoutineDraft()));
@@ -150,6 +162,23 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
     });
   }
 
+  // A class holds no exercises: switching to it takes them out, with undo
+  // instead of "Are you sure?" (gym UX rule).
+  function changeLabel(label: RoutineLabel) {
+    const removed = draft.exercises;
+    const previousLabel = draft.label;
+    setDraft((current) => setLabel(current, label));
+    if (usesExercises(label) || removed.length === 0) return;
+    showToast({
+      message: t('routines.editor.exercisesRemoved', { count: removed.length }),
+      action: {
+        label: t('common.undo'),
+        onPress: () =>
+          setDraft((current) => ({ ...current, label: previousLabel, exercises: removed })),
+      },
+    });
+  }
+
   const labelOptions = ROUTINE_LABELS.map((label) => ({
     value: label,
     label: t(`routines.labels.${label}`),
@@ -180,55 +209,84 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
           label={t('routines.editor.label')}
           options={labelOptions}
           value={draft.label}
-          onChange={(label) => setDraft((current) => ({ ...current, label }))}
+          onChange={changeLabel}
         />
         <Text variant="caption" color="textMuted">
           {t(`routines.labelHints.${draft.label}`)}
         </Text>
       </View>
 
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Text variant="caption" color="textMuted">
-            {t('routines.editor.exercises')}
-          </Text>
-          {draft.exercises.length > 1 ? (
-            <Button
-              label={t('routines.reorder.open')}
-              variant="ghost"
-              onPress={() => setReorderOpen(true)}
-            />
-          ) : null}
-        </View>
-        {draft.exercises.length === 0 ? (
-          <Text color="textMuted">{t('routines.editor.noExercises')}</Text>
-        ) : (
-          exerciseSegments(draft.exercises).map(({ groupKey, items }) => {
-            if (groupKey === null) return renderCard(items[0], null);
-            const kind: GroupKind = items.length > 2 ? 'circuit' : 'superset';
-            const [first] = items;
-            return (
-              <ExerciseGroup
-                key={groupKey}
-                kind={kind}
-                plannedSets={first.plannedSets}
-                restS={first.restS}
-                exerciseRestS={exerciseRest(items[items.length - 1].exerciseId)}
-                onSetsChange={(sets) =>
-                  setDraft((current) => setPlannedSets(current, first.key, sets))
-                }
-                onRestChange={(restS) => setDraft((current) => setRest(current, first.key, restS))}>
-                {items.map((item) => renderCard(item, kind))}
-              </ExerciseGroup>
-            );
-          })
-        )}
-        <Button
-          label={t('routines.editor.addExercises')}
-          variant="secondary"
-          onPress={() => setPickerOpen(true)}
+      {draft.label === 'custom' ? (
+        <TextField
+          label={t('routines.editor.customLabel')}
+          placeholder={t('routines.editor.customLabelPlaceholder')}
+          value={draft.customLabel}
+          onChangeText={(customLabel) => setDraft((current) => ({ ...current, customLabel }))}
+          maxLength={CUSTOM_LABEL_MAX_LENGTH}
+          autoCapitalize="sentences"
+          returnKeyType="done"
         />
-      </View>
+      ) : null}
+
+      {usesPlannedDuration(draft.label) ? (
+        <PlannedDurationField
+          value={draft.plannedDurationS}
+          onChange={(seconds) => setDraft((current) => setPlannedDuration(current, seconds))}
+        />
+      ) : null}
+
+      {usesExercises(draft.label) ? (
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text variant="caption" color="textMuted">
+              {t('routines.editor.exercises')}
+            </Text>
+            {draft.exercises.length > 1 ? (
+              <Button
+                label={t('routines.reorder.open')}
+                variant="ghost"
+                onPress={() => setReorderOpen(true)}
+              />
+            ) : null}
+          </View>
+          {draft.label === 'hybrid' || draft.label === 'custom' ? (
+            // Exercises are optional here: plan them, or log them on the day.
+            <Text variant="caption" color="textMuted">
+              {t(`routines.editor.exercisesOptional.${draft.label}`)}
+            </Text>
+          ) : null}
+          {draft.exercises.length === 0 ? (
+            draft.label === 'hybrid' || draft.label === 'custom' ? null : (
+              <Text color="textMuted">{t('routines.editor.noExercises')}</Text>
+            )
+          ) : (
+            exerciseSegments(draft.exercises).map(({ groupKey, items }) => {
+              if (groupKey === null) return renderCard(items[0], null);
+              const kind: GroupKind = items.length > 2 ? 'circuit' : 'superset';
+              const [first] = items;
+              return (
+                <ExerciseGroup
+                  key={groupKey}
+                  kind={kind}
+                  plannedSets={first.plannedSets}
+                  restS={first.restS}
+                  exerciseRestS={exerciseRest(items[items.length - 1].exerciseId)}
+                  onSetsChange={(sets) =>
+                    setDraft((current) => setPlannedSets(current, first.key, sets))
+                  }
+                  onRestChange={(restS) => setDraft((current) => setRest(current, first.key, restS))}>
+                  {items.map((item) => renderCard(item, kind))}
+                </ExerciseGroup>
+              );
+            })
+          )}
+          <Button
+            label={t('routines.editor.addExercises')}
+            variant="secondary"
+            onPress={() => setPickerOpen(true)}
+          />
+        </View>
+      ) : null}
 
       <TextField
         label={t('routines.editor.notes')}

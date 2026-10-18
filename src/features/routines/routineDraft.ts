@@ -1,7 +1,10 @@
 import type { SaveRoutineInput } from './api';
 import {
+  DEFAULT_PLANNED_DURATION_S,
   DEFAULT_PLANNED_SETS,
   NO_TARGETS,
+  PLANNED_DURATION_MAX_S,
+  PLANNED_DURATION_MIN_S,
   PLANNED_SETS_MAX,
   PLANNED_SETS_MIN,
   ROUTINE_NAME_MAX_LENGTH,
@@ -9,6 +12,8 @@ import {
   type Routine,
   type RoutineLabel,
   type Weekday,
+  usesExercises,
+  usesPlannedDuration,
 } from './routine';
 
 // One exercise while the routine is being edited. `key` identifies it in
@@ -95,7 +100,9 @@ export function toSaveInput(draft: RoutineDraft, routineId: string | null): Save
     name: draft.name.trim(),
     label: draft.label,
     customLabel: draft.label === 'custom' ? emptyAsNull(draft.customLabel) : null,
-    plannedDurationS: draft.plannedDurationS,
+    // Kept in the draft while you try other types, but only saved for those
+    // that use it.
+    plannedDurationS: usesPlannedDuration(draft.label) ? draft.plannedDurationS : null,
     notes: emptyAsNull(draft.notes),
     // Monday first, so the order of taps doesn't count as a change.
     weekdays: [...draft.weekdays].sort((a, b) => a - b),
@@ -125,6 +132,32 @@ function emptyAsNull(text: string): string | null {
 // True when saving would change something, i.e. there are unsaved changes.
 export function hasChanges(draft: RoutineDraft, saved: RoutineDraft): boolean {
   return JSON.stringify(toSaveInput(draft, null)) !== JSON.stringify(toSaveInput(saved, null));
+}
+
+// Changes the type. A type with a planned duration starts at 1 hour if it
+// has none yet. A class holds no exercises, so they're taken out (the
+// editor offers to undo it).
+export function setLabel(draft: RoutineDraft, label: RoutineLabel): RoutineDraft {
+  return {
+    ...draft,
+    label,
+    plannedDurationS:
+      usesPlannedDuration(label) && draft.plannedDurationS === null
+        ? DEFAULT_PLANNED_DURATION_S
+        : draft.plannedDurationS,
+    exercises: usesExercises(label) ? draft.exercises : [],
+  };
+}
+
+// Null: no planned duration.
+export function setPlannedDuration(draft: RoutineDraft, seconds: number | null): RoutineDraft {
+  return {
+    ...draft,
+    plannedDurationS:
+      seconds === null
+        ? null
+        : Math.min(PLANNED_DURATION_MAX_S, Math.max(PLANNED_DURATION_MIN_S, seconds)),
+  };
 }
 
 // Adds exercises at the end, with the default number of sets and no rest
