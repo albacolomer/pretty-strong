@@ -230,9 +230,17 @@
     "exerciseCount_other": "{{count}} exercises",
     "labels": {
       "strength": "Strength",
-      "hyrox": "HYROX",
       "run": "Run",
-      "other": "Other"
+      "hybrid": "Hybrid",
+      "class": "Class",
+      "custom": "Custom"
+    },
+    "labelHints": {
+      "strength": "Exercises with sets, rest and notes.",
+      "run": "Runs: distance, time or intervals.",
+      "hybrid": "HYROX and sessions that change every week.",
+      "class": "Spinning, pilates, body pump…",
+      "custom": "Anything else, with the name you choose."
     },
     "editor": {
       "newTitle": "New routine",

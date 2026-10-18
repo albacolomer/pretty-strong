@@ -67,7 +67,8 @@ describe('<RoutineEditor />', () => {
 
     expect(guardsUnsavedChanges()).toBe(false);
     await user.type(screen.getByLabelText('Nom'), 'HYROX dimarts');
-    await user.press(screen.getByRole('radio', { name: 'HYROX' }));
+    await user.press(screen.getByRole('radio', { name: 'Híbrid' }));
+    expect(screen.getByText('HYROX i sessions que canvien cada setmana.')).toBeOnTheScreen();
     await user.type(screen.getByLabelText('Notes (opcional)'), 'Simulació curta');
     expect(guardsUnsavedChanges()).toBe(true);
 
@@ -76,8 +77,11 @@ describe('<RoutineEditor />', () => {
     expect(mockSaveRoutine).toHaveBeenCalledWith({
       id: null,
       name: 'HYROX dimarts',
-      label: 'hyrox',
+      label: 'hybrid',
+      customLabel: null,
+      plannedDurationS: null,
       notes: 'Simulació curta',
+      weekdays: [],
       exercises: [],
     });
     expect(onSaved).toHaveBeenCalled();
@@ -147,7 +151,14 @@ describe('<RoutineEditor />', () => {
       expect.objectContaining({
         name: 'Cames',
         exercises: [
-          { exercise_id: 'squat', planned_sets: 3, rest_s: null, group_key: null, notes: null },
+          expect.objectContaining({
+            exercise_id: 'squat',
+            planned_sets: 3,
+            rest_s: null,
+            group_key: null,
+            notes: null,
+            target_weight_kg: null,
+          }),
         ],
       }),
     );

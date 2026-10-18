@@ -39,8 +39,9 @@ describe('<RoutineList />', () => {
 
   test('shows each routine with its label and first exercises, and opens it', async () => {
     const user = userEvent.setup();
-    const hyrox = { ...upperBody, id: 'routine-2', name: 'HYROX dimarts', label: 'hyrox' as const, exercises: [] };
-    mockFetchRoutines.mockResolvedValue([upperBody, hyrox]);
+    const hyrox = { ...upperBody, id: 'routine-2', name: 'HYROX dimarts', label: 'hybrid' as const, exercises: [] };
+    const swim = { ...hyrox, id: 'routine-3', name: 'Piscina', label: 'custom' as const, customLabel: 'Natació' };
+    mockFetchRoutines.mockResolvedValue([upperBody, hyrox, swim]);
     await render(<RoutineList />, { wrapper: createQueryWrapper() });
 
     expect(await screen.findByText('Tren superior 1')).toBeOnTheScreen();
@@ -48,8 +49,10 @@ describe('<RoutineList />', () => {
     expect(
       screen.getByText('4 exercicis · Tracció al pit, Rem assegut amb politja, Face pull…'),
     ).toBeOnTheScreen();
-    expect(screen.getByText('HYROX')).toBeOnTheScreen();
-    expect(screen.getByText('Encara sense exercicis')).toBeOnTheScreen();
+    expect(screen.getByText('Híbrid')).toBeOnTheScreen();
+    // A custom type shows its own name.
+    expect(screen.getByText('Natació')).toBeOnTheScreen();
+    expect(screen.getAllByText('Encara sense exercicis')).toHaveLength(2);
 
     await user.press(screen.getByRole('button', { name: /Tren superior 1/ }));
 

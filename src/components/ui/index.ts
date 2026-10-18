@@ -1,5 +1,6 @@
 export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
+export { ChoiceChips, type ChoiceChipsProps } from './ChoiceChips';
 export { Logo, type LogoProps } from './Logo';
 export { MenuButton } from './MenuButton';
 export { Screen, type ScreenProps } from './Screen';

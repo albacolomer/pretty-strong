@@ -119,6 +119,13 @@ export type Database = {
           position: number
           rest_s: number | null
           routine_id: string
+          target_distance_m: number | null
+          target_duration_s: number | null
+          target_incline_pct: number | null
+          target_level: number | null
+          target_reps: number | null
+          target_speed_kmh: number | null
+          target_weight_kg: number | null
         }
         Insert: {
           created_at?: string
@@ -130,6 +137,13 @@ export type Database = {
           position: number
           rest_s?: number | null
           routine_id: string
+          target_distance_m?: number | null
+          target_duration_s?: number | null
+          target_incline_pct?: number | null
+          target_level?: number | null
+          target_reps?: number | null
+          target_speed_kmh?: number | null
+          target_weight_kg?: number | null
         }
         Update: {
           created_at?: string
@@ -141,6 +155,13 @@ export type Database = {
           position?: number
           rest_s?: number | null
           routine_id?: string
+          target_distance_m?: number | null
+          target_duration_s?: number | null
+          target_incline_pct?: number | null
+          target_level?: number | null
+          target_reps?: number | null
+          target_speed_kmh?: number | null
+          target_weight_kg?: number | null
         }
         Relationships: [
           {
@@ -163,28 +184,34 @@ export type Database = {
         Row: {
           archived_at: string | null
           created_at: string
+          custom_label: string | null
           id: string
           label: string
           name: string
           notes: string | null
+          planned_duration_s: number | null
           user_id: string
         }
         Insert: {
           archived_at?: string | null
           created_at?: string
+          custom_label?: string | null
           id?: string
           label?: string
           name: string
           notes?: string | null
+          planned_duration_s?: number | null
           user_id: string
         }
         Update: {
           archived_at?: string | null
           created_at?: string
+          custom_label?: string | null
           id?: string
           label?: string
           name?: string
           notes?: string | null
+          planned_duration_s?: number | null
           user_id?: string
         }
         Relationships: []
@@ -221,6 +248,38 @@ export type Database = {
           },
         ]
       }
+      weekly_schedule: {
+        Row: {
+          created_at: string
+          position: number
+          routine_id: string
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          position?: number
+          routine_id: string
+          user_id: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          position?: number
+          routine_id?: string
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_schedule_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
@@ -229,11 +288,14 @@ export type Database = {
       is_username_available: { Args: { candidate: string }; Returns: boolean }
       save_routine: {
         Args: {
+          p_custom_label: string
           p_exercises: Json
           p_id: string
           p_label: string
           p_name: string
           p_notes: string
+          p_planned_duration_s: number
+          p_weekdays: number[]
         }
         Returns: string
       }

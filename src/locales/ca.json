@@ -230,9 +230,17 @@
     "exerciseCount_other": "{{count}} exercicis",
     "labels": {
       "strength": "Força",
-      "hyrox": "HYROX",
       "run": "Córrer",
-      "other": "Altres"
+      "hybrid": "Híbrid",
+      "class": "Classe",
+      "custom": "Personalitzat"
+    },
+    "labelHints": {
+      "strength": "Exercicis amb sèries, descans i notes.",
+      "run": "Curses: distància, temps o sèries.",
+      "hybrid": "HYROX i sessions que canvien cada setmana.",
+      "class": "Spinning, pilates, body pump…",
+      "custom": "Qualsevol altra cosa, amb el nom que vulguis."
     },
     "editor": {
       "newTitle": "Nova rutina",

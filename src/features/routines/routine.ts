@@ -1,10 +1,36 @@
 import type { Exercise } from '@/features/exercises/exercise';
 
-// Fixed codes, matching routines_label_check in the create_routines
-// migration. Each is also the last part of its translation key:
-// routines.labels.<label>.
-export const ROUTINE_LABELS = ['strength', 'hyrox', 'run', 'other'] as const;
+// Routine types (spec: "Routine types"), matching routines_label_check in
+// the routine_types_plan_and_week migration. Each is also the last part of
+// its translation keys: routines.labels.<label>, routines.labelHints.<label>.
+export const ROUTINE_LABELS = ['strength', 'run', 'hybrid', 'class', 'custom'] as const;
 export type RoutineLabel = (typeof ROUTINE_LABELS)[number];
+
+// Weekdays as the database stores them: 1 = Monday … 7 = Sunday.
+export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
+export type Weekday = (typeof WEEKDAYS)[number];
+
+// The first-time plan for an exercise: what its first workout in this
+// routine starts from. Only the fields its tracking type uses are set.
+export type ExerciseTargets = {
+  weightKg: number | null;
+  reps: number | null;
+  durationS: number | null;
+  distanceM: number | null;
+  speedKmh: number | null;
+  inclinePct: number | null;
+  level: number | null;
+};
+
+export const NO_TARGETS: ExerciseTargets = {
+  weightKg: null,
+  reps: null,
+  durationS: null,
+  distanceM: null,
+  speedKmh: null,
+  inclinePct: null,
+  level: null,
+};
 
 // One exercise in a routine, with its plan for it.
 export type RoutineExercise = {
@@ -18,18 +44,26 @@ export type RoutineExercise = {
   // Same key = superset or circuit (US-08).
   groupKey: string | null;
   notes: string | null;
+  targets: ExerciseTargets;
 };
 
 export type Routine = {
   id: string;
   name: string;
   label: RoutineLabel;
+  // The name of a custom type, e.g. "Natació".
+  customLabel: string | null;
+  plannedDurationS: number | null;
   notes: string | null;
+  // The days it's planned on, Monday first.
+  weekdays: Weekday[];
   // In order.
   exercises: RoutineExercise[];
 };
 
 export const ROUTINE_NAME_MAX_LENGTH = 60;
+// Matches routines_custom_label_check.
+export const CUSTOM_LABEL_MAX_LENGTH = 30;
 export const PLANNED_SETS_MIN = 1;
 export const PLANNED_SETS_MAX = 20;
 export const DEFAULT_PLANNED_SETS = 3;

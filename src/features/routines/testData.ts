@@ -1,7 +1,7 @@
 // Shared test data for the routines feature (only imported by tests).
 import type { Exercise } from '@/features/exercises/exercise';
 
-import type { Routine } from './routine';
+import { NO_TARGETS, type Routine } from './routine';
 
 export function testExercise(id: string, ca: string): Exercise {
   return {
@@ -21,7 +21,10 @@ export const upperBody: Routine = {
   id: 'routine-1',
   name: 'Tren superior 1',
   label: 'strength',
+  customLabel: null,
+  plannedDurationS: null,
   notes: null,
+  weekdays: [],
   exercises: ['Tracció al pit', 'Rem assegut amb politja', 'Face pull', 'Curl martell'].map(
     (ca, index) => ({
       id: `re-${index + 1}`,
@@ -31,6 +34,7 @@ export const upperBody: Routine = {
       restS: null,
       groupKey: null,
       notes: null,
+      targets: NO_TARGETS,
     }),
   ),
 };

@@ -1,11 +1,14 @@
 import type { SaveRoutineInput } from './api';
 import {
   DEFAULT_PLANNED_SETS,
+  NO_TARGETS,
   PLANNED_SETS_MAX,
   PLANNED_SETS_MIN,
   ROUTINE_NAME_MAX_LENGTH,
+  type ExerciseTargets,
   type Routine,
   type RoutineLabel,
+  type Weekday,
 } from './routine';
 
 // One exercise while the routine is being edited. `key` identifies it in
@@ -19,12 +22,17 @@ export type DraftExercise = {
   groupKey: string | null;
   // As typed; saved as null when empty.
   notes: string;
+  targets: ExerciseTargets;
 };
 
 export type RoutineDraft = {
   name: string;
   label: RoutineLabel;
+  // As typed; only kept for custom routines.
+  customLabel: string;
+  plannedDurationS: number | null;
   notes: string;
+  weekdays: Weekday[];
   exercises: DraftExercise[];
 };
 
@@ -35,14 +43,25 @@ function newKey(): string {
 }
 
 export function emptyRoutineDraft(): RoutineDraft {
-  return { name: '', label: 'strength', notes: '', exercises: [] };
+  return {
+    name: '',
+    label: 'strength',
+    customLabel: '',
+    plannedDurationS: null,
+    notes: '',
+    weekdays: [],
+    exercises: [],
+  };
 }
 
 export function draftFromRoutine(routine: Routine): RoutineDraft {
   return {
     name: routine.name,
     label: routine.label,
+    customLabel: routine.customLabel ?? '',
+    plannedDurationS: routine.plannedDurationS,
     notes: routine.notes ?? '',
+    weekdays: routine.weekdays,
     exercises: routine.exercises.map((exercise) => ({
       key: exercise.id,
       id: exercise.id,
@@ -51,6 +70,7 @@ export function draftFromRoutine(routine: Routine): RoutineDraft {
       restS: exercise.restS,
       groupKey: exercise.groupKey,
       notes: exercise.notes ?? '',
+      targets: exercise.targets,
     })),
   };
 }
@@ -74,7 +94,11 @@ export function toSaveInput(draft: RoutineDraft, routineId: string | null): Save
     id: routineId,
     name: draft.name.trim(),
     label: draft.label,
+    customLabel: draft.label === 'custom' ? emptyAsNull(draft.customLabel) : null,
+    plannedDurationS: draft.plannedDurationS,
     notes: emptyAsNull(draft.notes),
+    // Monday first, so the order of taps doesn't count as a change.
+    weekdays: [...draft.weekdays].sort((a, b) => a - b),
     exercises: draft.exercises.map((exercise) => ({
       ...(exercise.id ? { id: exercise.id } : {}),
       exercise_id: exercise.exerciseId,
@@ -82,6 +106,13 @@ export function toSaveInput(draft: RoutineDraft, routineId: string | null): Save
       rest_s: exercise.restS,
       group_key: exercise.groupKey,
       notes: emptyAsNull(exercise.notes),
+      target_weight_kg: exercise.targets.weightKg,
+      target_reps: exercise.targets.reps,
+      target_duration_s: exercise.targets.durationS,
+      target_distance_m: exercise.targets.distanceM,
+      target_speed_kmh: exercise.targets.speedKmh,
+      target_incline_pct: exercise.targets.inclinePct,
+      target_level: exercise.targets.level,
     })),
   };
 }
@@ -111,6 +142,7 @@ export function addExercises(draft: RoutineDraft, exerciseIds: readonly string[]
         restS: null,
         groupKey: null,
         notes: '',
+        targets: NO_TARGETS,
       })),
     ],
   };

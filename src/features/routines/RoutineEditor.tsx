@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, SegmentedControl, Text, TextField } from '@/components/ui';
+import { Button, ChoiceChips, Text, TextField } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
@@ -176,12 +176,15 @@ function RoutineForm({ routine, onSaved }: { routine: Routine | null; onSaved: (
         <Text variant="caption" color="textMuted">
           {t('routines.editor.label')}
         </Text>
-        <SegmentedControl
+        <ChoiceChips
           label={t('routines.editor.label')}
           options={labelOptions}
           value={draft.label}
           onChange={(label) => setDraft((current) => ({ ...current, label }))}
         />
+        <Text variant="caption" color="textMuted">
+          {t(`routines.labelHints.${draft.label}`)}
+        </Text>
       </View>
 
       <View style={styles.section}>

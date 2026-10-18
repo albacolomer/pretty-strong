@@ -1,6 +1,6 @@
 import type { Exercise } from '@/features/exercises/exercise';
 
-import type { Routine } from './routine';
+import { NO_TARGETS, type Routine } from './routine';
 import {
   addExercises,
   draftFromRoutine,
@@ -37,10 +37,13 @@ const upperBody: Routine = {
   id: 'routine-1',
   name: 'Tren superior 1',
   label: 'strength',
+  customLabel: null,
+  plannedDurationS: null,
   notes: null,
+  weekdays: [1, 4],
   exercises: [
-    { id: 're-1', exerciseId: 'lat', exercise: exercise('lat'), plannedSets: 4, restS: 120, groupKey: null, notes: null },
-    { id: 're-2', exerciseId: 'row', exercise: exercise('row'), plannedSets: 3, restS: null, groupKey: null, notes: null },
+    { id: 're-1', exerciseId: 'lat', exercise: exercise('lat'), plannedSets: 4, restS: 120, groupKey: null, notes: null, targets: { ...NO_TARGETS, reps: 10, weightKg: 42.5 } },
+    { id: 're-2', exerciseId: 'row', exercise: exercise('row'), plannedSets: 3, restS: null, groupKey: null, notes: null, targets: NO_TARGETS },
   ],
 };
 
@@ -64,16 +67,41 @@ describe('toSaveInput', () => {
       ['curl'],
     );
 
+    const noPlan = {
+      target_weight_kg: null,
+      target_reps: null,
+      target_duration_s: null,
+      target_distance_m: null,
+      target_speed_kmh: null,
+      target_incline_pct: null,
+      target_level: null,
+    };
     expect(toSaveInput(draft, 'routine-1')).toEqual({
       id: 'routine-1',
       name: 'Tren superior 1',
       label: 'strength',
+      customLabel: null,
+      plannedDurationS: null,
       notes: null,
+      weekdays: [1, 4],
       exercises: [
-        { id: 're-1', exercise_id: 'lat', planned_sets: 4, rest_s: 120, group_key: null, notes: null },
-        { id: 're-2', exercise_id: 'row', planned_sets: 3, rest_s: null, group_key: null, notes: null },
-        { exercise_id: 'curl', planned_sets: 3, rest_s: null, group_key: null, notes: null },
+        { id: 're-1', exercise_id: 'lat', planned_sets: 4, rest_s: 120, group_key: null, notes: null, ...noPlan, target_reps: 10, target_weight_kg: 42.5 },
+        { id: 're-2', exercise_id: 'row', planned_sets: 3, rest_s: null, group_key: null, notes: null, ...noPlan },
+        { exercise_id: 'curl', planned_sets: 3, rest_s: null, group_key: null, notes: null, ...noPlan },
       ],
+    });
+  });
+
+  test('keeps a custom name only for custom routines, and sorts the days', () => {
+    const draft: RoutineDraft = {
+      ...draftFromRoutine(upperBody),
+      customLabel: ' Natació ',
+      weekdays: [5, 1],
+    };
+
+    expect(toSaveInput(draft, null)).toMatchObject({ customLabel: null, weekdays: [1, 5] });
+    expect(toSaveInput({ ...draft, label: 'custom' }, null)).toMatchObject({
+      customLabel: 'Natació',
     });
   });
 });

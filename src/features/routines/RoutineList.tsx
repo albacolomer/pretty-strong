@@ -69,7 +69,8 @@ function RoutineCard({ routine, onPress }: { routine: Routine; onPress: () => vo
           </Text>
           <View style={[styles.tag, { backgroundColor: colors.accentSoft }]}>
             <Text variant="caption" color="accent">
-              {t(`routines.labels.${routine.label}`)}
+              {/* A custom type shows the name you gave it, e.g. "Natació". */}
+              {routine.customLabel ?? t(`routines.labels.${routine.label}`)}
             </Text>
           </View>
         </View>
