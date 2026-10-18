@@ -301,11 +301,6 @@
       },
       "noExercises": "No exercises yet. Add the ones you'll do in this routine.",
       "addExercises": "Add exercises",
-      "sets": "Sets",
-      "setsValue_one": "{{count}} set",
-      "setsValue_other": "{{count}} sets",
-      "setsMinus": "One set fewer",
-      "setsPlus": "One set more",
       "rest": "Rest",
       "restValue": "Rest: {{time}}",
       "restMinus": "15 seconds less",
@@ -338,6 +333,15 @@
       "addNote": "Add a note",
       "typeButton": "Type: {{type}}"
     },
+    "sets": {
+      "header": "Set",
+      "rowName": "{{name}}, set {{number}}",
+      "menuTitle": "Set {{number}}",
+      "setFor": "Set {{number}} of “{{name}}”",
+      "remove": "Remove set",
+      "add": "+ Add set",
+      "addFor": "Add a set to “{{name}}”"
+    },
     "reorder": {
       "open": "Reorder",
       "title": "Reorder exercises",
@@ -348,11 +352,8 @@
       "superset": "Superset",
       "circuit": "Circuit",
       "hint": "Do one of each back to back, then rest at the end of the round.",
-      "rounds": "Rounds",
       "roundsValue_one": "{{count}} round",
       "roundsValue_other": "{{count}} rounds",
-      "roundsMinus": "One round fewer",
-      "roundsPlus": "One round more",
       "rest": "Rest between rounds"
     },
     "targets": {

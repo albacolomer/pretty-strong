@@ -38,8 +38,8 @@ export function formatDuration(seconds: number): string {
 export const WEEKDAYS = [1, 2, 3, 4, 5, 6, 7] as const;
 export type Weekday = (typeof WEEKDAYS)[number];
 
-// The first-time plan for an exercise: what its first workout in this
-// routine starts from. Only the fields its tracking type uses are set.
+// The first-time plan for one set: what the first workout of this routine
+// starts from. Only the fields the exercise's tracking type uses are set.
 export type ExerciseTargets = {
   weightKg: number | null;
   reps: number | null;
@@ -66,13 +66,13 @@ export type RoutineExercise = {
   exerciseId: string;
   // The exercise itself, even if it has been archived since.
   exercise: Exercise;
-  plannedSets: number;
   // Empty: the exercise's own default rest, or the app's.
   restS: number | null;
   // Same key = superset or circuit (US-08).
   groupKey: string | null;
   notes: string | null;
-  targets: ExerciseTargets;
+  // One plan per set, in order (routine_sets); at least one.
+  sets: ExerciseTargets[];
 };
 
 export type Routine = {
@@ -92,8 +92,8 @@ export type Routine = {
 export const ROUTINE_NAME_MAX_LENGTH = 60;
 // Matches routines_custom_label_check.
 export const CUSTOM_LABEL_MAX_LENGTH = 30;
+// Sets per exercise: at least one, at most 20.
 export const PLANNED_SETS_MIN = 1;
 export const PLANNED_SETS_MAX = 20;
-export const DEFAULT_PLANNED_SETS = 3;
 // Matches routine_exercises_notes_length in the create_routines migration.
 export const EXERCISE_NOTES_MAX_LENGTH = 500;

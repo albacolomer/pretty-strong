@@ -301,11 +301,6 @@
       },
       "noExercises": "Todavía no hay ejercicios. Añade los que harás en esta rutina.",
       "addExercises": "Añadir ejercicios",
-      "sets": "Series",
-      "setsValue_one": "{{count}} serie",
-      "setsValue_other": "{{count}} series",
-      "setsMinus": "Quitar una serie",
-      "setsPlus": "Añadir una serie",
       "rest": "Descanso",
       "restValue": "Descanso: {{time}}",
       "restMinus": "Quitar 15 segundos",
@@ -338,6 +333,15 @@
       "addNote": "Añadir una nota",
       "typeButton": "Tipo: {{type}}"
     },
+    "sets": {
+      "header": "Serie",
+      "rowName": "{{name}}, serie {{number}}",
+      "menuTitle": "Serie {{number}}",
+      "setFor": "Serie {{number}} de «{{name}}»",
+      "remove": "Quitar la serie",
+      "add": "+ Añadir una serie",
+      "addFor": "Añadir una serie a «{{name}}»"
+    },
     "reorder": {
       "open": "Reordenar",
       "title": "Reordenar los ejercicios",
@@ -348,11 +352,8 @@
       "superset": "Superset",
       "circuit": "Circuito",
       "hint": "Haz uno de cada seguido, sin descanso, y descansa al acabar la ronda.",
-      "rounds": "Rondas",
       "roundsValue_one": "{{count}} ronda",
       "roundsValue_other": "{{count}} rondas",
-      "roundsMinus": "Una ronda menos",
-      "roundsPlus": "Una ronda más",
       "rest": "Descanso entre rondas"
     },
     "targets": {

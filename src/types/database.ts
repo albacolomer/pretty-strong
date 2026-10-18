@@ -115,17 +115,9 @@ export type Database = {
           group_key: string | null
           id: string
           notes: string | null
-          planned_sets: number
           position: number
           rest_s: number | null
           routine_id: string
-          target_distance_m: number | null
-          target_duration_s: number | null
-          target_incline_pct: number | null
-          target_level: number | null
-          target_reps: number | null
-          target_speed_kmh: number | null
-          target_weight_kg: number | null
         }
         Insert: {
           created_at?: string
@@ -133,17 +125,9 @@ export type Database = {
           group_key?: string | null
           id?: string
           notes?: string | null
-          planned_sets?: number
           position: number
           rest_s?: number | null
           routine_id: string
-          target_distance_m?: number | null
-          target_duration_s?: number | null
-          target_incline_pct?: number | null
-          target_level?: number | null
-          target_reps?: number | null
-          target_speed_kmh?: number | null
-          target_weight_kg?: number | null
         }
         Update: {
           created_at?: string
@@ -151,17 +135,9 @@ export type Database = {
           group_key?: string | null
           id?: string
           notes?: string | null
-          planned_sets?: number
           position?: number
           rest_s?: number | null
           routine_id?: string
-          target_distance_m?: number | null
-          target_duration_s?: number | null
-          target_incline_pct?: number | null
-          target_level?: number | null
-          target_reps?: number | null
-          target_speed_kmh?: number | null
-          target_weight_kg?: number | null
         }
         Relationships: [
           {
@@ -176,6 +152,56 @@ export type Database = {
             columns: ["routine_id"]
             isOneToOne: false
             referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      routine_sets: {
+        Row: {
+          created_at: string
+          id: string
+          position: number
+          routine_exercise_id: string
+          target_distance_m: number | null
+          target_duration_s: number | null
+          target_incline_pct: number | null
+          target_level: number | null
+          target_reps: number | null
+          target_speed_kmh: number | null
+          target_weight_kg: number | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          position: number
+          routine_exercise_id: string
+          target_distance_m?: number | null
+          target_duration_s?: number | null
+          target_incline_pct?: number | null
+          target_level?: number | null
+          target_reps?: number | null
+          target_speed_kmh?: number | null
+          target_weight_kg?: number | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          position?: number
+          routine_exercise_id?: string
+          target_distance_m?: number | null
+          target_duration_s?: number | null
+          target_incline_pct?: number | null
+          target_level?: number | null
+          target_reps?: number | null
+          target_speed_kmh?: number | null
+          target_weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "routine_sets_routine_exercise_id_fkey"
+            columns: ["routine_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "routine_exercises"
             referencedColumns: ["id"]
           },
         ]

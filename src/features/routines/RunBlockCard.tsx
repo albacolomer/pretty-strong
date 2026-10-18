@@ -9,7 +9,7 @@ import { spacing, useTheme } from '@/theme';
 import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
 import { RestField } from './RestField';
 import { PLANNED_SETS_MAX } from './routine';
-import type { DraftExercise } from './routineDraft';
+import { blockTargets, type DraftExercise } from './routineDraft';
 import {
   INTERVALS_MIN,
   isRunBlockComplete,
@@ -54,7 +54,13 @@ export function RunBlockCard({
   const language = useAppLanguage();
   const kindName = t(`routines.blocks.kinds.${kind}`);
   const name = t('routines.blocks.name', { number, kind: kindName });
-  const summary = runBlockSummary(kind, block, language);
+  const targets = blockTargets(block);
+  const repetitions = block.sets.length;
+  const summary = runBlockSummary(
+    kind,
+    block.sets.map((set) => set.targets),
+    language,
+  );
   // The note shows once asked for with "+ Nota", or straight away if set.
   const [notesOpen, setNotesOpen] = useState(block.notes !== '');
 
@@ -95,14 +101,14 @@ export function RunBlockCard({
             {t('routines.blocks.repetitions')}
           </Text>
           <Stepper
-            value={String(block.plannedSets)}
-            valueLabel={t('routines.blocks.repetitionsValue', { count: block.plannedSets })}
-            onDecrement={() => onRepetitionsChange(block.plannedSets - 1)}
-            onIncrement={() => onRepetitionsChange(block.plannedSets + 1)}
+            value={String(repetitions)}
+            valueLabel={t('routines.blocks.repetitionsValue', { count: repetitions })}
+            onDecrement={() => onRepetitionsChange(repetitions - 1)}
+            onIncrement={() => onRepetitionsChange(repetitions + 1)}
             decrementLabel={t('routines.blocks.repetitionsMinus')}
             incrementLabel={t('routines.blocks.repetitionsPlus')}
-            canDecrement={block.plannedSets > INTERVALS_MIN}
-            canIncrement={block.plannedSets < PLANNED_SETS_MAX}
+            canDecrement={repetitions > INTERVALS_MIN}
+            canIncrement={repetitions < PLANNED_SETS_MAX}
           />
         </View>
       ) : null}
@@ -112,11 +118,11 @@ export function RunBlockCard({
         title={
           kind === 'intervals' ? t('routines.blocks.eachRepetition') : t('routines.blocks.target')
         }
-        targets={block.targets}
+        targets={targets}
         exerciseName={name}
         onChange={onTargetsChange}
       />
-      {showIncomplete && !isRunBlockComplete(kind, block.targets) ? (
+      {showIncomplete && !isRunBlockComplete(kind, targets) ? (
         <Text variant="caption" color="danger">
           {t(`routines.blocks.incomplete.${kind}`)}
         </Text>

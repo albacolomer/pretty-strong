@@ -8,7 +8,6 @@ import {
 } from './runBlocks';
 import {
   DEFAULT_PLANNED_DURATION_S,
-  DEFAULT_PLANNED_SETS,
   NO_TARGETS,
   PLANNED_DURATION_MAX_S,
   PLANNED_DURATION_MIN_S,
@@ -23,18 +22,25 @@ import {
   usesPlannedDuration,
 } from './routine';
 
+// One planned set while the routine is being edited: its first-time plan.
+// `key` keeps each row's typed numbers in place when a set above it goes.
+export type DraftSet = {
+  key: string;
+  targets: ExerciseTargets;
+};
+
 // One exercise while the routine is being edited. `key` identifies it in
 // the list; `id` is its database id, or null until it's first saved.
 export type DraftExercise = {
   key: string;
   id: string | null;
   exerciseId: string;
-  plannedSets: number;
   restS: number | null;
   groupKey: string | null;
   // As typed; saved as null when empty.
   notes: string;
-  targets: ExerciseTargets;
+  // At least one, in order.
+  sets: DraftSet[];
   // In a run routine: the kind of block it was added as. Null: it follows
   // from its numbers (see runBlockKind), as for blocks loaded from the
   // database.
@@ -56,6 +62,10 @@ let lastKey = 0;
 function newKey(): string {
   lastKey += 1;
   return `new-${lastKey}`;
+}
+
+function newSet(targets: ExerciseTargets = NO_TARGETS): DraftSet {
+  return { key: newKey(), targets };
 }
 
 export function emptyRoutineDraft(): RoutineDraft {
@@ -82,11 +92,10 @@ export function draftFromRoutine(routine: Routine): RoutineDraft {
       key: exercise.id,
       id: exercise.id,
       exerciseId: exercise.exerciseId,
-      plannedSets: exercise.plannedSets,
       restS: exercise.restS,
       groupKey: exercise.groupKey,
       notes: exercise.notes ?? '',
-      targets: exercise.targets,
+      sets: exercise.sets.map((targets) => newSet(targets)),
       runBlock: null,
     })),
   };
@@ -104,7 +113,7 @@ export function validateRoutineDraft(draft: RoutineDraft): RoutineDraftErrors {
   else if (name.length > ROUTINE_NAME_MAX_LENGTH) errors.name = 'nameTooLong';
   if (
     draft.label === 'run' &&
-    draft.exercises.some((block) => !isRunBlockComplete(blockKindOf(block), block.targets))
+    draft.exercises.some((block) => !isRunBlockComplete(blockKindOf(block), blockTargets(block)))
   ) {
     errors.blocks = 'blocksIncomplete';
   }
@@ -113,7 +122,12 @@ export function validateRoutineDraft(draft: RoutineDraft): RoutineDraftErrors {
 
 // The kind of a run block: as added, or from its numbers.
 export function blockKindOf(block: DraftExercise): RunBlockKind {
-  return block.runBlock ?? runBlockKind(block);
+  return block.runBlock ?? runBlockKind(block.sets.map((set) => set.targets));
+}
+
+// A run block's numbers: its sets are all alike, so the first one's.
+export function blockTargets(block: DraftExercise): ExerciseTargets {
+  return block.sets[0]?.targets ?? NO_TARGETS;
 }
 
 // What save_routine() receives: trimmed text, empty notes as null, and an
@@ -133,17 +147,18 @@ export function toSaveInput(draft: RoutineDraft, routineId: string | null): Save
     exercises: draft.exercises.map((exercise) => ({
       ...(exercise.id ? { id: exercise.id } : {}),
       exercise_id: exercise.exerciseId,
-      planned_sets: exercise.plannedSets,
       rest_s: exercise.restS,
       group_key: exercise.groupKey,
       notes: emptyAsNull(exercise.notes),
-      target_weight_kg: exercise.targets.weightKg,
-      target_reps: exercise.targets.reps,
-      target_duration_s: exercise.targets.durationS,
-      target_distance_m: exercise.targets.distanceM,
-      target_speed_kmh: exercise.targets.speedKmh,
-      target_incline_pct: exercise.targets.inclinePct,
-      target_level: exercise.targets.level,
+      sets: exercise.sets.map(({ targets }) => ({
+        target_weight_kg: targets.weightKg,
+        target_reps: targets.reps,
+        target_duration_s: targets.durationS,
+        target_distance_m: targets.distanceM,
+        target_speed_kmh: targets.speedKmh,
+        target_incline_pct: targets.inclinePct,
+        target_level: targets.level,
+      })),
     })),
   };
 }
@@ -199,15 +214,35 @@ export function addRunBlock(
         key: newKey(),
         id: null,
         exerciseId: runExerciseId,
-        plannedSets: intervals ? DEFAULT_INTERVALS : 1,
         restS: intervals ? DEFAULT_RECOVERY_S : null,
         groupKey: null,
         notes: '',
-        targets: NO_TARGETS,
+        sets: Array.from({ length: intervals ? DEFAULT_INTERVALS : 1 }, () => newSet()),
         runBlock: kind,
       },
     ],
   };
+}
+
+// A run block's repetitions: that many sets, all with the block's numbers.
+export function setRepetitions(draft: RoutineDraft, key: string, count: number): RoutineDraft {
+  const length = clampSets(count);
+  return updateExercise(draft, key, (block) => ({
+    ...block,
+    sets: Array.from({ length }, (_, index) => block.sets[index] ?? newSet(blockTargets(block))),
+  }));
+}
+
+// A run block's numbers, the same for every repetition.
+export function updateBlockTargets(
+  draft: RoutineDraft,
+  key: string,
+  update: (targets: ExerciseTargets) => ExerciseTargets,
+): RoutineDraft {
+  return updateExercise(draft, key, (block) => ({
+    ...block,
+    sets: block.sets.map((set) => ({ ...set, targets: update(set.targets) })),
+  }));
 }
 
 // Adds or takes off a day of the week.
@@ -231,8 +266,8 @@ export function setPlannedDuration(draft: RoutineDraft, seconds: number | null):
   };
 }
 
-// Adds exercises at the end, with the default number of sets and no rest
-// of their own (they use the exercise's default rest).
+// Adds exercises at the end, each with one empty set (add more with
+// "Afegeix una sèrie") and no rest of its own (it uses the exercise's).
 export function addExercises(draft: RoutineDraft, exerciseIds: readonly string[]): RoutineDraft {
   return {
     ...draft,
@@ -242,11 +277,10 @@ export function addExercises(draft: RoutineDraft, exerciseIds: readonly string[]
         key: newKey(),
         id: null,
         exerciseId,
-        plannedSets: DEFAULT_PLANNED_SETS,
         restS: null,
         groupKey: null,
         notes: '',
-        targets: NO_TARGETS,
+        sets: [newSet()],
         runBlock: null,
       })),
     ],
@@ -260,10 +294,42 @@ export function removeExercise(draft: RoutineDraft, key: string): RoutineDraft {
   };
 }
 
-// Planned sets; in a superset or circuit, the rounds of the whole group.
-export function setPlannedSets(draft: RoutineDraft, key: string, sets: number): RoutineDraft {
-  const plannedSets = Math.min(PLANNED_SETS_MAX, Math.max(PLANNED_SETS_MIN, sets));
-  return updateWithGroup(draft, key, (exercise) => ({ ...exercise, plannedSets }));
+// "Afegeix una sèrie": a copy of the last set, so 4 × 10 at 60 kg is one row
+// typed and three taps. In a superset or circuit every exercise gets one,
+// so the rounds stay aligned.
+export function addSet(draft: RoutineDraft, key: string): RoutineDraft {
+  return updateWithGroup(draft, key, (exercise) =>
+    exercise.sets.length >= PLANNED_SETS_MAX
+      ? exercise
+      : { ...exercise, sets: [...exercise.sets, newSet(exercise.sets.at(-1)?.targets)] },
+  );
+}
+
+// "Treu la sèrie". In a superset or circuit, that round goes from every
+// exercise. The last set stays: an exercise needs at least one.
+export function removeSet(draft: RoutineDraft, key: string, setKey: string): RoutineDraft {
+  const item = draft.exercises.find((exercise) => exercise.key === key);
+  const index = item?.sets.findIndex((set) => set.key === setKey) ?? -1;
+  if (!item || index === -1 || item.sets.length <= PLANNED_SETS_MIN) return draft;
+  return updateWithGroup(draft, key, (exercise) => ({
+    ...exercise,
+    sets: exercise.sets.filter((_, position) => position !== index),
+  }));
+}
+
+// One set's first-time plan (see SetTable).
+export function updateSetTargets(
+  draft: RoutineDraft,
+  key: string,
+  setKey: string,
+  update: (targets: ExerciseTargets) => ExerciseTargets,
+): RoutineDraft {
+  return updateExercise(draft, key, (exercise) => ({
+    ...exercise,
+    sets: exercise.sets.map((set) =>
+      set.key === setKey ? { ...set, targets: update(set.targets) } : set,
+    ),
+  }));
 }
 
 // Rest; in a superset or circuit, the rest after each round of the group.
@@ -271,6 +337,29 @@ export function setRest(draft: RoutineDraft, key: string, restS: number | null):
   return updateWithGroup(draft, key, (exercise) => ({ ...exercise, restS }));
 }
 
+// This routine's note on one exercise, e.g. "agafada ampla".
+export function setExerciseNotes(draft: RoutineDraft, key: string, notes: string): RoutineDraft {
+  return updateExercise(draft, key, (exercise) => ({ ...exercise, notes }));
+}
+
+function clampSets(count: number): number {
+  return Math.min(PLANNED_SETS_MAX, Math.max(PLANNED_SETS_MIN, count));
+}
+
+function updateExercise(
+  draft: RoutineDraft,
+  key: string,
+  change: (exercise: DraftExercise) => DraftExercise,
+): RoutineDraft {
+  return {
+    ...draft,
+    exercises: draft.exercises.map((exercise) =>
+      exercise.key === key ? change(exercise) : exercise,
+    ),
+  };
+}
+
+// Changes one exercise, or its whole superset or circuit.
 function updateWithGroup(
   draft: RoutineDraft,
   key: string,
@@ -290,7 +379,8 @@ function updateWithGroup(
 
 // Supersets and circuits (US-08). Exercises with the same groupKey are a
 // superset (2) or a circuit (3 or more). They always sit next to each other,
-// and share their rounds (plannedSets) and the rest after each round.
+// have the same number of sets (one per round), and share the rest after
+// each round.
 
 // One exercise on its own (groupKey null), or a whole group, in order.
 export type ExerciseSegment = { groupKey: string | null; items: DraftExercise[] };
@@ -309,8 +399,8 @@ export function exerciseSegments(exercises: readonly DraftExercise[]): ExerciseS
 }
 
 // Puts `otherKey` in a superset with `key`: right after `key`'s group (or
-// `key` itself), with the group's rounds and rest. Grouped with a third,
-// it becomes a circuit.
+// `key` itself), with the group's rest. Grouped with a third, it becomes a
+// circuit.
 export function makeSuperset(draft: RoutineDraft, key: string, otherKey: string): RoutineDraft {
   const target = draft.exercises.find((exercise) => exercise.key === key);
   const other = draft.exercises.find((exercise) => exercise.key === otherKey);
@@ -323,7 +413,7 @@ export function makeSuperset(draft: RoutineDraft, key: string, otherKey: string)
     .map((exercise) => (exercise.key === key ? { ...exercise, groupKey } : exercise));
   const lastInGroup = exercises.findLastIndex((exercise) => exercise.groupKey === groupKey);
   exercises.splice(lastInGroup + 1, 0, joinGroup(other, target, groupKey));
-  return { ...draft, exercises: withoutLoneGroups(exercises) };
+  return { ...draft, exercises: withAlignedRounds(withoutLoneGroups(exercises)) };
 }
 
 // Takes an exercise out of its group, to just after it, so the group stays
@@ -361,12 +451,33 @@ export function dropExercise(
   ) {
     list[toIndex] = { ...moved, groupKey: null };
   }
-  return withoutLoneGroups(list);
+  return withAlignedRounds(withoutLoneGroups(list));
 }
 
-// `item` joins `groupKey`, taking the rounds and rest of `member`.
+// `item` joins `groupKey`, taking the rest of `member`.
 function joinGroup(item: DraftExercise, member: DraftExercise, groupKey: string): DraftExercise {
-  return { ...item, groupKey, plannedSets: member.plannedSets, restS: member.restS };
+  return { ...item, groupKey, restS: member.restS };
+}
+
+// Every exercise of a group gets as many sets as the one with the most,
+// each copying its own last set, so no planned set is ever lost.
+function withAlignedRounds(exercises: DraftExercise[]): DraftExercise[] {
+  const rounds = new Map<string, number>();
+  for (const { groupKey, sets } of exercises) {
+    if (groupKey !== null) rounds.set(groupKey, Math.max(rounds.get(groupKey) ?? 0, sets.length));
+  }
+  return exercises.map((exercise) => {
+    const length = exercise.groupKey === null ? 0 : (rounds.get(exercise.groupKey) ?? 0);
+    if (exercise.sets.length >= length) return exercise;
+    const last = exercise.sets.at(-1)?.targets;
+    return {
+      ...exercise,
+      sets: [
+        ...exercise.sets,
+        ...Array.from({ length: length - exercise.sets.length }, () => newSet(last)),
+      ],
+    };
+  });
 }
 
 // A group needs at least two exercises; one left on its own is ungrouped.
@@ -388,28 +499,4 @@ function newGroupKey(exercises: readonly DraftExercise[]): string {
   let number = 1;
   while (used.has(`g${number}`)) number += 1;
   return `g${number}`;
-}
-
-// The first-time plan for one exercise (see TargetFields).
-export function updateTargets(
-  draft: RoutineDraft,
-  key: string,
-  update: (targets: ExerciseTargets) => ExerciseTargets,
-): RoutineDraft {
-  return {
-    ...draft,
-    exercises: draft.exercises.map((exercise) =>
-      exercise.key === key ? { ...exercise, targets: update(exercise.targets) } : exercise,
-    ),
-  };
-}
-
-// This routine's note on one exercise, e.g. "agafada ampla".
-export function setExerciseNotes(draft: RoutineDraft, key: string, notes: string): RoutineDraft {
-  return {
-    ...draft,
-    exercises: draft.exercises.map((exercise) =>
-      exercise.key === key ? { ...exercise, notes } : exercise,
-    ),
-  };
 }

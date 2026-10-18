@@ -1,10 +1,9 @@
 import { NO_TARGETS } from './routine';
 import { isRunBlockComplete, runBlockKind, runBlockSummary } from './runBlocks';
 
-const block = (plannedSets: number, distanceM: number | null, durationS: number | null) => ({
-  plannedSets,
-  targets: { ...NO_TARGETS, distanceM, durationS },
-});
+// A block of `repetitions` sets, all with the same distance and time.
+const block = (repetitions: number, distanceM: number | null, durationS: number | null) =>
+  Array.from({ length: repetitions }, () => ({ ...NO_TARGETS, distanceM, durationS }));
 
 describe('runBlockKind', () => {
   test('follows from the numbers', () => {
@@ -17,11 +16,11 @@ describe('runBlockKind', () => {
 
 describe('isRunBlockComplete', () => {
   test('needs the block’s main number; intervals need a distance or a time', () => {
-    expect(isRunBlockComplete('distance', block(1, null, null).targets)).toBe(false);
-    expect(isRunBlockComplete('distance', block(1, 5000, null).targets)).toBe(true);
-    expect(isRunBlockComplete('time', block(1, null, 600).targets)).toBe(true);
-    expect(isRunBlockComplete('intervals', block(6, null, null).targets)).toBe(false);
-    expect(isRunBlockComplete('intervals', block(6, null, 60).targets)).toBe(true);
+    expect(isRunBlockComplete('distance', block(1, null, null)[0])).toBe(false);
+    expect(isRunBlockComplete('distance', block(1, 5000, null)[0])).toBe(true);
+    expect(isRunBlockComplete('time', block(1, null, 600)[0])).toBe(true);
+    expect(isRunBlockComplete('intervals', block(6, null, null)[0])).toBe(false);
+    expect(isRunBlockComplete('intervals', block(6, null, 60)[0])).toBe(true);
   });
 });
 

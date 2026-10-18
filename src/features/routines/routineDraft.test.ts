@@ -4,6 +4,7 @@ import { formatDuration, NO_TARGETS, type Routine } from './routine';
 import {
   addExercises,
   addRunBlock,
+  addSet,
   blockKindOf,
   draftFromRoutine,
   dropExercise,
@@ -13,15 +14,17 @@ import {
   leaveSuperset,
   makeSuperset,
   removeExercise,
-  updateTargets,
+  removeSet,
   type RoutineDraft,
   setExerciseNotes,
   setLabel,
   setPlannedDuration,
-  setPlannedSets,
+  setRepetitions,
   setRest,
   toggleWeekday,
   toSaveInput,
+  updateBlockTargets,
+  updateSetTargets,
   validateRoutineDraft,
 } from './routineDraft';
 
@@ -48,8 +51,26 @@ const upperBody: Routine = {
   notes: null,
   weekdays: [1, 4],
   exercises: [
-    { id: 're-1', exerciseId: 'lat', exercise: exercise('lat'), plannedSets: 4, restS: 120, groupKey: null, notes: null, targets: { ...NO_TARGETS, reps: 10, weightKg: 42.5 } },
-    { id: 're-2', exerciseId: 'row', exercise: exercise('row'), plannedSets: 3, restS: null, groupKey: null, notes: null, targets: NO_TARGETS },
+    // 4 × 10 at 42,5 kg.
+    {
+      id: 're-1',
+      exerciseId: 'lat',
+      exercise: exercise('lat'),
+      restS: 120,
+      groupKey: null,
+      notes: null,
+      sets: Array(4).fill({ ...NO_TARGETS, reps: 10, weightKg: 42.5 }),
+    },
+    // 3 sets, no plan.
+    {
+      id: 're-2',
+      exerciseId: 'row',
+      exercise: exercise('row'),
+      restS: null,
+      groupKey: null,
+      notes: null,
+      sets: Array(3).fill(NO_TARGETS),
+    },
   ],
 };
 
@@ -82,6 +103,7 @@ describe('toSaveInput', () => {
       target_incline_pct: null,
       target_level: null,
     };
+    const tenAt42 = { ...noPlan, target_reps: 10, target_weight_kg: 42.5 };
     expect(toSaveInput(draft, 'routine-1')).toEqual({
       id: 'routine-1',
       name: 'Tren superior 1',
@@ -91,9 +113,9 @@ describe('toSaveInput', () => {
       notes: null,
       weekdays: [1, 4],
       exercises: [
-        { id: 're-1', exercise_id: 'lat', planned_sets: 4, rest_s: 120, group_key: null, notes: null, ...noPlan, target_reps: 10, target_weight_kg: 42.5 },
-        { id: 're-2', exercise_id: 'row', planned_sets: 3, rest_s: null, group_key: null, notes: null, ...noPlan },
-        { exercise_id: 'curl', planned_sets: 3, rest_s: null, group_key: null, notes: null, ...noPlan },
+        { id: 're-1', exercise_id: 'lat', rest_s: 120, group_key: null, notes: null, sets: Array(4).fill(tenAt42) },
+        { id: 're-2', exercise_id: 'row', rest_s: null, group_key: null, notes: null, sets: Array(3).fill(noPlan) },
+        { exercise_id: 'curl', rest_s: null, group_key: null, notes: null, sets: [noPlan] },
       ],
     });
   });
@@ -118,7 +140,7 @@ describe('hasChanges', () => {
 
     expect(hasChanges(draftFromRoutine(upperBody), saved)).toBe(false);
     expect(hasChanges({ ...saved, name: 'Tren superior 2' }, saved)).toBe(true);
-    expect(hasChanges(setPlannedSets(saved, 're-1', 5), saved)).toBe(true);
+    expect(hasChanges(addSet(saved, 're-1'), saved)).toBe(true);
     expect(hasChanges({ ...saved, exercises: dropExercise(saved.exercises, 1, 0) }, saved)).toBe(
       true,
     );
@@ -131,11 +153,12 @@ describe('hasChanges', () => {
 });
 
 describe('editing the exercise list', () => {
-  test('adds exercises at the end with 3 sets and no rest of their own', () => {
+  test('adds exercises at the end with one empty set and no rest of their own', () => {
     const draft = addExercises(draftFromRoutine(upperBody), ['curl', 'dip']);
 
     expect(exerciseIds(draft)).toEqual(['lat', 'row', 'curl', 'dip']);
-    expect(draft.exercises[2]).toMatchObject({ id: null, plannedSets: 3, restS: null });
+    expect(draft.exercises[2]).toMatchObject({ id: null, restS: null });
+    expect(draft.exercises[2].sets.map((set) => set.targets)).toEqual([NO_TARGETS]);
     expect(draft.exercises[2].key).not.toBe(draft.exercises[3].key);
   });
 
@@ -153,13 +176,6 @@ describe('editing the exercise list', () => {
     ]);
   });
 
-  test('keeps planned sets between 1 and 20', () => {
-    const draft = draftFromRoutine(upperBody);
-
-    expect(setPlannedSets(draft, 're-1', 0).exercises[0].plannedSets).toBe(1);
-    expect(setPlannedSets(draft, 're-1', 25).exercises[0].plannedSets).toBe(20);
-  });
-
   test('keeps this routine’s note on an exercise, trimmed, and empty as null', () => {
     const draft = setExerciseNotes(draftFromRoutine(upperBody), 're-2', '  Agafada ampla ');
     const saved = toSaveInput(setExerciseNotes(draft, 're-1', '   '), 'routine-1');
@@ -175,6 +191,51 @@ describe('editing the exercise list', () => {
   });
 });
 
+describe('sets', () => {
+  test('a new set copies the last one, up to 20', () => {
+    let draft = draftFromRoutine(upperBody);
+    const lastKey = draft.exercises[1].sets[2].key;
+    draft = updateSetTargets(draft, 're-2', lastKey, (targets) => ({ ...targets, reps: 8 }));
+    draft = addSet(draft, 're-2');
+
+    const sets = draft.exercises[1].sets;
+    expect(sets.map((set) => set.targets.reps)).toEqual([null, null, 8, 8]);
+    // A row of its own, not the same one twice.
+    expect(new Set(sets.map((set) => set.key)).size).toBe(4);
+
+    for (let i = 0; i < 30; i += 1) draft = addSet(draft, 're-2');
+    expect(draft.exercises[1].sets).toHaveLength(20);
+  });
+
+  test('removes the set you tap, and keeps the last one', () => {
+    let draft = draftFromRoutine(upperBody);
+    const [first, second] = draft.exercises[1].sets;
+    draft = updateSetTargets(draft, 're-2', second.key, (targets) => ({ ...targets, reps: 12 }));
+
+    draft = removeSet(draft, 're-2', first.key);
+    expect(draft.exercises[1].sets.map((set) => set.key)).not.toContain(first.key);
+    expect(draft.exercises[1].sets[0].targets.reps).toBe(12);
+
+    draft = removeSet(draft, 're-2', draft.exercises[1].sets[0].key);
+    const onlyOne = removeSet(draft, 're-2', draft.exercises[1].sets[0].key);
+    expect(onlyOne.exercises[1].sets).toHaveLength(1);
+  });
+
+  test('changes one set’s plan only, so a pyramid can be planned', () => {
+    const draft = draftFromRoutine(upperBody);
+    const second = draft.exercises[0].sets[1].key;
+
+    const pyramid = updateSetTargets(draft, 're-1', second, (targets) => ({
+      ...targets,
+      weightKg: 45,
+    }));
+
+    expect(pyramid.exercises[0].sets.map((set) => set.targets.weightKg)).toEqual([
+      42.5, 45, 42.5, 42.5,
+    ]);
+  });
+});
+
 describe('supersets and circuits', () => {
   // lat, row, face, curl, dip: five exercises, none grouped.
   const fiveExercises = (): RoutineDraft =>
@@ -186,32 +247,38 @@ describe('supersets and circuits', () => {
       segment.items.map((e) => e.exerciseId).join('+'),
     );
 
-  test('makes a superset: the other exercise moves right after, with the same rounds and rest', () => {
+  test('makes a superset: the other exercise moves right after, with the same rest and rounds', () => {
     let draft = fiveExercises();
-    draft = setPlannedSets(draft, keyOf(draft, 'face'), 4);
     draft = setRest(draft, keyOf(draft, 'face'), 60);
+    // face has 1 set and lat 4: face gets 3 more, copies of its own.
     draft = makeSuperset(draft, keyOf(draft, 'face'), 're-1');
 
     expect(groups(draft)).toEqual(['row', 'face+lat', 'curl', 'dip']);
-    const lat = draft.exercises.find((e) => e.exerciseId === 'lat')!;
-    expect(lat).toMatchObject({ plannedSets: 4, restS: 60 });
+    const byId = (id: string) => draft.exercises.find((e) => e.exerciseId === id)!;
+    expect(byId('lat').restS).toBe(60);
+    expect(byId('lat').sets).toHaveLength(4);
+    expect(byId('face').sets).toHaveLength(4);
   });
 
-  test('a third exercise makes it a circuit; rounds and rest change for the whole group', () => {
+  test('a third exercise makes it a circuit; a set added or taken is a round for all', () => {
     let draft = fiveExercises();
     draft = makeSuperset(draft, keyOf(draft, 'face'), keyOf(draft, 'curl'));
     draft = makeSuperset(draft, keyOf(draft, 'curl'), keyOf(draft, 'dip'));
-    draft = setPlannedSets(draft, keyOf(draft, 'dip'), 5);
+    draft = addSet(draft, keyOf(draft, 'dip'));
     draft = setRest(draft, keyOf(draft, 'face'), 90);
 
     expect(groups(draft)).toEqual(['lat', 'row', 'face+curl+dip']);
-    expect(draft.exercises.slice(2).map((e) => [e.plannedSets, e.restS])).toEqual([
-      [5, 90],
-      [5, 90],
-      [5, 90],
+    expect(draft.exercises.slice(2).map((e) => [e.sets.length, e.restS])).toEqual([
+      [2, 90],
+      [2, 90],
+      [2, 90],
     ]);
     // Group keys are only unique within the routine.
     expect(draft.exercises[2].groupKey).toBe('g1');
+
+    const curl = draft.exercises.find((e) => e.exerciseId === 'curl')!;
+    const fewer = removeSet(draft, curl.key, curl.sets[0].key);
+    expect(fewer.exercises.slice(2).map((e) => e.sets.length)).toEqual([1, 1, 1]);
   });
 
   test('leaving a group puts the exercise after it; a group of one is no group', () => {
@@ -230,9 +297,10 @@ describe('supersets and circuits', () => {
     let draft = fiveExercises();
     draft = makeSuperset(draft, 're-1', 're-2'); // lat+row, face, curl, dip
 
-    // dip (index 4) dropped between lat and row: joins them.
+    // dip (index 4) dropped between lat and row: joins them, with their 4 rounds.
     const joined = { ...draft, exercises: dropExercise(draft.exercises, 4, 1) };
     expect(groups(joined)).toEqual(['lat+dip+row', 'face', 'curl']);
+    expect(joined.exercises[1].sets).toHaveLength(4);
 
     // row (index 1) dragged to the end: leaves, and lat is on its own again.
     const left = { ...draft, exercises: dropExercise(draft.exercises, 1, 4) };
@@ -294,7 +362,7 @@ describe('routine types', () => {
       'run',
     );
 
-    expect(draft.exercises.map((e) => [e.runBlock, e.plannedSets, e.restS])).toEqual([
+    expect(draft.exercises.map((e) => [e.runBlock, e.sets.length, e.restS])).toEqual([
       ['distance', 1, null],
       ['intervals', 6, 90],
     ]);
@@ -310,8 +378,20 @@ describe('routine types', () => {
     const key = draft.exercises[0].key;
 
     expect(validateRoutineDraft(draft)).toEqual({ blocks: 'blocksIncomplete' });
-    const timed = updateTargets(draft, key, (targets) => ({ ...targets, durationS: 2700 }));
+    const timed = updateBlockTargets(draft, key, (targets) => ({ ...targets, durationS: 2700 }));
     expect(validateRoutineDraft(timed)).toEqual({});
+  });
+
+  test('a block’s repetitions are sets with the same numbers', () => {
+    let draft = addRunBlock({ ...emptyRoutineDraft(), label: 'run' }, 'intervals', 'run');
+    const key = draft.exercises[0].key;
+    draft = updateBlockTargets(draft, key, (targets) => ({ ...targets, distanceM: 400 }));
+    draft = setRepetitions(draft, key, 8);
+
+    expect(draft.exercises[0].sets.map((set) => set.targets.distanceM)).toEqual(
+      Array(8).fill(400),
+    );
+    expect(setRepetitions(draft, key, 3).exercises[0].sets).toHaveLength(3);
   });
 
   test('the duration is only saved for types that use it, between 5 minutes and 10 hours', () => {

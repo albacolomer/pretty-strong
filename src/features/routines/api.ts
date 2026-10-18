@@ -4,14 +4,14 @@ import type { Database } from '@/types/database';
 
 import { WEEKDAYS, type Routine, type RoutineLabel, type Weekday } from './routine';
 
-const ROUTINE_EXERCISE_COLUMNS =
-  'id, exercise_id, position, planned_sets, rest_s, group_key, notes, target_weight_kg, target_reps, target_duration_s, target_distance_m, target_speed_kmh, target_incline_pct, target_level';
+const ROUTINE_SET_COLUMNS =
+  'position, target_weight_kg, target_reps, target_duration_s, target_distance_m, target_speed_kmh, target_incline_pct, target_level';
 
 function selectRoutines() {
   return supabase
     .from('routines')
     .select(
-      `id, name, label, custom_label, planned_duration_s, notes, weekly_schedule(weekday), routine_exercises(${ROUTINE_EXERCISE_COLUMNS}, exercise:exercises(${EXERCISE_COLUMNS}))`,
+      `id, name, label, custom_label, planned_duration_s, notes, weekly_schedule(weekday), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}))`,
     )
     .order('position', { referencedTable: 'routine_exercises' });
 }
@@ -62,19 +62,20 @@ function toRoutine(row: RoutineRow): Routine {
       id: item.id,
       exerciseId: item.exercise_id,
       exercise: toExercise(item.exercise),
-      plannedSets: item.planned_sets,
       restS: item.rest_s,
       groupKey: item.group_key,
       notes: item.notes,
-      targets: {
-        weightKg: item.target_weight_kg,
-        reps: item.target_reps,
-        durationS: item.target_duration_s,
-        distanceM: item.target_distance_m,
-        speedKmh: item.target_speed_kmh,
-        inclinePct: item.target_incline_pct,
-        level: item.target_level,
-      },
+      sets: [...item.routine_sets]
+        .sort((a, b) => a.position - b.position)
+        .map((set) => ({
+          weightKg: set.target_weight_kg,
+          reps: set.target_reps,
+          durationS: set.target_duration_s,
+          distanceM: set.target_distance_m,
+          speedKmh: set.target_speed_kmh,
+          inclinePct: set.target_incline_pct,
+          level: set.target_level,
+        })),
     })),
   };
 }
@@ -84,10 +85,15 @@ function toRoutine(row: RoutineRow): Routine {
 export type SaveRoutineExercise = {
   id?: string;
   exercise_id: string;
-  planned_sets: number;
   rest_s: number | null;
   group_key: string | null;
   notes: string | null;
+  // At least one, in order.
+  sets: SaveRoutineSet[];
+};
+
+// One planned set: its first-time plan.
+export type SaveRoutineSet = {
   target_weight_kg: number | null;
   target_reps: number | null;
   target_duration_s: number | null;

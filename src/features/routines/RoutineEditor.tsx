@@ -32,6 +32,7 @@ import { RUN_BLOCK_KINDS, RUN_EXERCISE_SLUG, runBlockSummary, type RunBlockKind 
 import {
   addExercises,
   addRunBlock,
+  addSet,
   blockKindOf,
   draftFromRoutine,
   emptyRoutineDraft,
@@ -40,14 +41,16 @@ import {
   leaveSuperset,
   makeSuperset,
   removeExercise,
+  removeSet,
   setExerciseNotes,
   setLabel,
   setPlannedDuration,
-  setPlannedSets,
+  setRepetitions,
   setRest,
   toggleWeekday,
   toSaveInput,
-  updateTargets,
+  updateBlockTargets,
+  updateSetTargets,
   validateRoutineDraft,
   type DraftExercise,
   type RoutineDraftErrors,
@@ -140,12 +143,13 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         group={group}
         supersetOptions={supersetOptions}
         onReorder={openReorder}
-        onSetsChange={(sets) => setDraft((current) => setPlannedSets(current, item.key, sets))}
+        onAddSet={() => setDraft((current) => addSet(current, item.key))}
+        onRemoveSet={(setKey) => setDraft((current) => removeSet(current, item.key, setKey))}
+        onSetTargetsChange={(setKey, update) =>
+          setDraft((current) => updateSetTargets(current, item.key, setKey, update))
+        }
         onRestChange={(restS) => setDraft((current) => setRest(current, item.key, restS))}
         onNotesChange={(notes) => setDraft((current) => setExerciseNotes(current, item.key, notes))}
-        onTargetsChange={(update) =>
-          setDraft((current) => updateTargets(current, item.key, update))
-        }
         onMakeSuperset={(otherKey) =>
           setDraft((current) => makeSuperset(current, item.key, otherKey))
         }
@@ -291,12 +295,12 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
               number={index + 1}
               showIncomplete={errors.blocks !== undefined}
               onReorder={openReorder}
-              onRepetitionsChange={(sets) =>
-                setDraft((current) => setPlannedSets(current, block.key, sets))
+              onRepetitionsChange={(count) =>
+                setDraft((current) => setRepetitions(current, block.key, count))
               }
               onRecoveryChange={(restS) => setDraft((current) => setRest(current, block.key, restS))}
               onTargetsChange={(update) =>
-                setDraft((current) => updateTargets(current, block.key, update))
+                setDraft((current) => updateBlockTargets(current, block.key, update))
               }
               onNotesChange={(notes) =>
                 setDraft((current) => setExerciseNotes(current, block.key, notes))
@@ -340,12 +344,9 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
                 <ExerciseGroup
                   key={groupKey}
                   kind={kind}
-                  plannedSets={first.plannedSets}
+                  rounds={first.sets.length}
                   restS={first.restS}
                   exerciseRestS={exerciseRest(items[items.length - 1].exerciseId)}
-                  onSetsChange={(sets) =>
-                    setDraft((current) => setPlannedSets(current, first.key, sets))
-                  }
                   onRestChange={(restS) => setDraft((current) => setRest(current, first.key, restS))}>
                   {items.map((item) => renderCard(item, kind))}
                 </ExerciseGroup>
@@ -433,7 +434,11 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
             ? (block) =>
                 [
                   t(`routines.blocks.kinds.${blockKindOf(block)}`),
-                  runBlockSummary(blockKindOf(block), block, language),
+                  runBlockSummary(
+                    blockKindOf(block),
+                    block.sets.map((set) => set.targets),
+                    language,
+                  ),
                 ]
                   .filter((part) => part !== '')
                   .join(' · ')

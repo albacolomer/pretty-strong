@@ -10,6 +10,7 @@ import { createAppWrapper } from '@/test-utils/appWrapper';
 import { drop } from '@/test-utils/sortablesMock';
 
 import { fetchRoutines, saveRoutine, setRoutineArchived } from './api';
+import { NO_TARGETS } from './routine';
 import { RoutineEditor } from './RoutineEditor';
 import { testExercise, upperBody } from './testData';
 
@@ -161,10 +162,12 @@ describe('<RoutineEditor />', () => {
     expect(screen.getAllByLabelText('Descans: 1:30')).toHaveLength(1);
     expect(screen.getByLabelText('Descans: 2:30')).toBeOnTheScreen();
 
-    // First card (Pes mort romanès): 4 sets and 15 s more rest.
-    await user.press(screen.getAllByRole('button', { name: 'Afegeix una sèrie' })[0]);
+    // Each starts with one set. First card (Pes mort romanès): a second
+    // set and 15 s more rest.
+    expect(screen.queryByLabelText('Reps · Pes mort romanès, sèrie 2')).not.toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Afegeix una sèrie a «Pes mort romanès»' }));
     await user.press(screen.getAllByRole('button', { name: 'Afegeix 15 segons' })[0]);
-    expect(screen.getByLabelText('4 sèries')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Reps · Pes mort romanès, sèrie 2')).toBeOnTheScreen();
     expect(screen.getByLabelText('Descans: 1:45')).toBeOnTheScreen();
 
     // Drag the squat to the top, then remove the Romanian deadlift.
@@ -181,11 +184,10 @@ describe('<RoutineEditor />', () => {
         exercises: [
           expect.objectContaining({
             exercise_id: 'squat',
-            planned_sets: 3,
             rest_s: null,
             group_key: null,
             notes: null,
-            target_weight_kg: null,
+            sets: [expect.objectContaining({ target_reps: null, target_weight_kg: null })],
           }),
         ],
       }),
@@ -292,10 +294,13 @@ describe('<RoutineEditor />', () => {
 
     await fromMenu(user, 'Face pull', 'Fes un superset amb…', 'Curl martell');
 
-    // One box for the pair, with the rounds and rest they share.
+    // One box for the pair, with their rounds and the rest they share. A set
+    // added to one is a round for both.
     expect(screen.getByRole('header', { name: 'Superset' })).toBeOnTheScreen();
-    await user.press(screen.getByRole('button', { name: 'Una ronda més' }));
-    expect(screen.getByLabelText('4 rondes')).toBeOnTheScreen();
+    expect(screen.getByText('3 rondes')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Afegeix una sèrie a «Face pull»' }));
+    expect(screen.getByText('4 rondes')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Reps · Curl martell, sèrie 4')).toBeOnTheScreen();
 
     // Drag "Tracció al pit" (first) between Face pull and Curl martell.
     await fromMenu(user, 'Face pull', 'Reordena');
@@ -306,7 +311,7 @@ describe('<RoutineEditor />', () => {
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
     const saved = mockSaveRoutine.mock.lastCall?.[0];
     expect(
-      saved?.exercises.map(({ id, group_key, planned_sets }) => [id, group_key, planned_sets]),
+      saved?.exercises.map(({ id, group_key, sets }) => [id, group_key, sets.length]),
     ).toEqual([
       ['re-2', null, 3],
       ['re-3', 'g1', 4],
@@ -369,15 +374,21 @@ describe('<RoutineEditor />', () => {
     expect(guardsUnsavedChanges()).toBe(false);
   });
 
-  test('plans the first time per exercise, with the fields its tracking type logs', async () => {
+  test('plans each set, with the fields its tracking type logs', async () => {
     const user = userEvent.setup();
     const plank = { ...testExercise('plank', 'Planxa'), trackingType: 'duration' as const };
     jest.mocked(fetchRoutines).mockResolvedValue([
       {
         ...upperBody,
         exercises: [
-          { ...upperBody.exercises[0], targets: { ...upperBody.exercises[0].targets, reps: 12 } },
-          { ...upperBody.exercises[1], id: 're-plank', exerciseId: 'plank', exercise: plank },
+          { ...upperBody.exercises[0], sets: [{ ...NO_TARGETS, reps: 12 }, NO_TARGETS] },
+          {
+            ...upperBody.exercises[1],
+            id: 're-plank',
+            exerciseId: 'plank',
+            exercise: plank,
+            sets: [NO_TARGETS],
+          },
         ],
       },
     ]);
@@ -385,19 +396,33 @@ describe('<RoutineEditor />', () => {
       wrapper: createAppWrapper(),
     });
 
-    // A saved plan shows; a weight exercise asks for reps and kg.
-    expect(await screen.findByLabelText('Reps · Tracció al pit')).toHaveDisplayValue('12');
-    await user.type(screen.getByLabelText('kg · Tracció al pit'), '42,5');
-    // A plank asks for a time instead.
-    expect(screen.queryByLabelText('kg · Planxa')).not.toBeOnTheScreen();
-    await user.type(screen.getByLabelText('min · Planxa'), '1');
-    await user.type(screen.getByLabelText('s · Planxa'), '30');
+    // A saved plan shows; a weight exercise asks for reps and kg in each set.
+    expect(await screen.findByLabelText('Reps · Tracció al pit, sèrie 1')).toHaveDisplayValue('12');
+    await user.type(screen.getByLabelText('kg · Tracció al pit, sèrie 1'), '40');
+    await user.type(screen.getByLabelText('kg · Tracció al pit, sèrie 2'), '42,5');
+    // A new set copies the one above it.
+    await user.press(screen.getByRole('button', { name: 'Afegeix una sèrie a «Tracció al pit»' }));
+    expect(screen.getByLabelText('kg · Tracció al pit, sèrie 3')).toHaveDisplayValue('42,5');
+    // Tap a set's number to remove it.
+    sheetChoices.push('Treu la sèrie');
+    await user.press(screen.getByRole('button', { name: 'Sèrie 1 de «Tracció al pit»' }));
+    expect(screen.queryByLabelText('kg · Tracció al pit, sèrie 3')).not.toBeOnTheScreen();
+    // A plank asks for a time instead; its only set can't be removed.
+    expect(screen.queryByLabelText('kg · Planxa, sèrie 1')).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Sèrie 1 de «Planxa»' })).not.toBeOnTheScreen();
+    await user.type(screen.getByLabelText('min · Planxa, sèrie 1'), '1');
+    await user.type(screen.getByLabelText('s · Planxa, sèrie 1'), '30');
 
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
 
     const saved = mockSaveRoutine.mock.lastCall?.[0];
-    expect(saved?.exercises[0]).toMatchObject({ target_reps: 12, target_weight_kg: 42.5 });
-    expect(saved?.exercises[1]).toMatchObject({ target_duration_s: 90, target_weight_kg: null });
+    expect(saved?.exercises[0].sets).toEqual([
+      expect.objectContaining({ target_reps: null, target_weight_kg: 42.5 }),
+      expect.objectContaining({ target_reps: null, target_weight_kg: 42.5 }),
+    ]);
+    expect(saved?.exercises[1].sets).toEqual([
+      expect.objectContaining({ target_duration_s: 90, target_weight_kg: null }),
+    ]);
   });
 
   test('a run routine is made of blocks, each needing its distance or time', async () => {
@@ -434,11 +459,13 @@ describe('<RoutineEditor />', () => {
         exercises: [
           expect.objectContaining({
             exercise_id: 'run',
-            planned_sets: 6,
             rest_s: 90,
-            target_distance_m: 400,
+            sets: Array(6).fill(expect.objectContaining({ target_distance_m: 400 })),
           }),
-          expect.objectContaining({ exercise_id: 'run', planned_sets: 1, target_distance_m: 2000 }),
+          expect.objectContaining({
+            exercise_id: 'run',
+            sets: [expect.objectContaining({ target_distance_m: 2000 })],
+          }),
         ],
       }),
     );

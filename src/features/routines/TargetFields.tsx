@@ -68,11 +68,22 @@ type TargetInputFieldProps = {
   label: string;
   ariaLabel: string;
   onChange: (update: TargetsUpdate) => void;
+  // In a table, whose header names the column.
+  labelHidden?: boolean;
+  width?: number;
 };
 
 // One field. It keeps the text as typed ("42," on the way to "42,5") and
 // saves the number it reads; when you leave it, it shows that number.
-function TargetInputField({ input, targets, label, ariaLabel, onChange }: TargetInputFieldProps) {
+export function TargetInputField({
+  input,
+  targets,
+  label,
+  ariaLabel,
+  onChange,
+  labelHidden = false,
+  width,
+}: TargetInputFieldProps) {
   const language = useAppLanguage();
   const [text, setText] = useState(() => formatInput(inputValue(targets, input), language));
   const { decimals, maxLength } = INPUT_SPECS[input];
@@ -80,7 +91,9 @@ function TargetInputField({ input, targets, label, ariaLabel, onChange }: Target
   return (
     <NumberInput
       label={label}
+      labelHidden={labelHidden}
       aria-label={ariaLabel}
+      style={width === undefined ? undefined : { width, minWidth: width }}
       decimal={decimals > 0}
       maxLength={maxLength}
       value={text}

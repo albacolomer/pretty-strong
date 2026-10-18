@@ -6,7 +6,8 @@ import { formatInput, type TargetInput } from './targets';
 // Run routines are built from blocks (spec: "Routine types"): Distància
 // (10 km), Temps (45 min) or Sèries (6 × 400 m with recovery). Each block
 // is a routine exercise of the built-in run exercise, so logging treats it
-// like any other: the kind follows from its numbers. No React here.
+// like any other: Sèries are that many sets, all with the same numbers, and
+// the kind follows from them. No React here.
 
 export const RUN_BLOCK_KINDS = ['distance', 'time', 'intervals'] as const;
 export type RunBlockKind = (typeof RUN_BLOCK_KINDS)[number];
@@ -18,13 +19,15 @@ export const INTERVALS_MIN = 2;
 export const DEFAULT_INTERVALS = 6;
 export const DEFAULT_RECOVERY_S = 90;
 
-type BlockNumbers = { plannedSets: number; targets: ExerciseTargets };
+// A block's sets: one, or one per repetition, all alike.
+type BlockSets = readonly ExerciseTargets[];
 
 // Repetitions make intervals; a time without a distance is a time block;
 // anything else is a distance block.
-export function runBlockKind({ plannedSets, targets }: BlockNumbers): RunBlockKind {
-  if (plannedSets > 1) return 'intervals';
-  if (targets.durationS !== null && targets.distanceM === null) return 'time';
+export function runBlockKind(sets: BlockSets): RunBlockKind {
+  if (sets.length > 1) return 'intervals';
+  const [first] = sets;
+  if (first && first.durationS !== null && first.distanceM === null) return 'time';
   return 'distance';
 }
 
@@ -53,12 +56,8 @@ function formatTime(seconds: number): string {
 
 // A short description: "5,5 km", "45 min", "6 × 400 m", "8 × 1:30". Empty
 // while the block has no numbers yet.
-export function runBlockSummary(
-  kind: RunBlockKind,
-  { plannedSets, targets }: BlockNumbers,
-  language: Language,
-): string {
-  const { distanceM, durationS } = targets;
+export function runBlockSummary(kind: RunBlockKind, sets: BlockSets, language: Language): string {
+  const { distanceM = null, durationS = null } = sets[0] ?? {};
   if (kind === 'distance') {
     return distanceM === null ? '' : `${formatInput(distanceM / 1000, language)} km`;
   }
@@ -69,5 +68,5 @@ export function runBlockSummary(
   ]
     .filter((part) => part !== null)
     .join(' · ');
-  return each === '' ? '' : `${plannedSets} × ${each}`;
+  return each === '' ? '' : `${sets.length} × ${each}`;
 }

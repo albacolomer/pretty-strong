@@ -20,19 +20,29 @@ export type NumberInputProps = Omit<TextInputProps, 'keyboardType'> & {
   label: string;
   // Shows the keypad with a decimal separator.
   decimal?: boolean;
+  // Only for screen readers, e.g. in a table whose header names the column.
+  labelHidden?: boolean;
 };
 
 // A short number field with the number keypad (gym UX: numeric keypad for
 // numbers). The keypad has no return key, so a "Fet" bar above it closes it.
-export function NumberInput({ label, decimal = false, style, ...rest }: NumberInputProps) {
+export function NumberInput({
+  label,
+  decimal = false,
+  labelHidden = false,
+  style,
+  ...rest
+}: NumberInputProps) {
   const { colors } = useTheme();
   const accessoryId = useId();
 
   return (
     <View style={styles.field}>
-      <Text variant="caption" color="textMuted">
-        {label}
-      </Text>
+      {labelHidden ? null : (
+        <Text variant="caption" color="textMuted">
+          {label}
+        </Text>
+      )}
       <TextInput
         aria-label={label}
         keyboardType={decimal ? 'decimal-pad' : 'number-pad'}

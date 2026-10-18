@@ -30,11 +30,11 @@ export const upperBody: Routine = {
       id: `re-${index + 1}`,
       exerciseId: `exercise-${index + 1}`,
       exercise: testExercise(`exercise-${index + 1}`, ca),
-      plannedSets: 3,
       restS: null,
       groupKey: null,
       notes: null,
-      targets: NO_TARGETS,
+      // Three sets, no plan yet.
+      sets: [NO_TARGETS, NO_TARGETS, NO_TARGETS],
     }),
   ),
 };

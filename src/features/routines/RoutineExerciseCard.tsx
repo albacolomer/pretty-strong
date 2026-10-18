@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, StyleSheet, View } from 'react-native';
 
-import { Card, MenuButton, Stepper, Text } from '@/components/ui';
+import { Card, MenuButton, Text } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage } from '@/lib/i18n';
@@ -10,9 +10,9 @@ import { spacing, useTheme } from '@/theme';
 
 import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
 import { RestField } from './RestField';
-import { PLANNED_SETS_MAX, PLANNED_SETS_MIN } from './routine';
 import type { DraftExercise } from './routineDraft';
-import { TargetFields, type TargetsUpdate } from './TargetFields';
+import { SetTable } from './SetTable';
+import type { TargetsUpdate } from './TargetFields';
 import { TARGET_INPUTS } from './targets';
 
 export type GroupKind = 'superset' | 'circuit';
@@ -28,17 +28,18 @@ type RoutineExerciseCardProps = {
   supersetOptions: { key: string; name: string }[];
   // Opens the reorder sheet; left out when there's nothing to reorder.
   onReorder?: () => void;
-  onSetsChange: (sets: number) => void;
+  onAddSet: () => void;
+  onRemoveSet: (setKey: string) => void;
+  onSetTargetsChange: (setKey: string, update: TargetsUpdate) => void;
   onRestChange: (restS: number | null) => void;
   onNotesChange: (notes: string) => void;
-  onTargetsChange: (update: TargetsUpdate) => void;
   onMakeSuperset: (otherKey: string) => void;
   onLeaveGroup: () => void;
   onRemove: () => void;
 };
 
-// One exercise in the routine editor: picture, name and ⋯; its sets and
-// first-time plan; then rest and "+ Nota" on one line. The ⋯ menu holds
+// One exercise in the routine editor: picture, name and ⋯; its sets, each
+// with its first-time plan; then rest and "+ Nota" on one line. The ⋯ menu holds
 // everything else: reorder, supersets, the exercise's own rest, remove.
 export function RoutineExerciseCard({
   item,
@@ -47,10 +48,11 @@ export function RoutineExerciseCard({
   group,
   supersetOptions,
   onReorder,
-  onSetsChange,
+  onAddSet,
+  onRemoveSet,
+  onSetTargetsChange,
   onRestChange,
   onNotesChange,
-  onTargetsChange,
   onMakeSuperset,
   onLeaveGroup,
   onRemove,
@@ -117,30 +119,14 @@ export function RoutineExerciseCard({
         <MenuButton label={t('exercises.menu.label', { name })} onPress={openMenu} />
       </View>
 
-      {group === null ? (
-        <View style={styles.sets}>
-          <Text variant="caption" color="textMuted">
-            {t('routines.editor.sets')}
-          </Text>
-          <Stepper
-            value={String(item.plannedSets)}
-            valueLabel={t('routines.editor.setsValue', { count: item.plannedSets })}
-            onDecrement={() => onSetsChange(item.plannedSets - 1)}
-            onIncrement={() => onSetsChange(item.plannedSets + 1)}
-            decrementLabel={t('routines.editor.setsMinus')}
-            incrementLabel={t('routines.editor.setsPlus')}
-            canDecrement={item.plannedSets > PLANNED_SETS_MIN}
-            canIncrement={item.plannedSets < PLANNED_SETS_MAX}
-          />
-        </View>
-      ) : null}
-
       {exercise ? (
-        <TargetFields
+        <SetTable
           inputs={TARGET_INPUTS[exercise.trackingType]}
-          targets={item.targets}
+          sets={item.sets}
           exerciseName={name}
-          onChange={onTargetsChange}
+          onChange={onSetTargetsChange}
+          onAdd={onAddSet}
+          onRemove={onRemoveSet}
         />
       ) : null}
 
@@ -180,11 +166,6 @@ const styles = StyleSheet.create({
   },
   name: {
     flex: 1,
-  },
-  sets: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
   },
   bottomRow: {
     flexDirection: 'row',

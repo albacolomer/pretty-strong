@@ -91,7 +91,7 @@ function RoutineCard({ routine, onPress, onMenu }: RoutineCardProps) {
   // A run's blocks are all the run exercise: describe them, e.g. "6 × 400 m".
   const names = routine.exercises.map((item) =>
     isRun
-      ? runBlockSummary(runBlockKind(item), item, language)
+      ? runBlockSummary(runBlockKind(item.sets), item.sets, language)
       : exerciseName(item.exercise, language),
   );
   const preview =

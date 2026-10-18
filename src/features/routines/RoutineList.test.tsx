@@ -8,6 +8,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { fetchArchivedRoutines, fetchRoutines, setRoutineArchived } from './api';
+import { NO_TARGETS } from './routine';
 import { RoutineList } from './RoutineList';
 import { upperBody } from './testData';
 
@@ -55,8 +56,9 @@ describe('<RoutineList />', () => {
       name: 'Sèries',
       label: 'run' as const,
       exercises: [
-        { ...upperBody.exercises[0], plannedSets: 6, targets: { ...upperBody.exercises[0].targets, distanceM: 400 } },
-        { ...upperBody.exercises[1], plannedSets: 1, targets: { ...upperBody.exercises[1].targets, distanceM: 2000 } },
+        // 6 × 400 m, then 2 km.
+        { ...upperBody.exercises[0], sets: Array(6).fill({ ...NO_TARGETS, distanceM: 400 }) },
+        { ...upperBody.exercises[1], sets: [{ ...NO_TARGETS, distanceM: 2000 }] },
       ],
     };
     mockFetchRoutines.mockResolvedValue([

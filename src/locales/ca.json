@@ -301,11 +301,6 @@
       },
       "noExercises": "Encara no hi ha exercicis. Afegeix els que faràs en aquesta rutina.",
       "addExercises": "Afegeix exercicis",
-      "sets": "Sèries",
-      "setsValue_one": "{{count}} sèrie",
-      "setsValue_other": "{{count}} sèries",
-      "setsMinus": "Treu una sèrie",
-      "setsPlus": "Afegeix una sèrie",
       "rest": "Descans",
       "restValue": "Descans: {{time}}",
       "restMinus": "Treu 15 segons",
@@ -338,6 +333,15 @@
       "addNote": "Afegeix una nota",
       "typeButton": "Tipus: {{type}}"
     },
+    "sets": {
+      "header": "Sèrie",
+      "rowName": "{{name}}, sèrie {{number}}",
+      "menuTitle": "Sèrie {{number}}",
+      "setFor": "Sèrie {{number}} de «{{name}}»",
+      "remove": "Treu la sèrie",
+      "add": "+ Afegeix una sèrie",
+      "addFor": "Afegeix una sèrie a «{{name}}»"
+    },
     "reorder": {
       "open": "Reordena",
       "title": "Reordena els exercicis",
@@ -348,11 +352,8 @@
       "superset": "Superset",
       "circuit": "Circuit",
       "hint": "Fes un de cada seguit, sense descans, i descansa en acabar la ronda.",
-      "rounds": "Rondes",
       "roundsValue_one": "{{count}} ronda",
       "roundsValue_other": "{{count}} rondes",
-      "roundsMinus": "Una ronda menys",
-      "roundsPlus": "Una ronda més",
       "rest": "Descans entre rondes"
     },
     "targets": {
