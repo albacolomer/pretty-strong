@@ -3,18 +3,13 @@ import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Card, MenuButton, Text } from '@/components/ui';
-import { exerciseName } from '@/features/exercises/exercise';
-import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
-import { formatDuration, usesExercises, usesPlannedDuration, type Routine } from './routine';
+import type { Routine } from './routine';
 import { RoutineTypeTag } from './RoutineTypeTag';
-import { runBlockKind, runBlockSummary } from './runBlocks';
 import { useArchivedRoutines, useArchiveRoutineWithUndo } from './useArchiveRoutine';
+import { useRoutineSummary } from './useRoutineSummary';
 import { useRoutines } from './useRoutines';
-
-// How many exercise names a card shows before "…".
-const PREVIEW_COUNT = 3;
 
 // Plan → Rutines (US-07).
 export function RoutineList() {
@@ -85,34 +80,7 @@ type RoutineCardProps = {
 
 function RoutineCard({ routine, onPress, onMenu }: RoutineCardProps) {
   const { t } = useTranslation();
-  const language = useAppLanguage();
-
-  const isRun = routine.label === 'run';
-  // A run's blocks are all the run exercise: describe them, e.g. "6 × 400 m".
-  const names = routine.exercises.map((item) =>
-    isRun
-      ? runBlockSummary(runBlockKind(item.sets), item.sets, language)
-      : exerciseName(item.exercise, language),
-  );
-  const preview =
-    names.slice(0, PREVIEW_COUNT).join(', ') + (names.length > PREVIEW_COUNT ? '…' : '');
-  const count = isRun
-    ? t('routines.blockCount', { count: names.length })
-    : t('routines.exerciseCount', { count: names.length });
-  const exercisesSummary =
-    names.length === 0 ? t('routines.noExercises') : `${count} · ${preview}`;
-  // E.g. "Dl, Dj · 1 h · 4 exercicis · …"; a class shows no exercises.
-  const summary = [
-    routine.weekdays.length > 0
-      ? routine.weekdays.map((day) => t(`weekdays.short.${day}`)).join(', ')
-      : null,
-    usesPlannedDuration(routine.label) && routine.plannedDurationS !== null
-      ? formatDuration(routine.plannedDurationS)
-      : null,
-    usesExercises(routine.label) ? exercisesSummary : null,
-  ]
-    .filter((part) => part !== null)
-    .join(' · ');
+  const summary = useRoutineSummary(routine, { withDays: true });
 
   return (
     <Pressable role="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>

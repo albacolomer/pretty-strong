@@ -14,7 +14,6 @@
     "profile": "Profile"
   },
   "placeholder": {
-    "today": "Today's workout will show up here.",
     "history": "Your past workouts will show up here."
   },
   "plan": {
@@ -409,5 +408,17 @@
     "removed": "{{day}}: “{{name}}” taken off",
     "saveError": "Couldn't save it. Try again.",
     "noRoutines": "You don't have any routines yet. Create one in Routines, then choose the days you do it."
+  },
+  "today": {
+    "week": "This week",
+    "stripDay": "{{day}} {{date}}, {{plan}}",
+    "planned_one": "{{count}} routine",
+    "planned_other": "{{count}} routines",
+    "restShort": "rest",
+    "rest": "Rest",
+    "restToday": "Rest day today. Recover well!",
+    "restOther": "Rest day.",
+    "backToToday": "Today",
+    "noWeek": "Nothing planned this week yet. Choose each routine's days in Plan → Week."
   }
 }

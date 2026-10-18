@@ -1,4 +1,4 @@
-import { addDays, dateKey, startOfDay, startOfWeek, weekdayOf } from './dates';
+import { addDays, dateKey, formatDayTitle, startOfDay, startOfWeek, weekdayOf } from './dates';
 
 // Tuesday 20 October 2026, mid-afternoon.
 const tuesday = new Date(2026, 9, 20, 15, 30);
@@ -22,6 +22,12 @@ describe('days and weeks', () => {
     expect(addDays(new Date(2026, 9, 31), 1)).toEqual(new Date(2026, 10, 1));
     // Clocks go back on 25 October 2026 in Spain.
     expect(addDays(new Date(2026, 9, 24), 2)).toEqual(new Date(2026, 9, 26));
+  });
+
+  test('titles a day in the app’s language, starting with a capital', () => {
+    expect(formatDayTitle(tuesday, 'ca')).toBe('Dimarts, 20 d’octubre');
+    expect(formatDayTitle(tuesday, 'es')).toBe('Martes, 20 de octubre');
+    expect(formatDayTitle(tuesday, 'en')).toBe('Tuesday, October 20');
   });
 
   test('writes the day as the database stores it', () => {

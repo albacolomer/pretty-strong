@@ -14,7 +14,6 @@
     "profile": "Perfil"
   },
   "placeholder": {
-    "today": "Aquí veuràs l'entrenament d'avui.",
     "history": "Aquí veuràs els teus entrenaments passats."
   },
   "plan": {
@@ -409,5 +408,17 @@
     "removed": "{{day}}: s'ha tret «{{name}}»",
     "saveError": "No s'ha pogut desar. Torna-ho a provar.",
     "noRoutines": "Encara no tens rutines. Crea'n una a Rutines i després tria els dies que la fas."
+  },
+  "today": {
+    "week": "Aquesta setmana",
+    "stripDay": "{{day}} {{date}}, {{plan}}",
+    "planned_one": "{{count}} rutina",
+    "planned_other": "{{count}} rutines",
+    "restShort": "descans",
+    "rest": "Descans",
+    "restToday": "Avui toca descans. Recupera bé!",
+    "restOther": "Dia de descans.",
+    "backToToday": "Avui",
+    "noWeek": "Aquesta setmana encara no hi tens res. Tria els dies de cada rutina a Pla → Setmana."
   }
 }

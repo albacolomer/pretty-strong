@@ -1,4 +1,5 @@
 import type { Weekday } from '@/features/routines/routine';
+import type { Language } from '@/lib/i18n';
 
 // Calendar days on the phone's own clock and time zone. No React here.
 
@@ -29,4 +30,15 @@ export function dateKey(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
   return `${date.getFullYear()}-${month}-${day}`;
+}
+
+// "Dimarts, 20 d’octubre": weekday, day and month in the app's language,
+// as the phone writes dates in it.
+export function formatDayTitle(date: Date, language: Language): string {
+  const text = new Intl.DateTimeFormat(language, {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  }).format(date);
+  return text.charAt(0).toLocaleUpperCase(language) + text.slice(1);
 }

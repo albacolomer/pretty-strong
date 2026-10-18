@@ -1,15 +1,14 @@
 import { useTranslation } from 'react-i18next';
 
-import { Card, Screen, Text } from '@/components/ui';
+import { Screen } from '@/components/ui';
+import { Today } from '@/features/schedule/Today';
 
 export default function TodayScreen() {
   const { t } = useTranslation();
 
   return (
     <Screen title={t('tabs.today')}>
-      <Card>
-        <Text color="textMuted">{t('placeholder.today')}</Text>
-      </Card>
+      <Today />
     </Screen>
   );
 }
