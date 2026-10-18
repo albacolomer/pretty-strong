@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet } from 'react-native';
 
@@ -7,28 +6,32 @@ import { spacing } from '@/theme';
 
 import { EXERCISE_NOTES_MAX_LENGTH } from './routine';
 
-type ExerciseNoteFieldProps = {
+// "+ Nota": opens this routine's note on an exercise or run block. `name`
+// tells VoiceOver which one.
+export function AddNoteButton({ name, onPress }: { name: string; onPress: () => void }) {
+  const { t } = useTranslation();
+
+  return (
+    <Button
+      label={t('routines.editor.addNoteShort')}
+      aria-label={t('routines.editor.addExerciseNotes', { name })}
+      variant="ghost"
+      onPress={onPress}
+    />
+  );
+}
+
+type ExerciseNoteInputProps = {
   notes: string;
-  // The exercise or block, so VoiceOver says which one the field is for.
   name: string;
   onChange: (notes: string) => void;
+  // When just opened with "+ Nota", not when the routine opens with a note.
+  autoFocus: boolean;
 };
 
 // This routine's note on an exercise or run block, e.g. "agafada ampla".
-// "Afegeix una nota" until asked for, or straight away if there's a note.
-export function ExerciseNoteField({ notes, name, onChange }: ExerciseNoteFieldProps) {
+export function ExerciseNoteInput({ notes, name, onChange, autoFocus }: ExerciseNoteInputProps) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(notes !== '');
-
-  if (!open) {
-    return (
-      <Button
-        label={t('routines.editor.addExerciseNotes')}
-        variant="ghost"
-        onPress={() => setOpen(true)}
-      />
-    );
-  }
 
   return (
     <TextField
@@ -38,8 +41,7 @@ export function ExerciseNoteField({ notes, name, onChange }: ExerciseNoteFieldPr
       placeholder={t('routines.editor.exerciseNotesPlaceholder')}
       value={notes}
       onChangeText={onChange}
-      // Only when just asked for, not when the routine opens.
-      autoFocus={notes === ''}
+      autoFocus={autoFocus}
       multiline
       maxLength={EXERCISE_NOTES_MAX_LENGTH}
       style={styles.notes}

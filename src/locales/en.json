@@ -267,19 +267,12 @@
       "class": "Class",
       "custom": "Custom"
     },
-    "labelHints": {
-      "strength": "Exercises with sets, rest and notes.",
-      "run": "Runs: distance, time or intervals.",
-      "hybrid": "HYROX and sessions that change every week.",
-      "class": "Spinning, pilates, body pump…",
-      "custom": "Anything else, with the name you choose."
-    },
     "editor": {
       "newTitle": "New routine",
       "editTitle": "Routine",
       "notFound": "This routine wasn't found.",
       "name": "Name",
-      "namePlaceholder": "E.g. Upper body 1",
+      "namePlaceholder": "Routine name",
       "label": "Type",
       "customLabel": "Type name",
       "customLabelPlaceholder": "E.g. Swimming",
@@ -290,12 +283,11 @@
       "addDuration": "Add a duration",
       "noDuration": "No duration",
       "weekdays": "Days (optional)",
-      "weekdaysHint": "One day can have more than one routine.",
       "exercisesOptional": {
         "hybrid": "If the session changes every week, leave it without exercises and add them on the day.",
         "custom": "Optional: add exercises, or leave it without and mark it as done."
       },
-      "notes": "Notes (optional)",
+      "notes": "Routine note",
       "save": "Save routine",
       "discardTitle": "You have unsaved changes.",
       "discard": "Discard changes",
@@ -307,7 +299,6 @@
         "unknown": "Couldn't save it. Try again.",
         "blocksIncomplete": "Add the distance or time of each block."
       },
-      "exercises": "Exercises",
       "noExercises": "No exercises yet. Add the ones you'll do in this routine.",
       "addExercises": "Add exercises",
       "sets": "Sets",
@@ -319,9 +310,8 @@
       "restValue": "Rest: {{time}}",
       "restMinus": "15 seconds less",
       "restPlus": "15 seconds more",
-      "restFromExercise": "Using the exercise's own rest.",
       "useExerciseRest": "Use the exercise's rest",
-      "addExerciseNotes": "Add a note",
+      "addExerciseNotes": "Add a note to “{{name}}”",
       "exerciseNotes": "Note for this routine",
       "exerciseNotesFor": "Note for this routine on “{{name}}”",
       "exerciseNotesPlaceholder": "E.g. wide grip",
@@ -343,7 +333,10 @@
         "class_other": "A class has no exercises: {{count}} exercises were removed.",
         "run_one": "A run routine only has run blocks: {{count}} exercise was removed.",
         "run_other": "A run routine only has run blocks: {{count}} exercises were removed."
-      }
+      },
+      "addNoteShort": "+ Note",
+      "addNote": "Add a note",
+      "typeButton": "Type: {{type}}"
     },
     "reorder": {
       "open": "Reorder",
@@ -360,10 +353,9 @@
       "roundsValue_other": "{{count}} rounds",
       "roundsMinus": "One round fewer",
       "roundsPlus": "One round more",
-      "rest": "Rest after each round"
+      "rest": "Rest between rounds"
     },
     "targets": {
-      "title": "First time (optional)",
       "hint": "Each exercise's numbers are for this routine's first workout; after that, every set starts from what you did last time.",
       "inputs": {
         "reps": "Reps",
@@ -379,7 +371,6 @@
       "inputFor": "{{input}} · {{name}}"
     },
     "blocks": {
-      "title": "Blocks",
       "hint": "Combine them into a session of your own: warm-up, intervals and cool-down.",
       "add": "Add a block",
       "kinds": {

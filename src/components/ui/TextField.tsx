@@ -11,17 +11,29 @@ export type TextFieldProps = TextInputProps & {
   hint?: string;
   // Already translated message shown under the input.
   error?: string;
+  // Only for screen readers, when the placeholder already says what it is.
+  labelHidden?: boolean;
   ref?: Ref<TextInput>;
 };
 
-export function TextField({ label, hint, error, style, ref, ...rest }: TextFieldProps) {
+export function TextField({
+  label,
+  hint,
+  error,
+  labelHidden = false,
+  style,
+  ref,
+  ...rest
+}: TextFieldProps) {
   const { colors } = useTheme();
 
   return (
     <View style={styles.field}>
-      <Text variant="caption" color="textMuted">
-        {label}
-      </Text>
+      {labelHidden ? null : (
+        <Text variant="caption" color="textMuted">
+          {label}
+        </Text>
+      )}
       <TextInput
         ref={ref}
         aria-label={label}

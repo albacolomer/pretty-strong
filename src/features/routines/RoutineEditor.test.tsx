@@ -33,6 +33,25 @@ const mockPreventRemove = jest.mocked(usePreventRemove);
 // Whether the screen currently refuses to close without asking.
 const guardsUnsavedChanges = () => mockPreventRemove.mock.lastCall?.[0];
 
+// Each native action sheet (⋯ menus, the type list…) picks the next of these
+// labels, or is cancelled when there's none.
+const sheetChoices: string[] = [];
+let actionSheet: jest.SpyInstance;
+
+type User = ReturnType<typeof userEvent.setup>;
+
+// Opens an item's ⋯ menu and picks `choices`, in order.
+async function fromMenu(user: User, name: string, ...choices: string[]) {
+  sheetChoices.push(...choices);
+  await user.press(await screen.findByRole('button', { name: `Opcions de «${name}»` }));
+}
+
+// Picks a type from the list the "Força ▾" button opens.
+async function chooseType(user: User, current: string, type: string) {
+  sheetChoices.push(type);
+  await user.press(await screen.findByRole('button', { name: `Tipus: ${current}` }));
+}
+
 beforeEach(() => {
   jest
     .mocked(useAuth)
@@ -47,7 +66,15 @@ beforeEach(() => {
   jest.mocked(fetchExerciseSettings).mockResolvedValue({ squat: { notes: null, defaultRestS: 150 } });
   mockSaveRoutine.mockReset().mockResolvedValue('routine-1');
   mockPreventRemove.mockClear();
+  sheetChoices.length = 0;
+  actionSheet = jest
+    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .mockImplementation((options, callback) =>
+      callback(options.options.indexOf(sheetChoices.shift() ?? '')),
+    );
 });
+
+afterEach(() => actionSheet.mockRestore());
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<RoutineEditor />', () => {
@@ -63,7 +90,7 @@ describe('<RoutineEditor />', () => {
     expect(mockSaveRoutine).not.toHaveBeenCalled();
   });
 
-  test('creates a routine with its name, type and notes', async () => {
+  test('creates a routine with its name, type and note', async () => {
     const user = userEvent.setup();
     const onSaved = jest.fn();
     await render(<RoutineEditor routineId={null} onSaved={onSaved} />, {
@@ -72,9 +99,11 @@ describe('<RoutineEditor />', () => {
 
     expect(guardsUnsavedChanges()).toBe(false);
     await user.type(screen.getByLabelText('Nom'), 'HYROX dimarts');
-    await user.press(screen.getByRole('radio', { name: 'Híbrid' }));
-    expect(screen.getByText('HYROX i sessions que canvien cada setmana.')).toBeOnTheScreen();
-    await user.type(screen.getByLabelText('Notes (opcional)'), 'Simulació curta');
+    await chooseType(user, 'Força', 'Híbrid');
+    expect(screen.getByRole('button', { name: 'Tipus: Híbrid' })).toBeOnTheScreen();
+    // The routine's note is a button until it's needed.
+    await user.press(screen.getByRole('button', { name: 'Afegeix una nota' }));
+    await user.type(screen.getByLabelText('Nota de la rutina'), 'Simulació curta');
     expect(guardsUnsavedChanges()).toBe(true);
 
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
@@ -101,7 +130,7 @@ describe('<RoutineEditor />', () => {
 
     const name = await screen.findByLabelText('Nom');
     expect(name).toHaveDisplayValue('Tren superior 1');
-    expect(screen.getByRole('radio', { name: 'Força' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Tipus: Força' })).toBeOnTheScreen();
 
     await user.clear(name);
     await user.type(name, 'Tren superior A');
@@ -118,13 +147,6 @@ describe('<RoutineEditor />', () => {
 
   test('adds exercises from the picker, then adjusts, reorders and removes them', async () => {
     const user = userEvent.setup();
-    // Pretend the user picks this label in the native action sheet.
-    let choice = '';
-    const actionSheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((options, callback) =>
-      callback(options.options.indexOf(choice)),
-    );
     await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
@@ -143,13 +165,13 @@ describe('<RoutineEditor />', () => {
     await user.press(screen.getAllByRole('button', { name: 'Afegeix una sèrie' })[0]);
     await user.press(screen.getAllByRole('button', { name: 'Afegeix 15 segons' })[0]);
     expect(screen.getByLabelText('4 sèries')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Descans: 1:45')).toBeOnTheScreen();
 
     // Drag the squat to the top, then remove the Romanian deadlift.
-    await user.press(screen.getByRole('button', { name: 'Reordena' }));
+    await fromMenu(user, 'Pes mort romanès', 'Reordena');
     await drop(1, 0);
     await user.press(screen.getByRole('button', { name: 'Fet' }));
-    choice = 'Treu de la rutina';
-    await user.press(screen.getByRole('button', { name: 'Opcions de «Pes mort romanès»' }));
+    await fromMenu(user, 'Pes mort romanès', 'Treu de la rutina');
 
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
 
@@ -168,7 +190,24 @@ describe('<RoutineEditor />', () => {
         ],
       }),
     );
-    actionSheet.mockRestore();
+  });
+
+  test('types a rest, like a microwave, or goes back to the exercise’s own', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    const rests = await screen.findAllByLabelText('Descans: 1:30');
+
+    await user.type(rests[0], '245');
+    expect(screen.getByLabelText('Descans: 2:45')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    expect(mockSaveRoutine.mock.lastCall?.[0].exercises[0]).toMatchObject({ rest_s: 165 });
+
+    // The menu offers the exercise's own rest once the routine sets one.
+    await fromMenu(user, 'Tracció al pit', "Usa el descans de l'exercici");
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    expect(mockSaveRoutine.mock.lastCall?.[0].exercises[0]).toMatchObject({ rest_s: null });
   });
 
   test('adds and edits this routine’s note on each exercise', async () => {
@@ -185,13 +224,16 @@ describe('<RoutineEditor />', () => {
       wrapper: createAppWrapper(),
     });
 
-    // A saved note shows straight away; the others offer to add one.
+    // A saved note shows straight away; the others offer "+ Nota".
     expect(await screen.findByDisplayValue('Agafada ampla')).toBeOnTheScreen();
-    expect(screen.getAllByRole('button', { name: 'Afegeix una nota' })).toHaveLength(3);
+    expect(screen.getAllByRole('button', { name: /^Afegeix una nota a «/ })).toHaveLength(3);
     expect(guardsUnsavedChanges()).toBe(false);
 
-    await user.press(screen.getAllByRole('button', { name: 'Afegeix una nota' })[0]);
-    await user.type(screen.getByLabelText('Nota en aquesta rutina per a «Tracció al pit»'), 'Agafada neutra');
+    await user.press(screen.getByRole('button', { name: 'Afegeix una nota a «Tracció al pit»' }));
+    await user.type(
+      screen.getByLabelText('Nota en aquesta rutina per a «Tracció al pit»'),
+      'Agafada neutra',
+    );
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
 
     expect(mockSaveRoutine).toHaveBeenCalledWith(
@@ -211,15 +253,14 @@ describe('<RoutineEditor />', () => {
     await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
-    const reorder = await screen.findByRole('button', { name: 'Reordena' });
 
-    await user.press(reorder);
+    await fromMenu(user, 'Tracció al pit', 'Reordena');
     expect(screen.getByLabelText('Mou «Curl martell»')).toBeOnTheScreen();
     await drop(3, 0);
     await user.press(screen.getByRole('button', { name: 'Cancel·la' }));
     expect(guardsUnsavedChanges()).toBe(false);
 
-    await user.press(reorder);
+    await fromMenu(user, 'Tracció al pit', 'Reordena');
     await drop(3, 0);
     await user.press(screen.getByRole('button', { name: 'Fet' }));
     expect(guardsUnsavedChanges()).toBe(true);
@@ -229,21 +270,27 @@ describe('<RoutineEditor />', () => {
     expect(saved?.exercises.map((item) => item.id)).toEqual(['re-4', 're-1', 're-2', 're-3']);
   });
 
-  test('makes a superset from the menu, then a circuit by dragging a third exercise in', async () => {
+  test('a single exercise has nothing to reorder', async () => {
+    jest.mocked(fetchRoutines).mockResolvedValue([
+      { ...upperBody, exercises: upperBody.exercises.slice(0, 1) },
+    ]);
     const user = userEvent.setup();
-    // Each action sheet picks the next label in the list.
-    const choices: string[] = [];
-    const actionSheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((options, callback) =>
-        callback(options.options.indexOf(choices.shift() ?? '')),
-      );
     await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
 
-    choices.push('Fes un superset amb…', 'Curl martell');
-    await user.press(await screen.findByRole('button', { name: 'Opcions de «Face pull»' }));
+    await fromMenu(user, 'Tracció al pit');
+
+    expect(actionSheet.mock.lastCall?.[0].options).not.toContain('Reordena');
+  });
+
+  test('makes a superset from the menu, then a circuit by dragging a third exercise in', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    await fromMenu(user, 'Face pull', 'Fes un superset amb…', 'Curl martell');
 
     // One box for the pair, with the rounds and rest they share.
     expect(screen.getByRole('header', { name: 'Superset' })).toBeOnTheScreen();
@@ -251,7 +298,7 @@ describe('<RoutineEditor />', () => {
     expect(screen.getByLabelText('4 rondes')).toBeOnTheScreen();
 
     // Drag "Tracció al pit" (first) between Face pull and Curl martell.
-    await user.press(screen.getByRole('button', { name: 'Reordena' }));
+    await fromMenu(user, 'Face pull', 'Reordena');
     await drop(0, 2);
     await user.press(screen.getByRole('button', { name: 'Fet' }));
     expect(screen.getByRole('header', { name: 'Circuit' })).toBeOnTheScreen();
@@ -268,10 +315,8 @@ describe('<RoutineEditor />', () => {
     ]);
 
     // And out again: a circuit of three becomes a superset of two.
-    choices.push('Treu del circuit');
-    await user.press(screen.getByRole('button', { name: 'Opcions de «Tracció al pit»' }));
+    await fromMenu(user, 'Tracció al pit', 'Treu del circuit');
     expect(screen.getByRole('header', { name: 'Superset' })).toBeOnTheScreen();
-    actionSheet.mockRestore();
   });
 
   test('a custom type has its own name and a duration you can change or take off', async () => {
@@ -284,7 +329,7 @@ describe('<RoutineEditor />', () => {
     expect(screen.queryByLabelText('Nom del tipus')).not.toBeOnTheScreen();
     expect(screen.queryByText('Durada prevista')).not.toBeOnTheScreen();
 
-    await user.press(screen.getByRole('radio', { name: 'Personalitzat' }));
+    await chooseType(user, 'Força', 'Personalitzat');
     await user.type(screen.getByLabelText('Nom del tipus'), 'Natació');
     expect(screen.getByLabelText('Durada prevista: 1 h')).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: '5 minuts menys' }));
@@ -310,7 +355,7 @@ describe('<RoutineEditor />', () => {
       wrapper: createAppWrapper(),
     });
 
-    await user.press(await screen.findByRole('radio', { name: 'Classe' }));
+    await chooseType(user, 'Força', 'Classe');
 
     expect(screen.queryByRole('button', { name: 'Afegeix exercicis' })).not.toBeOnTheScreen();
     expect(
@@ -319,7 +364,7 @@ describe('<RoutineEditor />', () => {
 
     await user.press(screen.getByRole('button', { name: 'Desfés' }));
 
-    expect(screen.getByRole('radio', { name: 'Força' })).toBeChecked();
+    expect(screen.getByRole('button', { name: 'Tipus: Força' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Opcions de «Face pull»' })).toBeOnTheScreen();
     expect(guardsUnsavedChanges()).toBe(false);
   });
@@ -357,25 +402,21 @@ describe('<RoutineEditor />', () => {
 
   test('a run routine is made of blocks, each needing its distance or time', async () => {
     const user = userEvent.setup();
-    let choice = '';
-    const actionSheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-      .mockImplementation((options, callback) => callback(options.options.indexOf(choice)));
     const run = { ...testExercise('run', 'Córrer'), trackingType: 'run' as const };
     jest.mocked(fetchExercises).mockResolvedValue([run, testExercise('squat', 'Esquat amb barra')]);
     await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
     await user.type(screen.getByLabelText('Nom'), 'Sèries de dijous');
-    await user.press(screen.getByRole('radio', { name: 'Córrer' }));
+    await chooseType(user, 'Força', 'Córrer');
 
     // 6 × 400 m with 1:30 recovery, then a 2 km cool-down.
-    choice = 'Sèries';
+    sheetChoices.push('Sèries');
     await user.press(await screen.findByRole('button', { name: 'Afegeix un bloc' }));
     expect(screen.getByLabelText('6 repeticions')).toBeOnTheScreen();
     expect(screen.getByLabelText('Recuperació: 1:30')).toBeOnTheScreen();
     await user.type(screen.getByLabelText('metres · Bloc 1: Sèries'), '400');
-    choice = 'Distància';
+    sheetChoices.push('Distància');
     await user.press(screen.getByRole('button', { name: 'Afegeix un bloc' }));
 
     // The distance block is still empty.
@@ -401,7 +442,6 @@ describe('<RoutineEditor />', () => {
         ],
       }),
     );
-    actionSheet.mockRestore();
   });
 
   test('switching to Córrer takes out what isn’t a run, with Desfés', async () => {
@@ -410,7 +450,7 @@ describe('<RoutineEditor />', () => {
       wrapper: createAppWrapper(),
     });
 
-    await user.press(await screen.findByRole('radio', { name: 'Córrer' }));
+    await chooseType(user, 'Força', 'Córrer');
 
     expect(
       screen.getByText("Una rutina de córrer només té blocs de córrer: s'han tret 4 exercicis."),

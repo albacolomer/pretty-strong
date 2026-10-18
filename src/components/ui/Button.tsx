@@ -12,6 +12,8 @@ export type ButtonProps = {
   variant?: ButtonVariant;
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  // What screen readers say, when the visible label is shorter, e.g. "+ Nota".
+  'aria-label'?: string;
 };
 
 const variantColors: Record<ButtonVariant, { background: ColorToken | null; text: ColorToken }> = {
@@ -20,7 +22,14 @@ const variantColors: Record<ButtonVariant, { background: ColorToken | null; text
   ghost: { background: null, text: 'accent' },
 };
 
-export function Button({ label, onPress, variant = 'primary', disabled = false, style }: ButtonProps) {
+export function Button({
+  label,
+  onPress,
+  variant = 'primary',
+  disabled = false,
+  style,
+  'aria-label': ariaLabel,
+}: ButtonProps) {
   const { colors } = useTheme();
   const { background, text } = variantColors[variant];
 
@@ -30,6 +39,7 @@ export function Button({ label, onPress, variant = 'primary', disabled = false, 
       disabled={disabled}
       accessibilityRole="button"
       accessibilityState={{ disabled }}
+      aria-label={ariaLabel}
       style={({ pressed }) => [
         styles.button,
         { backgroundColor: background ? colors[background] : 'transparent' },

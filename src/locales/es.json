@@ -267,19 +267,12 @@
       "class": "Clase",
       "custom": "Personalizado"
     },
-    "labelHints": {
-      "strength": "Ejercicios con series, descanso y notas.",
-      "run": "Carreras: distancia, tiempo o series.",
-      "hybrid": "HYROX y sesiones que cambian cada semana.",
-      "class": "Spinning, pilates, body pump…",
-      "custom": "Cualquier otra cosa, con el nombre que quieras."
-    },
     "editor": {
       "newTitle": "Nueva rutina",
       "editTitle": "Rutina",
       "notFound": "No se ha encontrado esta rutina.",
       "name": "Nombre",
-      "namePlaceholder": "P. ej. Tren superior 1",
+      "namePlaceholder": "Nombre de la rutina",
       "label": "Tipo",
       "customLabel": "Nombre del tipo",
       "customLabelPlaceholder": "P. ej. Natación",
@@ -290,12 +283,11 @@
       "addDuration": "Añadir una duración",
       "noDuration": "Sin duración",
       "weekdays": "Días (opcional)",
-      "weekdaysHint": "Un mismo día puede tener más de una rutina.",
       "exercisesOptional": {
         "hybrid": "Si el entrenamiento cambia cada semana, déjala sin ejercicios y añádelos el día que entrenes.",
         "custom": "Opcional: añade ejercicios, o déjala sin ellos y márcala como hecha."
       },
-      "notes": "Notas (opcional)",
+      "notes": "Nota de la rutina",
       "save": "Guardar rutina",
       "discardTitle": "Tienes cambios sin guardar.",
       "discard": "Descartar cambios",
@@ -307,7 +299,6 @@
         "unknown": "No se ha podido guardar. Vuelve a intentarlo.",
         "blocksIncomplete": "Pon la distancia o el tiempo de cada bloque."
       },
-      "exercises": "Ejercicios",
       "noExercises": "Todavía no hay ejercicios. Añade los que harás en esta rutina.",
       "addExercises": "Añadir ejercicios",
       "sets": "Series",
@@ -319,9 +310,8 @@
       "restValue": "Descanso: {{time}}",
       "restMinus": "Quitar 15 segundos",
       "restPlus": "Añadir 15 segundos",
-      "restFromExercise": "Usa el descanso del ejercicio.",
       "useExerciseRest": "Usar el descanso del ejercicio",
-      "addExerciseNotes": "Añadir una nota",
+      "addExerciseNotes": "Añadir una nota a «{{name}}»",
       "exerciseNotes": "Nota en esta rutina",
       "exerciseNotesFor": "Nota en esta rutina para «{{name}}»",
       "exerciseNotesPlaceholder": "P. ej. agarre abierto",
@@ -343,7 +333,10 @@
         "class_other": "Una clase no tiene ejercicios: se han quitado {{count}} ejercicios.",
         "run_one": "Una rutina de correr solo tiene bloques de carrera: se ha quitado {{count}} ejercicio.",
         "run_other": "Una rutina de correr solo tiene bloques de carrera: se han quitado {{count}} ejercicios."
-      }
+      },
+      "addNoteShort": "+ Nota",
+      "addNote": "Añadir una nota",
+      "typeButton": "Tipo: {{type}}"
     },
     "reorder": {
       "open": "Reordenar",
@@ -360,10 +353,9 @@
       "roundsValue_other": "{{count}} rondas",
       "roundsMinus": "Una ronda menos",
       "roundsPlus": "Una ronda más",
-      "rest": "Descanso tras cada ronda"
+      "rest": "Descanso entre rondas"
     },
     "targets": {
-      "title": "Primera vez (opcional)",
       "hint": "Los números de cada ejercicio son para el primer entrenamiento de esta rutina; después, cada serie empieza con lo que hiciste la última vez.",
       "inputs": {
         "reps": "Reps",
@@ -379,7 +371,6 @@
       "inputFor": "{{input}} · {{name}}"
     },
     "blocks": {
-      "title": "Bloques",
       "hint": "Combínalos para hacer una sesión a medida: calentamiento, series y vuelta a la calma.",
       "add": "Añadir un bloque",
       "kinds": {

@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, ChoiceChips, Text, TextField, useToast } from '@/components/ui';
+import { Button, Text, TextField, useToast } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
@@ -12,11 +12,10 @@ import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { useExercises } from '@/features/exercises/useExercises';
 import { isNetworkError } from '@/lib/errors';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, touch, useTheme } from '@/theme';
+import { spacing, useTheme } from '@/theme';
 
 import {
   CUSTOM_LABEL_MAX_LENGTH,
-  ROUTINE_LABELS,
   ROUTINE_NAME_MAX_LENGTH,
   usesExercises,
   usesPlannedDuration,
@@ -27,6 +26,7 @@ import { ExerciseGroup } from './ExerciseGroup';
 import { PlannedDurationField } from './PlannedDurationField';
 import { ReorderExercisesSheet } from './ReorderExercisesSheet';
 import { RoutineExerciseCard, type GroupKind } from './RoutineExerciseCard';
+import { RoutineTypeButton } from './RoutineTypeButton';
 import { RunBlockCard } from './RunBlockCard';
 import { RUN_BLOCK_KINDS, RUN_EXERCISE_SLUG, runBlockSummary, type RunBlockKind } from './runBlocks';
 import {
@@ -97,6 +97,8 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const leavingAfterSave = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [reorderOpen, setReorderOpen] = useState(false);
+  // The routine's note shows once asked for, or straight away if it has one.
+  const [notesOpen, setNotesOpen] = useState(draft.notes !== '');
   const { data: library = [] } = useExercises();
   const { data: settings } = useExerciseSettings();
 
@@ -114,6 +116,8 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
     exercisesById.get(exerciseId)?.trackingType === 'run';
   // Run blocks are made of the built-in run exercise.
   const runExerciseId = library.find((exercise) => exercise.slug === RUN_EXERCISE_SLUG)?.id;
+  // In each card's ⋯ menu; reordering only makes sense with two or more.
+  const openReorder = draft.exercises.length > 1 ? () => setReorderOpen(true) : undefined;
 
   function renderCard(item: DraftExercise, group: GroupKind | null) {
     // Any exercise outside this one's own group.
@@ -135,6 +139,7 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         exerciseRestS={exerciseRest(item.exerciseId)}
         group={group}
         supersetOptions={supersetOptions}
+        onReorder={openReorder}
         onSetsChange={(sets) => setDraft((current) => setPlannedSets(current, item.key, sets))}
         onRestChange={(restS) => setDraft((current) => setRest(current, item.key, restS))}
         onNotesChange={(notes) => setDraft((current) => setExerciseNotes(current, item.key, notes))}
@@ -231,41 +236,27 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
     );
   }
 
-  const labelOptions = ROUTINE_LABELS.map((label) => ({
-    value: label,
-    label: t(`routines.labels.${label}`),
-  }));
-
   return (
     <View style={styles.form}>
-      <TextField
-        label={t('routines.editor.name')}
-        placeholder={t('routines.editor.namePlaceholder')}
-        value={draft.name}
-        onChangeText={(name) => setDraft((current) => ({ ...current, name }))}
-        error={
-          errors.name
-            ? t(`routines.editor.errors.${errors.name}`, { max: ROUTINE_NAME_MAX_LENGTH })
-            : undefined
-        }
-        maxLength={ROUTINE_NAME_MAX_LENGTH}
-        autoCapitalize="sentences"
-        returnKeyType="done"
-      />
-
-      <View style={styles.section}>
-        <Text variant="caption" color="textMuted">
-          {t('routines.editor.label')}
-        </Text>
-        <ChoiceChips
-          label={t('routines.editor.label')}
-          options={labelOptions}
-          value={draft.label}
-          onChange={changeLabel}
-        />
-        <Text variant="caption" color="textMuted">
-          {t(`routines.labelHints.${draft.label}`)}
-        </Text>
+      <View style={styles.titleRow}>
+        <View style={styles.name}>
+          <TextField
+            label={t('routines.editor.name')}
+            labelHidden
+            placeholder={t('routines.editor.namePlaceholder')}
+            value={draft.name}
+            onChangeText={(name) => setDraft((current) => ({ ...current, name }))}
+            error={
+              errors.name
+                ? t(`routines.editor.errors.${errors.name}`, { max: ROUTINE_NAME_MAX_LENGTH })
+                : undefined
+            }
+            maxLength={ROUTINE_NAME_MAX_LENGTH}
+            autoCapitalize="sentences"
+            returnKeyType="done"
+          />
+        </View>
+        <RoutineTypeButton value={draft.label} onChange={changeLabel} />
       </View>
 
       {draft.label === 'custom' ? (
@@ -280,19 +271,6 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         />
       ) : null}
 
-      <View style={styles.section}>
-        <Text variant="caption" color="textMuted">
-          {t('routines.editor.weekdays')}
-        </Text>
-        <WeekdayPicker
-          selected={draft.weekdays}
-          onToggle={(day) => setDraft((current) => toggleWeekday(current, day))}
-        />
-        <Text variant="caption" color="textMuted">
-          {t('routines.editor.weekdaysHint')}
-        </Text>
-      </View>
-
       {usesPlannedDuration(draft.label) ? (
         <PlannedDurationField
           value={draft.plannedDurationS}
@@ -302,18 +280,6 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
 
       {draft.label === 'run' ? (
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text variant="caption" color="textMuted">
-              {t('routines.blocks.title')}
-            </Text>
-            {draft.exercises.length > 1 ? (
-              <Button
-                label={t('routines.reorder.open')}
-                variant="ghost"
-                onPress={() => setReorderOpen(true)}
-              />
-            ) : null}
-          </View>
           <Text variant="caption" color="textMuted">
             {t('routines.blocks.hint')}
           </Text>
@@ -324,6 +290,7 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
               kind={blockKindOf(block)}
               number={index + 1}
               showIncomplete={errors.blocks !== undefined}
+              onReorder={openReorder}
               onRepetitionsChange={(sets) =>
                 setDraft((current) => setPlannedSets(current, block.key, sets))
               }
@@ -342,24 +309,13 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
             variant="secondary"
             onPress={chooseRunBlock}
             disabled={!runExerciseId}
+            style={styles.addButton}
           />
         </View>
       ) : null}
 
       {usesExercises(draft.label) && draft.label !== 'run' ? (
         <View style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text variant="caption" color="textMuted">
-              {t('routines.editor.exercises')}
-            </Text>
-            {draft.exercises.length > 1 ? (
-              <Button
-                label={t('routines.reorder.open')}
-                variant="ghost"
-                onPress={() => setReorderOpen(true)}
-              />
-            ) : null}
-          </View>
           {draft.label === 'hybrid' || draft.label === 'custom' ? (
             // Exercises are optional here: plan them, or log them on the day.
             <Text variant="caption" color="textMuted">
@@ -400,18 +356,40 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
             label={t('routines.editor.addExercises')}
             variant="secondary"
             onPress={() => setPickerOpen(true)}
+            style={styles.addButton}
           />
         </View>
       ) : null}
 
-      <TextField
-        label={t('routines.editor.notes')}
-        value={draft.notes}
-        onChangeText={(notes) => setDraft((current) => ({ ...current, notes }))}
-        multiline
-        maxLength={1000}
-        style={styles.notes}
-      />
+      <View style={styles.section}>
+        <Text variant="caption" color="textMuted">
+          {t('routines.editor.weekdays')}
+        </Text>
+        <WeekdayPicker
+          selected={draft.weekdays}
+          onToggle={(day) => setDraft((current) => toggleWeekday(current, day))}
+        />
+      </View>
+
+      {notesOpen ? (
+        <TextField
+          label={t('routines.editor.notes')}
+          value={draft.notes}
+          onChangeText={(notes) => setDraft((current) => ({ ...current, notes }))}
+          // Only when just asked for, not when the routine opens with a note.
+          autoFocus={draft.notes === ''}
+          multiline
+          maxLength={1000}
+          style={styles.notes}
+        />
+      ) : (
+        <Button
+          label={t('routines.editor.addNote')}
+          variant="ghost"
+          onPress={() => setNotesOpen(true)}
+          style={styles.addNote}
+        />
+      )}
 
       {errors.blocks ? (
         <Text color="danger" role="alert">
@@ -478,12 +456,21 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.sm,
   },
-  sectionHeader: {
+  // Name and type on one line; the type keeps to the input's height when
+  // an error shows under the name.
+  titleRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    // Same height with or without the button, so nothing jumps.
-    minHeight: touch.min,
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+  },
+  name: {
+    flex: 1,
+  },
+  addButton: {
+    alignSelf: 'center',
+  },
+  addNote: {
+    alignSelf: 'flex-start',
   },
   notes: {
     minHeight: 72,

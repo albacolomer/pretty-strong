@@ -1,15 +1,17 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, StyleSheet, View } from 'react-native';
 
-import { Card, MenuButton, Text } from '@/components/ui';
+import { Card, MenuButton, Stepper, Text } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
-import { ExerciseNoteField } from './ExerciseNoteField';
+import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
+import { RestField } from './RestField';
+import { PLANNED_SETS_MAX, PLANNED_SETS_MIN } from './routine';
 import type { DraftExercise } from './routineDraft';
-import { SetsAndRest } from './SetsAndRest';
 import { TargetFields, type TargetsUpdate } from './TargetFields';
 import { TARGET_INPUTS } from './targets';
 
@@ -24,6 +26,8 @@ type RoutineExerciseCardProps = {
   group: GroupKind | null;
   // The exercises this one can make a superset with.
   supersetOptions: { key: string; name: string }[];
+  // Opens the reorder sheet; left out when there's nothing to reorder.
+  onReorder?: () => void;
   onSetsChange: (sets: number) => void;
   onRestChange: (restS: number | null) => void;
   onNotesChange: (notes: string) => void;
@@ -33,14 +37,16 @@ type RoutineExerciseCardProps = {
   onRemove: () => void;
 };
 
-// One exercise in the routine editor: planned sets, rest, the first-time
-// plan, this routine's note on it, and a ⋯ menu for supersets and removing it.
+// One exercise in the routine editor: picture, name and ⋯; its sets and
+// first-time plan; then rest and "+ Nota" on one line. The ⋯ menu holds
+// everything else: reorder, supersets, the exercise's own rest, remove.
 export function RoutineExerciseCard({
   item,
   exercise,
   exerciseRestS,
   group,
   supersetOptions,
+  onReorder,
   onSetsChange,
   onRestChange,
   onNotesChange,
@@ -53,6 +59,8 @@ export function RoutineExerciseCard({
   const { scheme } = useTheme();
   const language = useAppLanguage();
   const name = exercise ? exerciseName(exercise, language) : '…';
+  // The note shows once asked for with "+ Nota", or straight away if set.
+  const [notesOpen, setNotesOpen] = useState(item.notes !== '');
 
   function showSheet(
     title: string,
@@ -87,8 +95,13 @@ export function RoutineExerciseCard({
         ? t('routines.editor.menu.superset')
         : t(`routines.editor.menu.addTo.${group}`);
     const actions = [
+      ...(onReorder ? [{ label: t('routines.reorder.open'), run: onReorder }] : []),
       ...(supersetOptions.length > 0 ? [{ label: supersetLabel, run: pickSupersetPartner }] : []),
       ...(group ? [{ label: t(`routines.editor.menu.leave.${group}`), run: onLeaveGroup }] : []),
+      // In a group, the rest is the group's: this resets it for all of them.
+      ...(item.restS !== null
+        ? [{ label: t('routines.editor.useExerciseRest'), run: () => onRestChange(null) }]
+        : []),
       { label: t('routines.editor.menu.remove'), run: onRemove },
     ];
     showSheet(name, actions, actions.length - 1);
@@ -97,7 +110,7 @@ export function RoutineExerciseCard({
   return (
     <Card>
       <View style={styles.titleRow}>
-        {exercise ? <ExercisePicture exercise={exercise} size={48} /> : null}
+        {exercise ? <ExercisePicture exercise={exercise} size={40} /> : null}
         <Text variant="bodyStrong" style={styles.name}>
           {name}
         </Text>
@@ -105,13 +118,21 @@ export function RoutineExerciseCard({
       </View>
 
       {group === null ? (
-        <SetsAndRest
-          plannedSets={item.plannedSets}
-          restS={item.restS}
-          exerciseRestS={exerciseRestS}
-          onSetsChange={onSetsChange}
-          onRestChange={onRestChange}
-        />
+        <View style={styles.sets}>
+          <Text variant="caption" color="textMuted">
+            {t('routines.editor.sets')}
+          </Text>
+          <Stepper
+            value={String(item.plannedSets)}
+            valueLabel={t('routines.editor.setsValue', { count: item.plannedSets })}
+            onDecrement={() => onSetsChange(item.plannedSets - 1)}
+            onIncrement={() => onSetsChange(item.plannedSets + 1)}
+            decrementLabel={t('routines.editor.setsMinus')}
+            incrementLabel={t('routines.editor.setsPlus')}
+            canDecrement={item.plannedSets > PLANNED_SETS_MIN}
+            canIncrement={item.plannedSets < PLANNED_SETS_MAX}
+          />
+        </View>
       ) : null}
 
       {exercise ? (
@@ -123,7 +144,30 @@ export function RoutineExerciseCard({
         />
       ) : null}
 
-      <ExerciseNoteField notes={item.notes} name={name} onChange={onNotesChange} />
+      <View style={styles.bottomRow}>
+        {group === null ? (
+          <RestField
+            label={t('routines.editor.rest')}
+            value={item.restS}
+            defaultS={exerciseRestS}
+            onChange={onRestChange}
+            valueLabel={(time) => t('routines.editor.restValue', { time })}
+          />
+        ) : (
+          // In a group, the rest is in the group's box.
+          <View />
+        )}
+        {notesOpen ? null : <AddNoteButton name={name} onPress={() => setNotesOpen(true)} />}
+      </View>
+
+      {notesOpen ? (
+        <ExerciseNoteInput
+          notes={item.notes}
+          name={name}
+          onChange={onNotesChange}
+          autoFocus={item.notes === ''}
+        />
+      ) : null}
     </Card>
   );
 }
@@ -136,5 +180,16 @@ const styles = StyleSheet.create({
   },
   name: {
     flex: 1,
+  },
+  sets: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  bottomRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });

@@ -20,3 +20,16 @@ export function adjustRest(current: number | null, delta: number): number {
   const stepped = Math.round((base + delta) / REST_STEP_S) * REST_STEP_S;
   return Math.min(REST_MAX_S, Math.max(0, stepped));
 }
+
+// Typing a rest like on a microwave: digits fill from the right, so typing
+// 1, 3, 0 reads "1:30". Returns what to show while typing and the seconds
+// it means, up to 10 minutes ("0:90" is 90 seconds).
+export function readTypedRest(text: string): { display: string; seconds: number } {
+  const digits = text.replace(/\D/g, '').replace(/^0+/, '').slice(-4).padStart(3, '0');
+  const minutes = Number(digits.slice(0, -2));
+  const seconds = Number(digits.slice(-2));
+  return {
+    display: `${minutes}:${digits.slice(-2)}`,
+    seconds: Math.min(REST_MAX_S, minutes * 60 + seconds),
+  };
+}

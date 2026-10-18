@@ -44,17 +44,16 @@ export function Stepper({
   );
 }
 
-function StepButton({
-  symbol,
-  label,
-  onPress,
-  disabled,
-}: {
+type StepButtonProps = {
   symbol: string;
   label: string;
   onPress: () => void;
   disabled: boolean;
-}) {
+  // Drawn smaller, for compact rows; it still takes a 48-pt tap.
+  small?: boolean;
+};
+
+export function StepButton({ symbol, label, onPress, disabled, small = false }: StepButtonProps) {
   const { colors } = useTheme();
 
   return (
@@ -64,16 +63,19 @@ function StepButton({
       aria-disabled={disabled}
       disabled={disabled}
       onPress={onPress}
+      hitSlop={small ? (touch.min - SMALL_SIZE) / 2 : undefined}
       style={({ pressed }) => [
-        styles.button,
+        small ? styles.smallButton : styles.button,
         { backgroundColor: colors.surfaceRaised },
         pressed && styles.pressed,
         disabled && styles.disabled,
       ]}>
-      <Text variant="cardTitle">{symbol}</Text>
+      <Text variant={small ? 'bodyStrong' : 'cardTitle'}>{symbol}</Text>
     </Pressable>
   );
 }
+
+const SMALL_SIZE = 32;
 
 const styles = StyleSheet.create({
   stepper: {
@@ -88,6 +90,13 @@ const styles = StyleSheet.create({
   button: {
     width: touch.min,
     height: touch.min,
+    borderRadius: radius.pill,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  smallButton: {
+    width: SMALL_SIZE,
+    height: SMALL_SIZE,
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',

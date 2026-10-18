@@ -1,12 +1,13 @@
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, StyleSheet, View } from 'react-native';
 
 import { Card, MenuButton, Stepper, Text } from '@/components/ui';
-import { adjustRest, formatRest, REST_MAX_S, REST_STEP_S } from '@/features/exercises/rest';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
-import { ExerciseNoteField } from './ExerciseNoteField';
+import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
+import { RestField } from './RestField';
 import { PLANNED_SETS_MAX } from './routine';
 import type { DraftExercise } from './routineDraft';
 import {
@@ -25,6 +26,8 @@ type RunBlockCardProps = {
   number: number;
   // After a save attempt: say so if the block has no distance or time.
   showIncomplete: boolean;
+  // Opens the reorder sheet; left out when there's nothing to reorder.
+  onReorder?: () => void;
   onRepetitionsChange: (repetitions: number) => void;
   onRecoveryChange: (restS: number) => void;
   onTargetsChange: (update: TargetsUpdate) => void;
@@ -39,6 +42,7 @@ export function RunBlockCard({
   kind,
   number,
   showIncomplete,
+  onReorder,
   onRepetitionsChange,
   onRecoveryChange,
   onTargetsChange,
@@ -51,20 +55,23 @@ export function RunBlockCard({
   const kindName = t(`routines.blocks.kinds.${kind}`);
   const name = t('routines.blocks.name', { number, kind: kindName });
   const summary = runBlockSummary(kind, block, language);
-  const recovery = block.restS ?? 0;
+  // The note shows once asked for with "+ Nota", or straight away if set.
+  const [notesOpen, setNotesOpen] = useState(block.notes !== '');
 
   function openMenu() {
+    const actions = [
+      ...(onReorder ? [{ label: t('routines.reorder.open'), run: onReorder }] : []),
+      { label: t('routines.blocks.remove'), run: onRemove },
+    ];
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: name,
-        options: [t('routines.blocks.remove'), t('common.cancel')],
-        destructiveButtonIndex: 0,
-        cancelButtonIndex: 1,
+        options: [...actions.map((action) => action.label), t('common.cancel')],
+        destructiveButtonIndex: actions.length - 1,
+        cancelButtonIndex: actions.length,
         userInterfaceStyle: scheme,
       },
-      (index) => {
-        if (index === 0) onRemove();
-      },
+      (index) => actions[index]?.run(),
     );
   }
 
@@ -83,37 +90,20 @@ export function RunBlockCard({
       </View>
 
       {kind === 'intervals' ? (
-        <View style={styles.controls}>
-          <View style={styles.control}>
-            <Text variant="caption" color="textMuted">
-              {t('routines.blocks.repetitions')}
-            </Text>
-            <Stepper
-              value={String(block.plannedSets)}
-              valueLabel={t('routines.blocks.repetitionsValue', { count: block.plannedSets })}
-              onDecrement={() => onRepetitionsChange(block.plannedSets - 1)}
-              onIncrement={() => onRepetitionsChange(block.plannedSets + 1)}
-              decrementLabel={t('routines.blocks.repetitionsMinus')}
-              incrementLabel={t('routines.blocks.repetitionsPlus')}
-              canDecrement={block.plannedSets > INTERVALS_MIN}
-              canIncrement={block.plannedSets < PLANNED_SETS_MAX}
-            />
-          </View>
-          <View style={styles.control}>
-            <Text variant="caption" color="textMuted">
-              {t('routines.blocks.recovery')}
-            </Text>
-            <Stepper
-              value={formatRest(recovery)}
-              valueLabel={t('routines.blocks.recoveryValue', { time: formatRest(recovery) })}
-              onDecrement={() => onRecoveryChange(adjustRest(recovery, -REST_STEP_S))}
-              onIncrement={() => onRecoveryChange(adjustRest(recovery, REST_STEP_S))}
-              decrementLabel={t('routines.editor.restMinus')}
-              incrementLabel={t('routines.editor.restPlus')}
-              canDecrement={recovery > 0}
-              canIncrement={recovery < REST_MAX_S}
-            />
-          </View>
+        <View style={styles.row}>
+          <Text variant="caption" color="textMuted">
+            {t('routines.blocks.repetitions')}
+          </Text>
+          <Stepper
+            value={String(block.plannedSets)}
+            valueLabel={t('routines.blocks.repetitionsValue', { count: block.plannedSets })}
+            onDecrement={() => onRepetitionsChange(block.plannedSets - 1)}
+            onIncrement={() => onRepetitionsChange(block.plannedSets + 1)}
+            decrementLabel={t('routines.blocks.repetitionsMinus')}
+            incrementLabel={t('routines.blocks.repetitionsPlus')}
+            canDecrement={block.plannedSets > INTERVALS_MIN}
+            canIncrement={block.plannedSets < PLANNED_SETS_MAX}
+          />
         </View>
       ) : null}
 
@@ -132,7 +122,29 @@ export function RunBlockCard({
         </Text>
       ) : null}
 
-      <ExerciseNoteField notes={block.notes} name={name} onChange={onNotesChange} />
+      <View style={styles.row}>
+        {kind === 'intervals' ? (
+          <RestField
+            label={t('routines.blocks.recovery')}
+            value={block.restS}
+            defaultS={0}
+            onChange={onRecoveryChange}
+            valueLabel={(time) => t('routines.blocks.recoveryValue', { time })}
+          />
+        ) : (
+          <View />
+        )}
+        {notesOpen ? null : <AddNoteButton name={name} onPress={() => setNotesOpen(true)} />}
+      </View>
+
+      {notesOpen ? (
+        <ExerciseNoteInput
+          notes={block.notes}
+          name={name}
+          onChange={onNotesChange}
+          autoFocus={block.notes === ''}
+        />
+      ) : null}
     </Card>
   );
 }
@@ -146,13 +158,10 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
   },
-  controls: {
+  row: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    gap: spacing.md,
-  },
-  control: {
-    gap: spacing.xs,
   },
 });

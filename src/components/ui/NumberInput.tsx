@@ -25,7 +25,6 @@ export type NumberInputProps = Omit<TextInputProps, 'keyboardType'> & {
 // A short number field with the number keypad (gym UX: numeric keypad for
 // numbers). The keypad has no return key, so a "Fet" bar above it closes it.
 export function NumberInput({ label, decimal = false, style, ...rest }: NumberInputProps) {
-  const { t } = useTranslation();
   const { colors } = useTheme();
   const accessoryId = useId();
 
@@ -50,12 +49,23 @@ export function NumberInput({ label, decimal = false, style, ...rest }: NumberIn
         ]}
         {...rest}
       />
-      <InputAccessoryView nativeID={accessoryId} backgroundColor={colors.surfaceRaised}>
-        <View style={styles.accessory}>
-          <Button label={t('common.done')} variant="ghost" onPress={() => Keyboard.dismiss()} />
-        </View>
-      </InputAccessoryView>
+      <KeyboardDoneBar nativeID={accessoryId} />
     </View>
+  );
+}
+
+// The "Fet" bar above the number keypad, which has no return key. Give the
+// input inputAccessoryViewID={nativeID}.
+export function KeyboardDoneBar({ nativeID }: { nativeID: string }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+
+  return (
+    <InputAccessoryView nativeID={nativeID} backgroundColor={colors.surfaceRaised}>
+      <View style={styles.accessory}>
+        <Button label={t('common.done')} variant="ghost" onPress={() => Keyboard.dismiss()} />
+      </View>
+    </InputAccessoryView>
   );
 }
 

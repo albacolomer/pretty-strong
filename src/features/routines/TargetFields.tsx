@@ -23,7 +23,7 @@ export type TargetsUpdate = (targets: ExerciseTargets) => ExerciseTargets;
 type TargetFieldsProps = {
   // Which numbers to ask for, e.g. TARGET_INPUTS[trackingType].
   inputs: readonly TargetInput[];
-  // Above the fields; "Primera vegada (opcional)" unless given.
+  // Above the fields, e.g. "Cada repetició"; none unless given.
   title?: string;
   targets: ExerciseTargets;
   // The exercise's name, so VoiceOver says which exercise each field is for.
@@ -38,9 +38,11 @@ export function TargetFields({ inputs, title, targets, exerciseName, onChange }:
 
   return (
     <View style={styles.section}>
-      <Text variant="caption" color="textMuted">
-        {title ?? t('routines.targets.title')}
-      </Text>
+      {title ? (
+        <Text variant="caption" color="textMuted">
+          {title}
+        </Text>
+      ) : null}
       <View style={styles.row}>
         {inputs.map((input) => (
           <TargetInputField

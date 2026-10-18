@@ -2,7 +2,7 @@ import type { Exercise } from '@/features/exercises/exercise';
 
 // Routine types (spec: "Routine types"), matching routines_label_check in
 // the routine_types_plan_and_week migration. Each is also the last part of
-// its translation keys: routines.labels.<label>, routines.labelHints.<label>.
+// its translation key: routines.labels.<label>.
 export const ROUTINE_LABELS = ['strength', 'run', 'hybrid', 'class', 'custom'] as const;
 export type RoutineLabel = (typeof ROUTINE_LABELS)[number];
 
