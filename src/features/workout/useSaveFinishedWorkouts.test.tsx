@@ -25,6 +25,8 @@ const finished = (): FinishedWorkout => ({
     defaultRestS: () => 90,
   }),
   endedAt: '2026-10-20T18:00:00.000Z',
+  energy: null,
+  notes: null,
 });
 
 // Lets a test bring the app back to the front.

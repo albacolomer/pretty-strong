@@ -343,7 +343,7 @@ describe('<Today />', () => {
 
       defaultRestS: () => 90,
     });
-    useWorkoutStore.setState({ pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z' }] });
+    useWorkoutStore.setState({ pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z', energy: null, notes: null }] });
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('✓ Fet · 1 h')).toBeOnTheScreen();

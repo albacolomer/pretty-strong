@@ -533,6 +533,24 @@
     "todaysNoteFor": "Nota d'avui per a «{{name}}»",
     "saveNoteToRoutine": "Desa-la també a la rutina",
     "noteSavedToRoutine": "Nota desada a la rutina ✓",
-    "noSignal": "No hi ha connexió. Comprova-la i torna-ho a provar."
+    "noSignal": "No hi ha connexió. Comprova-la i torna-ho a provar.",
+    "summary": {
+      "title": "Bona feina!",
+      "duration": "Durada",
+      "exercises": "Exercicis",
+      "sets": "Sèries",
+      "volume": "Kg aixecats",
+      "stat": "{{label}}: {{value}}",
+      "highlights": "Millor que l'últim cop",
+      "energy": "Com vas d'energia?",
+      "energyLevel": "{{level}} de 5",
+      "energyLow": "1 = sense energia",
+      "energyHigh": "5 = amb molta energia",
+      "notes": "Nota (opcional)",
+      "notesPlaceholder": "Com ha anat?",
+      "back": "Torna",
+      "backLabel": "Torna a l'entrenament",
+      "save": "Desa"
+    }
   }
 }

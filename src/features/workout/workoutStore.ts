@@ -2,7 +2,13 @@ import Storage from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import { upgradeWorkout, type ActiveWorkout, type FinishedWorkout } from './activeWorkout';
+import {
+  upgradeFinished,
+  upgradeWorkout,
+  type ActiveWorkout,
+  type FinishedWorkout,
+  type WrapUp,
+} from './activeWorkout';
 
 type WorkoutState = {
   // The workout being done; only one at a time.
@@ -11,8 +17,9 @@ type WorkoutState = {
   pending: FinishedWorkout[];
   start: (workout: ActiveWorkout) => void;
   update: (change: (workout: ActiveWorkout) => ActiveWorkout) => void;
-  // Moves the active workout to `pending`, to be saved.
-  finish: (endedAt: string) => void;
+  // Moves the active workout to `pending`, to be saved, with the
+  // summary's energy and note.
+  finish: (endedAt: string, wrapUp: WrapUp) => void;
   discard: () => void;
   // Once it's in the database.
   removePending: (id: string) => void;
@@ -29,10 +36,13 @@ export const useWorkoutStore = create<WorkoutState>()(
       pending: [],
       start: (workout) => set({ active: workout }),
       update: (change) => set((state) => (state.active ? { active: change(state.active) } : state)),
-      finish: (endedAt) =>
+      finish: (endedAt, wrapUp) =>
         set((state) =>
           state.active
-            ? { active: null, pending: [...state.pending, { ...state.active, endedAt }] }
+            ? {
+                active: null,
+                pending: [...state.pending, { ...state.active, ...wrapUp, endedAt }],
+              }
             : state,
         ),
       discard: () => set({ active: null }),
@@ -45,13 +55,13 @@ export const useWorkoutStore = create<WorkoutState>()(
       // Only the data; the functions above aren't saved.
       partialize: ({ active, pending }) => ({ active, pending }),
       // Saved by an older version of the app: bring it up to date. Bump the
-      // version whenever ActiveWorkout gains a field.
-      version: 1,
+      // version whenever ActiveWorkout or FinishedWorkout gains a field.
+      version: 2,
       migrate: (saved) => {
         const { active, pending } = saved as Pick<WorkoutState, 'active' | 'pending'>;
         return {
           active: active ? upgradeWorkout(active) : null,
-          pending: (pending ?? []).map(upgradeWorkout),
+          pending: (pending ?? []).map(upgradeFinished),
         };
       },
     },

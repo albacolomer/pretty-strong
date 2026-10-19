@@ -533,6 +533,24 @@
     "todaysNoteFor": "Nota de hoy para «{{name}}»",
     "saveNoteToRoutine": "Guardarla también en la rutina",
     "noteSavedToRoutine": "Nota guardada en la rutina ✓",
-    "noSignal": "No hay conexión. Compruébala y vuelve a intentarlo."
+    "noSignal": "No hay conexión. Compruébala y vuelve a intentarlo.",
+    "summary": {
+      "title": "¡Buen trabajo!",
+      "duration": "Duración",
+      "exercises": "Ejercicios",
+      "sets": "Series",
+      "volume": "Kg levantados",
+      "stat": "{{label}}: {{value}}",
+      "highlights": "Mejor que la última vez",
+      "energy": "¿Cómo vas de energía?",
+      "energyLevel": "{{level}} de 5",
+      "energyLow": "1 = sin energía",
+      "energyHigh": "5 = con mucha energía",
+      "notes": "Nota (opcional)",
+      "notesPlaceholder": "¿Cómo ha ido?",
+      "back": "Volver",
+      "backLabel": "Volver al entrenamiento",
+      "save": "Guardar"
+    }
   }
 }

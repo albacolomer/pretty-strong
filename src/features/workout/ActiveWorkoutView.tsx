@@ -1,6 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
-import { useEffect, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -29,6 +29,7 @@ import { useRestTimer } from './useRestTimer';
 import { useWorkoutChanges } from './useWorkoutChanges';
 import { WorkoutExerciseCard } from './WorkoutExerciseCard';
 import { useWorkoutStore } from './workoutStore';
+import { WorkoutSummaryView } from './WorkoutSummaryView';
 
 // The workout screen (spec: Active workout), full screen over the tabs.
 // `onClose` hides it; the workout carries on and Today offers "Reprèn".
@@ -58,6 +59,8 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
   const elapsed = useElapsed(workout.startedAt);
   const restTimer = useRestTimer(workout);
   const changes = useWorkoutChanges(workout);
+  // Set once "Acaba" is tapped: the summary shows, with this as the end.
+  const [finishingAt, setFinishingAt] = useState<string | null>(null);
   // Pre-fills from last time (US-13), once there's signal.
   useLastTime(workout);
   // Gym UX rule 5: the screen stays on while the workout is open.
@@ -150,9 +153,13 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
       );
       return;
     }
-    const save = () => leave(() => finish(new Date().toISOString()));
+    // The summary comes first (US-21): no more rest, and the clock stops.
+    const summary = () => {
+      restTimer.skip();
+      setFinishingAt(new Date().toISOString());
+    };
     if (done === total) {
-      save();
+      summary();
       return;
     }
     ActionSheetIOS.showActionSheetWithOptions(
@@ -164,8 +171,22 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
         userInterfaceStyle: scheme,
       },
       (index) => {
-        if (index === 0) save();
+        if (index === 0) summary();
       },
+    );
+  }
+
+  if (finishingAt) {
+    return (
+      <WorkoutSummaryView
+        workout={workout}
+        endedAt={finishingAt}
+        onBack={() => setFinishingAt(null)}
+        onSave={(wrapUp) => {
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+          leave(() => finish(finishingAt, wrapUp));
+        }}
+      />
     );
   }
 

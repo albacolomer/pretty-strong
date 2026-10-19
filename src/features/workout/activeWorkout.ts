@@ -3,7 +3,7 @@ import { moveWithinGroups, withoutLoneGroups } from '@/features/routines/groupin
 import { NO_TARGETS, type ExerciseTargets, type Routine } from '@/features/routines/routine';
 
 import type { NextSet, RestTimer } from './restTimer';
-import type { ChangeReason, ExerciseChangeReason } from './session';
+import type { ChangeReason, Energy, ExerciseChangeReason } from './session';
 
 // The workout being done right now (US-13, US-15, US-22). It lives on the
 // phone (workoutStore) until it's finished, then goes to the database in
@@ -80,8 +80,11 @@ export type ActiveWorkout = {
   lastTimeLoaded: boolean;
 };
 
+// What the finish summary adds (US-21); both optional.
+export type WrapUp = { energy: Energy | null; notes: string | null };
+
 // Finished, waiting to be saved to the database.
-export type FinishedWorkout = ActiveWorkout & { endedAt: string };
+export type FinishedWorkout = ActiveWorkout & WrapUp & { endedAt: string };
 
 function newSet(id: string, planned: SetNumbers = NO_TARGETS): ActiveSet {
   return { id, planned, typed: NO_TARGETS, setType: 'normal', rpe: null, completedAt: null };
@@ -496,8 +499,8 @@ export function toFinishPayload(workout: FinishedWorkout) {
     change_reason: workout.changeReason,
     started_at: workout.startedAt,
     ended_at: workout.endedAt,
-    energy: null,
-    notes: null,
+    energy: workout.energy,
+    notes: workout.notes?.trim() || null,
     exercises: workout.exercises
       .map((exercise) => ({
         id: exercise.id,
@@ -562,4 +565,9 @@ export function upgradeWorkout<T extends ActiveWorkout>(saved: T): T {
       };
     }),
   };
+}
+
+// The same for a finished workout waiting to be saved.
+export function upgradeFinished(saved: FinishedWorkout): FinishedWorkout {
+  return { ...upgradeWorkout(saved), energy: saved.energy ?? null, notes: saved.notes ?? null };
 }

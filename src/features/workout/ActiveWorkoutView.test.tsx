@@ -134,7 +134,7 @@ describe('<ActiveWorkoutView />', () => {
     expect(active()!.exercises[0].sets[0].completedAt).toBeNull();
   });
 
-  test('finishing with sets left asks first, then keeps the workout to be saved', async () => {
+  test('finishing with sets left asks first, then the summary saves it', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();
     await render(<ActiveWorkoutView onClose={onClose} />, { wrapper: createAppWrapper() });
@@ -145,11 +145,59 @@ describe('<ActiveWorkoutView />', () => {
     await user.press(screen.getByRole('button', { name: "Acaba l'entrenament" }));
 
     expect(actionSheet.mock.lastCall?.[0].message).toBe('2 sèries sense ✓ no es desaran.');
+    expect(screen.getByRole('header', { name: 'Bona feina!' })).toBeOnTheScreen();
+    // Nothing is saved until "Desa".
+    expect(active()).not.toBeNull();
+
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
     expect(onClose).toHaveBeenCalled();
+    expect(Haptics.notificationAsync).toHaveBeenCalledWith('success');
     const { active: after, pending } = useWorkoutStore.getState();
     expect(after).toBeNull();
     expect(pending.map((workout) => workout.id)).toEqual([workoutId]);
-    expect(pending[0].endedAt).toEqual(expect.any(String));
+    expect(pending[0]).toMatchObject({ endedAt: expect.any(String), energy: null, notes: null });
+  });
+
+  test('the summary: totals, what beat last time, energy and a note', async () => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+    const lift = (weightKg: number, reps: number) => ({ ...NO_TARGETS, weightKg, reps });
+    jest.mocked(fetchLastTime).mockResolvedValueOnce({
+      'exercise-1': { routine: [lift(37.5, 10)], any: [] },
+    });
+    await render(<ActiveWorkoutView onClose={onClose} />, { wrapper: createAppWrapper() });
+    await waitFor(() => expect(active()!.lastTimeLoaded).toBe(true));
+    // Tracció al pit: 40 kg, then last time's 37,5 kg; Rem assegut skipped.
+    await user.type(screen.getByLabelText('kg · Tracció al pit, sèrie 1'), '40');
+    await user.press(screen.getByRole('checkbox', { name: 'Sèrie 1 de «Tracció al pit» feta' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Sèrie 2 de «Tracció al pit» feta' }));
+    sheetChoices.push("Salta l'exercici", 'Sense motiu');
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Rem assegut amb politja»' }));
+
+    await user.press(screen.getByRole('button', { name: "Acaba l'entrenament" }));
+
+    expect(screen.getByLabelText('Exercicis: 1')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Sèries: 2')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Kg aixecats: 775 kg')).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: "Millor que l'últim cop" })).toBeOnTheScreen();
+    expect(screen.getByLabelText("Millor que l'últim cop: +2,5 kg")).toBeOnTheScreen();
+
+    // "Torna" goes back to the workout, still going.
+    await user.press(screen.getByRole('button', { name: "Torna a l'entrenament" }));
+    expect(screen.getByRole('button', { name: "Acaba l'entrenament" })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: "Acaba l'entrenament" }));
+    await user.press(screen.getByRole('radio', { name: '2 de 5' }));
+    // Changed my mind: 4.
+    await user.press(screen.getByRole('radio', { name: '4 de 5' }));
+    expect(screen.getByRole('radio', { name: '4 de 5' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '2 de 5' })).not.toBeChecked();
+    await user.type(screen.getByLabelText('Nota (opcional)'), 'Molt bé ');
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(useWorkoutStore.getState().pending[0]).toMatchObject({ energy: 4, notes: 'Molt bé' });
+    expect(onClose).toHaveBeenCalled();
   });
 
   test('"Continua" keeps going; discarding throws it away', async () => {

@@ -7,6 +7,14 @@ export type ChangeReason = (typeof CHANGE_REASONS)[number];
 
 export type SessionStatus = 'in_progress' | 'completed' | 'skipped';
 
+// How much energy was left at the end, 1 (none) to 5 (plenty), matching
+// workout_sessions_energy_check.
+export const ENERGY_LEVELS = [1, 2, 3, 4, 5] as const;
+export type Energy = (typeof ENERGY_LEVELS)[number];
+
+// Matches workout_sessions_notes_length.
+export const SESSION_NOTES_MAX_LENGTH = 1000;
+
 export type WorkoutSession = {
   id: string;
   // "2026-10-20", the calendar day it belongs to.

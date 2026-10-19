@@ -533,6 +533,24 @@
     "todaysNoteFor": "Today's note for “{{name}}”",
     "saveNoteToRoutine": "Save it in the routine too",
     "noteSavedToRoutine": "Note saved in the routine ✓",
-    "noSignal": "No connection. Check it and try again."
+    "noSignal": "No connection. Check it and try again.",
+    "summary": {
+      "title": "Nice work!",
+      "duration": "Duration",
+      "exercises": "Exercises",
+      "sets": "Sets",
+      "volume": "Kg lifted",
+      "stat": "{{label}}: {{value}}",
+      "highlights": "Better than last time",
+      "energy": "How's your energy?",
+      "energyLevel": "{{level}} of 5",
+      "energyLow": "1 = none left",
+      "energyHigh": "5 = plenty left",
+      "notes": "Note (optional)",
+      "notesPlaceholder": "How did it go?",
+      "back": "Back",
+      "backLabel": "Back to the workout",
+      "save": "Save"
+    }
   }
 }
