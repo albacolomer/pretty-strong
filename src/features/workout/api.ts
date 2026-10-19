@@ -1,6 +1,6 @@
 import { supabase } from '@/lib/supabase';
 
-import { toFinishPayload, type FinishedWorkout } from './activeWorkout';
+import { toFinishPayload, type FinishedWorkout, type LastTime } from './activeWorkout';
 import { liveDuration, type ChangeReason, type SessionStatus, type WorkoutSession } from './session';
 
 const SESSION_COLUMNS =
@@ -49,6 +49,37 @@ export async function logQuickSession(session: WorkoutSession): Promise<void> {
     { onConflict: 'id', ignoreDuplicates: true },
   );
   if (error) throw error;
+}
+
+// Each exercise's sets the last time it was done, in this routine (when
+// there is one) and anywhere: once, when a workout starts (see last_sets()).
+export async function fetchLastTime(
+  routineId: string | null,
+  exerciseIds: string[],
+): Promise<Record<string, LastTime>> {
+  const { data, error } = await supabase.rpc('last_sets', {
+    // A null routine (an unplanned workout, or an exercise added in it)
+    // only finds last time anywhere.
+    p_routine_id: routineId as string,
+    p_exercise_ids: exerciseIds,
+  });
+  if (error) throw error;
+
+  const lastTime: Record<string, LastTime> = {};
+  for (const row of data) {
+    const entry = (lastTime[row.exercise_id] ??= { routine: [], any: [] });
+    // Rows come in order, set by set; columns not used are null.
+    (row.scope === 'routine' ? entry.routine : entry.any).push({
+      weightKg: row.weight_kg ?? null,
+      reps: row.reps ?? null,
+      durationS: row.duration_s ?? null,
+      distanceM: row.distance_m ?? null,
+      speedKmh: row.speed_kmh ?? null,
+      inclinePct: row.incline_pct ?? null,
+      level: row.level ?? null,
+    });
+  }
+  return lastTime;
 }
 
 // A finished live workout, in one transaction (see finish_workout()).

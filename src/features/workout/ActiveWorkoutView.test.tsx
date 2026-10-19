@@ -7,6 +7,8 @@ import { ActionSheetIOS } from 'react-native';
 import { NO_TARGETS, type Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 import { cancelScheduled, scheduleAt } from '@/lib/notifications';
+
+import { fetchLastTime } from './api';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { workoutFromRoutine } from './activeWorkout';
@@ -21,6 +23,8 @@ jest.mock('expo-haptics', () => ({
 }));
 jest.mock('expo-keep-awake', () => ({ useKeepAwake: jest.fn() }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => `rest-${Math.random()}` }));
+// Last time: nothing yet, unless a test says otherwise.
+jest.mock('./api', () => ({ fetchLastTime: jest.fn(() => Promise.resolve({})) }));
 jest.mock('@/lib/notifications', () => ({
   scheduleAt: jest.fn(() => Promise.resolve('notification-1')),
   cancelScheduled: jest.fn(() => Promise.resolve()),
@@ -254,6 +258,30 @@ describe('<ActiveWorkoutView />', () => {
     await user.press(screen.getByRole('button', { name: "Acaba l'entrenament" }));
 
     expect(cancelScheduled).toHaveBeenCalledWith('notification-1');
+  });
+
+  test('pre-fills from last time in this routine, and compares once the sets are done', async () => {
+    const user = userEvent.setup();
+    const lift = (weightKg: number, reps: number) => ({ ...NO_TARGETS, weightKg, reps });
+    jest.mocked(fetchLastTime).mockResolvedValueOnce({
+      'exercise-1': { routine: [lift(42.5, 10), lift(42.5, 8)], any: [] },
+    });
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    // Last time's numbers replace the plan's (40 kg).
+    await waitFor(() =>
+      expect(screen.getByLabelText('kg · Tracció al pit, sèrie 1').props.placeholder).toBe('42,5'),
+    );
+    expect(screen.getByLabelText('Reps · Tracció al pit, sèrie 2').props.placeholder).toBe('8');
+    expect(fetchLastTime).toHaveBeenCalledWith('routine-1', ['exercise-1', 'exercise-2']);
+
+    // 45 kg in the first set, then both done: better than last time.
+    await user.type(screen.getByLabelText('kg · Tracció al pit, sèrie 1'), '45');
+    await user.press(screen.getByRole('checkbox', { name: 'Sèrie 1 de «Tracció al pit» feta' }));
+    await user.press(screen.getByRole('checkbox', { name: 'Sèrie 2 de «Tracció al pit» feta' }));
+
+    expect(screen.getByLabelText("Millor que l'últim cop: +2,5 kg")).toBeOnTheScreen();
+    expect(screen.getByText('↑ +2,5 kg ✨')).toBeOnTheScreen();
   });
 
   test('with no workout going, says so', async () => {

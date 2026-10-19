@@ -21,6 +21,7 @@ import {
 } from './activeWorkout';
 import { RestTimerBar } from './RestTimerBar';
 import { useElapsed } from './useElapsed';
+import { useLastTime } from './useLastTime';
 import { useRestTimer } from './useRestTimer';
 import { WorkoutExerciseCard } from './WorkoutExerciseCard';
 import { useWorkoutStore } from './workoutStore';
@@ -52,6 +53,8 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
   const discard = useWorkoutStore((state) => state.discard);
   const elapsed = useElapsed(workout.startedAt);
   const restTimer = useRestTimer(workout);
+  // Pre-fills from last time (US-13), once there's signal.
+  useLastTime(workout);
   // Gym UX rule 5: the screen stays on while the workout is open.
   useKeepAwake();
   // While it's open, "rest is over" shows here, not as a notification.

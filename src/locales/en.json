@@ -492,6 +492,14 @@
     "restPlus": "+15 s",
     "restMinusLabel": "{{seconds}} seconds less rest",
     "restPlusLabel": "{{seconds}} seconds more rest",
-    "round": "Round {{round}} of {{rounds}}"
+    "round": "Round {{round}} of {{rounds}}",
+    "vs": {
+      "up": "Better than last time: {{change}}",
+      "same": "Same as last time",
+      "sameShort": "Same",
+      "down": "Less than last time: {{change}}",
+      "reps_one": "{{count}} rep",
+      "reps_other": "{{count}} reps"
+    }
   }
 }

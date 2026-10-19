@@ -515,6 +515,23 @@ export type Database = {
     Functions: {
       finish_workout: { Args: { p_session: Json }; Returns: string }
       is_username_available: { Args: { candidate: string }; Returns: boolean }
+      last_sets: {
+        Args: { p_exercise_ids: string[]; p_routine_id: string }
+        Returns: {
+          distance_m: number
+          duration_s: number
+          exercise_id: string
+          incline_pct: number
+          level: number
+          position: number
+          reps: number
+          scope: string
+          session_date: string
+          set_type: string
+          speed_kmh: number
+          weight_kg: number
+        }[]
+      }
       save_routine: {
         Args: {
           p_custom_label: string

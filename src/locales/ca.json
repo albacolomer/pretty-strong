@@ -492,6 +492,14 @@
     "restPlus": "+15 s",
     "restMinusLabel": "Treu {{seconds}} segons de descans",
     "restPlusLabel": "Afegeix {{seconds}} segons de descans",
-    "round": "Ronda {{round}} de {{rounds}}"
+    "round": "Ronda {{round}} de {{rounds}}",
+    "vs": {
+      "up": "Millor que l'últim cop: {{change}}",
+      "same": "Igual que l'últim cop",
+      "sameShort": "Igual",
+      "down": "Menys que l'últim cop: {{change}}",
+      "reps_one": "{{count}} rep",
+      "reps_other": "{{count}} reps"
+    }
   }
 }

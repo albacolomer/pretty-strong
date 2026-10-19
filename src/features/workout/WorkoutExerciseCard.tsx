@@ -9,8 +9,10 @@ import { TARGET_INPUTS } from '@/features/routines/targets';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
-import type { ActiveExercise } from './activeWorkout';
+import { shownNumbers, type ActiveExercise } from './activeWorkout';
+import { compareToLastTime } from './compareToLastTime';
 import { ROW_MAX_INPUTS, SET_INPUT_WIDTH, SetRow } from './SetRow';
+import { VsLastTimeBadge } from './VsLastTimeBadge';
 
 type WorkoutExerciseCardProps = {
   exercise: ActiveExercise;
@@ -32,7 +34,17 @@ export function WorkoutExerciseCard({
   const language = useAppLanguage();
   const name = exerciseName(exercise.exercise, language);
   const inputs = TARGET_INPUTS[exercise.exercise.trackingType];
-  const done = exercise.sets.filter((set) => set.completedAt !== null).length;
+  const doneSets = exercise.sets.filter((set) => set.completedAt !== null);
+  const done = doneSets.length;
+  // Once all its sets are done: better, same or less than last time?
+  const comparison =
+    done === exercise.sets.length && exercise.previous
+      ? compareToLastTime(
+          exercise.exercise.trackingType,
+          doneSets.map(shownNumbers),
+          exercise.previous,
+        )
+      : null;
 
   return (
     <Card>
@@ -41,9 +53,13 @@ export function WorkoutExerciseCard({
         <Text variant="cardTitle" style={styles.name} accessibilityRole="header">
           {name}
         </Text>
-        <Text variant="caption" color="textMuted">
-          {t('workout.setsDone', { done, total: exercise.sets.length })}
-        </Text>
+        {comparison ? (
+          <VsLastTimeBadge comparison={comparison} />
+        ) : (
+          <Text variant="caption" color="textMuted">
+            {t('workout.setsDone', { done, total: exercise.sets.length })}
+          </Text>
+        )}
       </View>
       {exercise.notes ? (
         <Text variant="caption" color="textMuted">

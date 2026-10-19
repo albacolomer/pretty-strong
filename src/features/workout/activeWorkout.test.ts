@@ -3,6 +3,7 @@ import { upperBody } from '@/features/routines/testData';
 
 import {
   afterSet,
+  applyLastTime,
   countSets,
   nextSet,
   shownNumbers,
@@ -209,5 +210,44 @@ describe('rest and order', () => {
     for (const [e, s] of [[0, 0], [0, 1], [1, 0], [2, 0], [1, 1]]) workout = tick(workout, e, s);
     expect(nextSet(workout)).toBeNull();
     expect(afterSet(workout, setOf(workout, 1, 1))).toEqual({ restS: null, next: null });
+  });
+});
+
+describe('last time (Alba’s rule)', () => {
+  const lift = (weightKg: number, reps: number) => ({ ...NO_TARGETS, weightKg, reps });
+  // Tracció al pit has a plan (2 × 10 at 40 kg); Rem assegut doesn't.
+  const begin = () => start();
+
+  test('last time in this routine wins, row by row; extra rows take its last set', () => {
+    const workout = applyLastTime(begin(), {
+      'exercise-1': { routine: [lift(42.5, 10)], any: [lift(50, 5)] },
+    });
+
+    const [lat] = workout.exercises;
+    expect(lat.sets.map((set) => set.planned)).toEqual([lift(42.5, 10), lift(42.5, 10)]);
+    expect(lat.previous).toEqual([lift(42.5, 10)]);
+    expect(workout.lastTimeLoaded).toBe(true);
+  });
+
+  test('the first time in this routine, the plan stays; it compares with anywhere', () => {
+    const workout = applyLastTime(begin(), {
+      'exercise-1': { routine: [], any: [lift(50, 5)] },
+    });
+
+    const [lat] = workout.exercises;
+    expect(lat.sets[0].planned).toMatchObject({ weightKg: 40, reps: 10 });
+    expect(lat.previous).toEqual([lift(50, 5)]);
+  });
+
+  test('without a plan, last time anywhere; never done, nothing', () => {
+    const workout = applyLastTime(begin(), {
+      'exercise-2': { routine: [], any: [lift(30, 12), lift(30, 10)] },
+    });
+
+    const [, row, face] = workout.exercises;
+    expect(row.sets.map((set) => set.planned.weightKg)).toEqual([30, 30, 30]);
+    expect(row.sets.map((set) => set.planned.reps)).toEqual([12, 10, 10]);
+    expect(face.previous).toBeNull();
+    expect(face.sets[0].planned).toEqual(NO_TARGETS);
   });
 });

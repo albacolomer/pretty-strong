@@ -39,6 +39,9 @@ export type ActiveExercise = {
   // The routine's note on it, shown during the workout.
   notes: string | null;
   sets: ActiveSet[];
+  // Last time's sets, to compare with (US-14): from this routine, else from
+  // anywhere. Null until known, or if it was never done.
+  previous: SetNumbers[] | null;
 };
 
 export type ActiveWorkout = {
@@ -56,6 +59,8 @@ export type ActiveWorkout = {
   exercises: ActiveExercise[];
   // The rest running now, if any.
   rest: RestTimer | null;
+  // Whether last time's numbers have been fetched yet (they need signal).
+  lastTimeLoaded: boolean;
 };
 
 // Finished, waiting to be saved to the database.
@@ -83,6 +88,7 @@ export function workoutFromRoutine(routine: Routine, options: StartOptions): Act
     changeReason: options.changeReason,
     startedAt: options.startedAt,
     rest: null,
+    lastTimeLoaded: false,
     exercises: routine.exercises.map((item) => ({
       id: options.newId(),
       exerciseId: item.exerciseId,
@@ -97,7 +103,50 @@ export function workoutFromRoutine(routine: Routine, options: StartOptions): Act
         typed: NO_TARGETS,
         completedAt: null,
       })),
+      previous: null,
     })),
+  };
+}
+
+// An exercise's sets the last time it was done (see last_sets()): in this
+// routine, and anywhere.
+export type LastTime = { routine: SetNumbers[]; any: SetNumbers[] };
+
+function hasNumbers(numbers: SetNumbers): boolean {
+  return Object.values(numbers).some((value) => value !== null);
+}
+
+// Pre-fills an exercise from last time (US-13), with Alba's rule: last time
+// in this routine; the first time, the routine's plan; without a plan, last
+// time anywhere. Row by row; extra rows take last time's last set.
+export function withLastTime(exercise: ActiveExercise, last: LastTime | undefined): ActiveExercise {
+  const inRoutine = last?.routine ?? [];
+  const anywhere = last?.any ?? [];
+  const hasPlan = exercise.sets.some((set) => hasNumbers(set.planned));
+  const source =
+    inRoutine.length > 0 ? inRoutine : hasPlan ? null : anywhere.length > 0 ? anywhere : null;
+  return {
+    ...exercise,
+    previous: inRoutine.length > 0 ? inRoutine : anywhere.length > 0 ? anywhere : null,
+    sets: source
+      ? exercise.sets.map((set, index) => ({
+          ...set,
+          planned: source[index] ?? source[source.length - 1],
+        }))
+      : exercise.sets,
+  };
+}
+
+export function applyLastTime(
+  workout: ActiveWorkout,
+  lastTime: Record<string, LastTime>,
+): ActiveWorkout {
+  return {
+    ...workout,
+    lastTimeLoaded: true,
+    exercises: workout.exercises.map((exercise) =>
+      withLastTime(exercise, lastTime[exercise.exerciseId]),
+    ),
   };
 }
 
