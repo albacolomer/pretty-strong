@@ -25,3 +25,9 @@ export type WorkoutSession = {
 
 // A quick log's length: from 1 minute to 24 hours, as the database allows.
 export const QUICK_DURATION_MAX_MIN = 24 * 60;
+
+// A live workout's length, from its real start and end times.
+export function liveDuration(startedAt: string | null, endedAt: string | null): number | null {
+  if (!startedAt || !endedAt) return null;
+  return Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000);
+}

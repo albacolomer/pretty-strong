@@ -455,6 +455,30 @@
       "notes": "Nota (opcional)",
       "notesPlaceholder": "Com ha anat?",
       "save": "Desa"
-    }
+    },
+    "start": "Comença",
+    "startFor": "Comença «{{name}}»",
+    "resume": "Reprèn",
+    "resumeBanner": "En marxa: {{name}}",
+    "alreadyActive": "Ja tens un entrenament en marxa.",
+    "otherRoutine": "Fes una altra rutina",
+    "otherRoutineTitle": "Quina rutina fas?",
+    "hide": "Amaga l'entrenament",
+    "finish": "Acaba l'entrenament",
+    "finishTitle": "Acabar l'entrenament?",
+    "unfinishedSets_one": "{{count}} sèrie sense ✓ no es desarà.",
+    "unfinishedSets_other": "{{count}} sèries sense ✓ no es desaran.",
+    "noSetsTitle": "Encara no has fet cap sèrie.",
+    "discard": "Descarta l'entrenament",
+    "discardTitle": "Descartar l'entrenament? No es desarà res.",
+    "keepGoing": "Continua",
+    "noExercises": "Aquest entrenament no té exercicis.",
+    "setFor": "Sèrie {{number}} de «{{name}}» feta",
+    "setsDone": "{{done}}/{{total}}",
+    "saved": "Entrenament desat ✓",
+    "savedLater": "Sense connexió: es desarà quan n'hi hagi.",
+    "saveFailed": "No s'ha pogut desar l'entrenament. Es tornarà a provar.",
+    "noWorkout": "No hi ha cap entrenament en marxa.",
+    "close": "Tanca"
   }
 }

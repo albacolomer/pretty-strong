@@ -2,12 +2,15 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
 import { useSyncProfileLanguage } from '@/features/profile/useSyncProfileLanguage';
+import { useSaveFinishedWorkouts } from '@/features/workout/useSaveFinishedWorkouts';
 import { useTheme } from '@/theme';
 
 export default function TabsLayout() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   useSyncProfileLanguage();
+  // Finished workouts reach the database whatever tab is open.
+  useSaveFinishedWorkouts();
 
   return (
     <NativeTabs tintColor={colors.accent}>

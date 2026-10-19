@@ -8,8 +8,10 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { fetchRoutines } from '@/features/routines/api';
 import type { Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
+import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { deleteSession, fetchSessions, logQuickSession } from '@/features/workout/api';
 import type { WorkoutSession } from '@/features/workout/session';
+import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { Today } from './Today';
@@ -80,6 +82,8 @@ beforeEach(() => {
   jest.mocked(logQuickSession).mockReset().mockResolvedValue();
   jest.mocked(deleteSession).mockReset().mockResolvedValue();
   localStorage.clear();
+  useWorkoutStore.setState({ active: null, pending: [] });
+  jest.mocked(router.push).mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
     .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
@@ -217,6 +221,80 @@ describe('<Today />', () => {
     await user.press(screen.getByRole('button', { name: 'Opcions de «Tren superior 1»' }));
 
     expect(deleteSession).toHaveBeenCalledWith('session-1');
+  });
+
+  test('Comença copies the routine into a workout and opens it; a class has no Comença', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(screen.queryByRole('button', { name: 'Comença «Spinning»' })).not.toBeOnTheScreen();
+    await user.press(await screen.findByRole('button', { name: 'Comença «Tren superior 1»' }));
+
+    expect(useWorkoutStore.getState().active).toMatchObject({
+      date: '2026-10-20',
+      plannedRoutineId: 'upper',
+      routineId: 'upper',
+      routineName: 'Tren superior 1',
+    });
+    expect(useWorkoutStore.getState().active?.exercises).toHaveLength(4);
+    expect(router.push).toHaveBeenCalledWith('/workout');
+  });
+
+  test('a workout going shows "Reprèn", and no second one can start', async () => {
+    const user = userEvent.setup();
+    useWorkoutStore.setState({
+      active: workoutFromRoutine(upper, {
+        date: '2026-10-20',
+        plannedRoutineId: 'upper',
+        changeReason: null,
+        startedAt: new Date().toISOString(),
+        newId: () => Math.random().toString(),
+      }),
+    });
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('En marxa: Tren superior 1')).toBeOnTheScreen();
+    // The card of the workout going says "Reprèn" too.
+    expect(screen.getByRole('button', { name: 'Comença «Tren superior 1»' })).toHaveTextContent(
+      'Reprèn',
+    );
+
+    sheetChoices.push('Cames');
+    await user.press(screen.getByRole('button', { name: 'Fes una altra rutina' }));
+    expect(screen.getByText('Ja tens un entrenament en marxa.')).toBeOnTheScreen();
+    expect(router.push).not.toHaveBeenCalled();
+
+    await user.press(screen.getAllByRole('button', { name: 'Reprèn' })[0]);
+    expect(router.push).toHaveBeenCalledWith('/workout');
+  });
+
+  test('"Fes una altra rutina" starts any routine, unplanned', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Cames');
+    await user.press(await screen.findByRole('button', { name: 'Fes una altra rutina' }));
+
+    // A class isn't offered: there's nothing to log set by set.
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual(['Tren superior 1', 'Cames', 'Cancel·la']);
+    expect(useWorkoutStore.getState().active).toMatchObject({
+      plannedRoutineId: null,
+      routineId: 'legs',
+    });
+  });
+
+  test('a finished workout not saved yet already counts as done', async () => {
+    const workout = workoutFromRoutine(upper, {
+      date: '2026-10-20',
+      plannedRoutineId: 'upper',
+      changeReason: null,
+      startedAt: '2026-10-20T07:00:00.000Z',
+      newId: () => Math.random().toString(),
+    });
+    useWorkoutStore.setState({ pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z' }] });
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('✓ Fet · 1 h')).toBeOnTheScreen();
   });
 
   test('a rest day today says so', async () => {

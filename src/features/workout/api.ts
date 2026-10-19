@@ -1,9 +1,10 @@
 import { supabase } from '@/lib/supabase';
 
-import type { ChangeReason, SessionStatus, WorkoutSession } from './session';
+import { toFinishPayload, type FinishedWorkout } from './activeWorkout';
+import { liveDuration, type ChangeReason, type SessionStatus, type WorkoutSession } from './session';
 
 const SESSION_COLUMNS =
-  'id, date, planned_routine_id, routine_id, status, log_mode, duration_s, notes, change_reason';
+  'id, date, planned_routine_id, routine_id, status, log_mode, started_at, ended_at, duration_s, notes, change_reason';
 
 // Your sessions from `from` to `to` (both "2026-10-20" dates, included),
 // oldest first. RLS only returns your own.
@@ -24,7 +25,7 @@ export async function fetchSessions(from: string, to: string): Promise<WorkoutSe
     // The database's check constraints guarantee the codes.
     status: row.status as SessionStatus,
     logMode: row.log_mode as WorkoutSession['logMode'],
-    durationS: row.duration_s,
+    durationS: row.duration_s ?? liveDuration(row.started_at, row.ended_at),
     notes: row.notes,
     changeReason: row.change_reason as ChangeReason | null,
   }));
@@ -47,6 +48,15 @@ export async function logQuickSession(session: WorkoutSession): Promise<void> {
     },
     { onConflict: 'id', ignoreDuplicates: true },
   );
+  if (error) throw error;
+}
+
+// A finished live workout, in one transaction (see finish_workout()).
+// Sending the same one again replaces it, so retries are safe.
+export async function finishWorkout(workout: FinishedWorkout): Promise<void> {
+  const { error } = await supabase.rpc('finish_workout', {
+    p_session: toFinishPayload(workout),
+  });
   if (error) throw error;
 }
 

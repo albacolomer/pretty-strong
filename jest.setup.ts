@@ -23,6 +23,18 @@ jest.mock('react-native/Libraries/Components/TextInput/InputAccessoryView', () =
 // doesn't have. Skip installing it and use an in-memory one instead.
 jest.mock('expo-sqlite/localStorage/install', () => ({}));
 
+// The same for expo-sqlite's key-value store (the live workout): an
+// in-memory one, kept apart from the localStorage below.
+jest.mock('expo-sqlite/kv-store', () => {
+  const items = new Map<string, string>();
+  const storage = {
+    getItem: async (key: string) => items.get(key) ?? null,
+    setItem: async (key: string, value: string) => void items.set(key, value),
+    removeItem: async (key: string) => void items.delete(key),
+  };
+  return { __esModule: true, default: storage, Storage: storage };
+});
+
 const store = new Map<string, string>();
 
 globalThis.localStorage = {

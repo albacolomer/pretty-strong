@@ -18,6 +18,10 @@ type TodayRoutineCardProps = {
   session: WorkoutSession | undefined;
   // Days still ahead can't be logged yet.
   canLog: boolean;
+  // "Comença" (or "Reprèn" for the workout already going); left out for a
+  // class, and for days other than today.
+  onStart?: () => void;
+  startLabel?: string;
   onDone: () => void;
   onSwap: () => void;
   onSkip: () => void;
@@ -33,6 +37,8 @@ export function TodayRoutineCard({
   shown,
   session,
   canLog,
+  onStart,
+  startLabel,
   onDone,
   onSwap,
   onSkip,
@@ -79,27 +85,37 @@ export function TodayRoutineCard({
               .join(' · ')}
           </Text>
         ) : canLog ? (
-          <View style={styles.actions}>
-            <Button
-              label={t('today.done')}
-              aria-label={t('today.doneFor', { name: shown.name })}
-              onPress={onDone}
-              style={styles.action}
-            />
-            <Button
-              label={t('today.swap')}
-              aria-label={t('today.swapFor', { name: shown.name })}
-              variant="secondary"
-              onPress={onSwap}
-              style={styles.action}
-            />
-            <Button
-              label={t('today.skip')}
-              aria-label={t('today.skipFor', { name: shown.name })}
-              variant="secondary"
-              onPress={onSkip}
-              style={styles.action}
-            />
+          <View style={styles.actionGroup}>
+            {onStart ? (
+              <Button
+                label={startLabel ?? t('workout.start')}
+                aria-label={t('workout.startFor', { name: shown.name })}
+                onPress={onStart}
+              />
+            ) : null}
+            <View style={styles.actions}>
+              <Button
+                label={t('today.done')}
+                aria-label={t('today.doneFor', { name: shown.name })}
+                variant={onStart ? 'secondary' : 'primary'}
+                onPress={onDone}
+                style={styles.action}
+              />
+              <Button
+                label={t('today.swap')}
+                aria-label={t('today.swapFor', { name: shown.name })}
+                variant="secondary"
+                onPress={onSwap}
+                style={styles.action}
+              />
+              <Button
+                label={t('today.skip')}
+                aria-label={t('today.skipFor', { name: shown.name })}
+                variant="secondary"
+                onPress={onSkip}
+                style={styles.action}
+              />
+            </View>
           </View>
         ) : null}
       </Card>
@@ -116,10 +132,13 @@ const styles = StyleSheet.create({
   name: {
     flex: 1,
   },
+  actionGroup: {
+    gap: spacing.sm,
+    marginTop: spacing.xs,
+  },
   actions: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.xs,
   },
   action: {
     flex: 1,

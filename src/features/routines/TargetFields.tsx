@@ -71,6 +71,8 @@ type TargetInputFieldProps = {
   // In a table, whose header names the column.
   labelHidden?: boolean;
   width?: number;
+  // Shown in grey while empty, e.g. the planned number in a workout.
+  placeholder?: string;
 };
 
 // One field. It keeps the text as typed ("42," on the way to "42,5") and
@@ -83,6 +85,7 @@ export function TargetInputField({
   onChange,
   labelHidden = false,
   width,
+  placeholder,
 }: TargetInputFieldProps) {
   const language = useAppLanguage();
   const [text, setText] = useState(() => formatInput(inputValue(targets, input), language));
@@ -94,6 +97,7 @@ export function TargetInputField({
       labelHidden={labelHidden}
       aria-label={ariaLabel}
       style={width === undefined ? undefined : { width, minWidth: width }}
+      placeholder={placeholder}
       decimal={decimals > 0}
       maxLength={maxLength}
       value={text}

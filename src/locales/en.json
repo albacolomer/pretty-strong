@@ -455,6 +455,30 @@
       "notes": "Note (optional)",
       "notesPlaceholder": "How did it go?",
       "save": "Save"
-    }
+    },
+    "start": "Start",
+    "startFor": "Start “{{name}}”",
+    "resume": "Resume",
+    "resumeBanner": "In progress: {{name}}",
+    "alreadyActive": "You already have a workout in progress.",
+    "otherRoutine": "Do another routine",
+    "otherRoutineTitle": "Which routine?",
+    "hide": "Hide workout",
+    "finish": "Finish workout",
+    "finishTitle": "Finish the workout?",
+    "unfinishedSets_one": "{{count}} set without ✓ won’t be saved.",
+    "unfinishedSets_other": "{{count}} sets without ✓ won’t be saved.",
+    "noSetsTitle": "You haven't done any sets yet.",
+    "discard": "Discard workout",
+    "discardTitle": "Discard the workout? Nothing will be saved.",
+    "keepGoing": "Keep going",
+    "noExercises": "This workout has no exercises.",
+    "setFor": "Set {{number}} of “{{name}}” done",
+    "setsDone": "{{done}}/{{total}}",
+    "saved": "Workout saved ✓",
+    "savedLater": "No connection: it'll be saved when there is one.",
+    "saveFailed": "Couldn't save the workout. It'll try again.",
+    "noWorkout": "No workout in progress.",
+    "close": "Close"
   }
 }

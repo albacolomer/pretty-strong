@@ -1,18 +1,23 @@
 import { randomUUID } from 'expo-crypto';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Text, useToast } from '@/components/ui';
-import { WEEKDAYS, type Routine, type Weekday } from '@/features/routines/routine';
+import { usesExercises, WEEKDAYS, type Routine, type Weekday } from '@/features/routines/routine';
 import { useRoutines } from '@/features/routines/useRoutines';
+import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { QuickLogSheet, type QuickLog } from '@/features/workout/QuickLogSheet';
+import { ResumeBanner } from '@/features/workout/ResumeBanner';
 import {
   CHANGE_REASONS,
+  liveDuration,
   type ChangeReason,
   type WorkoutSession,
 } from '@/features/workout/session';
 import { useDeleteSession, useLogSession, useWeekSessions } from '@/features/workout/useSessions';
+import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
@@ -25,7 +30,7 @@ import { WeekStrip, type DayState } from './WeekStrip';
 
 // The Today tab (US-11, US-12, US-20): the date, the week strip, and the
 // plan for today, or for the day picked in the strip: one card per routine,
-// to mark done, swap or skip; or rest.
+// to start, mark done, swap or skip; or rest.
 export function Today() {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
@@ -41,7 +46,27 @@ export function Today() {
   const from = dateKey(weekStart);
   const to = dateKey(addDays(weekStart, 6));
   const { data: routines, isPending, isError } = useRoutines();
-  const { data: sessions = [] } = useWeekSessions(from, to);
+  const { data: savedSessions = [] } = useWeekSessions(from, to);
+  const active = useWorkoutStore((state) => state.active);
+  const pending = useWorkoutStore((state) => state.pending);
+  const startWorkout = useWorkoutStore((state) => state.start);
+  // Finished workouts not in the database yet (no signal) count as done.
+  const sessions: WorkoutSession[] = [
+    ...savedSessions,
+    ...pending
+      .filter((workout) => !savedSessions.some((session) => session.id === workout.id))
+      .map((workout) => ({
+        id: workout.id,
+        date: workout.date,
+        plannedRoutineId: workout.plannedRoutineId,
+        routineId: workout.routineId,
+        status: 'completed' as const,
+        logMode: 'live' as const,
+        durationS: liveDuration(workout.startedAt, workout.endedAt),
+        notes: null,
+        changeReason: workout.changeReason,
+      })),
+  ];
   const logSession = useLogSession(from, to);
   const deleteSession = useDeleteSession(from, to);
   const { swaps, setSwap } = useSwaps(from);
@@ -179,6 +204,45 @@ export function Today() {
     );
   }
 
+  // Copies the routine into a new workout and opens it. Only one at a time:
+  // with another one going, it offers to go back to that one instead.
+  function start(routine: Routine, plannedRoutineId: string | null) {
+    if (active) {
+      showToast({
+        message: t('workout.alreadyActive'),
+        action: { label: t('workout.resume'), onPress: () => router.push('/workout') },
+      });
+      return;
+    }
+    startWorkout(
+      workoutFromRoutine(routine, {
+        date: day,
+        plannedRoutineId,
+        changeReason: plannedRoutineId ? (swaps[day]?.[plannedRoutineId]?.reason ?? null) : null,
+        startedAt: new Date().toISOString(),
+        newId: randomUUID,
+      }),
+    );
+    router.push('/workout');
+  }
+
+  // "Fes una altra rutina": any routine, unplanned, today.
+  function startAnother() {
+    const startable = allRoutines.filter((routine) => usesExercises(routine.label));
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: t('workout.otherRoutineTitle'),
+        options: [...startable.map((routine) => routine.name), t('common.cancel')],
+        cancelButtonIndex: startable.length,
+        userInterfaceStyle: scheme,
+      },
+      (index) => {
+        const routine = startable[index];
+        if (routine) start(routine, null);
+      },
+    );
+  }
+
   // ⋯: "Desfés" once logged; "Torna a «…»" while swapped.
   function openMenu(routine: Routine, shown: Routine, session: WorkoutSession | undefined) {
     const actions = session
@@ -205,6 +269,8 @@ export function Today() {
       <Text variant="bodyStrong" color="textMuted">
         {formatDayTitle(today, language)}
       </Text>
+
+      {active ? <ResumeBanner workout={active} /> : null}
 
       <WeekStrip
         weekStart={weekStart}
@@ -243,6 +309,11 @@ export function Today() {
           const session = sessionFor(routine);
           const shown = shownFor(routine, session);
           const swapped = !session && shown.id !== routine.id;
+          // This card's own workout, if it's the one going.
+          const isActive =
+            active?.date === day &&
+            active.plannedRoutineId === routine.id &&
+            active.routineId === shown.id;
           return (
             <TodayRoutineCard
               key={routine.id}
@@ -250,6 +321,13 @@ export function Today() {
               shown={shown}
               session={session}
               canLog={canLog}
+              // Live workouts are for today; a class is only marked done.
+              onStart={
+                showingToday && usesExercises(shown.label)
+                  ? () => (isActive ? router.push('/workout') : start(shown, routine.id))
+                  : undefined
+              }
+              startLabel={isActive ? t('workout.resume') : t('workout.start')}
               onDone={() => setLogging({ planned: routine, shown })}
               onSwap={() => swap(routine, shown)}
               onSkip={() => skip(routine)}
@@ -258,6 +336,10 @@ export function Today() {
           );
         })
       )}
+
+      {showingToday && routines.some((routine) => usesExercises(routine.label)) ? (
+        <Button label={t('workout.otherRoutine')} variant="ghost" onPress={startAnother} />
+      ) : null}
 
       <QuickLogSheet
         visible={logging !== null}

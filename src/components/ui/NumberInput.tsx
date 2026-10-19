@@ -30,6 +30,7 @@ export function NumberInput({
   label,
   decimal = false,
   labelHidden = false,
+  placeholder = '–',
   style,
   ...rest
 }: NumberInputProps) {
@@ -49,7 +50,7 @@ export function NumberInput({
         inputAccessoryViewID={accessoryId}
         // Typing replaces the old number instead of adding to it.
         selectTextOnFocus
-        placeholder="–"
+        placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         selectionColor={colors.accent}
         style={[

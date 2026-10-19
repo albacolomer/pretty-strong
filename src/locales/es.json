@@ -455,6 +455,30 @@
       "notes": "Nota (opcional)",
       "notesPlaceholder": "¿Cómo ha ido?",
       "save": "Guardar"
-    }
+    },
+    "start": "Empezar",
+    "startFor": "Empezar «{{name}}»",
+    "resume": "Reanudar",
+    "resumeBanner": "En marcha: {{name}}",
+    "alreadyActive": "Ya tienes un entrenamiento en marcha.",
+    "otherRoutine": "Hacer otra rutina",
+    "otherRoutineTitle": "¿Qué rutina haces?",
+    "hide": "Ocultar el entrenamiento",
+    "finish": "Terminar el entrenamiento",
+    "finishTitle": "¿Terminar el entrenamiento?",
+    "unfinishedSets_one": "{{count}} serie sin ✓ no se guardará.",
+    "unfinishedSets_other": "{{count}} series sin ✓ no se guardarán.",
+    "noSetsTitle": "Todavía no has hecho ninguna serie.",
+    "discard": "Descartar el entrenamiento",
+    "discardTitle": "¿Descartar el entrenamiento? No se guardará nada.",
+    "keepGoing": "Seguir",
+    "noExercises": "Este entrenamiento no tiene ejercicios.",
+    "setFor": "Serie {{number}} de «{{name}}» hecha",
+    "setsDone": "{{done}}/{{total}}",
+    "saved": "Entrenamiento guardado ✓",
+    "savedLater": "Sin conexión: se guardará cuando haya.",
+    "saveFailed": "No se ha podido guardar el entrenamiento. Se volverá a intentar.",
+    "noWorkout": "No hay ningún entrenamiento en marcha.",
+    "close": "Cerrar"
   }
 }

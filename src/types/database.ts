@@ -242,6 +242,136 @@ export type Database = {
         }
         Relationships: []
       }
+      session_exercises: {
+        Row: {
+          change: string | null
+          change_reason: string | null
+          created_at: string
+          exercise_id: string
+          group_key: string | null
+          id: string
+          notes: string | null
+          position: number
+          rest_s: number | null
+          routine_exercise_id: string | null
+          session_id: string
+          swapped_from_id: string | null
+        }
+        Insert: {
+          change?: string | null
+          change_reason?: string | null
+          created_at?: string
+          exercise_id: string
+          group_key?: string | null
+          id: string
+          notes?: string | null
+          position: number
+          rest_s?: number | null
+          routine_exercise_id?: string | null
+          session_id: string
+          swapped_from_id?: string | null
+        }
+        Update: {
+          change?: string | null
+          change_reason?: string | null
+          created_at?: string
+          exercise_id?: string
+          group_key?: string | null
+          id?: string
+          notes?: string | null
+          position?: number
+          rest_s?: number | null
+          routine_exercise_id?: string | null
+          session_id?: string
+          swapped_from_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_exercises_exercise_id_fkey"
+            columns: ["exercise_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_exercises_routine_exercise_id_fkey"
+            columns: ["routine_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "routine_exercises"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_exercises_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "workout_sessions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "session_exercises_swapped_from_id_fkey"
+            columns: ["swapped_from_id"]
+            isOneToOne: false
+            referencedRelation: "exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sets: {
+        Row: {
+          completed_at: string
+          distance_m: number | null
+          duration_s: number | null
+          id: string
+          incline_pct: number | null
+          level: number | null
+          position: number
+          reps: number | null
+          rpe: number | null
+          session_exercise_id: string
+          set_type: string
+          speed_kmh: number | null
+          weight_kg: number | null
+        }
+        Insert: {
+          completed_at: string
+          distance_m?: number | null
+          duration_s?: number | null
+          id: string
+          incline_pct?: number | null
+          level?: number | null
+          position: number
+          reps?: number | null
+          rpe?: number | null
+          session_exercise_id: string
+          set_type?: string
+          speed_kmh?: number | null
+          weight_kg?: number | null
+        }
+        Update: {
+          completed_at?: string
+          distance_m?: number | null
+          duration_s?: number | null
+          id?: string
+          incline_pct?: number | null
+          level?: number | null
+          position?: number
+          reps?: number | null
+          rpe?: number | null
+          session_exercise_id?: string
+          set_type?: string
+          speed_kmh?: number | null
+          weight_kg?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sets_session_exercise_id_fkey"
+            columns: ["session_exercise_id"]
+            isOneToOne: false
+            referencedRelation: "session_exercises"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_exercise_settings: {
         Row: {
           created_at: string
@@ -383,6 +513,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      finish_workout: { Args: { p_session: Json }; Returns: string }
       is_username_available: { Args: { candidate: string }; Returns: boolean }
       save_routine: {
         Args: {
