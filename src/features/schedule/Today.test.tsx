@@ -24,7 +24,12 @@ jest.mock('@/features/workout/api', () => ({
   deleteSession: jest.fn(),
 }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'session-1' }));
-jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+// The screen's link parameters, e.g. { start } from the routine editor.
+let mockParams: { start?: string } = {};
+jest.mock('expo-router', () => ({
+  router: { push: jest.fn(), setParams: jest.fn() },
+  useLocalSearchParams: () => mockParams,
+}));
 // Today is Tuesday 20 October 2026.
 jest.mock('./useToday', () => ({ useToday: () => new Date(2026, 9, 20) }));
 
@@ -83,6 +88,7 @@ beforeEach(() => {
   jest.mocked(deleteSession).mockReset().mockResolvedValue();
   localStorage.clear();
   useWorkoutStore.setState({ active: null, pending: [] });
+  mockParams = {};
   jest.mocked(router.push).mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
@@ -276,11 +282,41 @@ describe('<Today />', () => {
     await user.press(await screen.findByRole('button', { name: 'Fes una altra rutina' }));
 
     // A class isn't offered: there's nothing to log set by set.
-    expect(actionSheet.mock.lastCall?.[0].options).toEqual(['Tren superior 1', 'Cames', 'Cancel·la']);
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual([
+      'Tren superior 1',
+      'Cames',
+      'Crea una rutina nova',
+      'Cancel·la',
+    ]);
     expect(useWorkoutStore.getState().active).toMatchObject({
       plannedRoutineId: null,
       routineId: 'legs',
     });
+  });
+
+  test('"Crea una rutina nova" opens the editor, and the new routine starts once saved', async () => {
+    const user = userEvent.setup();
+    const { unmount } = await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Crea una rutina nova');
+    await user.press(await screen.findByRole('button', { name: 'Fes una altra rutina' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/plan/routines/new',
+      params: { start: '1' },
+    });
+    await unmount();
+
+    // The editor comes back with the new routine's id.
+    mockParams = { start: 'legs' };
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    await screen.findByRole('button', { name: 'Fes una altra rutina' });
+    expect(useWorkoutStore.getState().active).toMatchObject({
+      plannedRoutineId: null,
+      routineId: 'legs',
+    });
+    expect(router.setParams).toHaveBeenCalledWith({ start: undefined });
+    expect(router.push).toHaveBeenLastCalledWith('/workout');
   });
 
   test('a finished workout not saved yet already counts as done', async () => {

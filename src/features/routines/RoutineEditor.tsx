@@ -62,7 +62,8 @@ import { WeekdayPicker } from './WeekdayPicker';
 type RoutineEditorProps = {
   // Null for a new routine.
   routineId: string | null;
-  onSaved: () => void;
+  // With the routine's id, new or not.
+  onSaved: (routineId: string) => void;
   // Given for a saved routine: offers "Arxiva la rutina", then leaves.
   onArchived?: () => void;
 };
@@ -185,9 +186,9 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
     if (Object.keys(found).length > 0) return;
 
     save.mutate(toSaveInput(draft, routine?.id ?? null), {
-      onSuccess: () => {
+      onSuccess: (routineId) => {
         leavingAfterSave.current = true;
-        onSaved();
+        onSaved(routineId);
       },
     });
   }

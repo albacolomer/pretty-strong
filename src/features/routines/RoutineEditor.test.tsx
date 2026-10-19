@@ -1,6 +1,6 @@
 import '@/lib/i18n';
 
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { act, render, screen, userEvent } from '@testing-library/react-native';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { ActionSheetIOS } from 'react-native';
 
@@ -529,6 +529,8 @@ describe('<RoutineEditor />', () => {
     });
 
     expect(screen.queryByRole('button', { name: 'Arxiva la rutina' })).not.toBeOnTheScreen();
+    // Let the exercise library finish loading before the test ends.
+    await act(async () => {});
   });
 
   test('says so when the routine does not exist', async () => {

@@ -1,6 +1,6 @@
 import { randomUUID } from 'expo-crypto';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useLocalSearchParams } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -70,6 +70,41 @@ export function Today() {
   const logSession = useLogSession(from, to);
   const deleteSession = useDeleteSession(from, to);
   const { swaps, setSwap } = useSwaps(from);
+
+  // Copies the routine into a new workout and opens it. Only one at a time:
+  // with another one going, it offers to go back to that one instead.
+  function start(routine: Routine, plannedRoutineId: string | null, date: string) {
+    if (active) {
+      showToast({
+        message: t('workout.alreadyActive'),
+        action: { label: t('workout.resume'), onPress: () => router.push('/workout') },
+      });
+      return;
+    }
+    startWorkout(
+      workoutFromRoutine(routine, {
+        date,
+        plannedRoutineId,
+        changeReason: plannedRoutineId ? (swaps[date]?.[plannedRoutineId]?.reason ?? null) : null,
+        startedAt: new Date().toISOString(),
+        newId: randomUUID,
+      }),
+    );
+    router.push('/workout');
+  }
+
+  // A routine just created from "Fes una altra rutina" (routines/new sends
+  // its id back): start it as soon as it's in the list.
+  const { start: createdRoutineId } = useLocalSearchParams<{ start?: string }>();
+  // Started once, even if the screen redraws before the link is cleared.
+  const startedCreated = useRef<string | null>(null);
+  useEffect(() => {
+    const created = routines?.find((routine) => routine.id === createdRoutineId);
+    if (!created || startedCreated.current === created.id) return;
+    startedCreated.current = created.id;
+    router.setParams({ start: undefined });
+    start(created, null, dateKey(today));
+  });
   // The routine whose "Fet" sheet is open.
   const [logging, setLogging] = useState<{ planned: Routine; shown: Routine } | null>(null);
 
@@ -204,41 +239,27 @@ export function Today() {
     );
   }
 
-  // Copies the routine into a new workout and opens it. Only one at a time:
-  // with another one going, it offers to go back to that one instead.
-  function start(routine: Routine, plannedRoutineId: string | null) {
-    if (active) {
-      showToast({
-        message: t('workout.alreadyActive'),
-        action: { label: t('workout.resume'), onPress: () => router.push('/workout') },
-      });
-      return;
-    }
-    startWorkout(
-      workoutFromRoutine(routine, {
-        date: day,
-        plannedRoutineId,
-        changeReason: plannedRoutineId ? (swaps[day]?.[plannedRoutineId]?.reason ?? null) : null,
-        startedAt: new Date().toISOString(),
-        newId: randomUUID,
-      }),
-    );
-    router.push('/workout');
-  }
-
-  // "Fes una altra rutina": any routine, unplanned, today.
+  // "Fes una altra rutina": any routine, unplanned, today; or a new one,
+  // made in the routine editor and started once it's saved.
   function startAnother() {
     const startable = allRoutines.filter((routine) => usesExercises(routine.label));
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: t('workout.otherRoutineTitle'),
-        options: [...startable.map((routine) => routine.name), t('common.cancel')],
-        cancelButtonIndex: startable.length,
+        options: [
+          ...startable.map((routine) => routine.name),
+          t('workout.newRoutine'),
+          t('common.cancel'),
+        ],
+        cancelButtonIndex: startable.length + 1,
         userInterfaceStyle: scheme,
       },
       (index) => {
         const routine = startable[index];
-        if (routine) start(routine, null);
+        if (routine) start(routine, null, day);
+        else if (index === startable.length) {
+          router.push({ pathname: '/plan/routines/new', params: { start: '1' } });
+        }
       },
     );
   }
@@ -324,7 +345,7 @@ export function Today() {
               // Live workouts are for today; a class is only marked done.
               onStart={
                 showingToday && usesExercises(shown.label)
-                  ? () => (isActive ? router.push('/workout') : start(shown, routine.id))
+                  ? () => (isActive ? router.push('/workout') : start(shown, routine.id, day))
                   : undefined
               }
               startLabel={isActive ? t('workout.resume') : t('workout.start')}
@@ -337,7 +358,7 @@ export function Today() {
         })
       )}
 
-      {showingToday && routines.some((routine) => usesExercises(routine.label)) ? (
+      {showingToday ? (
         <Button label={t('workout.otherRoutine')} variant="ghost" onPress={startAnother} />
       ) : null}
 

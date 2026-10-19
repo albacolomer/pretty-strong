@@ -1,4 +1,4 @@
-import { router, Stack } from 'expo-router';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { Screen } from '@/components/ui';
@@ -6,6 +6,8 @@ import { RoutineEditor } from '@/features/routines/RoutineEditor';
 
 export default function NewRoutineScreen() {
   const { t } = useTranslation();
+  // From Today's "Fes una altra rutina": once saved, train with it.
+  const { start } = useLocalSearchParams<{ start?: string }>();
 
   return (
     <Screen>
@@ -17,7 +19,13 @@ export default function NewRoutineScreen() {
           headerBackButtonDisplayMode: 'minimal',
         }}
       />
-      <RoutineEditor routineId={null} onSaved={() => router.back()} />
+      <RoutineEditor
+        routineId={null}
+        onSaved={(routineId) => {
+          router.back();
+          if (start) router.navigate({ pathname: '/', params: { start: routineId } });
+        }}
+      />
     </Screen>
   );
 }
