@@ -11,15 +11,21 @@ export function formatElapsed(ms: number): string {
     : `${minutes}:${seconds}`;
 }
 
-// Time since `startedAt`, worked out from the clock each second (the
-// second tick only redraws it, so a locked phone never loses time).
-export function useElapsed(startedAt: string): string {
+// The clock, redrawn every `intervalMs`. Times are always worked out from
+// it, never counted, so a locked phone never loses any.
+export function useNow(intervalMs = 1000): number {
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now()), 1000);
+    const timer = setInterval(() => setNow(Date.now()), intervalMs);
     return () => clearInterval(timer);
-  }, []);
+  }, [intervalMs]);
 
+  return now;
+}
+
+// Time since `startedAt`.
+export function useElapsed(startedAt: string): string {
+  const now = useNow();
   return formatElapsed(now - new Date(startedAt).getTime());
 }

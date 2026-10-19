@@ -14,13 +14,20 @@ import { ROW_MAX_INPUTS, SET_INPUT_WIDTH, SetRow } from './SetRow';
 
 type WorkoutExerciseCardProps = {
   exercise: ActiveExercise;
+  // The workout's next set to do, outlined.
+  nextSetId: string | null;
   onType: (setId: string, update: TargetsUpdate) => void;
   onToggle: (setId: string) => void;
 };
 
 // One exercise in the workout (spec: ExerciseCard): picture and name, the
 // routine's note on it, then a row per set.
-export function WorkoutExerciseCard({ exercise, onType, onToggle }: WorkoutExerciseCardProps) {
+export function WorkoutExerciseCard({
+  exercise,
+  nextSetId,
+  onType,
+  onToggle,
+}: WorkoutExerciseCardProps) {
   const { t } = useTranslation();
   const language = useAppLanguage();
   const name = exerciseName(exercise.exercise, language);
@@ -63,6 +70,7 @@ export function WorkoutExerciseCard({ exercise, onType, onToggle }: WorkoutExerc
           number={index + 1}
           inputs={inputs}
           set={set}
+          isNext={set.id === nextSetId}
           exerciseName={name}
           onType={(update) => onType(set.id, update)}
           onToggle={() => onToggle(set.id)}

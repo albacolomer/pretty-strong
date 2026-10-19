@@ -2,12 +2,15 @@ import { NO_TARGETS, type Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 
 import {
+  afterSet,
   countSets,
+  nextSet,
   shownNumbers,
   toFinishPayload,
   toggleSet,
   updateTyped,
   workoutFromRoutine,
+  workoutOrder,
   type ActiveWorkout,
 } from './activeWorkout';
 
@@ -29,6 +32,7 @@ const start = (): ActiveWorkout =>
     changeReason: null,
     startedAt: '2026-10-20T17:00:00.000Z',
     newId: () => `id-${(ids += 1)}`,
+    defaultRestS: () => 90,
   });
 
 describe('workoutFromRoutine', () => {
@@ -113,5 +117,97 @@ describe('toFinishPayload', () => {
       completed_at: '2026-10-20T17:05:00.000Z',
     });
     expect(payload.exercises[1].sets[0]).toMatchObject({ weight_kg: 30, reps: 12 });
+  });
+});
+
+describe('rest and order', () => {
+  // Lat pulldown on its own (2 sets, 2:00 rest), then face pull + curl as a
+  // superset (2 rounds, 1:00 rest after each round).
+  const superset: Routine = {
+    ...upperBody,
+    exercises: [
+      { ...upperBody.exercises[0], restS: 120, sets: [NO_TARGETS, NO_TARGETS] },
+      { ...upperBody.exercises[2], groupKey: 'g1', restS: 60, sets: [NO_TARGETS, NO_TARGETS] },
+      { ...upperBody.exercises[3], groupKey: 'g1', restS: 60, sets: [NO_TARGETS, NO_TARGETS] },
+    ],
+  };
+  const begin = () =>
+    workoutFromRoutine(superset, {
+      date: '2026-10-20',
+      plannedRoutineId: null,
+      changeReason: null,
+      startedAt: '2026-10-20T17:00:00.000Z',
+      newId: () => `id-${(ids += 1)}`,
+      defaultRestS: () => 90,
+    });
+  const tick = (workout: ActiveWorkout, exerciseIndex: number, setIndex: number) => {
+    const exercise = workout.exercises[exerciseIndex];
+    return toggleSet(workout, exercise.id, exercise.sets[setIndex].id, '2026-10-20T17:05:00.000Z');
+  };
+  const setOf = (workout: ActiveWorkout, exerciseIndex: number, setIndex: number) =>
+    workout.exercises[exerciseIndex].sets[setIndex].id;
+
+  test('fixes each exercise’s rest when it starts: the routine’s, else the default', () => {
+    const plain = workoutFromRoutine(upperBody, {
+      date: '2026-10-20',
+      plannedRoutineId: null,
+      changeReason: null,
+      startedAt: '2026-10-20T17:00:00.000Z',
+      newId: () => `id-${(ids += 1)}`,
+      defaultRestS: (exerciseId) => (exerciseId === 'exercise-2' ? 150 : 90),
+    });
+    expect(plain.exercises.map((e) => e.restS)).toEqual([90, 150, 90, 90]);
+    expect(plain.rest).toBeNull();
+  });
+
+  test('goes through a superset round by round', () => {
+    const workout = begin();
+    const [lat, face, curl] = workout.exercises.map((e) => e.id);
+
+    expect(workoutOrder(workout).map((item) => [item.exerciseId, item.round])).toEqual([
+      [lat, 0],
+      [lat, 1],
+      [face, 0],
+      [curl, 0],
+      [face, 1],
+      [curl, 1],
+    ]);
+  });
+
+  test('rests after a set on its own; in a superset only at the end of the round', () => {
+    let workout = begin();
+
+    workout = tick(workout, 0, 0);
+    expect(afterSet(workout, setOf(workout, 0, 0))).toEqual({
+      restS: 120,
+      next: { exerciseId: workout.exercises[0].id, setId: setOf(workout, 0, 1) },
+    });
+
+    // Face pull, round 1: straight on to the curl, no rest.
+    workout = tick(workout, 1, 0);
+    expect(afterSet(workout, setOf(workout, 1, 0))).toEqual({
+      restS: null,
+      next: { exerciseId: workout.exercises[2].id, setId: setOf(workout, 2, 0) },
+    });
+
+    // Curl, end of round 1: rest, then face pull round 2.
+    workout = tick(workout, 2, 0);
+    expect(afterSet(workout, setOf(workout, 2, 0))).toEqual({
+      restS: 60,
+      next: { exerciseId: workout.exercises[1].id, setId: setOf(workout, 1, 1) },
+    });
+  });
+
+  test('the next set is the first not done; none (and no rest) once all are done', () => {
+    let workout = begin();
+    expect(nextSet(workout)?.setId).toBe(setOf(workout, 0, 0));
+
+    // Skipping ahead leaves the earlier set as the one after the last.
+    workout = tick(workout, 2, 1);
+    expect(nextSet(workout, setOf(workout, 2, 1))?.setId).toBe(setOf(workout, 0, 0));
+
+    for (const [e, s] of [[0, 0], [0, 1], [1, 0], [2, 0], [1, 1]]) workout = tick(workout, e, s);
+    expect(nextSet(workout)).toBeNull();
+    expect(afterSet(workout, setOf(workout, 1, 1))).toEqual({ restS: null, next: null });
   });
 });

@@ -6,9 +6,13 @@ import { Stack, ThemeProvider } from 'expo-router';
 import { ToastProvider } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { SplashScreenController } from '@/features/auth/SplashScreenController';
+import { configureNotifications } from '@/lib/notifications';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
 import { navigationThemes } from '@/theme/navigation';
+
+// Once, when the app starts: rest alerts don't pop up over the workout.
+configureNotifications();
 
 export default function RootLayout() {
   const { scheme } = useTheme();

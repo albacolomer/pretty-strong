@@ -480,6 +480,18 @@
     "savedLater": "Sin conexión: se guardará cuando haya.",
     "saveFailed": "No se ha podido guardar el entrenamiento. Se volverá a intentar.",
     "noWorkout": "No hay ningún entrenamiento en marcha.",
-    "close": "Cerrar"
+    "close": "Cerrar",
+    "rest": "Descanso",
+    "nextUp": "Siguiente: {{name}}, serie {{number}}",
+    "restOver": "Se ha acabado el descanso",
+    "restLeft": "Descanso: {{time}}",
+    "pauseRest": "Pausa",
+    "resumeRest": "Seguir",
+    "skipRest": "Saltar el descanso",
+    "restMinus": "−15 s",
+    "restPlus": "+15 s",
+    "restMinusLabel": "Quitar {{seconds}} segundos de descanso",
+    "restPlusLabel": "Añadir {{seconds}} segundos de descanso",
+    "round": "Ronda {{round}} de {{rounds}}"
   }
 }

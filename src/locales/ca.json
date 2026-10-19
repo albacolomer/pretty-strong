@@ -480,6 +480,18 @@
     "savedLater": "Sense connexió: es desarà quan n'hi hagi.",
     "saveFailed": "No s'ha pogut desar l'entrenament. Es tornarà a provar.",
     "noWorkout": "No hi ha cap entrenament en marxa.",
-    "close": "Tanca"
+    "close": "Tanca",
+    "rest": "Descans",
+    "nextUp": "Següent: {{name}}, sèrie {{number}}",
+    "restOver": "S'ha acabat el descans",
+    "restLeft": "Descans: {{time}}",
+    "pauseRest": "Pausa",
+    "resumeRest": "Continua",
+    "skipRest": "Salta el descans",
+    "restMinus": "−15 s",
+    "restPlus": "+15 s",
+    "restMinusLabel": "Treu {{seconds}} segons de descans",
+    "restPlusLabel": "Afegeix {{seconds}} segons de descans",
+    "round": "Ronda {{round}} de {{rounds}}"
   }
 }

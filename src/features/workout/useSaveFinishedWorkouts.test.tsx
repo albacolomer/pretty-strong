@@ -22,6 +22,7 @@ const finished = (): FinishedWorkout => ({
     changeReason: null,
     startedAt: '2026-10-20T17:00:00.000Z',
     newId: () => `id-${(ids += 1)}`,
+    defaultRestS: () => 90,
   }),
   endedAt: '2026-10-20T18:00:00.000Z',
 });

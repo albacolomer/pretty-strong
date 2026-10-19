@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Text, useToast } from '@/components/ui';
+import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
+import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { usesExercises, WEEKDAYS, type Routine, type Weekday } from '@/features/routines/routine';
 import { useRoutines } from '@/features/routines/useRoutines';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
@@ -19,6 +21,7 @@ import {
 import { useDeleteSession, useLogSession, useWeekSessions } from '@/features/workout/useSessions';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { useAppLanguage } from '@/lib/i18n';
+import { ensureNotificationPermission } from '@/lib/notifications';
 import { spacing, useTheme } from '@/theme';
 
 import { addDays, dateKey, formatDayTitle, startOfWeek, weekdayOf } from './dates';
@@ -70,6 +73,8 @@ export function Today() {
   const logSession = useLogSession(from, to);
   const deleteSession = useDeleteSession(from, to);
   const { swaps, setSwap } = useSwaps(from);
+  // Your own default rest per exercise, fixed into the workout when it starts.
+  const { data: settings } = useExerciseSettings();
 
   // Copies the routine into a new workout and opens it. Only one at a time:
   // with another one going, it offers to go back to that one instead.
@@ -81,6 +86,8 @@ export function Today() {
       });
       return;
     }
+    // Asked once, before the first rest: "rest is over" needs it.
+    void ensureNotificationPermission();
     startWorkout(
       workoutFromRoutine(routine, {
         date,
@@ -88,6 +95,7 @@ export function Today() {
         changeReason: plannedRoutineId ? (swaps[date]?.[plannedRoutineId]?.reason ?? null) : null,
         startedAt: new Date().toISOString(),
         newId: randomUUID,
+        defaultRestS: (exerciseId) => settings?.[exerciseId]?.defaultRestS ?? APP_DEFAULT_REST_S,
       }),
     );
     router.push('/workout');

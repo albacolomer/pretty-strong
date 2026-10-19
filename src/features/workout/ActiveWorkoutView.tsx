@@ -1,14 +1,27 @@
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
+import { useEffect, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Text } from '@/components/ui';
+import { cancelScheduled, setWorkoutScreenOpen } from '@/lib/notifications';
 import { spacing, touch, useTheme } from '@/theme';
 
-import { countSets, toggleSet, updateTyped, type ActiveWorkout } from './activeWorkout';
+import {
+  afterSet,
+  countSets,
+  nextSet,
+  toggleSet,
+  updateTyped,
+  workoutSegments,
+  type ActiveExercise,
+  type ActiveWorkout,
+} from './activeWorkout';
+import { RestTimerBar } from './RestTimerBar';
 import { useElapsed } from './useElapsed';
+import { useRestTimer } from './useRestTimer';
 import { WorkoutExerciseCard } from './WorkoutExerciseCard';
 import { useWorkoutStore } from './workoutStore';
 
@@ -38,13 +51,55 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
   const finish = useWorkoutStore((state) => state.finish);
   const discard = useWorkoutStore((state) => state.discard);
   const elapsed = useElapsed(workout.startedAt);
+  const restTimer = useRestTimer(workout);
   // Gym UX rule 5: the screen stays on while the workout is open.
   useKeepAwake();
+  // While it's open, "rest is over" shows here, not as a notification.
+  useEffect(() => {
+    setWorkoutScreenOpen(true);
+    return () => setWorkoutScreenOpen(false);
+  }, []);
 
+  // ✓: the set is done, with a soft tap (gym UX rule 6), and rest starts;
+  // in a superset, straight on to the next exercise of the round instead.
   function toggle(exerciseId: string, setId: string, wasDone: boolean) {
     update((current) => toggleSet(current, exerciseId, setId, new Date().toISOString()));
-    // Gym UX rule 6: a soft tap on every ✓.
-    if (!wasDone) void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (wasDone) return;
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    const updated = useWorkoutStore.getState().active;
+    if (!updated) return;
+    const { restS, next } = afterSet(updated, setId);
+    if (restS) restTimer.start(restS, next);
+    else restTimer.skip();
+  }
+
+  // Leaving the workout: no "rest is over" afterwards.
+  function leave(then: () => void) {
+    void cancelScheduled(workout.rest?.notificationId ?? null);
+    onClose();
+    then();
+  }
+
+  const upNext = nextSet(workout)?.setId ?? null;
+
+  function card(exercise: ActiveExercise) {
+    return (
+      <WorkoutExerciseCard
+        key={exercise.id}
+        exercise={exercise}
+        nextSetId={upNext}
+        onType={(setId, change) =>
+          update((current) => updateTyped(current, exercise.id, setId, change))
+        }
+        onToggle={(setId) =>
+          toggle(
+            exercise.id,
+            setId,
+            exercise.sets.some((set) => set.id === setId && set.completedAt !== null),
+          )
+        }
+      />
+    );
   }
 
   function confirmDiscard() {
@@ -58,9 +113,7 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
         userInterfaceStyle: scheme,
       },
       (index) => {
-        if (index !== 0) return;
-        onClose();
-        discard();
+        if (index === 0) leave(discard);
       },
     );
   }
@@ -77,17 +130,12 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
           userInterfaceStyle: scheme,
         },
         (index) => {
-          if (index !== 0) return;
-          onClose();
-          discard();
+          if (index === 0) leave(discard);
         },
       );
       return;
     }
-    const save = () => {
-      onClose();
-      finish(new Date().toISOString());
-    };
+    const save = () => leave(() => finish(new Date().toISOString()));
     if (done === total) {
       save();
       return;
@@ -134,26 +182,23 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
       </View>
 
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + spacing.xl }]}
+        contentContainerStyle={[
+          styles.content,
+          // The rest bar adds the safe area itself.
+          { paddingBottom: (workout.rest ? 0 : insets.bottom) + spacing.xl },
+        ]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
         automaticallyAdjustKeyboardInsets>
-        {workout.exercises.map((exercise) => (
-          <WorkoutExerciseCard
-            key={exercise.id}
-            exercise={exercise}
-            onType={(setId, change) =>
-              update((current) => updateTyped(current, exercise.id, setId, change))
-            }
-            onToggle={(setId) =>
-              toggle(
-                exercise.id,
-                setId,
-                exercise.sets.some((set) => set.id === setId && set.completedAt !== null),
-              )
-            }
-          />
-        ))}
+        {workoutSegments(workout).map(({ groupKey, exercises }) =>
+          groupKey === null ? (
+            card(exercises[0])
+          ) : (
+            <GroupBlock key={groupKey} exercises={exercises}>
+              {exercises.map(card)}
+            </GroupBlock>
+          ),
+        )}
 
         {workout.exercises.length === 0 ? (
           <Text color="textMuted">{t('workout.noExercises')}</Text>
@@ -162,6 +207,44 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
         <Button label={t('workout.finish')} onPress={confirmFinish} />
         <Button label={t('workout.discard')} variant="ghost" onPress={confirmDiscard} />
       </ScrollView>
+
+      {restTimer.rest ? (
+        <RestTimerBar
+          rest={restTimer.rest}
+          nextLabel={restTimer.nextLabel}
+          onPause={restTimer.pause}
+          onResume={restTimer.resume}
+          onAdjust={restTimer.adjust}
+          onSkip={restTimer.skip}
+          onEnd={restTimer.end}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+// A superset or circuit (spec: GroupBracket): a pink bracket joining its
+// exercises, with the round you're on.
+function GroupBlock({ exercises, children }: { exercises: ActiveExercise[]; children: ReactNode }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const rounds = Math.max(...exercises.map((exercise) => exercise.sets.length));
+  const roundsDone = Math.min(
+    ...exercises.map((exercise) => exercise.sets.filter((set) => set.completedAt !== null).length),
+  );
+  const kind = exercises.length > 2 ? 'circuit' : 'superset';
+
+  return (
+    <View style={[styles.group, { borderLeftColor: colors.accent }]}>
+      <View style={styles.groupHeader}>
+        <Text variant="bodyStrong" color="accent" accessibilityRole="header">
+          {t(`routines.group.${kind}`)}
+        </Text>
+        <Text variant="caption" color="textMuted">
+          {t('workout.round', { round: Math.min(rounds, roundsDone + 1), rounds })}
+        </Text>
+      </View>
+      {children}
     </View>
   );
 }
@@ -200,6 +283,16 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     gap: spacing.lg,
+  },
+  group: {
+    gap: spacing.sm,
+    paddingLeft: spacing.sm,
+    borderLeftWidth: 3,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   pressed: {
     opacity: 0.75,

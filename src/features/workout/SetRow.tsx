@@ -18,6 +18,8 @@ type SetRowProps = {
   // The numbers the exercise logs, e.g. kg and reps.
   inputs: readonly TargetInput[];
   set: ActiveSet;
+  // The next set to do: outlined.
+  isNext: boolean;
   exerciseName: string;
   onType: (update: TargetsUpdate) => void;
   onToggle: () => void;
@@ -25,7 +27,15 @@ type SetRowProps = {
 
 // One set in the workout (spec: SetRow): its number, the numbers with the
 // plan pre-filled in grey, and a large ✓. Done sets are tinted.
-export function SetRow({ number, inputs, set, exerciseName, onType, onToggle }: SetRowProps) {
+export function SetRow({
+  number,
+  inputs,
+  set,
+  isNext,
+  exerciseName,
+  onType,
+  onToggle,
+}: SetRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const language = useAppLanguage();
@@ -34,7 +44,12 @@ export function SetRow({ number, inputs, set, exerciseName, onType, onToggle }: 
   const rowName = t('routines.sets.rowName', { name: exerciseName, number });
 
   return (
-    <View style={[styles.row, done && { backgroundColor: colors.accentSoft }]}>
+    <View
+      style={[
+        styles.row,
+        { borderColor: isNext ? colors.accent : 'transparent' },
+        done && { backgroundColor: colors.accentSoft },
+      ]}>
       <Text variant="bodyStrong" color="textMuted" style={styles.number}>
         {number}
       </Text>
@@ -84,6 +99,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
     paddingHorizontal: spacing.xs,
     borderRadius: radius.input,
+    borderWidth: 2,
   },
   number: {
     width: 24,

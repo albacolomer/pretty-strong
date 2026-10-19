@@ -1,6 +1,7 @@
 import type { Exercise } from '@/features/exercises/exercise';
 import { NO_TARGETS, type ExerciseTargets, type Routine } from '@/features/routines/routine';
 
+import type { NextSet, RestTimer } from './restTimer';
 import type { ChangeReason } from './session';
 
 // The workout being done right now (US-13, US-22). It lives on the phone
@@ -31,8 +32,10 @@ export type ActiveExercise = {
   // The routine exercise it came from (data rule 1).
   routineExerciseId: string | null;
   groupKey: string | null;
-  // Null: the exercise's own default rest.
-  restS: number | null;
+  // Rest after each set (in a superset or circuit, after each round), fixed
+  // when the workout starts: the routine's, else the exercise's own, else
+  // the app's. So it's known with no signal.
+  restS: number;
   // The routine's note on it, shown during the workout.
   notes: string | null;
   sets: ActiveSet[];
@@ -51,6 +54,8 @@ export type ActiveWorkout = {
   changeReason: ChangeReason | null;
   startedAt: string;
   exercises: ActiveExercise[];
+  // The rest running now, if any.
+  rest: RestTimer | null;
 };
 
 // Finished, waiting to be saved to the database.
@@ -62,6 +67,8 @@ type StartOptions = {
   changeReason: ChangeReason | null;
   startedAt: string;
   newId: () => string;
+  // The rest for an exercise the routine sets none for.
+  defaultRestS: (exerciseId: string) => number;
 };
 
 // Starting a workout copies the routine (data rule 1): its exercises, in
@@ -75,13 +82,14 @@ export function workoutFromRoutine(routine: Routine, options: StartOptions): Act
     routineName: routine.name,
     changeReason: options.changeReason,
     startedAt: options.startedAt,
+    rest: null,
     exercises: routine.exercises.map((item) => ({
       id: options.newId(),
       exerciseId: item.exerciseId,
       exercise: item.exercise,
       routineExerciseId: item.id,
       groupKey: item.groupKey,
-      restS: item.restS,
+      restS: item.restS ?? options.defaultRestS(item.exerciseId),
       notes: item.notes,
       sets: item.sets.map((planned) => ({
         id: options.newId(),
@@ -143,6 +151,83 @@ export function toggleSet(
       ? { ...set, typed: shownNumbers(set), completedAt: now }
       : { ...set, completedAt: null },
   );
+}
+
+// Supersets and circuits (US-08): exercises with the same groupKey, next to
+// each other. One exercise on its own, or a whole group, in order.
+export type WorkoutSegment = { groupKey: string | null; exercises: ActiveExercise[] };
+
+export function workoutSegments(workout: ActiveWorkout): WorkoutSegment[] {
+  const segments: WorkoutSegment[] = [];
+  for (const exercise of workout.exercises) {
+    const last = segments.at(-1);
+    if (exercise.groupKey !== null && last?.groupKey === exercise.groupKey) {
+      last.exercises.push(exercise);
+    } else {
+      segments.push({ groupKey: exercise.groupKey, exercises: [exercise] });
+    }
+  }
+  return segments;
+}
+
+type OrderedSet = NextSet & { done: boolean; groupKey: string | null; round: number };
+
+// The order sets are done in: an exercise's sets one after another; in a
+// superset or circuit, round by round across its exercises (face pull 1,
+// curl 1, face pull 2, curl 2…).
+export function workoutOrder(workout: ActiveWorkout): OrderedSet[] {
+  return workoutSegments(workout).flatMap(({ groupKey, exercises }) => {
+    const rounds = Math.max(...exercises.map((exercise) => exercise.sets.length));
+    const order: OrderedSet[] = [];
+    for (let round = 0; round < (groupKey === null ? 1 : rounds); round += 1) {
+      for (const exercise of exercises) {
+        const sets = groupKey === null ? exercise.sets : exercise.sets.slice(round, round + 1);
+        sets.forEach((set, index) =>
+          order.push({
+            exerciseId: exercise.id,
+            setId: set.id,
+            done: set.completedAt !== null,
+            groupKey,
+            round: groupKey === null ? index : round,
+          }),
+        );
+      }
+    }
+    return order;
+  });
+}
+
+// The next set to do: the first not done after `setId` in the workout's
+// order, else the first not done anywhere. Null when every set is done.
+export function nextSet(workout: ActiveWorkout, setId?: string): NextSet | null {
+  const order = workoutOrder(workout);
+  const from = setId === undefined ? -1 : order.findIndex((item) => item.setId === setId);
+  const found =
+    order.slice(from + 1).find((item) => !item.done) ?? order.find((item) => !item.done);
+  return found ? { exerciseId: found.exerciseId, setId: found.setId } : null;
+}
+
+// After a set is ticked: how long to rest, and what comes next. In a
+// superset or circuit, no rest between its exercises: straight to the next
+// one in the round, then rest at the end of the round (flow 2). No rest
+// once every set is done.
+export function afterSet(
+  workout: ActiveWorkout,
+  setId: string,
+): { restS: number | null; next: NextSet | null } {
+  const order = workoutOrder(workout);
+  const index = order.findIndex((item) => item.setId === setId);
+  const current = order[index];
+  const next = nextSet(workout, setId);
+  if (!current || !next) return { restS: null, next };
+
+  const following = order[index + 1];
+  const midRound =
+    current.groupKey !== null &&
+    following?.groupKey === current.groupKey &&
+    following.round === current.round;
+  const restS = workout.exercises.find((exercise) => exercise.id === current.exerciseId)?.restS;
+  return { restS: midRound || !restS ? null : restS, next };
 }
 
 export function countSets(workout: ActiveWorkout): { done: number; total: number } {

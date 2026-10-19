@@ -480,6 +480,18 @@
     "savedLater": "No connection: it'll be saved when there is one.",
     "saveFailed": "Couldn't save the workout. It'll try again.",
     "noWorkout": "No workout in progress.",
-    "close": "Close"
+    "close": "Close",
+    "rest": "Rest",
+    "nextUp": "Next: {{name}}, set {{number}}",
+    "restOver": "Rest is over",
+    "restLeft": "Rest: {{time}}",
+    "pauseRest": "Pause",
+    "resumeRest": "Resume",
+    "skipRest": "Skip rest",
+    "restMinus": "−15 s",
+    "restPlus": "+15 s",
+    "restMinusLabel": "{{seconds}} seconds less rest",
+    "restPlusLabel": "{{seconds}} seconds more rest",
+    "round": "Round {{round}} of {{rounds}}"
   }
 }

@@ -12,12 +12,20 @@ import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { deleteSession, fetchSessions, logQuickSession } from '@/features/workout/api';
 import type { WorkoutSession } from '@/features/workout/session';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
+import { ensureNotificationPermission } from '@/lib/notifications';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { Today } from './Today';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('@/features/routines/api', () => ({ fetchRoutines: jest.fn() }));
+// Your default rest: 2:30 for the first exercise, the app's for the rest.
+jest.mock('@/features/exercises/api', () => ({
+  fetchExerciseSettings: jest.fn(() =>
+    Promise.resolve({ 'exercise-1': { notes: null, defaultRestS: 150 } }),
+  ),
+}));
+jest.mock('@/lib/notifications', () => ({ ensureNotificationPermission: jest.fn() }));
 jest.mock('@/features/workout/api', () => ({
   fetchSessions: jest.fn(),
   logQuickSession: jest.fn(),
@@ -242,7 +250,11 @@ describe('<Today />', () => {
       routineId: 'upper',
       routineName: 'Tren superior 1',
     });
-    expect(useWorkoutStore.getState().active?.exercises).toHaveLength(4);
+    // Each exercise's rest is fixed in: your own default, else the app's.
+    expect(useWorkoutStore.getState().active?.exercises.map((e) => e.restS)).toEqual([
+      150, 90, 90, 90,
+    ]);
+    expect(ensureNotificationPermission).toHaveBeenCalled();
     expect(router.push).toHaveBeenCalledWith('/workout');
   });
 
@@ -255,6 +267,8 @@ describe('<Today />', () => {
         changeReason: null,
         startedAt: new Date().toISOString(),
         newId: () => Math.random().toString(),
+
+        defaultRestS: () => 90,
       }),
     });
     await render(<Today />, { wrapper: createAppWrapper() });
@@ -326,6 +340,8 @@ describe('<Today />', () => {
       changeReason: null,
       startedAt: '2026-10-20T07:00:00.000Z',
       newId: () => Math.random().toString(),
+
+      defaultRestS: () => 90,
     });
     useWorkoutStore.setState({ pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z' }] });
     await render(<Today />, { wrapper: createAppWrapper() });
