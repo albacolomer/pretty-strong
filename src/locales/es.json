@@ -105,7 +105,9 @@
     "picker": {
       "title": "Añadir ejercicios",
       "add": "Añadir ({{count}})",
-      "backToList": "Volver a la lista"
+      "backToList": "Volver a la lista",
+      "swapTitle": "Cambiar el ejercicio",
+      "swap": "Cambiar"
     }
   },
   "trackingTypes": {
@@ -500,6 +502,37 @@
       "down": "Menos que la última vez: {{change}}",
       "reps_one": "{{count}} rep",
       "reps_other": "{{count}} reps"
-    }
+    },
+    "addExercises": "+ Añadir ejercicios",
+    "swapExercise": "Cambiar el ejercicio",
+    "skipExercise": "Saltar el ejercicio",
+    "unskipExercise": "Recuperar el ejercicio",
+    "removeExercise": "Quitar el ejercicio",
+    "skipped": "Saltado",
+    "insteadOf": "En lugar de «{{name}}»",
+    "skipReasonTitle": "¿Por qué lo saltas?",
+    "swapReasonTitle": "¿Por qué lo cambias?",
+    "skippedExercise": "Se ha saltado «{{name}}»",
+    "removedExercise": "Se ha quitado «{{name}}»",
+    "exerciseReasons": {
+      "machine_busy": "Máquina ocupada",
+      "pain": "Dolor",
+      "tired": "Cansancio",
+      "no_time": "Falta de tiempo",
+      "other": "Otros"
+    },
+    "setMenuFor": "Opciones de la serie {{number}} de «{{name}}»",
+    "dropShort": "D",
+    "dropSet": "Serie descendente",
+    "normalSet": "Serie normal",
+    "addRpe": "Añadir RPE",
+    "changeRpe": "RPE: {{rpe}}",
+    "rpeTitle": "RPE: ¿cómo de dura ha sido? (10 = al límite)",
+    "removeRpe": "Quitar el RPE",
+    "todaysNote": "Nota de hoy",
+    "todaysNoteFor": "Nota de hoy para «{{name}}»",
+    "saveNoteToRoutine": "Guardarla también en la rutina",
+    "noteSavedToRoutine": "Nota guardada en la rutina ✓",
+    "noSignal": "No hay conexión. Compruébala y vuelve a intentarlo."
   }
 }

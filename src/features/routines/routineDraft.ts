@@ -1,4 +1,5 @@
 import type { SaveRoutineInput } from './api';
+import { moveWithinGroups, withoutLoneGroups } from './grouping';
 import {
   DEFAULT_INTERVALS,
   DEFAULT_RECOVERY_S,
@@ -436,22 +437,7 @@ export function dropExercise(
   fromIndex: number,
   toIndex: number,
 ): DraftExercise[] {
-  const list = [...exercises];
-  const [moved] = list.splice(fromIndex, 1);
-  if (!moved) return list;
-  list.splice(toIndex, 0, moved);
-
-  const above = list[toIndex - 1];
-  const below = list[toIndex + 1];
-  if (above?.groupKey && above.groupKey === below?.groupKey) {
-    list[toIndex] = joinGroup(moved, above, above.groupKey);
-  } else if (
-    moved.groupKey === null ||
-    (above?.groupKey !== moved.groupKey && below?.groupKey !== moved.groupKey)
-  ) {
-    list[toIndex] = { ...moved, groupKey: null };
-  }
-  return withAlignedRounds(withoutLoneGroups(list));
+  return withAlignedRounds(moveWithinGroups(exercises, fromIndex, toIndex, joinGroup));
 }
 
 // `item` joins `groupKey`, taking the rest of `member`.
@@ -478,19 +464,6 @@ function withAlignedRounds(exercises: DraftExercise[]): DraftExercise[] {
       ],
     };
   });
-}
-
-// A group needs at least two exercises; one left on its own is ungrouped.
-function withoutLoneGroups(exercises: DraftExercise[]): DraftExercise[] {
-  const sizes = new Map<string, number>();
-  for (const { groupKey } of exercises) {
-    if (groupKey !== null) sizes.set(groupKey, (sizes.get(groupKey) ?? 0) + 1);
-  }
-  return exercises.map((exercise) =>
-    exercise.groupKey !== null && sizes.get(exercise.groupKey) === 1
-      ? { ...exercise, groupKey: null }
-      : exercise,
-  );
 }
 
 // "g1", "g2"…: the first one this routine doesn't use yet.

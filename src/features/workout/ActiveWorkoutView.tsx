@@ -6,12 +6,15 @@ import { ActionSheetIOS, Pressable, ScrollView, StyleSheet, View } from 'react-n
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Text } from '@/components/ui';
+import { ExercisePicker } from '@/features/exercises/ExercisePicker';
+import { ReorderExercisesSheet } from '@/features/routines/ReorderExercisesSheet';
 import { cancelScheduled, setWorkoutScreenOpen } from '@/lib/notifications';
 import { spacing, touch, useTheme } from '@/theme';
 
 import {
   afterSet,
   countSets,
+  dropWorkoutExercise,
   nextSet,
   toggleSet,
   updateTyped,
@@ -23,6 +26,7 @@ import { RestTimerBar } from './RestTimerBar';
 import { useElapsed } from './useElapsed';
 import { useLastTime } from './useLastTime';
 import { useRestTimer } from './useRestTimer';
+import { useWorkoutChanges } from './useWorkoutChanges';
 import { WorkoutExerciseCard } from './WorkoutExerciseCard';
 import { useWorkoutStore } from './workoutStore';
 
@@ -53,6 +57,7 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
   const discard = useWorkoutStore((state) => state.discard);
   const elapsed = useElapsed(workout.startedAt);
   const restTimer = useRestTimer(workout);
+  const changes = useWorkoutChanges(workout);
   // Pre-fills from last time (US-13), once there's signal.
   useLastTime(workout);
   // Gym UX rule 5: the screen stays on while the workout is open.
@@ -100,6 +105,13 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
             setId,
             exercise.sets.some((set) => set.id === setId && set.completedAt !== null),
           )
+        }
+        onMenu={() => changes.openExerciseMenu(exercise)}
+        onSetMenu={(setId) => changes.openSetMenu(exercise, setId)}
+        onAddSet={() => changes.addSet(exercise)}
+        onNotesChange={(notes) => changes.setNotes(exercise, notes)}
+        onSaveNoteToRoutine={
+          exercise.routineExerciseId ? () => changes.saveNote(exercise) : undefined
         }
       />
     );
@@ -207,9 +219,31 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
           <Text color="textMuted">{t('workout.noExercises')}</Text>
         ) : null}
 
+        <Button
+          label={t('workout.addExercises')}
+          variant="secondary"
+          onPress={changes.openAddPicker}
+        />
         <Button label={t('workout.finish')} onPress={confirmFinish} />
         <Button label={t('workout.discard')} variant="ghost" onPress={confirmDiscard} />
       </ScrollView>
+
+      <ExercisePicker
+        visible={changes.picker !== null}
+        single={changes.picker?.swapId != null}
+        onClose={changes.closePicker}
+        onAdd={changes.pickerDone}
+        onDismissed={changes.onPickerDismissed}
+      />
+      <ReorderExercisesSheet
+        visible={changes.reordering}
+        items={workout.exercises}
+        keyOf={(exercise) => exercise.id}
+        exerciseOf={(exercise) => exercise.exercise}
+        drop={dropWorkoutExercise}
+        onClose={changes.closeReorder}
+        onDone={changes.reorderDone}
+      />
 
       {restTimer.rest ? (
         <RestTimerBar

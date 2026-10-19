@@ -19,13 +19,23 @@ type ExercisePickerProps = {
   onClose: () => void;
   // The ticked exercises' ids, in the order they were ticked.
   onAdd: (exerciseIds: string[]) => void;
+  // Picks one exercise to swap in (mid-workout), instead of adding several.
+  single?: boolean;
+  // Once the sheet has finished closing (iOS), e.g. to show another menu.
+  onDismissed?: () => void;
 };
 
 // A sheet to pick one or more exercises from the library (spec: "Exercise
 // picker"), with the same search and filters. A missing exercise can be
 // created right here (US-04). Used by the routine editor now and by
 // workouts later.
-export function ExercisePicker({ visible, onClose, onAdd }: ExercisePickerProps) {
+export function ExercisePicker({
+  visible,
+  onClose,
+  onAdd,
+  single = false,
+  onDismissed,
+}: ExercisePickerProps) {
   const { colors } = useTheme();
 
   return (
@@ -33,16 +43,17 @@ export function ExercisePicker({ visible, onClose, onAdd }: ExercisePickerProps)
       visible={visible}
       animationType="slide"
       presentationStyle="pageSheet"
-      onRequestClose={onClose}>
+      onRequestClose={onClose}
+      onDismiss={onDismissed}>
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
         {/* Only mounted while open, so search and ticks start fresh each time. */}
-        {visible ? <PickerContent onClose={onClose} onAdd={onAdd} /> : null}
+        {visible ? <PickerContent onClose={onClose} onAdd={onAdd} single={single} /> : null}
       </View>
     </Modal>
   );
 }
 
-function PickerContent({ onClose, onAdd }: Omit<ExercisePickerProps, 'visible'>) {
+function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerProps, 'visible'>) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -55,15 +66,16 @@ function PickerContent({ onClose, onAdd }: Omit<ExercisePickerProps, 'visible'>)
   const creating = newName !== null;
 
   function toggle(id: string) {
-    setSelected((current) =>
-      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
-    );
+    setSelected((current) => {
+      if (current.includes(id)) return current.filter((item) => item !== id);
+      return single ? [id] : [...current, id];
+    });
   }
 
   // Back to the list, searching for the new exercise so it shows, ticked.
   function handleCreated(exercise: Exercise) {
     search.setFilters({ ...NO_FILTERS, query: exerciseName(exercise, language) });
-    setSelected((current) => [...current, exercise.id]);
+    setSelected((current) => (single ? [exercise.id] : [...current, exercise.id]));
     setNewName(null);
   }
 
@@ -72,7 +84,11 @@ function PickerContent({ onClose, onAdd }: Omit<ExercisePickerProps, 'visible'>)
       <View style={styles.header}>
         <View style={[styles.grabber, { backgroundColor: colors.surfaceRaised }]} />
         <Text variant="cardTitle" accessibilityRole="header">
-          {creating ? t('exercises.form.title') : t('exercises.picker.title')}
+          {creating
+            ? t('exercises.form.title')
+            : single
+              ? t('exercises.picker.swapTitle')
+              : t('exercises.picker.title')}
         </Text>
       </View>
 
@@ -148,7 +164,9 @@ function PickerContent({ onClose, onAdd }: Omit<ExercisePickerProps, 'visible'>)
               style={styles.footerButton}
             />
             <Button
-              label={t('exercises.picker.add', { count: selected.length })}
+              label={
+                single ? t('exercises.picker.swap') : t('exercises.picker.add', { count: selected.length })
+              }
               onPress={() => onAdd(selected)}
               disabled={selected.length === 0}
               style={styles.footerButton}

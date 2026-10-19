@@ -2,7 +2,7 @@ import Storage from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
-import type { ActiveWorkout, FinishedWorkout } from './activeWorkout';
+import { upgradeWorkout, type ActiveWorkout, type FinishedWorkout } from './activeWorkout';
 
 type WorkoutState = {
   // The workout being done; only one at a time.
@@ -44,6 +44,16 @@ export const useWorkoutStore = create<WorkoutState>()(
       storage: createJSONStorage(() => Storage),
       // Only the data; the functions above aren't saved.
       partialize: ({ active, pending }) => ({ active, pending }),
+      // Saved by an older version of the app: bring it up to date. Bump the
+      // version whenever ActiveWorkout gains a field.
+      version: 1,
+      migrate: (saved) => {
+        const { active, pending } = saved as Pick<WorkoutState, 'active' | 'pending'>;
+        return {
+          active: active ? upgradeWorkout(active) : null,
+          pending: (pending ?? []).map(upgradeWorkout),
+        };
+      },
     },
   ),
 );

@@ -23,6 +23,8 @@ type SetRowProps = {
   exerciseName: string;
   onType: (update: TargetsUpdate) => void;
   onToggle: () => void;
+  // Opens the set's menu: drop set, RPE, remove.
+  onNumberPress: () => void;
 };
 
 // One set in the workout (spec: SetRow): its number, the numbers with the
@@ -35,6 +37,7 @@ export function SetRow({
   exerciseName,
   onType,
   onToggle,
+  onNumberPress,
 }: SetRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -50,9 +53,22 @@ export function SetRow({
         { borderColor: isNext ? colors.accent : 'transparent' },
         done && { backgroundColor: colors.accentSoft },
       ]}>
-      <Text variant="bodyStrong" color="textMuted" style={styles.number}>
-        {number}
-      </Text>
+      <Pressable
+        role="button"
+        aria-label={t('workout.setMenuFor', { number, name: exerciseName })}
+        onPress={onNumberPress}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
+        style={({ pressed }) => [styles.number, pressed && styles.pressed]}>
+        {/* A drop set shows "D"; its RPE, when given, under it. */}
+        <Text variant="bodyStrong" color={set.setType === 'drop' ? 'accent' : 'textMuted'}>
+          {set.setType === 'drop' ? t('workout.dropShort') : number}
+        </Text>
+        {set.rpe !== null ? (
+          <Text variant="caption" color="textMuted">
+            {`@${formatInput(set.rpe, language)}`}
+          </Text>
+        ) : null}
+      </Pressable>
       <View style={[styles.inputs, wraps && styles.wrapping]}>
         {inputs.map((input) => {
           const label = t(`routines.targets.inputs.${input}`);
@@ -102,8 +118,10 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   number: {
-    width: 24,
-    textAlign: 'center',
+    width: 28,
+    minHeight: touch.min,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   inputs: {
     flex: 1,

@@ -31,3 +31,9 @@ export function liveDuration(startedAt: string | null, endedAt: string | null): 
   if (!startedAt || !endedAt) return null;
   return Math.round((new Date(endedAt).getTime() - new Date(startedAt).getTime()) / 1000);
 }
+
+// Why an exercise was swapped or skipped mid-workout, matching
+// session_exercises_change_reason_check (spec: ReasonChips). Each is also
+// the last part of its translation key: workout.exerciseReasons.<reason>.
+export const EXERCISE_CHANGE_REASONS = ['machine_busy', 'pain', 'tired', 'no_time', 'other'] as const;
+export type ExerciseChangeReason = (typeof EXERCISE_CHANGE_REASONS)[number];

@@ -105,7 +105,9 @@
     "picker": {
       "title": "Afegeix exercicis",
       "add": "Afegeix ({{count}})",
-      "backToList": "Torna a la llista"
+      "backToList": "Torna a la llista",
+      "swapTitle": "Canvia l'exercici",
+      "swap": "Canvia"
     }
   },
   "trackingTypes": {
@@ -500,6 +502,37 @@
       "down": "Menys que l'últim cop: {{change}}",
       "reps_one": "{{count}} rep",
       "reps_other": "{{count}} reps"
-    }
+    },
+    "addExercises": "+ Afegeix exercicis",
+    "swapExercise": "Canvia l'exercici",
+    "skipExercise": "Salta l'exercici",
+    "unskipExercise": "Recupera l'exercici",
+    "removeExercise": "Treu l'exercici",
+    "skipped": "Saltat",
+    "insteadOf": "En lloc de «{{name}}»",
+    "skipReasonTitle": "Per què el saltes?",
+    "swapReasonTitle": "Per què el canvies?",
+    "skippedExercise": "S'ha saltat «{{name}}»",
+    "removedExercise": "S'ha tret «{{name}}»",
+    "exerciseReasons": {
+      "machine_busy": "Màquina ocupada",
+      "pain": "Dolor",
+      "tired": "Cansament",
+      "no_time": "Falta de temps",
+      "other": "Altres"
+    },
+    "setMenuFor": "Opcions de la sèrie {{number}} de «{{name}}»",
+    "dropShort": "D",
+    "dropSet": "Sèrie de descàrrega",
+    "normalSet": "Sèrie normal",
+    "addRpe": "Afegeix RPE",
+    "changeRpe": "RPE: {{rpe}}",
+    "rpeTitle": "RPE: com de dura ha estat? (10 = al límit)",
+    "removeRpe": "Treu l'RPE",
+    "todaysNote": "Nota d'avui",
+    "todaysNoteFor": "Nota d'avui per a «{{name}}»",
+    "saveNoteToRoutine": "Desa-la també a la rutina",
+    "noteSavedToRoutine": "Nota desada a la rutina ✓",
+    "noSignal": "No hi ha connexió. Comprova-la i torna-ho a provar."
   }
 }

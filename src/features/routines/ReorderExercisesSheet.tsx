@@ -12,25 +12,29 @@ import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage, type Language } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
-import { dropExercise, type DraftExercise } from './routineDraft';
-
-type ReorderExercisesSheetProps = {
+type ReorderExercisesSheetProps<T extends { groupKey: string | null }> = {
   visible: boolean;
-  // In the routine's current order.
-  exercises: DraftExercise[];
-  exercisesById: ReadonlyMap<string, Exercise>;
+  // In their current order: a routine's exercises, or a workout's.
+  items: T[];
+  keyOf: (item: T) => string;
+  exerciseOf: (item: T) => Exercise | undefined;
   // A row's name instead of the exercise's, e.g. "Sèries · 6 × 400 m".
-  labelFor?: (item: DraftExercise) => string;
+  labelFor?: (item: T) => string;
+  // What a drag does (see moveWithinGroups): the new order, with groups
+  // updated.
+  drop: (items: readonly T[], fromIndex: number, toIndex: number) => T[];
   onClose: () => void;
-  // In their new order, with their supersets updated.
-  onDone: (exercises: DraftExercise[]) => void;
+  onDone: (items: T[]) => void;
 };
 
-// A sheet listing the routine's exercises as short rows, to drag them into a
-// new order by their ≡ handle. Short rows because the editor's cards are
-// too tall to drag through a long form. Dropping an exercise inside a
-// superset adds it; dragging it out takes it out (see dropExercise).
-export function ReorderExercisesSheet({ visible, ...props }: ReorderExercisesSheetProps) {
+// A sheet listing exercises as short rows, to drag them into a new order by
+// their ≡ handle. Short rows because the editor's and workout's cards are
+// too tall to drag through. Dropping an exercise inside a superset adds it;
+// dragging it out takes it out.
+export function ReorderExercisesSheet<T extends { groupKey: string | null }>({
+  visible,
+  ...props
+}: ReorderExercisesSheetProps<T>) {
   const { colors } = useTheme();
 
   return (
@@ -48,18 +52,20 @@ export function ReorderExercisesSheet({ visible, ...props }: ReorderExercisesShe
   );
 }
 
-function SheetContent({
-  exercises,
-  exercisesById,
+function SheetContent<T extends { groupKey: string | null }>({
+  items,
+  keyOf,
+  exerciseOf,
   labelFor,
+  drop,
   onClose,
   onDone,
-}: Omit<ReorderExercisesSheetProps, 'visible'>) {
+}: Omit<ReorderExercisesSheetProps<T>, 'visible'>) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const language = useAppLanguage();
-  const [order, setOrder] = useState(exercises);
+  const [order, setOrder] = useState(items);
   // Lets the list scroll by itself while an exercise is dragged to an edge.
   const scrollableRef = useAnimatedRef<Animated.ScrollView>();
 
@@ -78,17 +84,17 @@ function SheetContent({
       <Animated.ScrollView ref={scrollableRef} contentContainerStyle={styles.content}>
         <Sortable.Grid
           data={order}
-          keyExtractor={(item) => item.key}
+          keyExtractor={keyOf}
           renderItem={({ item }) => (
             <ReorderRow
-              exercise={exercisesById.get(item.exerciseId)}
+              exercise={exerciseOf(item)}
               label={labelFor?.(item)}
               grouped={item.groupKey !== null}
               language={language}
             />
           )}
           onDragEnd={({ fromIndex, toIndex }) =>
-            setOrder((current) => dropExercise(current, fromIndex, toIndex))
+            setOrder((current) => drop(current, fromIndex, toIndex))
           }
           // Only the ≡ starts a drag, so scrolling the list never moves anything.
           customHandle

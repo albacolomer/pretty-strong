@@ -1,17 +1,21 @@
 import type { Exercise } from '@/features/exercises/exercise';
+import { moveWithinGroups, withoutLoneGroups } from '@/features/routines/grouping';
 import { NO_TARGETS, type ExerciseTargets, type Routine } from '@/features/routines/routine';
 
 import type { NextSet, RestTimer } from './restTimer';
-import type { ChangeReason } from './session';
+import type { ChangeReason, ExerciseChangeReason } from './session';
 
-// The workout being done right now (US-13, US-22). It lives on the phone
-// (workoutStore) until it's finished, then goes to the database in one
-// call (finish_workout). Plain data, so it can be saved as JSON. No React
-// here.
+// The workout being done right now (US-13, US-15, US-22). It lives on the
+// phone (workoutStore) until it's finished, then goes to the database in
+// one call (finish_workout). Plain data, so it can be saved as JSON.
+// Changes made here are for this workout only: the routine stays as it is.
+// No React here.
 
 // A set's numbers, the same fields as a plan (empty: not used, or not
 // typed).
 export type SetNumbers = ExerciseTargets;
+
+export type SetType = 'normal' | 'drop';
 
 export type ActiveSet = {
   // Made on the phone (data rule 5).
@@ -20,6 +24,10 @@ export type ActiveSet = {
   planned: SetNumbers;
   // What was typed over it; empty fields fall back to the plan.
   typed: SetNumbers;
+  // A drop set (US-16), shown as "D".
+  setType: SetType;
+  // How hard it felt, 1–10, when you say (US-16).
+  rpe: number | null;
   // When ✓ was tapped (data rule 7); null while not done.
   completedAt: string | null;
 };
@@ -29,7 +37,7 @@ export type ActiveExercise = {
   exerciseId: string;
   // A copy, so names and columns show with no signal.
   exercise: Exercise;
-  // The routine exercise it came from (data rule 1).
+  // The routine exercise it came from (data rule 1); null if added here.
   routineExerciseId: string | null;
   groupKey: string | null;
   // Rest after each set (in a superset or circuit, after each round), fixed
@@ -37,11 +45,20 @@ export type ActiveExercise = {
   // the app's. So it's known with no signal.
   restS: number;
   // The routine's note on it, shown during the workout.
-  notes: string | null;
+  routineNote: string | null;
+  // This workout's own note on it (saved with the session), as typed.
+  notes: string;
   sets: ActiveSet[];
   // Last time's sets, to compare with (US-14): from this routine, else from
   // anywhere. Null until known, or if it was never done.
   previous: SetNumbers[] | null;
+  // What happened to the plan in this workout (US-15).
+  change: 'added' | 'swapped' | 'skipped' | null;
+  // The exercise the routine had, when this one replaced it (a copy, for
+  // its name with no signal).
+  swappedFromId: string | null;
+  replaced: Exercise | null;
+  changeReason: ExerciseChangeReason | null;
 };
 
 export type ActiveWorkout = {
@@ -65,6 +82,10 @@ export type ActiveWorkout = {
 
 // Finished, waiting to be saved to the database.
 export type FinishedWorkout = ActiveWorkout & { endedAt: string };
+
+function newSet(id: string, planned: SetNumbers = NO_TARGETS): ActiveSet {
+  return { id, planned, typed: NO_TARGETS, setType: 'normal', rpe: null, completedAt: null };
+}
 
 type StartOptions = {
   date: string;
@@ -96,14 +117,14 @@ export function workoutFromRoutine(routine: Routine, options: StartOptions): Act
       routineExerciseId: item.id,
       groupKey: item.groupKey,
       restS: item.restS ?? options.defaultRestS(item.exerciseId),
-      notes: item.notes,
-      sets: item.sets.map((planned) => ({
-        id: options.newId(),
-        planned,
-        typed: NO_TARGETS,
-        completedAt: null,
-      })),
+      routineNote: item.notes,
+      notes: '',
+      sets: item.sets.map((planned) => newSet(options.newId(), planned)),
       previous: null,
+      change: null,
+      swappedFromId: null,
+      replaced: null,
+      changeReason: null,
     })),
   };
 }
@@ -150,6 +171,20 @@ export function applyLastTime(
   };
 }
 
+// Last time for some exercises only: ones added or swapped in.
+export function applyLastTimeTo(
+  workout: ActiveWorkout,
+  ids: readonly string[],
+  lastTime: Record<string, LastTime>,
+): ActiveWorkout {
+  return {
+    ...workout,
+    exercises: workout.exercises.map((exercise) =>
+      ids.includes(exercise.id) ? withLastTime(exercise, lastTime[exercise.exerciseId]) : exercise,
+    ),
+  };
+}
+
 // The numbers a set shows, and is saved with: what was typed, else the plan.
 export function shownNumbers(set: ActiveSet): SetNumbers {
   const fields = Object.keys(NO_TARGETS) as (keyof SetNumbers)[];
@@ -158,23 +193,29 @@ export function shownNumbers(set: ActiveSet): SetNumbers {
   ) as SetNumbers;
 }
 
+function updateExercise(
+  workout: ActiveWorkout,
+  exerciseId: string,
+  change: (exercise: ActiveExercise) => ActiveExercise,
+): ActiveWorkout {
+  return {
+    ...workout,
+    exercises: workout.exercises.map((exercise) =>
+      exercise.id === exerciseId ? change(exercise) : exercise,
+    ),
+  };
+}
+
 function updateSet(
   workout: ActiveWorkout,
   exerciseId: string,
   setId: string,
   change: (set: ActiveSet) => ActiveSet,
 ): ActiveWorkout {
-  return {
-    ...workout,
-    exercises: workout.exercises.map((exercise) =>
-      exercise.id === exerciseId
-        ? {
-            ...exercise,
-            sets: exercise.sets.map((set) => (set.id === setId ? change(set) : set)),
-          }
-        : exercise,
-    ),
-  };
+  return updateExercise(workout, exerciseId, (exercise) => ({
+    ...exercise,
+    sets: exercise.sets.map((set) => (set.id === setId ? change(set) : set)),
+  }));
 }
 
 // Numbers typed into a set (see SetRow).
@@ -202,6 +243,160 @@ export function toggleSet(
   );
 }
 
+// Mid-workout changes (US-15, US-16). They change this workout only.
+
+// "+ Afegeix una sèrie": pre-filled with the last set's numbers.
+export function addSet(workout: ActiveWorkout, exerciseId: string, newId: string): ActiveWorkout {
+  return updateExercise(workout, exerciseId, (exercise) => {
+    const last = exercise.sets.at(-1);
+    return {
+      ...exercise,
+      sets: [...exercise.sets, newSet(newId, last ? shownNumbers(last) : NO_TARGETS)],
+    };
+  });
+}
+
+// "Treu la sèrie". An exercise keeps at least one; to do none, skip it.
+export function removeSet(workout: ActiveWorkout, exerciseId: string, setId: string): ActiveWorkout {
+  return updateExercise(workout, exerciseId, (exercise) =>
+    exercise.sets.length <= 1
+      ? exercise
+      : { ...exercise, sets: exercise.sets.filter((set) => set.id !== setId) },
+  );
+}
+
+export function setSetType(
+  workout: ActiveWorkout,
+  exerciseId: string,
+  setId: string,
+  setType: SetType,
+): ActiveWorkout {
+  return updateSet(workout, exerciseId, setId, (set) => ({ ...set, setType }));
+}
+
+export function setRpe(
+  workout: ActiveWorkout,
+  exerciseId: string,
+  setId: string,
+  rpe: number | null,
+): ActiveWorkout {
+  return updateSet(workout, exerciseId, setId, (set) => ({ ...set, rpe }));
+}
+
+// "+ Afegeix exercicis": at the end, one empty set each (last time fills it
+// in once it's known).
+export function addExercises(
+  workout: ActiveWorkout,
+  added: readonly { exercise: Exercise; restS: number }[],
+  newId: () => string,
+): ActiveWorkout {
+  return {
+    ...workout,
+    exercises: [
+      ...workout.exercises,
+      ...added.map(({ exercise, restS }) => ({
+        id: newId(),
+        exerciseId: exercise.id,
+        exercise,
+        routineExerciseId: null,
+        groupKey: null,
+        restS,
+        routineNote: null,
+        notes: '',
+        sets: [newSet(newId())],
+        previous: null,
+        change: 'added' as const,
+        swappedFromId: null,
+        replaced: null,
+        changeReason: null,
+      })),
+    ],
+  };
+}
+
+// "Treu l'exercici": only for one added in this workout. (One from the
+// routine is skipped instead, so the plan still shows it wasn't done.)
+export function removeExercise(workout: ActiveWorkout, exerciseId: string): ActiveWorkout {
+  return {
+    ...workout,
+    exercises: withoutLoneGroups(
+      workout.exercises.filter((exercise) => exercise.id !== exerciseId),
+    ),
+  };
+}
+
+// "Salta l'exercici", with an optional reason; null undoes it.
+export function skipExercise(
+  workout: ActiveWorkout,
+  exerciseId: string,
+  skip: { reason: ExerciseChangeReason | null } | null,
+): ActiveWorkout {
+  return updateExercise(workout, exerciseId, (exercise) =>
+    skip
+      ? { ...exercise, change: 'skipped', changeReason: skip.reason }
+      : {
+          ...exercise,
+          change: exercise.swappedFromId ? 'swapped' : null,
+          changeReason: exercise.swappedFromId ? exercise.changeReason : null,
+        },
+  );
+}
+
+// Whether an exercise can still be swapped: not once a set of it is done,
+// or those sets would end up under the wrong exercise.
+export function canSwap(exercise: ActiveExercise): boolean {
+  return exercise.sets.every((set) => set.completedAt === null);
+}
+
+// "Canvia l'exercici": another exercise in its place, with the same number
+// of empty sets (last time fills them in once it's known). It remembers the
+// routine's exercise it replaced.
+export function swapExercise(
+  workout: ActiveWorkout,
+  exerciseId: string,
+  replacement: Exercise,
+  reason: ExerciseChangeReason | null,
+  newId: () => string,
+): ActiveWorkout {
+  return updateExercise(workout, exerciseId, (exercise) => {
+    if (!canSwap(exercise)) return exercise;
+    const added = exercise.change === 'added';
+    return {
+      ...exercise,
+      exerciseId: replacement.id,
+      exercise: replacement,
+      sets: exercise.sets.map(() => newSet(newId())),
+      previous: null,
+      change: added ? 'added' : 'swapped',
+      swappedFromId: added ? null : (exercise.swappedFromId ?? exercise.exerciseId),
+      replaced: added ? null : (exercise.replaced ?? exercise.exercise),
+      changeReason: added ? null : reason,
+    };
+  });
+}
+
+export function setExerciseNotes(
+  workout: ActiveWorkout,
+  exerciseId: string,
+  notes: string,
+): ActiveWorkout {
+  return updateExercise(workout, exerciseId, (exercise) => ({ ...exercise, notes }));
+}
+
+// A drag in the reorder sheet: dropped inside a superset, it joins it (and
+// its rest); dragged out, it leaves it.
+export function dropWorkoutExercise(
+  exercises: readonly ActiveExercise[],
+  fromIndex: number,
+  toIndex: number,
+): ActiveExercise[] {
+  return moveWithinGroups(exercises, fromIndex, toIndex, (item, member, groupKey) => ({
+    ...item,
+    groupKey,
+    restS: member.restS,
+  }));
+}
+
 // Supersets and circuits (US-08): exercises with the same groupKey, next to
 // each other. One exercise on its own, or a whole group, in order.
 export type WorkoutSegment = { groupKey: string | null; exercises: ActiveExercise[] };
@@ -223,9 +418,11 @@ type OrderedSet = NextSet & { done: boolean; groupKey: string | null; round: num
 
 // The order sets are done in: an exercise's sets one after another; in a
 // superset or circuit, round by round across its exercises (face pull 1,
-// curl 1, face pull 2, curl 2…).
+// curl 1, face pull 2, curl 2…). Skipped exercises have none to do.
 export function workoutOrder(workout: ActiveWorkout): OrderedSet[] {
-  return workoutSegments(workout).flatMap(({ groupKey, exercises }) => {
+  return workoutSegments(workout).flatMap(({ groupKey, exercises: all }) => {
+    const exercises = all.filter((exercise) => exercise.change !== 'skipped');
+    if (exercises.length === 0) return [];
     const rounds = Math.max(...exercises.map((exercise) => exercise.sets.length));
     const order: OrderedSet[] = [];
     for (let round = 0; round < (groupKey === null ? 1 : rounds); round += 1) {
@@ -279,13 +476,17 @@ export function afterSet(
   return { restS: midRound || !restS ? null : restS, next };
 }
 
+// Sets done and still to do; skipped exercises don't count.
 export function countSets(workout: ActiveWorkout): { done: number; total: number } {
-  const sets = workout.exercises.flatMap((exercise) => exercise.sets);
+  const sets = workout.exercises
+    .filter((exercise) => exercise.change !== 'skipped')
+    .flatMap((exercise) => exercise.sets);
   return { done: sets.filter((set) => set.completedAt !== null).length, total: sets.length };
 }
 
 // What finish_workout() receives: only the sets that were done, and only
-// the exercises that have some.
+// the exercises that have some, plus the skipped ones (so the plan shows
+// they weren't done, and why).
 export function toFinishPayload(workout: FinishedWorkout) {
   return {
     id: workout.id,
@@ -304,29 +505,61 @@ export function toFinishPayload(workout: FinishedWorkout) {
         routine_exercise_id: exercise.routineExerciseId,
         group_key: exercise.groupKey,
         rest_s: exercise.restS,
-        change: null,
-        swapped_from_id: null,
-        change_reason: null,
-        notes: null,
-        sets: exercise.sets
-          .filter((set) => set.completedAt !== null)
-          .map((set) => {
-            const numbers = shownNumbers(set);
-            return {
-              id: set.id,
-              set_type: 'normal',
-              weight_kg: numbers.weightKg,
-              reps: numbers.reps,
-              duration_s: numbers.durationS,
-              distance_m: numbers.distanceM,
-              speed_kmh: numbers.speedKmh,
-              incline_pct: numbers.inclinePct,
-              level: numbers.level,
-              rpe: null,
-              completed_at: set.completedAt,
-            };
-          }),
+        change: exercise.change,
+        swapped_from_id: exercise.swappedFromId,
+        change_reason: exercise.changeReason,
+        notes: exercise.notes.trim() === '' ? null : exercise.notes.trim(),
+        sets:
+          exercise.change === 'skipped'
+            ? []
+            : exercise.sets
+                .filter((set) => set.completedAt !== null)
+                .map((set) => {
+                  const numbers = shownNumbers(set);
+                  return {
+                    id: set.id,
+                    set_type: set.setType,
+                    weight_kg: numbers.weightKg,
+                    reps: numbers.reps,
+                    duration_s: numbers.durationS,
+                    distance_m: numbers.distanceM,
+                    speed_kmh: numbers.speedKmh,
+                    incline_pct: numbers.inclinePct,
+                    level: numbers.level,
+                    rpe: set.rpe,
+                    completed_at: set.completedAt,
+                  };
+                }),
       }))
-      .filter((exercise) => exercise.sets.length > 0),
+      .filter((exercise) => exercise.sets.length > 0 || exercise.change === 'skipped'),
+  };
+}
+
+// A workout saved on the phone by an older version of the app, brought up
+// to date: fields added since get their defaults.
+export function upgradeWorkout<T extends ActiveWorkout>(saved: T): T {
+  return {
+    ...saved,
+    rest: saved.rest ?? null,
+    lastTimeLoaded: saved.lastTimeLoaded ?? false,
+    exercises: saved.exercises.map((exercise) => {
+      // Before, `notes` held the routine's note.
+      const old = exercise as ActiveExercise & { notes: string | null };
+      return {
+        ...exercise,
+        routineNote: exercise.routineNote ?? old.notes ?? null,
+        notes: exercise.routineNote === undefined ? '' : (exercise.notes ?? ''),
+        previous: exercise.previous ?? null,
+        change: exercise.change ?? null,
+        swappedFromId: exercise.swappedFromId ?? null,
+        replaced: exercise.replaced ?? null,
+        changeReason: exercise.changeReason ?? null,
+        sets: exercise.sets.map((set) => ({
+          ...set,
+          setType: set.setType ?? 'normal',
+          rpe: set.rpe ?? null,
+        })),
+      };
+    }),
   };
 }

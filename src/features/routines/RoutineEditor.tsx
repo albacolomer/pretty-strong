@@ -35,6 +35,7 @@ import {
   addSet,
   blockKindOf,
   draftFromRoutine,
+  dropExercise,
   emptyRoutineDraft,
   exerciseSegments,
   hasChanges,
@@ -427,8 +428,10 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
       />
       <ReorderExercisesSheet
         visible={reorderOpen}
-        exercises={draft.exercises}
-        exercisesById={exercisesById}
+        items={draft.exercises}
+        keyOf={(item) => item.key}
+        exerciseOf={(item) => exercisesById.get(item.exerciseId)}
+        drop={dropExercise}
         // Blocks all show the run exercise: name them by what they are.
         labelFor={
           draft.label === 'run'

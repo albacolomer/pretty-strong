@@ -2,14 +2,25 @@ import { NO_TARGETS, type Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 
 import {
+  addExercises,
+  addSet,
   afterSet,
   applyLastTime,
+  canSwap,
   countSets,
   nextSet,
+  removeExercise,
+  removeSet,
+  setExerciseNotes,
+  setRpe,
+  setSetType,
   shownNumbers,
+  skipExercise,
+  swapExercise,
   toFinishPayload,
   toggleSet,
   updateTyped,
+  upgradeWorkout,
   workoutFromRoutine,
   workoutOrder,
   type ActiveWorkout,
@@ -52,7 +63,7 @@ describe('workoutFromRoutine', () => {
       ['Face pull', 're-3', 3],
       ['Curl martell', 're-4', 3],
     ]);
-    expect(workout.exercises[0]).toMatchObject({ restS: 120, notes: 'Agafada ampla' });
+    expect(workout.exercises[0]).toMatchObject({ restS: 120, routineNote: 'Agafada ampla', notes: '' });
     expect(workout.exercises[0].sets[0]).toMatchObject({
       planned: { reps: 10, weightKg: 40 },
       completedAt: null,
@@ -249,5 +260,118 @@ describe('last time (Alba’s rule)', () => {
     expect(row.sets.map((set) => set.planned.reps)).toEqual([12, 10, 10]);
     expect(face.previous).toBeNull();
     expect(face.sets[0].planned).toEqual(NO_TARGETS);
+  });
+});
+
+describe('changes during the workout (this workout only)', () => {
+  const lift = (weightKg: number, reps: number) => ({ ...NO_TARGETS, weightKg, reps });
+  const squat = { ...upperBody.exercises[0].exercise, id: 'squat', names: { ca: 'Esquat', es: 'Sentadilla', en: 'Squat' } };
+  const newId = () => `id-${(ids += 1)}`;
+
+  test('adds a set pre-filled with the last one; removes one, keeping at least one', () => {
+    let workout = start();
+    const lat = workout.exercises[0];
+    workout = updateTyped(workout, lat.id, lat.sets[1].id, () => lift(45, 8));
+    workout = addSet(workout, lat.id, 'new-set');
+
+    const sets = workout.exercises[0].sets;
+    expect(sets).toHaveLength(3);
+    expect(sets[2]).toMatchObject({ id: 'new-set', planned: lift(45, 8), completedAt: null });
+
+    workout = removeSet(workout, lat.id, sets[0].id);
+    workout = removeSet(workout, lat.id, sets[1].id);
+    expect(workout.exercises[0].sets.map((set) => set.id)).toEqual(['new-set']);
+    expect(removeSet(workout, lat.id, 'new-set').exercises[0].sets).toHaveLength(1);
+  });
+
+  test('marks drop sets and RPE, and saves them', () => {
+    let workout = start();
+    const lat = workout.exercises[0];
+    workout = setSetType(workout, lat.id, lat.sets[1].id, 'drop');
+    workout = setRpe(workout, lat.id, lat.sets[1].id, 8.5);
+    workout = toggleSet(workout, lat.id, lat.sets[1].id, '2026-10-20T17:05:00.000Z');
+
+    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z' });
+    expect(payload.exercises[0].sets[0]).toMatchObject({ set_type: 'drop', rpe: 8.5 });
+  });
+
+  test('adds exercises at the end, and an added one can be taken out again', () => {
+    let workout = addExercises(start(), [{ exercise: squat, restS: 150 }], newId);
+    const added = workout.exercises.at(-1)!;
+
+    expect(added).toMatchObject({
+      exerciseId: 'squat',
+      routineExerciseId: null,
+      restS: 150,
+      change: 'added',
+    });
+    expect(added.sets).toHaveLength(1);
+
+    workout = removeExercise(workout, added.id);
+    expect(workout.exercises).toHaveLength(4);
+  });
+
+  test('a skipped exercise has no sets to do, is saved as skipped, and can come back', () => {
+    let workout = start();
+    const row = workout.exercises[1];
+    workout = skipExercise(workout, row.id, { reason: 'machine_busy' });
+
+    expect(countSets(workout)).toEqual({ done: 0, total: 8 });
+    expect(workoutOrder(workout).some((item) => item.exerciseId === row.id)).toBe(false);
+    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z' });
+    expect(payload.exercises).toEqual([
+      expect.objectContaining({ exercise_id: 'exercise-2', change: 'skipped', change_reason: 'machine_busy', sets: [] }),
+    ]);
+
+    workout = skipExercise(workout, row.id, null);
+    expect(workout.exercises[1]).toMatchObject({ change: null, changeReason: null });
+  });
+
+  test('swaps an exercise before any of its sets is done, remembering what it replaced', () => {
+    let workout = start();
+    const lat = workout.exercises[0];
+    workout = swapExercise(workout, lat.id, squat, 'pain', newId);
+
+    expect(workout.exercises[0]).toMatchObject({
+      exerciseId: 'squat',
+      change: 'swapped',
+      swappedFromId: 'exercise-1',
+      replaced: expect.objectContaining({ id: 'exercise-1' }),
+      changeReason: 'pain',
+      previous: null,
+    });
+    // Same number of sets, empty: last time for the squat fills them in.
+    expect(workout.exercises[0].sets.map((set) => set.planned)).toEqual([NO_TARGETS, NO_TARGETS]);
+
+    const row = workout.exercises[1];
+    workout = toggleSet(workout, row.id, row.sets[0].id, '2026-10-20T17:05:00.000Z');
+    expect(canSwap(workout.exercises[1])).toBe(false);
+    expect(swapExercise(workout, row.id, squat, null, newId).exercises[1].exerciseId).toBe('exercise-2');
+  });
+
+  test('keeps this workout’s note apart from the routine’s, and saves it trimmed', () => {
+    let workout = start();
+    const lat = workout.exercises[0];
+    workout = setExerciseNotes(workout, lat.id, ' Agafada neutra avui ');
+    workout = toggleSet(workout, lat.id, lat.sets[0].id, '2026-10-20T17:05:00.000Z');
+
+    expect(workout.exercises[0].routineNote).toBe('Agafada ampla');
+    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z' });
+    expect(payload.exercises[0].notes).toBe('Agafada neutra avui');
+  });
+
+  test('a workout saved by an older version gets the new fields', () => {
+    const old = {
+      ...start(),
+      exercises: start().exercises.map(({ routineNote, notes: _notes, change: _c, swappedFromId: _s, replaced: _x, changeReason: _r, ...rest }) => ({
+        ...rest,
+        notes: routineNote,
+        sets: rest.sets.map(({ setType: _t, rpe: _p, ...set }) => set),
+      })),
+    } as unknown as ActiveWorkout;
+
+    const upgraded = upgradeWorkout(old);
+    expect(upgraded.exercises[0]).toMatchObject({ routineNote: 'Agafada ampla', notes: '', change: null });
+    expect(upgraded.exercises[0].sets[0]).toMatchObject({ setType: 'normal', rpe: null });
   });
 });

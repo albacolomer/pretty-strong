@@ -105,7 +105,9 @@
     "picker": {
       "title": "Add exercises",
       "add": "Add ({{count}})",
-      "backToList": "Back to the list"
+      "backToList": "Back to the list",
+      "swapTitle": "Swap exercise",
+      "swap": "Swap"
     }
   },
   "trackingTypes": {
@@ -500,6 +502,37 @@
       "down": "Less than last time: {{change}}",
       "reps_one": "{{count}} rep",
       "reps_other": "{{count}} reps"
-    }
+    },
+    "addExercises": "+ Add exercises",
+    "swapExercise": "Swap exercise",
+    "skipExercise": "Skip exercise",
+    "unskipExercise": "Bring the exercise back",
+    "removeExercise": "Remove exercise",
+    "skipped": "Skipped",
+    "insteadOf": "Instead of “{{name}}”",
+    "skipReasonTitle": "Why skip it?",
+    "swapReasonTitle": "Why the swap?",
+    "skippedExercise": "“{{name}}” skipped",
+    "removedExercise": "“{{name}}” removed",
+    "exerciseReasons": {
+      "machine_busy": "Machine busy",
+      "pain": "Pain",
+      "tired": "Tired",
+      "no_time": "No time",
+      "other": "Other"
+    },
+    "setMenuFor": "Options for set {{number}} of “{{name}}”",
+    "dropShort": "D",
+    "dropSet": "Drop set",
+    "normalSet": "Normal set",
+    "addRpe": "Add RPE",
+    "changeRpe": "RPE: {{rpe}}",
+    "rpeTitle": "RPE: how hard was it? (10 = all-out)",
+    "removeRpe": "Remove RPE",
+    "todaysNote": "Today's note",
+    "todaysNoteFor": "Today's note for “{{name}}”",
+    "saveNoteToRoutine": "Save it in the routine too",
+    "noteSavedToRoutine": "Note saved in the routine ✓",
+    "noSignal": "No connection. Check it and try again."
   }
 }

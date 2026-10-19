@@ -8,7 +8,7 @@ import { NO_TARGETS, type Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 import { cancelScheduled, scheduleAt } from '@/lib/notifications';
 
-import { fetchLastTime } from './api';
+import { fetchLastTime, saveNoteToRoutine } from './api';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { workoutFromRoutine } from './activeWorkout';
@@ -24,7 +24,20 @@ jest.mock('expo-haptics', () => ({
 jest.mock('expo-keep-awake', () => ({ useKeepAwake: jest.fn() }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => `rest-${Math.random()}` }));
 // Last time: nothing yet, unless a test says otherwise.
-jest.mock('./api', () => ({ fetchLastTime: jest.fn(() => Promise.resolve({})) }));
+jest.mock('./api', () => ({
+  fetchLastTime: jest.fn(() => Promise.resolve({})),
+  saveNoteToRoutine: jest.fn(() => Promise.resolve()),
+}));
+// The library, for adding or swapping in an exercise: just the squat.
+jest.mock('@/features/auth/AuthProvider', () => ({
+  useAuth: () => ({ session: { user: { id: 'user-1' } }, isLoading: false }),
+}));
+jest.mock('@/features/exercises/api', () => ({
+  fetchExercises: jest.fn(() =>
+    Promise.resolve([jest.requireActual('@/features/routines/testData').testExercise('squat', 'Esquat')]),
+  ),
+  fetchExerciseSettings: jest.fn(() => Promise.resolve({})),
+}));
 jest.mock('@/lib/notifications', () => ({
   scheduleAt: jest.fn(() => Promise.resolve('notification-1')),
   cancelScheduled: jest.fn(() => Promise.resolve()),
@@ -282,6 +295,98 @@ describe('<ActiveWorkoutView />', () => {
 
     expect(screen.getByLabelText("Millor que l'últim cop: +2,5 kg")).toBeOnTheScreen();
     expect(screen.getByText('↑ +2,5 kg ✨')).toBeOnTheScreen();
+  });
+
+  test('a set’s menu: drop set, RPE, and removing it', async () => {
+    const user = userEvent.setup();
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+    const setMenu = (number: number) =>
+      screen.getByRole('button', { name: `Opcions de la sèrie ${number} de «Tracció al pit»` });
+
+    sheetChoices.push('Sèrie de descàrrega');
+    await user.press(setMenu(2));
+    expect(setMenu(2)).toHaveTextContent('D');
+
+    sheetChoices.push('Afegeix RPE', '8,5');
+    await user.press(setMenu(2));
+    expect(setMenu(2)).toHaveTextContent('D@8,5');
+    expect(active()!.exercises[0].sets[1]).toMatchObject({ setType: 'drop', rpe: 8.5 });
+
+    sheetChoices.push('Treu la sèrie');
+    await user.press(setMenu(1));
+    expect(active()!.exercises[0].sets).toHaveLength(1);
+    // The last one stays: no "Treu la sèrie" any more.
+    await user.press(setMenu(1));
+    expect(actionSheet.mock.lastCall?.[0].options).not.toContain('Treu la sèrie');
+  });
+
+  test('adds a set, pre-filled with the last one', async () => {
+    const user = userEvent.setup();
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    await user.press(screen.getByRole('button', { name: 'Afegeix una sèrie a «Tracció al pit»' }));
+
+    expect(screen.getByLabelText('kg · Tracció al pit, sèrie 3').props.placeholder).toBe('40');
+  });
+
+  test('skips an exercise with a reason, and Desfés brings it back', async () => {
+    const user = userEvent.setup();
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push("Salta l'exercici", 'Màquina ocupada');
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Rem assegut amb politja»' }));
+
+    expect(screen.getByText('Saltat · Màquina ocupada')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('Reps · Rem assegut amb politja, sèrie 1')).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(screen.queryByText('Saltat · Màquina ocupada')).not.toBeOnTheScreen();
+  });
+
+  test('swaps an exercise for another from the library', async () => {
+    const user = userEvent.setup();
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push("Canvia l'exercici");
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Tracció al pit»' }));
+    await user.press(await screen.findByRole('checkbox', { name: /Esquat/ }));
+    await user.press(screen.getByRole('button', { name: 'Canvia' }));
+
+    expect(screen.getByRole('header', { name: 'Esquat' })).toBeOnTheScreen();
+    expect(screen.getByText('En lloc de «Tracció al pit»')).toBeOnTheScreen();
+    expect(active()!.exercises[0]).toMatchObject({ exerciseId: 'squat', change: 'swapped' });
+  });
+
+  test('adds an exercise from the library, and takes it out again with Desfés', async () => {
+    const user = userEvent.setup();
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    await user.press(screen.getByRole('button', { name: '+ Afegeix exercicis' }));
+    await user.press(await screen.findByRole('checkbox', { name: /Esquat/ }));
+    await user.press(screen.getByRole('button', { name: 'Afegeix (1)' }));
+
+    expect(screen.getByRole('header', { name: 'Esquat' })).toBeOnTheScreen();
+    expect(active()!.exercises.at(-1)).toMatchObject({ exerciseId: 'squat', change: 'added' });
+
+    sheetChoices.push("Treu l'exercici");
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Esquat»' }));
+    expect(screen.queryByRole('header', { name: 'Esquat' })).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(screen.getByRole('header', { name: 'Esquat' })).toBeOnTheScreen();
+  });
+
+  test('a note for today, which can also go into the routine', async () => {
+    const user = userEvent.setup();
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    await user.press(screen.getByRole('button', { name: 'Afegeix una nota a «Tracció al pit»' }));
+    await user.type(screen.getByLabelText("Nota d'avui per a «Tracció al pit»"), 'Agafada neutra');
+    await user.press(screen.getByRole('button', { name: 'Desa-la també a la rutina' }));
+
+    expect(saveNoteToRoutine).toHaveBeenCalledWith('re-1', 'Agafada neutra');
+    expect(await screen.findByText('Nota desada a la rutina ✓')).toBeOnTheScreen();
+    expect(active()!.exercises[0].notes).toBe('Agafada neutra');
   });
 
   test('with no workout going, says so', async () => {

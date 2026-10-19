@@ -91,6 +91,16 @@ export async function finishWorkout(workout: FinishedWorkout): Promise<void> {
   if (error) throw error;
 }
 
+// "Desa-la també a la rutina": a note written during a workout becomes the
+// routine's note on that exercise, so the next workout of it shows it.
+export async function saveNoteToRoutine(routineExerciseId: string, notes: string): Promise<void> {
+  const { error } = await supabase
+    .from('routine_exercises')
+    .update({ notes: notes.trim() === '' ? null : notes.trim() })
+    .eq('id', routineExerciseId);
+  if (error) throw error;
+}
+
 // "Desfés": the session goes, as if it was never logged.
 export async function deleteSession(id: string): Promise<void> {
   const { error } = await supabase.from('workout_sessions').delete().eq('id', id);
