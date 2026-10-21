@@ -5,11 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS } from 'react-native';
 
 import { useToast } from '@/components/ui';
-import { exerciseName } from '@/features/exercises/exercise';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { useExercises } from '@/features/exercises/useExercises';
-import { formatInput } from '@/features/routines/targets';
+import { TARGET_INPUTS, formatInput } from '@/features/routines/targets';
 import { isNetworkError } from '@/lib/errors';
 import { useAppLanguage } from '@/lib/i18n';
 import { useTheme } from '@/theme';
@@ -24,14 +23,20 @@ import {
   setExerciseNotes,
   setRpe,
   setSetType,
+  showAllFields,
   skipExercise,
   swapExercise,
   type ActiveExercise,
   type ActiveWorkout,
 } from './activeWorkout';
 import { fetchLastTime, saveNoteToRoutine } from './api';
+import { workoutInputs } from './cardio';
 import { EXERCISE_CHANGE_REASONS, type ExerciseChangeReason } from './session';
+import { useExerciseTitle } from './useExerciseTitle';
 import { useWorkoutStore } from './workoutStore';
+
+// Only these can have drop sets: there's a weight to drop.
+const DROP_SET_TYPES = ['weight_reps', 'bodyweight_reps', 'weight_distance'];
 
 // RPE values offered, from moderate to all-out.
 const RPE_VALUES = [6, 7, 7.5, 8, 8.5, 9, 9.5, 10];
@@ -45,6 +50,7 @@ export function useWorkoutChanges(workout: ActiveWorkout) {
   const { t } = useTranslation();
   const { scheme } = useTheme();
   const language = useAppLanguage();
+  const titleOf = useExerciseTitle();
   const showToast = useToast();
   const queryClient = useQueryClient();
   const update = useWorkoutStore((state) => state.update);
@@ -89,7 +95,7 @@ export function useWorkoutChanges(workout: ActiveWorkout) {
   }
 
   function nameOf(exercise: ActiveExercise) {
-    return exerciseName(exercise.exercise, language);
+    return titleOf(exercise);
   }
 
   function skip(exercise: ActiveExercise) {
@@ -142,6 +148,16 @@ export function useWorkoutChanges(workout: ActiveWorkout) {
               },
             ]
           : [{ label: t('workout.skipExercise'), run: () => skip(exercise) }]),
+      // A cardio machine showing only the fields in use.
+      ...(!skipped &&
+      workoutInputs(exercise).length < TARGET_INPUTS[exercise.exercise.trackingType].length
+        ? [
+            {
+              label: t('workout.allFields'),
+              run: () => update((current) => showAllFields(current, exercise.id)),
+            },
+          ]
+        : []),
       ...(workout.exercises.length > 1
         ? [{ label: t('routines.reorder.open'), run: () => setReordering(true) }]
         : []),
@@ -165,18 +181,27 @@ export function useWorkoutChanges(workout: ActiveWorkout) {
     ]);
   }
 
-  // Tap a set's number: drop set, RPE, or remove it.
+  // Tap a set's number: drop set, RPE, or remove it. A cardio machine's
+  // segment has no drop set.
   function openSetMenu(exercise: ActiveExercise, setId: string) {
     const index = exercise.sets.findIndex((set) => set.id === setId);
     const set = exercise.sets[index];
     if (!set) return;
     const drop = set.setType === 'drop';
+    const segment = exercise.exercise.trackingType === 'cardio_machine';
+    const names = { name: nameOf(exercise), number: index + 1 };
     const actions: Action[] = [
-      {
-        label: drop ? t('workout.normalSet') : t('workout.dropSet'),
-        run: () =>
-          update((current) => setSetType(current, exercise.id, setId, drop ? 'normal' : 'drop')),
-      },
+      ...(drop || DROP_SET_TYPES.includes(exercise.exercise.trackingType)
+        ? [
+            {
+              label: drop ? t('workout.normalSet') : t('workout.dropSet'),
+              run: () =>
+                update((current) =>
+                  setSetType(current, exercise.id, setId, drop ? 'normal' : 'drop'),
+                ),
+            },
+          ]
+        : []),
       {
         label:
           set.rpe === null
@@ -187,14 +212,14 @@ export function useWorkoutChanges(workout: ActiveWorkout) {
       ...(exercise.sets.length > 1
         ? [
             {
-              label: t('routines.sets.remove'),
+              label: segment ? t('workout.segments.remove') : t('routines.sets.remove'),
               run: () => update((current) => removeSet(current, exercise.id, setId)),
             },
           ]
         : []),
     ];
     sheet(
-      t('routines.sets.rowName', { name: nameOf(exercise), number: index + 1 }),
+      segment ? t('workout.segments.rowName', names) : t('routines.sets.rowName', names),
       actions,
       exercise.sets.length > 1 ? actions.length - 1 : undefined,
     );

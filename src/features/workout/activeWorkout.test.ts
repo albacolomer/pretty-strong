@@ -246,7 +246,7 @@ describe('last time (Alba’s rule)', () => {
 
   test('last time in this routine wins, row by row; extra rows take its last set', () => {
     const workout = applyLastTime(begin(), {
-      'exercise-1': { routine: [lift(42.5, 10)], any: [lift(50, 5)] },
+      'exercise-1': { routine: [{ routineExerciseId: 're-1', sets: [lift(42.5, 10)] }], any: [lift(50, 5)] },
     });
 
     const [lat] = workout.exercises;

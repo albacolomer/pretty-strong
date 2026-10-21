@@ -8,13 +8,14 @@ import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { AddNoteButton } from '@/features/routines/ExerciseNoteField';
 import { EXERCISE_NOTES_MAX_LENGTH } from '@/features/routines/routine';
 import type { TargetsUpdate } from '@/features/routines/TargetFields';
-import { TARGET_INPUTS } from '@/features/routines/targets';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
 import { shownNumbers, type ActiveExercise } from './activeWorkout';
+import { formatPace, pace, workoutInputs } from './cardio';
 import { compareToLastTime } from './compareToLastTime';
 import { ROW_MAX_INPUTS, SET_INPUT_WIDTH, SetRow } from './SetRow';
+import { useExerciseTitle } from './useExerciseTitle';
 import { VsLastTimeBadge } from './VsLastTimeBadge';
 
 type WorkoutExerciseCardProps = {
@@ -35,7 +36,8 @@ type WorkoutExerciseCardProps = {
 
 // One exercise in the workout (spec: ExerciseCard): picture, name and ⋯;
 // the routine's note on it; a row per set; then "+ Afegeix una sèrie" and
-// "+ Nota". A skipped exercise shows why, without its sets.
+// "+ Nota". A skipped exercise shows why, without its sets. A cardio
+// machine's rows are segments; a run's show their pace (US-19).
 export function WorkoutExerciseCard({
   exercise,
   nextSetId,
@@ -49,8 +51,11 @@ export function WorkoutExerciseCard({
 }: WorkoutExerciseCardProps) {
   const { t } = useTranslation();
   const language = useAppLanguage();
-  const name = exerciseName(exercise.exercise, language);
-  const inputs = TARGET_INPUTS[exercise.exercise.trackingType];
+  const titleOf = useExerciseTitle();
+  const name = titleOf(exercise);
+  const inputs = workoutInputs(exercise);
+  const segment = exercise.exercise.trackingType === 'cardio_machine';
+  const run = exercise.exercise.trackingType === 'run';
   const skipped = exercise.change === 'skipped';
   const doneSets = exercise.sets.filter((set) => set.completedAt !== null);
   const done = doneSets.length;
@@ -109,7 +114,7 @@ export function WorkoutExerciseCard({
           {inputs.length <= ROW_MAX_INPUTS ? (
             <View style={styles.header} aria-hidden>
               <Text variant="caption" color="textMuted" style={styles.numberColumn}>
-                {t('routines.sets.header')}
+                {segment ? t('workout.segments.header') : t('routines.sets.header')}
               </Text>
               {inputs.map((input) => (
                 <Text key={input} variant="caption" color="textMuted" style={styles.inputColumn}>
@@ -119,24 +124,31 @@ export function WorkoutExerciseCard({
             </View>
           ) : null}
 
-          {exercise.sets.map((set, index) => (
-            <SetRow
-              key={set.id}
-              number={index + 1}
-              inputs={inputs}
-              set={set}
-              isNext={set.id === nextSetId}
-              exerciseName={name}
-              onType={(update) => onType(set.id, update)}
-              onToggle={() => onToggle(set.id)}
-              onNumberPress={() => onSetMenu(set.id)}
-            />
-          ))}
+          {exercise.sets.map((set, index) => {
+            const setPace = run ? pace([shownNumbers(set)]) : null;
+            return (
+              <SetRow
+                key={set.id}
+                number={index + 1}
+                inputs={inputs}
+                set={set}
+                isNext={set.id === nextSetId}
+                exerciseName={name}
+                onType={(update) => onType(set.id, update)}
+                onToggle={() => onToggle(set.id)}
+                onNumberPress={() => onSetMenu(set.id)}
+                segment={segment}
+                pace={setPace === null ? null : t('workout.pace', { pace: formatPace(setPace) })}
+              />
+            );
+          })}
 
           <View style={styles.bottomRow}>
             <Button
-              label={t('routines.sets.add')}
-              aria-label={t('routines.sets.addFor', { name })}
+              label={segment ? t('workout.segments.add') : t('routines.sets.add')}
+              aria-label={
+                segment ? t('workout.segments.addFor', { name }) : t('routines.sets.addFor', { name })
+              }
               variant="ghost"
               onPress={onAddSet}
               style={styles.bottomButton}

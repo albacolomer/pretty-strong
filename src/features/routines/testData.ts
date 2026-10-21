@@ -39,3 +39,42 @@ export const upperBody: Routine = {
     }),
   ),
 };
+
+const runExercise: Exercise = { ...testExercise('run', 'Córrer'), trackingType: 'run' };
+
+// A run routine: a 1 km warm-up, then 2 × 400 m with 1:30 recovery. Both
+// blocks are the same run exercise.
+export const sundayRun: Routine = {
+  ...upperBody,
+  id: 'routine-run',
+  name: 'Sèries de diumenge',
+  label: 'run',
+  exercises: [
+    {
+      id: 're-warmup',
+      exerciseId: 'run',
+      exercise: runExercise,
+      restS: null,
+      groupKey: null,
+      notes: null,
+      sets: [{ ...NO_TARGETS, distanceM: 1000 }],
+    },
+    {
+      id: 're-intervals',
+      exerciseId: 'run',
+      exercise: runExercise,
+      restS: 90,
+      groupKey: null,
+      notes: null,
+      sets: [
+        { ...NO_TARGETS, distanceM: 400 },
+        { ...NO_TARGETS, distanceM: 400 },
+      ],
+    },
+  ],
+};
+
+// A cardio machine, e.g. the stairmaster.
+export function cardioExercise(id: string, ca: string): Exercise {
+  return { ...testExercise(id, ca), trackingType: 'cardio_machine', equipment: 'stair_climber' };
+}

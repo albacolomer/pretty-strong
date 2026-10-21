@@ -50,9 +50,31 @@ describe('compareToLastTime', () => {
     });
   });
 
-  test('nothing to compare without numbers on both sides, nor for cardio yet', () => {
+  test('runs: a faster average pace is up, by how much faster per km', () => {
+    const run = (distanceM: number | null, durationS: number | null) => ({ ...NO_TARGETS, distanceM, durationS });
+    // 5 km in 27:30 (5:30 /km) vs 5:40 /km last time.
+    expect(compareToLastTime('run', [run(5000, 1650)], [run(5000, 1700)])).toEqual({
+      direction: 'up',
+      change: { unit: 's/km', amount: -10 },
+    });
+    // 2 × 400 m in 1:36 (4:00 /km) vs 3:45 /km.
+    expect(compareToLastTime('run', [run(400, 96), run(400, 96)], [run(400, 90)])).toEqual({
+      direction: 'down',
+      change: { unit: 's/km', amount: 15 },
+    });
+    expect(compareToLastTime('run', [run(1000, 330)], [run(2000, 660)])).toEqual({
+      direction: 'same',
+      change: null,
+    });
+    // No time, no pace.
+    expect(compareToLastTime('run', [run(5000, null)], [run(5000, 1700)])).toBeNull();
+  });
+
+  test('nothing to compare without numbers on both sides, nor for cardio machines', () => {
     expect(compareToLastTime('weight_reps', [lift(40, 10)], [])).toBeNull();
     expect(compareToLastTime('weight_reps', [], [lift(40, 10)])).toBeNull();
     expect(compareToLastTime('run', [{ ...NO_TARGETS, distanceM: 5000 }], [])).toBeNull();
+    const segment = { ...NO_TARGETS, durationS: 600, level: 8 };
+    expect(compareToLastTime('cardio_machine', [segment], [segment])).toBeNull();
   });
 });

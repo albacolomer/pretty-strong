@@ -5,7 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { ActionSheetIOS } from 'react-native';
 
 import { NO_TARGETS, type Routine } from '@/features/routines/routine';
-import { upperBody } from '@/features/routines/testData';
+import { cardioExercise, sundayRun, upperBody } from '@/features/routines/testData';
 import { cancelScheduled, scheduleAt } from '@/lib/notifications';
 
 import { fetchLastTime, saveNoteToRoutine } from './api';
@@ -61,9 +61,9 @@ const routine: Routine = {
 };
 
 let ids = 0;
-function startWorkout() {
+function startWorkout(from: Routine = routine) {
   useWorkoutStore.setState({
-    active: workoutFromRoutine(routine, {
+    active: workoutFromRoutine(from, {
       date: '2026-10-20',
       plannedRoutineId: 'routine-1',
       changeReason: null,
@@ -164,7 +164,7 @@ describe('<ActiveWorkoutView />', () => {
     const onClose = jest.fn();
     const lift = (weightKg: number, reps: number) => ({ ...NO_TARGETS, weightKg, reps });
     jest.mocked(fetchLastTime).mockResolvedValueOnce({
-      'exercise-1': { routine: [lift(37.5, 10)], any: [] },
+      'exercise-1': { routine: [{ routineExerciseId: 're-1', sets: [lift(37.5, 10)] }], any: [] },
     });
     await render(<ActiveWorkoutView onClose={onClose} />, { wrapper: createAppWrapper() });
     await waitFor(() => expect(active()!.lastTimeLoaded).toBe(true));
@@ -325,7 +325,7 @@ describe('<ActiveWorkoutView />', () => {
     const user = userEvent.setup();
     const lift = (weightKg: number, reps: number) => ({ ...NO_TARGETS, weightKg, reps });
     jest.mocked(fetchLastTime).mockResolvedValueOnce({
-      'exercise-1': { routine: [lift(42.5, 10), lift(42.5, 8)], any: [] },
+      'exercise-1': { routine: [{ routineExerciseId: 're-1', sets: [lift(42.5, 10), lift(42.5, 8)] }], any: [] },
     });
     await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
 
@@ -435,6 +435,64 @@ describe('<ActiveWorkoutView />', () => {
     expect(saveNoteToRoutine).toHaveBeenCalledWith('re-1', 'Agafada neutra');
     expect(await screen.findByText('Nota desada a la rutina ✓')).toBeOnTheScreen();
     expect(active()!.exercises[0].notes).toBe('Agafada neutra');
+  });
+
+  test('a run: each block says what it is, with its pace, compared with its own last time', async () => {
+    const user = userEvent.setup();
+    const run = (distanceM: number, durationS: number) => ({ ...NO_TARGETS, distanceM, durationS });
+    jest.mocked(fetchLastTime).mockResolvedValueOnce({
+      run: { routine: [{ routineExerciseId: 're-warmup', sets: [run(1000, 340)] }], any: [] },
+    });
+    startWorkout(sundayRun);
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    expect(screen.getByRole('header', { name: 'Distància · 1 km' })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Sèries · 2 × 400 m' })).toBeOnTheScreen();
+    expect(screen.getByLabelText('metres · Sèries · 2 × 400 m, sèrie 1')).toBeOnTheScreen();
+    // Last time's 5:40 for the warm-up.
+    await waitFor(() => expect(screen.getByText('Ritme: 5:40 /km')).toBeOnTheScreen());
+
+    await user.type(screen.getByLabelText('s · Distància · 1 km, sèrie 1'), '30');
+    await user.type(screen.getByLabelText('min · Distància · 1 km, sèrie 1'), '5');
+    expect(screen.getByText('Ritme: 5:30 /km')).toBeOnTheScreen();
+    await user.press(screen.getByRole('checkbox', { name: 'Sèrie 1 de «Distància · 1 km» feta' }));
+
+    expect(screen.getByText('↑ −0:10 /km ✨')).toBeOnTheScreen();
+    expect(screen.getByLabelText("Millor que l'últim cop: −0:10 /km")).toBeOnTheScreen();
+    // No rest after the warm-up: straight into the intervals.
+    expect(rest()).toBeNull();
+  });
+
+  test('a cardio machine: segments with the fields in use, the others on request', async () => {
+    const user = userEvent.setup();
+    startWorkout({
+      ...upperBody,
+      exercises: [
+        {
+          ...upperBody.exercises[0],
+          exerciseId: 'stairs',
+          exercise: cardioExercise('stairs', 'Escala'),
+          sets: [
+            { ...NO_TARGETS, durationS: 300, level: 8 },
+            { ...NO_TARGETS, durationS: 300, level: 10 },
+          ],
+        },
+      ],
+    });
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    expect(screen.getByText('Tram', { includeHiddenElements: true })).toBeOnTheScreen();
+    expect(screen.getByLabelText('Nivell · Escala, tram 2').props.placeholder).toBe('10');
+    expect(screen.queryByLabelText('% pendent · Escala, tram 1')).not.toBeOnTheScreen();
+
+    sheetChoices.push('Mostra tots els camps');
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Escala»' }));
+    expect(screen.getByLabelText('% pendent · Escala, tram 1')).toBeOnTheScreen();
+
+    // The first segment runs straight into the second.
+    await user.press(screen.getByRole('checkbox', { name: 'Tram 1 de «Escala» fet' }));
+    expect(rest()).toBeNull();
+    expect(screen.getByRole('button', { name: 'Afegeix un tram a «Escala»' })).toBeOnTheScreen();
   });
 
   test('with no workout going, says so', async () => {

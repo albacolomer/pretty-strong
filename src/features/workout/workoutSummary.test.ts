@@ -1,5 +1,5 @@
 import { NO_TARGETS, type Routine } from '@/features/routines/routine';
-import { upperBody } from '@/features/routines/testData';
+import { sundayRun, upperBody } from '@/features/routines/testData';
 
 import {
   skipExercise,
@@ -79,6 +79,30 @@ describe('summarize', () => {
     expect(highlights.map((item) => [item.exercise.exerciseId, item.comparison])).toEqual([
       ['exercise-1', { direction: 'up', change: { unit: 'kg', amount: 2.5 } }],
     ]);
+  });
+
+  test('adds up the distance of runs and cardio machines', () => {
+    const runRoutine: Routine = {
+      ...sundayRun,
+      exercises: sundayRun.exercises.map((item) => ({
+        ...item,
+        sets: item.sets.map((set) => ({ ...set, durationS: 300 })),
+      })),
+    };
+    let workout = workoutFromRoutine(runRoutine, {
+      date: '2026-10-25',
+      plannedRoutineId: null,
+      changeReason: null,
+      startedAt: '2026-10-25T09:00:00.000Z',
+      newId: () => `id-${(ids += 1)}`,
+      defaultRestS: () => 90,
+    });
+    workout = tickAll(tickAll(workout, 0), 1);
+
+    expect(summarize(workout, '2026-10-25T09:30:00.000Z')).toMatchObject({
+      distanceM: 1800,
+      volumeKg: 0,
+    });
   });
 
   test('skipped exercises and sets without ✓ don’t count', () => {

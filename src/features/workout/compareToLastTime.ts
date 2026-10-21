@@ -1,11 +1,13 @@
 import type { TrackingType } from '@/features/exercises/vocabulary';
 
 import type { SetNumbers } from './activeWorkout';
+import { pace } from './cardio';
 
 // "vs last time" (US-14, spec: VsLastTimeBadge): did today's sets beat the
 // last time? No React here.
 
-export type Change = { unit: 'kg' | 'reps' | 'm' | 's'; amount: number };
+// A run's pace is in seconds per km: less is faster, so better.
+export type Change = { unit: 'kg' | 'reps' | 'm' | 's' | 's/km'; amount: number };
 
 export type Comparison = {
   direction: 'up' | 'same' | 'down';
@@ -60,7 +62,8 @@ const addedWeight: Measure = {
 
 // Weights: the heaviest set, then its reps (or distance for carries).
 // Bodyweight: the most reps (or the heaviest added weight, when there is
-// one). Holds: the longest. Cardio and runs: not yet (null).
+// one). Holds: the longest. Runs: the average pace, faster is better
+// (US-19). Cardio machines: none (null), for now.
 export function compareToLastTime(
   trackingType: TrackingType,
   done: SetNumbers[],
@@ -77,8 +80,15 @@ export function compareToLastTime(
     }
     case 'duration':
       return compareBy(done, last, time);
+    case 'run': {
+      const today = pace(done);
+      const before = pace(last);
+      if (today === null || before === null) return null;
+      const amount = today - before;
+      if (amount === 0) return { direction: 'same', change: null };
+      return { direction: amount < 0 ? 'up' : 'down', change: { unit: 's/km', amount } };
+    }
     case 'cardio_machine':
-    case 'run':
       return null;
   }
 }

@@ -4,7 +4,6 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, Text, TextField } from '@/components/ui';
-import { exerciseName } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';
 import { useAppLanguage } from '@/lib/i18n';
@@ -13,6 +12,7 @@ import { radius, spacing, touch, useTheme } from '@/theme';
 import type { ActiveWorkout, WrapUp } from './activeWorkout';
 import { ENERGY_LEVELS, SESSION_NOTES_MAX_LENGTH, type Energy } from './session';
 import { VsLastTimeBadge } from './VsLastTimeBadge';
+import { useExerciseTitle } from './useExerciseTitle';
 import { summarize } from './workoutSummary';
 
 type WorkoutSummaryViewProps = {
@@ -31,10 +31,12 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const language = useAppLanguage();
+  const titleOf = useExerciseTitle();
   const [energy, setEnergy] = useState<Energy | null>(null);
   const [notes, setNotes] = useState('');
   const summary = summarize(workout, endedAt);
   const kg = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
+  const km = new Intl.NumberFormat(language, { maximumFractionDigits: 2 });
 
   const stats = [
     { label: t('workout.summary.duration'), value: formatDuration(summary.durationS) },
@@ -43,6 +45,15 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
     // Only when something was lifted (not for a run, say).
     ...(summary.volumeKg > 0
       ? [{ label: t('workout.summary.volume'), value: `${kg.format(summary.volumeKg)} kg` }]
+      : []),
+    // Only after a run or a cardio machine with a distance.
+    ...(summary.distanceM > 0
+      ? [
+          {
+            label: t('workout.summary.distance'),
+            value: `${km.format(summary.distanceM / 1000)} km`,
+          },
+        ]
       : []),
   ];
 
@@ -85,7 +96,7 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
                 <View key={exercise.id} style={styles.highlight}>
                   <ExercisePicture exercise={exercise.exercise} size={32} />
                   <Text style={styles.highlightName} numberOfLines={2}>
-                    {exerciseName(exercise.exercise, language)}
+                    {titleOf(exercise)}
                   </Text>
                   <VsLastTimeBadge comparison={comparison} />
                 </View>

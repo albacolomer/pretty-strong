@@ -550,7 +550,19 @@
       "notesPlaceholder": "¿Cómo ha ido?",
       "back": "Volver",
       "backLabel": "Volver al entrenamiento",
-      "save": "Guardar"
-    }
+      "save": "Guardar",
+      "distance": "Distancia"
+    },
+    "segments": {
+      "header": "Tramo",
+      "rowName": "{{name}}, tramo {{number}}",
+      "done": "Tramo {{number}} de «{{name}}» hecho",
+      "menuFor": "Opciones del tramo {{number}} de «{{name}}»",
+      "add": "+ Añadir un tramo",
+      "addFor": "Añadir un tramo a «{{name}}»",
+      "remove": "Quitar el tramo"
+    },
+    "allFields": "Mostrar todos los campos",
+    "pace": "Ritmo: {{pace}}"
   }
 }

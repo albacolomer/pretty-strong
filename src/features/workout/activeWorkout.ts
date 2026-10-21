@@ -1,6 +1,7 @@
 import type { Exercise } from '@/features/exercises/exercise';
 import { moveWithinGroups, withoutLoneGroups } from '@/features/routines/grouping';
 import { NO_TARGETS, type ExerciseTargets, type Routine } from '@/features/routines/routine';
+import { runBlockKind, type RunBlockKind } from '@/features/routines/runBlocks';
 
 import type { NextSet, RestTimer } from './restTimer';
 import type { ChangeReason, Energy, ExerciseChangeReason } from './session';
@@ -59,6 +60,12 @@ export type ActiveExercise = {
   swappedFromId: string | null;
   replaced: Exercise | null;
   changeReason: ExerciseChangeReason | null;
+  // A block of a run routine (US-19): its kind and the routine's plan for
+  // it, for its title ("Sèries · 6 × 400 m"). Null for anything else.
+  runBlock: { kind: RunBlockKind; plan: SetNumbers[] } | null;
+  // A cardio machine shows only the fields in use, until all are asked
+  // for (see workoutInputs).
+  allFields: boolean;
 };
 
 export type ActiveWorkout = {
@@ -113,28 +120,52 @@ export function workoutFromRoutine(routine: Routine, options: StartOptions): Act
     startedAt: options.startedAt,
     rest: null,
     lastTimeLoaded: false,
-    exercises: routine.exercises.map((item) => ({
-      id: options.newId(),
-      exerciseId: item.exerciseId,
-      exercise: item.exercise,
-      routineExerciseId: item.id,
-      groupKey: item.groupKey,
-      restS: item.restS ?? options.defaultRestS(item.exerciseId),
-      routineNote: item.notes,
-      notes: '',
-      sets: item.sets.map((planned) => newSet(options.newId(), planned)),
-      previous: null,
-      change: null,
-      swappedFromId: null,
-      replaced: null,
-      changeReason: null,
-    })),
+    exercises: routine.exercises.map((item) => {
+      const runBlock =
+        routine.label === 'run' && item.exercise.trackingType === 'run'
+          ? { kind: runBlockKind(item.sets), plan: item.sets }
+          : null;
+      return {
+        id: options.newId(),
+        exerciseId: item.exerciseId,
+        exercise: item.exercise,
+        routineExerciseId: item.id,
+        groupKey: item.groupKey,
+        // Intervals rest for their recovery; other run blocks go straight on.
+        restS: item.restS ?? (runBlock ? 0 : options.defaultRestS(item.exerciseId)),
+        routineNote: item.notes,
+        notes: '',
+        sets: item.sets.map((planned) => newSet(options.newId(), planned)),
+        previous: null,
+        change: null,
+        swappedFromId: null,
+        replaced: null,
+        changeReason: null,
+        runBlock,
+        allFields: false,
+      };
+    }),
   };
 }
 
 // An exercise's sets the last time it was done (see last_sets()): in this
-// routine, and anywhere.
-export type LastTime = { routine: SetNumbers[]; any: SetNumbers[] };
+// routine, row by row (a run routine has several blocks of the same run
+// exercise), and anywhere.
+export type LastTime = {
+  routine: { routineExerciseId: string | null; sets: SetNumbers[] }[];
+  any: SetNumbers[];
+};
+
+// Last time in this routine for this row: the same routine row's sets.
+// Without a row to match (added that day, or since taken out of the
+// routine), the exercise's.
+function lastInRoutine(exercise: ActiveExercise, last: LastTime | undefined): SetNumbers[] {
+  const rows = last?.routine ?? [];
+  const row =
+    rows.find((item) => item.routineExerciseId === exercise.routineExerciseId) ??
+    rows.find((item) => item.routineExerciseId === null || exercise.routineExerciseId === null);
+  return row?.sets ?? [];
+}
 
 function hasNumbers(numbers: SetNumbers): boolean {
   return Object.values(numbers).some((value) => value !== null);
@@ -142,10 +173,12 @@ function hasNumbers(numbers: SetNumbers): boolean {
 
 // Pre-fills an exercise from last time (US-13), with Alba's rule: last time
 // in this routine; the first time, the routine's plan; without a plan, last
-// time anywhere. Row by row; extra rows take last time's last set.
+// time anywhere. Row by row; extra rows take last time's last set. A run
+// block is only compared with itself: a 10 km pace says nothing about a
+// 400 m one.
 export function withLastTime(exercise: ActiveExercise, last: LastTime | undefined): ActiveExercise {
-  const inRoutine = last?.routine ?? [];
-  const anywhere = last?.any ?? [];
+  const inRoutine = lastInRoutine(exercise, last);
+  const anywhere = exercise.runBlock ? [] : (last?.any ?? []);
   const hasPlan = exercise.sets.some((set) => hasNumbers(set.planned));
   const source =
     inRoutine.length > 0 ? inRoutine : hasPlan ? null : anywhere.length > 0 ? anywhere : null;
@@ -312,6 +345,8 @@ export function addExercises(
         swappedFromId: null,
         replaced: null,
         changeReason: null,
+        runBlock: null,
+        allFields: false,
       })),
     ],
   };
@@ -374,8 +409,15 @@ export function swapExercise(
       swappedFromId: added ? null : (exercise.swappedFromId ?? exercise.exerciseId),
       replaced: added ? null : (exercise.replaced ?? exercise.exercise),
       changeReason: added ? null : reason,
+      runBlock: null,
+      allFields: false,
     };
   });
+}
+
+// "Mostra tots els camps" on a cardio machine.
+export function showAllFields(workout: ActiveWorkout, exerciseId: string): ActiveWorkout {
+  return updateExercise(workout, exerciseId, (exercise) => ({ ...exercise, allFields: true }));
 }
 
 export function setExerciseNotes(
@@ -458,8 +500,9 @@ export function nextSet(workout: ActiveWorkout, setId?: string): NextSet | null 
 
 // After a set is ticked: how long to rest, and what comes next. In a
 // superset or circuit, no rest between its exercises: straight to the next
-// one in the round, then rest at the end of the round (flow 2). No rest
-// once every set is done.
+// one in the round, then rest at the end of the round (flow 2). A cardio
+// machine's segments run on, one into the next (flow 6). No rest once
+// every set is done.
 export function afterSet(
   workout: ActiveWorkout,
   setId: string,
@@ -475,8 +518,12 @@ export function afterSet(
     current.groupKey !== null &&
     following?.groupKey === current.groupKey &&
     following.round === current.round;
-  const restS = workout.exercises.find((exercise) => exercise.id === current.exerciseId)?.restS;
-  return { restS: midRound || !restS ? null : restS, next };
+  const exercise = workout.exercises.find((item) => item.id === current.exerciseId);
+  const nextSegment =
+    exercise?.exercise.trackingType === 'cardio_machine' &&
+    following?.exerciseId === current.exerciseId;
+  const restS = exercise?.restS;
+  return { restS: midRound || nextSegment || !restS ? null : restS, next };
 }
 
 // Sets done and still to do; skipped exercises don't count.
@@ -557,6 +604,8 @@ export function upgradeWorkout<T extends ActiveWorkout>(saved: T): T {
         swappedFromId: exercise.swappedFromId ?? null,
         replaced: exercise.replaced ?? null,
         changeReason: exercise.changeReason ?? null,
+        runBlock: exercise.runBlock ?? null,
+        allFields: exercise.allFields ?? false,
         sets: exercise.sets.map((set) => ({
           ...set,
           setType: set.setType ?? 'normal',

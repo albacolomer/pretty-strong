@@ -550,7 +550,19 @@
       "notesPlaceholder": "Com ha anat?",
       "back": "Torna",
       "backLabel": "Torna a l'entrenament",
-      "save": "Desa"
-    }
+      "save": "Desa",
+      "distance": "Distància"
+    },
+    "segments": {
+      "header": "Tram",
+      "rowName": "{{name}}, tram {{number}}",
+      "done": "Tram {{number}} de «{{name}}» fet",
+      "menuFor": "Opcions del tram {{number}} de «{{name}}»",
+      "add": "+ Afegeix un tram",
+      "addFor": "Afegeix un tram a «{{name}}»",
+      "remove": "Treu el tram"
+    },
+    "allFields": "Mostra tots els camps",
+    "pace": "Ritme: {{pace}}"
   }
 }

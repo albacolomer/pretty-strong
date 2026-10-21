@@ -11,6 +11,8 @@ export type WorkoutSummary = {
   sets: number;
   // Weight × reps over every set done with both, in kg.
   volumeKg: number;
+  // Run and cardio machine distance, in metres.
+  distanceM: number;
   // Exercises that beat last time.
   highlights: { exercise: ActiveExercise; comparison: Comparison }[];
 };
@@ -28,6 +30,11 @@ export function summarize(workout: ActiveWorkout, endedAt: string): WorkoutSumma
     .flatMap(({ sets }) => sets)
     .reduce((total, set) => total + (set.weightKg ?? 0) * (set.reps ?? 0), 0);
 
+  const distanceM = done
+    .filter(({ exercise }) => ['run', 'cardio_machine'].includes(exercise.exercise.trackingType))
+    .flatMap(({ sets }) => sets)
+    .reduce((total, set) => total + (set.distanceM ?? 0), 0);
+
   const highlights = done.flatMap(({ exercise, sets }) => {
     const comparison = exercise.previous
       ? compareToLastTime(exercise.exercise.trackingType, sets, exercise.previous)
@@ -44,6 +51,7 @@ export function summarize(workout: ActiveWorkout, endedAt: string): WorkoutSumma
     sets: done.reduce((total, { sets }) => total + sets.length, 0),
     // Rounded to grams' worth, so 42.5 × 8 adds up cleanly.
     volumeKg: Math.round(volumeKg * 100) / 100,
+    distanceM,
     highlights,
   };
 }

@@ -56,7 +56,7 @@ export const useWorkoutStore = create<WorkoutState>()(
       partialize: ({ active, pending }) => ({ active, pending }),
       // Saved by an older version of the app: bring it up to date. Bump the
       // version whenever ActiveWorkout or FinishedWorkout gains a field.
-      version: 2,
+      version: 3,
       migrate: (saved) => {
         const { active, pending } = saved as Pick<WorkoutState, 'active' | 'pending'>;
         return {

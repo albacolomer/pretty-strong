@@ -25,10 +25,15 @@ type SetRowProps = {
   onToggle: () => void;
   // Opens the set's menu: drop set, RPE, remove.
   onNumberPress: () => void;
+  // A cardio machine's rows are segments ("Tram 2").
+  segment?: boolean;
+  // A run's pace, e.g. "Ritme: 5:30 /km", under its numbers.
+  pace?: string | null;
 };
 
-// One set in the workout (spec: SetRow): its number, the numbers with the
-// plan pre-filled in grey, and a large ✓. Done sets are tinted.
+// One set in the workout (spec: SetRow, CardioSegmentRow): its number,
+// the numbers with the plan pre-filled in grey, and a large ✓. Done sets
+// are tinted.
 export function SetRow({
   number,
   inputs,
@@ -38,13 +43,18 @@ export function SetRow({
   onType,
   onToggle,
   onNumberPress,
+  segment = false,
+  pace = null,
 }: SetRowProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const language = useAppLanguage();
   const done = set.completedAt !== null;
   const wraps = inputs.length > ROW_MAX_INPUTS;
-  const rowName = t('routines.sets.rowName', { name: exerciseName, number });
+  const names = { name: exerciseName, number };
+  const rowName = segment
+    ? t('workout.segments.rowName', names)
+    : t('routines.sets.rowName', names);
 
   return (
     <View
@@ -55,7 +65,7 @@ export function SetRow({
       ]}>
       <Pressable
         role="button"
-        aria-label={t('workout.setMenuFor', { number, name: exerciseName })}
+        aria-label={segment ? t('workout.segments.menuFor', names) : t('workout.setMenuFor', names)}
         onPress={onNumberPress}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
         style={({ pressed }) => [styles.number, pressed && styles.pressed]}>
@@ -69,29 +79,36 @@ export function SetRow({
           </Text>
         ) : null}
       </Pressable>
-      <View style={[styles.inputs, wraps && styles.wrapping]}>
-        {inputs.map((input) => {
-          const label = t(`routines.targets.inputs.${input}`);
-          return (
-            <TargetInputField
-              // Shown afresh when done or undone, with the numbers logged.
-              key={`${input}-${done ? 'done' : 'open'}`}
-              input={input}
-              targets={set.typed}
-              label={label}
-              labelHidden={!wraps}
-              width={SET_INPUT_WIDTH}
-              placeholder={formatInput(inputValue(set.planned, input), language) || undefined}
-              ariaLabel={t('routines.targets.inputFor', { input: label, name: rowName })}
-              onChange={onType}
-            />
-          );
-        })}
+      <View style={styles.middle}>
+        <View style={[styles.inputs, wraps && styles.wrapping]}>
+          {inputs.map((input) => {
+            const label = t(`routines.targets.inputs.${input}`);
+            return (
+              <TargetInputField
+                // Shown afresh when done or undone, with the numbers logged.
+                key={`${input}-${done ? 'done' : 'open'}`}
+                input={input}
+                targets={set.typed}
+                label={label}
+                labelHidden={!wraps}
+                width={SET_INPUT_WIDTH}
+                placeholder={formatInput(inputValue(set.planned, input), language) || undefined}
+                ariaLabel={t('routines.targets.inputFor', { input: label, name: rowName })}
+                onChange={onType}
+              />
+            );
+          })}
+        </View>
+        {pace ? (
+          <Text variant="caption" color="textMuted">
+            {pace}
+          </Text>
+        ) : null}
       </View>
       <Pressable
         role="checkbox"
         aria-checked={done}
-        aria-label={t('workout.setFor', { number, name: exerciseName })}
+        aria-label={segment ? t('workout.segments.done', names) : t('workout.setFor', names)}
         onPress={onToggle}
         style={({ pressed }) => [
           styles.check,
@@ -123,8 +140,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  inputs: {
+  middle: {
     flex: 1,
+    gap: spacing.xs,
+  },
+  inputs: {
     flexDirection: 'row',
     gap: spacing.sm,
   },

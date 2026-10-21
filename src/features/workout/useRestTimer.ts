@@ -1,8 +1,6 @@
 import { randomUUID } from 'expo-crypto';
 import { useTranslation } from 'react-i18next';
 
-import { exerciseName } from '@/features/exercises/exercise';
-import { useAppLanguage } from '@/lib/i18n';
 import { cancelScheduled, scheduleAt } from '@/lib/notifications';
 
 import type { ActiveWorkout } from './activeWorkout';
@@ -14,6 +12,7 @@ import {
   type NextSet,
   type RestTimer,
 } from './restTimer';
+import { useExerciseTitle } from './useExerciseTitle';
 import { useWorkoutStore } from './workoutStore';
 
 // Runs the workout's rest timer and keeps its "rest is over" notification
@@ -21,7 +20,7 @@ import { useWorkoutStore } from './workoutStore';
 // moves, cancelled on pause or skip.
 export function useRestTimer(workout: ActiveWorkout) {
   const { t } = useTranslation();
-  const language = useAppLanguage();
+  const titleOf = useExerciseTitle();
   const update = useWorkoutStore((state) => state.update);
   const rest = workout.rest;
 
@@ -30,7 +29,7 @@ export function useRestTimer(workout: ActiveWorkout) {
     const exercise = workout.exercises.find((item) => item.id === next?.exerciseId);
     if (!exercise || !next) return '';
     return t('workout.nextUp', {
-      name: exerciseName(exercise.exercise, language),
+      name: titleOf(exercise),
       number: exercise.sets.findIndex((set) => set.id === next.setId) + 1,
     });
   }

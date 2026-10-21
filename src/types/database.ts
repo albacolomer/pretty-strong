@@ -525,6 +525,7 @@ export type Database = {
           level: number
           position: number
           reps: number
+          routine_exercise_id: string
           scope: string
           session_date: string
           set_type: string

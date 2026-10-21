@@ -69,7 +69,7 @@ export async function fetchLastTime(
   for (const row of data) {
     const entry = (lastTime[row.exercise_id] ??= { routine: [], any: [] });
     // Rows come in order, set by set; columns not used are null.
-    (row.scope === 'routine' ? entry.routine : entry.any).push({
+    const numbers = {
       weightKg: row.weight_kg ?? null,
       reps: row.reps ?? null,
       durationS: row.duration_s ?? null,
@@ -77,7 +77,19 @@ export async function fetchLastTime(
       speedKmh: row.speed_kmh ?? null,
       inclinePct: row.incline_pct ?? null,
       level: row.level ?? null,
-    });
+    };
+    if (row.scope !== 'routine') {
+      entry.any.push(numbers);
+      continue;
+    }
+    // In this routine, grouped by routine row.
+    const routineExerciseId = row.routine_exercise_id ?? null;
+    let routineRow = entry.routine.find((item) => item.routineExerciseId === routineExerciseId);
+    if (!routineRow) {
+      routineRow = { routineExerciseId, sets: [] };
+      entry.routine.push(routineRow);
+    }
+    routineRow.sets.push(numbers);
   }
   return lastTime;
 }

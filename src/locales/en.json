@@ -550,7 +550,19 @@
       "notesPlaceholder": "How did it go?",
       "back": "Back",
       "backLabel": "Back to the workout",
-      "save": "Save"
-    }
+      "save": "Save",
+      "distance": "Distance"
+    },
+    "segments": {
+      "header": "Seg.",
+      "rowName": "{{name}}, segment {{number}}",
+      "done": "Segment {{number}} of “{{name}}” done",
+      "menuFor": "Options for segment {{number}} of “{{name}}”",
+      "add": "+ Add segment",
+      "addFor": "Add a segment to “{{name}}”",
+      "remove": "Remove segment"
+    },
+    "allFields": "Show all fields",
+    "pace": "Pace: {{pace}}"
   }
 }
