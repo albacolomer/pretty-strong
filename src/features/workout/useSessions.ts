@@ -50,7 +50,12 @@ function useSessionMutation(
       queryClient.setQueryData(key, context?.previous);
       showToast({ message: t('workout.saveError') });
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: key, exact: true }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: key, exact: true }),
+        // Quick logs show in History too.
+        queryClient.invalidateQueries({ queryKey: ['history'] }),
+      ]),
   });
 }
 

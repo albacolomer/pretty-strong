@@ -32,7 +32,10 @@ export function useSaveFinishedWorkouts() {
           .then(() => {
             removePending(workout.id);
             showToast({ message: t('workout.saved') });
-            return queryClient.invalidateQueries({ queryKey: ['sessions'] });
+            return Promise.all([
+              queryClient.invalidateQueries({ queryKey: ['sessions'] }),
+              queryClient.invalidateQueries({ queryKey: ['history'] }),
+            ]);
           })
           .catch((error: unknown) => {
             if (toldOffline.current.has(workout.id)) return;

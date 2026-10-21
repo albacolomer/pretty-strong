@@ -32,6 +32,12 @@ export function dateKey(date: Date): string {
   return `${date.getFullYear()}-${month}-${day}`;
 }
 
+// "2026-10-20" back to that day, at local midnight.
+export function fromDateKey(key: string): Date {
+  const [year, month, day] = key.split('-').map(Number);
+  return new Date(year, month - 1, day);
+}
+
 // "Dimarts, 20 d’octubre": weekday, day and month in the app's language,
 // as the phone writes dates in it.
 export function formatDayTitle(date: Date, language: Language): string {

@@ -13,9 +13,6 @@
     "plan": "Plan",
     "profile": "Profile"
   },
-  "placeholder": {
-    "history": "Your past workouts will show up here."
-  },
   "plan": {
     "routines": "Routines",
     "exercises": "Exercises",
@@ -564,5 +561,25 @@
     },
     "allFields": "Show all fields",
     "pace": "Pace: {{pace}}"
+  },
+  "history": {
+    "empty": "No workouts yet. Once you finish one, it shows up here.",
+    "loadError": "Couldn't load your history.",
+    "retry": "Try again",
+    "notFound": "This workout is no longer there.",
+    "noRoutine": "Workout without a routine",
+    "quick": "Quick log",
+    "pending": "Waiting to be saved",
+    "exercises_one": "{{count}} exercise",
+    "exercises_other": "{{count}} exercises",
+    "sets_one": "{{count}} set",
+    "sets_other": "{{count}} sets",
+    "open": "{{name}}, {{date}}",
+    "menu": "Workout options",
+    "delete": "Delete workout",
+    "deleted": "Workout deleted",
+    "deleteError": "Couldn't delete it. Try again.",
+    "energy": "Energy: {{energy}} of 5",
+    "noExercises": "No exercises logged."
   }
 }

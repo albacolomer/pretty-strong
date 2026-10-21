@@ -13,9 +13,6 @@
     "plan": "Plan",
     "profile": "Perfil"
   },
-  "placeholder": {
-    "history": "Aquí verás tus entrenamientos anteriores."
-  },
   "plan": {
     "routines": "Rutinas",
     "exercises": "Ejercicios",
@@ -564,5 +561,25 @@
     },
     "allFields": "Mostrar todos los campos",
     "pace": "Ritmo: {{pace}}"
+  },
+  "history": {
+    "empty": "Aún no hay entrenamientos. Cuando termines uno, aparecerá aquí.",
+    "loadError": "No se ha podido cargar el historial.",
+    "retry": "Volver a intentarlo",
+    "notFound": "Este entrenamiento ya no está.",
+    "noRoutine": "Entrenamiento sin rutina",
+    "quick": "Registro rápido",
+    "pending": "Pendiente de guardar",
+    "exercises_one": "{{count}} ejercicio",
+    "exercises_other": "{{count}} ejercicios",
+    "sets_one": "{{count}} serie",
+    "sets_other": "{{count}} series",
+    "open": "{{name}}, {{date}}",
+    "menu": "Opciones del entrenamiento",
+    "delete": "Borrar el entrenamiento",
+    "deleted": "Entrenamiento borrado",
+    "deleteError": "No se ha podido borrar. Vuelve a intentarlo.",
+    "energy": "Energía: {{energy}} de 5",
+    "noExercises": "No hay ejercicios registrados."
   }
 }

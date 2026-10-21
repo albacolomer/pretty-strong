@@ -13,9 +13,6 @@
     "plan": "Pla",
     "profile": "Perfil"
   },
-  "placeholder": {
-    "history": "Aquí veuràs els teus entrenaments passats."
-  },
   "plan": {
     "routines": "Rutines",
     "exercises": "Exercicis",
@@ -564,5 +561,25 @@
     },
     "allFields": "Mostra tots els camps",
     "pace": "Ritme: {{pace}}"
+  },
+  "history": {
+    "empty": "Encara no hi ha entrenaments. Quan n'acabis un, sortirà aquí.",
+    "loadError": "No s'ha pogut carregar l'historial.",
+    "retry": "Torna-ho a provar",
+    "notFound": "Aquest entrenament ja no hi és.",
+    "noRoutine": "Entrenament sense rutina",
+    "quick": "Registre ràpid",
+    "pending": "Pendent de desar",
+    "exercises_one": "{{count}} exercici",
+    "exercises_other": "{{count}} exercicis",
+    "sets_one": "{{count}} sèrie",
+    "sets_other": "{{count}} sèries",
+    "open": "{{name}}, {{date}}",
+    "menu": "Opcions de l'entrenament",
+    "delete": "Esborra l'entrenament",
+    "deleted": "Entrenament esborrat",
+    "deleteError": "No s'ha pogut esborrar. Torna-ho a provar.",
+    "energy": "Energia: {{energy}} de 5",
+    "noExercises": "No hi ha exercicis registrats."
   }
 }
