@@ -1,17 +1,13 @@
-import {
-  skipToken,
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from '@tanstack/react-query';
+import { skipToken, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 
 import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { addDays, dateKey } from '@/features/schedule/dates';
 import { deleteSession } from '@/features/workout/api';
 
-import { fetchHistoryPage, fetchPastWorkout, HISTORY_PAGE_SIZE, saveWorkout } from './api';
+import { fetchHistory, fetchPastWorkout, saveWorkout } from './api';
+import { addMonths } from './calendar';
 import type { PastWorkout } from './pastWorkout';
 
 // Everything History shows sits under ['history', userId, …], so one
@@ -20,17 +16,16 @@ export function historyQueryKey(userId: string | undefined) {
   return ['history', userId] as const;
 }
 
-// The list, a page at a time as you scroll.
-export function useHistory() {
+// One month's workouts, for the calendar (`month`: its 1st).
+export function useHistoryMonth(month: Date) {
   const { session } = useAuth();
   const userId = session?.user.id;
+  const from = dateKey(month);
+  const to = dateKey(addDays(addMonths(month, 1), -1));
 
-  return useInfiniteQuery({
-    queryKey: [...historyQueryKey(userId), 'list'],
-    queryFn: userId ? ({ pageParam }) => fetchHistoryPage(pageParam) : skipToken,
-    initialPageParam: 0,
-    getNextPageParam: (lastPage, pages) =>
-      lastPage.length < HISTORY_PAGE_SIZE ? undefined : pages.length,
+  return useQuery({
+    queryKey: [...historyQueryKey(userId), 'month', from],
+    queryFn: userId ? () => fetchHistory(from, to) : skipToken,
   });
 }
 

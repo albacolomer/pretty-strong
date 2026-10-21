@@ -11,8 +11,8 @@ import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { fetchHistoryPage, fetchPastWorkout, saveWorkout } from './api';
-import { HistoryList } from './HistoryList';
+import { fetchHistory, fetchPastWorkout, saveWorkout } from './api';
+import { HistoryCalendar } from './HistoryCalendar';
 import type { PastWorkout } from './pastWorkout';
 import { PastWorkoutView } from './PastWorkoutView';
 
@@ -21,8 +21,7 @@ jest.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ session: { user: { id: 'user-1' } }, isLoading: false }),
 }));
 jest.mock('./api', () => ({
-  HISTORY_PAGE_SIZE: 30,
-  fetchHistoryPage: jest.fn(),
+  fetchHistory: jest.fn(),
   fetchPastWorkout: jest.fn(),
   saveWorkout: jest.fn(() => Promise.resolve()),
 }));
@@ -68,6 +67,26 @@ const workout: PastWorkout = {
 
 let actionSheet: jest.SpyInstance;
 beforeEach(() => {
+  // Today is Wednesday 21 October 2026; only the date is faked.
+  jest.useFakeTimers({
+    now: new Date(2026, 9, 21, 12),
+    doNotFake: [
+      'hrtime',
+      'nextTick',
+      'performance',
+      'queueMicrotask',
+      'requestAnimationFrame',
+      'cancelAnimationFrame',
+      'requestIdleCallback',
+      'cancelIdleCallback',
+      'setImmediate',
+      'clearImmediate',
+      'setInterval',
+      'clearInterval',
+      'setTimeout',
+      'clearTimeout',
+    ],
+  });
   useWorkoutStore.setState({ active: null, pending: [] });
   jest.mocked(router.push).mockReset();
   jest.mocked(deleteSession).mockClear();
@@ -77,22 +96,28 @@ beforeEach(() => {
     .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
     .mockImplementation((_options, callback) => callback(0));
 });
-afterEach(() => actionSheet.mockRestore());
+afterEach(() => {
+  actionSheet.mockRestore();
+  jest.useRealTimers();
+});
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('History', () => {
-  test('lists workouts by month, newest first; a tap opens one', async () => {
+  test('a month with a dot on each day trained, and its workouts below; a tap opens one', async () => {
     const user = userEvent.setup();
-    jest.mocked(fetchHistoryPage).mockResolvedValue([
+    jest.mocked(fetchHistory).mockResolvedValue([
       { id: 'session-1', date: '2026-10-20', routineName: 'Tren superior 1', logMode: 'live', durationS: 3600, exercises: 4, sets: 14 },
-      { id: 'session-2', date: '2026-09-28', routineName: null, logMode: 'quick', durationS: 3000, exercises: 0, sets: 0 },
+      { id: 'session-2', date: '2026-10-05', routineName: null, logMode: 'quick', durationS: 3000, exercises: 0, sets: 0 },
     ]);
-    await render(<HistoryList />, { wrapper: createAppWrapper() });
+    await render(<HistoryCalendar />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByText('1 h · 4 exercicis · 14 sèries')).toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Octubre del 2026' })).toBeOnTheScreen();
-    expect(screen.getByRole('header', { name: 'Setembre del 2026' })).toBeOnTheScreen();
+    expect(fetchHistory).toHaveBeenCalledWith('2026-10-01', '2026-10-31');
+    expect(await screen.findByText('1 h · 4 exercicis · 14 sèries')).toBeOnTheScreen();
     expect(screen.getByText('50 min · Registre ràpid')).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: '2 entrenaments aquest mes' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Dimarts, 20 d’octubre: 1 entrenament' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Dilluns, 19 d’octubre: cap entrenament' })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: /^Tren superior 1, / }));
     expect(router.push).toHaveBeenCalledWith({
@@ -101,14 +126,43 @@ describe('History', () => {
     });
   });
 
-  test('with no workouts yet, a friendly note', async () => {
-    jest.mocked(fetchHistoryPage).mockResolvedValue([]);
-    await render(<HistoryList />, { wrapper: createAppWrapper() });
-    expect(await screen.findByText(/Encara no hi ha entrenaments/)).toBeOnTheScreen();
+  test('a tap on a day shows only that day; again, the whole month', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistory).mockResolvedValue([
+      { id: 'session-1', date: '2026-10-20', routineName: 'Tren superior 1', logMode: 'live', durationS: 3600, exercises: 4, sets: 14 },
+      { id: 'session-2', date: '2026-10-05', routineName: 'Tren inferior 1', logMode: 'live', durationS: 3000, exercises: 3, sets: 9 },
+    ]);
+    await render(<HistoryCalendar />, { wrapper: createAppWrapper() });
+    await screen.findByText('Tren inferior 1');
+
+    const day = screen.getByRole('button', { name: 'Dimarts, 20 d’octubre: 1 entrenament' });
+    await user.press(day);
+    expect(screen.getByRole('header', { name: 'Dimarts, 20 d’octubre' })).toBeOnTheScreen();
+    expect(screen.queryByText('Tren inferior 1')).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Dilluns, 19 d’octubre: cap entrenament' }));
+    expect(screen.getByText('Aquest dia no hi ha cap entrenament.')).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Dilluns, 19 d’octubre: cap entrenament' }));
+    expect(screen.getByText('Tren inferior 1')).toBeOnTheScreen();
   });
 
-  test('a workout waiting for signal shows first', async () => {
-    jest.mocked(fetchHistoryPage).mockResolvedValue([]);
+  test('‹ goes back a month; there is nothing after this one', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistory).mockResolvedValue([]);
+    await render(<HistoryCalendar />, { wrapper: createAppWrapper() });
+
+    expect(screen.getByRole('button', { name: 'Mes següent' })).toBeDisabled();
+    await user.press(screen.getByRole('button', { name: 'Mes anterior' }));
+
+    expect(screen.getByRole('header', { name: 'Setembre del 2026' })).toBeOnTheScreen();
+    expect(fetchHistory).toHaveBeenLastCalledWith('2026-09-01', '2026-09-30');
+    expect(await screen.findByText(/Aquest mes encara no hi ha entrenaments/)).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Mes següent' })).toBeEnabled();
+  });
+
+  test('a workout waiting for signal shows too', async () => {
+    jest.mocked(fetchHistory).mockResolvedValue([]);
     useWorkoutStore.setState({
       pending: [
         {
@@ -126,7 +180,7 @@ describe('History', () => {
         },
       ],
     });
-    await render(<HistoryList />, { wrapper: createAppWrapper() });
+    await render(<HistoryCalendar />, { wrapper: createAppWrapper() });
     expect(await screen.findByText('45 min · Pendent de desar')).toBeOnTheScreen();
   });
 

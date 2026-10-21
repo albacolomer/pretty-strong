@@ -563,7 +563,6 @@
     "pace": "Ritmo: {{pace}}"
   },
   "history": {
-    "empty": "Aún no hay entrenamientos. Cuando termines uno, aparecerá aquí.",
     "loadError": "No se ha podido cargar el historial.",
     "retry": "Volver a intentarlo",
     "notFound": "Este entrenamiento ya no está.",
@@ -580,6 +579,16 @@
     "deleted": "Entrenamiento borrado",
     "deleteError": "No se ha podido borrar. Vuelve a intentarlo.",
     "energy": "Energía: {{energy}} de 5",
-    "noExercises": "No hay ejercicios registrados."
+    "noExercises": "No hay ejercicios registrados.",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes siguiente",
+    "day_zero": "{{date}}: ningún entrenamiento",
+    "day_one": "{{date}}: 1 entrenamiento",
+    "day_other": "{{date}}: {{count}} entrenamientos",
+    "monthCount_zero": "Ningún entrenamiento este mes",
+    "monthCount_one": "1 entrenamiento este mes",
+    "monthCount_other": "{{count}} entrenamientos este mes",
+    "monthEmpty": "Este mes aún no hay entrenamientos. Cuando termines uno, aparecerá aquí.",
+    "dayEmpty": "Este día no hay ningún entrenamiento."
   }
 }

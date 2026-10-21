@@ -3,7 +3,6 @@ import { cardioExercise, testExercise } from '@/features/routines/testData';
 
 import {
   formatSetNumbers,
-  groupByMonth,
   pastTotals,
   toSavePayload,
   type PastExercise,
@@ -113,18 +112,5 @@ describe('toSavePayload', () => {
       reps: 10,
       completed_at: '2026-10-20T17:30:00.000Z',
     });
-  });
-});
-
-describe('groupByMonth', () => {
-  test('sections by month, in the order given', () => {
-    const sections = groupByMonth(
-      [{ date: '2026-10-20' }, { date: '2026-10-02' }, { date: '2026-09-30' }],
-      'ca',
-    );
-    expect(sections.map((section) => [section.title, section.data.length])).toEqual([
-      ["Octubre del 2026", 2],
-      ["Setembre del 2026", 1],
-    ]);
   });
 });

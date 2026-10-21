@@ -563,7 +563,6 @@
     "pace": "Ritme: {{pace}}"
   },
   "history": {
-    "empty": "Encara no hi ha entrenaments. Quan n'acabis un, sortirà aquí.",
     "loadError": "No s'ha pogut carregar l'historial.",
     "retry": "Torna-ho a provar",
     "notFound": "Aquest entrenament ja no hi és.",
@@ -580,6 +579,16 @@
     "deleted": "Entrenament esborrat",
     "deleteError": "No s'ha pogut esborrar. Torna-ho a provar.",
     "energy": "Energia: {{energy}} de 5",
-    "noExercises": "No hi ha exercicis registrats."
+    "noExercises": "No hi ha exercicis registrats.",
+    "previousMonth": "Mes anterior",
+    "nextMonth": "Mes següent",
+    "day_zero": "{{date}}: cap entrenament",
+    "day_one": "{{date}}: 1 entrenament",
+    "day_other": "{{date}}: {{count}} entrenaments",
+    "monthCount_zero": "Cap entrenament aquest mes",
+    "monthCount_one": "1 entrenament aquest mes",
+    "monthCount_other": "{{count}} entrenaments aquest mes",
+    "monthEmpty": "Aquest mes encara no hi ha entrenaments. Quan n'acabis un, sortirà aquí.",
+    "dayEmpty": "Aquest dia no hi ha cap entrenament."
   }
 }

@@ -6,23 +6,20 @@ import { supabase } from '@/lib/supabase';
 
 import { toSavePayload, type HistoryEntry, type PastWorkout } from './pastWorkout';
 
-// How many workouts the list loads at a time.
-export const HISTORY_PAGE_SIZE = 30;
-
-// One page of finished workouts, newest first (skipped days aren't
-// workouts). Counts come from the database, nothing is stored (data
-// rule 2). RLS only returns your own.
-export async function fetchHistoryPage(page: number): Promise<HistoryEntry[]> {
-  const from = page * HISTORY_PAGE_SIZE;
+// Finished workouts from `from` to `to` ("2026-10-01" dates, both
+// included), newest first; skipped days aren't workouts. Counts come from
+// the database, nothing is stored (data rule 2). RLS only returns your own.
+export async function fetchHistory(from: string, to: string): Promise<HistoryEntry[]> {
   const { data, error } = await supabase
     .from('workout_sessions')
     .select(
       'id, date, log_mode, started_at, ended_at, duration_s, routine:routines!workout_sessions_routine_id_fkey(name), session_exercises(sets(count))',
     )
     .eq('status', 'completed')
+    .gte('date', from)
+    .lte('date', to)
     .order('date', { ascending: false })
-    .order('created_at', { ascending: false })
-    .range(from, from + HISTORY_PAGE_SIZE - 1);
+    .order('created_at', { ascending: false });
   if (error) throw error;
 
   return data.map((row) => {

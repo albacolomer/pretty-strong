@@ -190,24 +190,3 @@ export function toSavePayload(workout: PastWorkout) {
     })),
   };
 }
-
-// The list in sections by month, newest first: "Octubre del 2026".
-export function groupByMonth<T extends { date: string }>(
-  entries: readonly T[],
-  language: Language,
-): { title: string; data: T[] }[] {
-  const months = new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' });
-  const sections: { key: string; title: string; data: T[] }[] = [];
-  for (const entry of entries) {
-    const key = entry.date.slice(0, 7);
-    const last = sections.at(-1);
-    if (last?.key === key) {
-      last.data.push(entry);
-      continue;
-    }
-    const [year, month] = key.split('-').map(Number);
-    const title = months.format(new Date(year, month - 1, 1));
-    sections.push({ key, title: title.charAt(0).toLocaleUpperCase(language) + title.slice(1), data: [entry] });
-  }
-  return sections.map(({ title, data }) => ({ title, data }));
-}

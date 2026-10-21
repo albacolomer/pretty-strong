@@ -563,7 +563,6 @@
     "pace": "Pace: {{pace}}"
   },
   "history": {
-    "empty": "No workouts yet. Once you finish one, it shows up here.",
     "loadError": "Couldn't load your history.",
     "retry": "Try again",
     "notFound": "This workout is no longer there.",
@@ -580,6 +579,16 @@
     "deleted": "Workout deleted",
     "deleteError": "Couldn't delete it. Try again.",
     "energy": "Energy: {{energy}} of 5",
-    "noExercises": "No exercises logged."
+    "noExercises": "No exercises logged.",
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "day_zero": "{{date}}: no workouts",
+    "day_one": "{{date}}: 1 workout",
+    "day_other": "{{date}}: {{count}} workouts",
+    "monthCount_zero": "No workouts this month",
+    "monthCount_one": "1 workout this month",
+    "monthCount_other": "{{count}} workouts this month",
+    "monthEmpty": "No workouts this month yet. Once you finish one, it shows up here.",
+    "dayEmpty": "No workouts on this day."
   }
 }
