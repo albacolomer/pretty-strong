@@ -11,7 +11,13 @@ export default function PastWorkoutScreen() {
       <Stack.Screen
         options={{ headerShown: true, title: '', headerBackButtonDisplayMode: 'minimal' }}
       />
-      <PastWorkoutView id={sessionId} onDeleted={() => router.back()} />
+      <PastWorkoutView
+        id={sessionId}
+        onEdit={() =>
+          router.push({ pathname: '/history/edit/[sessionId]', params: { sessionId } })
+        }
+        onDeleted={() => router.back()}
+      />
     </Screen>
   );
 }

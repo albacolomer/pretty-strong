@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Button, NumberInput, Text, TextField } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
-import { QUICK_DURATION_MAX_MIN } from './session';
+import { readMinutes } from './session';
 
 export type QuickLog = {
   durationS: number | null;
@@ -39,13 +39,6 @@ export function QuickLogSheet({ visible, ...props }: QuickLogSheetProps) {
       </View>
     </Modal>
   );
-}
-
-// Whole minutes typed → seconds; empty or 0 means no duration.
-function readMinutes(text: string): number | null {
-  const minutes = Number.parseInt(text.replace(/\D/g, ''), 10);
-  if (!Number.isFinite(minutes) || minutes <= 0) return null;
-  return Math.min(QUICK_DURATION_MAX_MIN, minutes) * 60;
 }
 
 function SheetContent({

@@ -589,6 +589,15 @@
     "monthCount_one": "1 entrenamiento este mes",
     "monthCount_other": "{{count}} entrenamientos este mes",
     "monthEmpty": "Este mes aún no hay entrenamientos. Cuando termines uno, aparecerá aquí.",
-    "dayEmpty": "Este día no hay ningún entrenamiento."
+    "dayEmpty": "Este día no hay ningún entrenamiento.",
+    "edit": "Editar",
+    "editTitle": "Editar el entrenamiento",
+    "newTitle": "Registrar un entrenamiento",
+    "logPast": "+ Registrar un entrenamiento",
+    "whichRoutine": "¿Qué rutina has hecho?",
+    "duration": "Duración (min)",
+    "save": "Guardar",
+    "previousDay": "Día anterior",
+    "nextDay": "Día siguiente"
   }
 }

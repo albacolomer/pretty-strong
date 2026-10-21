@@ -34,6 +34,13 @@ export type WorkoutSession = {
 // A quick log's length: from 1 minute to 24 hours, as the database allows.
 export const QUICK_DURATION_MAX_MIN = 24 * 60;
 
+// Whole minutes typed → seconds; empty or 0 means no duration.
+export function readMinutes(text: string): number | null {
+  const minutes = Number.parseInt(text.replace(/\D/g, ''), 10);
+  if (!Number.isFinite(minutes) || minutes <= 0) return null;
+  return Math.min(QUICK_DURATION_MAX_MIN, minutes) * 60;
+}
+
 // A live workout's length, from its real start and end times.
 export function liveDuration(startedAt: string | null, endedAt: string | null): number | null {
   if (!startedAt || !endedAt) return null;

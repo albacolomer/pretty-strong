@@ -589,6 +589,15 @@
     "monthCount_one": "1 workout this month",
     "monthCount_other": "{{count}} workouts this month",
     "monthEmpty": "No workouts this month yet. Once you finish one, it shows up here.",
-    "dayEmpty": "No workouts on this day."
+    "dayEmpty": "No workouts on this day.",
+    "edit": "Edit",
+    "editTitle": "Edit workout",
+    "newTitle": "Log a workout",
+    "logPast": "+ Log a workout",
+    "whichRoutine": "Which routine did you do?",
+    "duration": "Duration (min)",
+    "save": "Save",
+    "previousDay": "Previous day",
+    "nextDay": "Next day"
   }
 }

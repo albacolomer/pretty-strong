@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Text } from '@/components/ui';
 import { formatDuration } from '@/features/routines/routine';
 import { dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
+import { useRoutines } from '@/features/routines/useRoutines';
 import { useToday } from '@/features/schedule/useToday';
 import { countSets } from '@/features/workout/activeWorkout';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
@@ -25,9 +26,10 @@ type Row = HistoryEntry & { pending: boolean };
 // workout finished with no signal shows too, until it's saved.
 export function HistoryCalendar() {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const language = useAppLanguage();
   const today = useToday();
+  const { data: routines = [] } = useRoutines();
   const [month, setMonth] = useState(() => startOfMonth(today));
   const [selected, setSelected] = useState<string | null>(null);
   const history = useHistoryMonth(month);
@@ -59,6 +61,33 @@ export function HistoryCalendar() {
   const workouts = new Map<string, number>();
   for (const row of rows) workouts.set(row.date, (workouts.get(row.date) ?? 0) + 1);
   const shown = selected ? rows.filter((row) => row.date === selected) : rows;
+
+  // "+ Registra un entrenament" (US-24): which routine, then the editor,
+  // for the day picked in the calendar (else today).
+  function logPastWorkout() {
+    const date = selected ?? dateKey(today);
+    const open = (routineId: string | null) =>
+      router.push({
+        pathname: '/history/new',
+        params: routineId ? { date, routineId } : { date },
+      });
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: t('history.whichRoutine'),
+        options: [
+          ...routines.map((routine) => routine.name),
+          t('history.noRoutine'),
+          t('common.cancel'),
+        ],
+        cancelButtonIndex: routines.length + 1,
+        userInterfaceStyle: scheme,
+      },
+      (index) => {
+        if (index < routines.length) open(routines[index].id);
+        else if (index === routines.length) open(null);
+      },
+    );
+  }
 
   function changeMonth(months: -1 | 1) {
     setMonth((current) => addMonths(current, months));
@@ -107,6 +136,7 @@ export function HistoryCalendar() {
         onSelect={(day) => setSelected((current) => (current === day ? null : day))}
         onMonthChange={changeMonth}
       />
+      <Button label={t('history.logPast')} variant="secondary" onPress={logPastWorkout} />
       <Text variant="bodyStrong" color="textMuted" accessibilityRole="header">
         {selected
           ? formatDayTitle(fromDateKey(selected), language)

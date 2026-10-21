@@ -26,6 +26,11 @@ jest.mock('./api', () => ({
   saveWorkout: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('@/features/workout/api', () => ({ deleteSession: jest.fn(() => Promise.resolve()) }));
+jest.mock('@/features/routines/api', () => ({
+  fetchRoutines: jest.fn(() =>
+    Promise.resolve([jest.requireActual('@/features/routines/testData').upperBody]),
+  ),
+}));
 
 const workout: PastWorkout = {
   id: 'session-1',
@@ -65,6 +70,7 @@ const workout: PastWorkout = {
   ],
 };
 
+const sheetChoices: string[] = [];
 let actionSheet: jest.SpyInstance;
 beforeEach(() => {
   // Today is Wednesday 21 October 2026; only the date is faked.
@@ -91,10 +97,13 @@ beforeEach(() => {
   jest.mocked(router.push).mockReset();
   jest.mocked(deleteSession).mockClear();
   jest.mocked(saveWorkout).mockClear();
-  // Each action sheet picks its first option.
+  sheetChoices.length = 0;
+  // Each action sheet picks the next of sheetChoices.
   actionSheet = jest
     .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
-    .mockImplementation((_options, callback) => callback(0));
+    .mockImplementation((options, callback) =>
+      callback(options.options.indexOf(sheetChoices.shift() ?? '')),
+    );
 });
 afterEach(() => {
   actionSheet.mockRestore();
@@ -161,6 +170,29 @@ describe('History', () => {
     expect(screen.getByRole('button', { name: 'Mes següent' })).toBeEnabled();
   });
 
+  test('+ logs a workout afterwards: pick the routine, for the day picked or today', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistory).mockResolvedValue([]);
+    await render(<HistoryCalendar />, { wrapper: createAppWrapper() });
+    await screen.findByText(/Aquest mes encara no hi ha entrenaments/);
+
+    sheetChoices.push('Tren superior 1');
+    await user.press(screen.getByRole('button', { name: '+ Registra un entrenament' }));
+    expect(actionSheet.mock.lastCall?.[0].title).toBe('Quina rutina has fet?');
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: '/history/new',
+      params: { date: '2026-10-21', routineId: 'routine-1' },
+    });
+
+    await user.press(screen.getByRole('button', { name: 'Dijous, 15 d’octubre: cap entrenament' }));
+    sheetChoices.push('Entrenament sense rutina');
+    await user.press(screen.getByRole('button', { name: '+ Registra un entrenament' }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: '/history/new',
+      params: { date: '2026-10-15' },
+    });
+  });
+
   test('a workout waiting for signal shows too', async () => {
     jest.mocked(fetchHistory).mockResolvedValue([]);
     useWorkoutStore.setState({
@@ -186,7 +218,7 @@ describe('History', () => {
 
   test('a workout: totals, energy, note and its sets', async () => {
     jest.mocked(fetchPastWorkout).mockResolvedValue(workout);
-    await render(<PastWorkoutView id="session-1" onDeleted={jest.fn()} />, {
+    await render(<PastWorkoutView id="session-1" onEdit={jest.fn()} onDeleted={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
 
@@ -203,12 +235,12 @@ describe('History', () => {
     const user = userEvent.setup();
     const onDeleted = jest.fn();
     jest.mocked(fetchPastWorkout).mockResolvedValue(workout);
-    await render(<PastWorkoutView id="session-1" onDeleted={onDeleted} />, {
+    await render(<PastWorkoutView id="session-1" onEdit={jest.fn()} onDeleted={onDeleted} />, {
       wrapper: createAppWrapper(),
     });
 
+    sheetChoices.push("Esborra l'entrenament");
     await user.press(await screen.findByRole('button', { name: "Opcions de l'entrenament" }));
-    expect(actionSheet.mock.lastCall?.[0].options[0]).toBe("Esborra l'entrenament");
     expect(onDeleted).toHaveBeenCalled();
     await waitFor(() => expect(deleteSession).toHaveBeenCalledWith('session-1'));
 

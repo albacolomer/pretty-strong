@@ -5,6 +5,7 @@ import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { addDays, dateKey } from '@/features/schedule/dates';
 import { deleteSession } from '@/features/workout/api';
+import { isNetworkError } from '@/lib/errors';
 
 import { fetchHistory, fetchPastWorkout, saveWorkout } from './api';
 import { addMonths } from './calendar';
@@ -69,5 +70,27 @@ export function useDeleteWorkout() {
       }),
     onError: () => showToast({ message: t('history.deleteError') }),
     onSettled: refresh,
+  });
+}
+
+// Saving an edited workout, or one logged afterwards (US-23, US-24). It
+// needs signal: only the live workout is kept on the phone.
+export function useSaveWorkout() {
+  const { t } = useTranslation();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (workout: PastWorkout) => saveWorkout(workout),
+    onSuccess: () => showToast({ message: t('workout.saved') }),
+    onError: (error) =>
+      showToast({
+        message: isNetworkError(error) ? t('workout.noSignal') : t('workout.saveError'),
+      }),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['history'] }),
+        queryClient.invalidateQueries({ queryKey: ['sessions'] }),
+      ]),
   });
 }

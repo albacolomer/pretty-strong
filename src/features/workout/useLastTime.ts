@@ -2,13 +2,14 @@ import { useEffect } from 'react';
 
 import { applyLastTime, type ActiveWorkout } from './activeWorkout';
 import { fetchLastTime } from './api';
-import { useWorkoutStore } from './workoutStore';
 
 // Fetches last time's numbers once for a workout and pre-fills it. With no
 // signal, the plan stays and it tries again the next time the workout
-// screen opens.
-export function useLastTime(workout: ActiveWorkout) {
-  const update = useWorkoutStore((state) => state.update);
+// screen opens. `update` changes the workout where it lives.
+export function useLastTime(
+  workout: ActiveWorkout,
+  update: (change: (workout: ActiveWorkout) => ActiveWorkout) => void,
+) {
   const { id, routineId, lastTimeLoaded } = workout;
   // A key, so new exercises in the list would fetch again.
   const exerciseIds = [...new Set(workout.exercises.map((exercise) => exercise.exerciseId))].join(',');

@@ -33,7 +33,6 @@ import { fetchLastTime, saveNoteToRoutine } from './api';
 import { workoutInputs } from './cardio';
 import { EXERCISE_CHANGE_REASONS, type ExerciseChangeReason } from './session';
 import { useExerciseTitle } from './useExerciseTitle';
-import { useWorkoutStore } from './workoutStore';
 
 // Only these can have drop sets: there's a weight to drop.
 const DROP_SET_TYPES = ['weight_reps', 'bodyweight_reps', 'weight_distance'];
@@ -43,17 +42,25 @@ const RPE_VALUES = [6, 7, 7.5, 8, 8.5, 9, 9.5, 10];
 
 type Action = { label: string; run: () => void };
 
+// Where the workout being changed lives: the live one in the workout store,
+// or a past one being edited in History. `current` reads it as it is now,
+// right after an update.
+export type WorkoutSource = {
+  update: (change: (workout: ActiveWorkout) => ActiveWorkout) => void;
+  current: () => ActiveWorkout | null;
+};
+
 // Changes during the workout (US-15, US-16), for this workout only: add,
 // swap, skip or remove exercises; add or remove sets; drop sets and RPE;
 // reorder; this workout's notes. Menus are the native iOS action sheets.
-export function useWorkoutChanges(workout: ActiveWorkout) {
+export function useWorkoutChanges(workout: ActiveWorkout, source: WorkoutSource) {
+  const { update } = source;
   const { t } = useTranslation();
   const { scheme } = useTheme();
   const language = useAppLanguage();
   const titleOf = useExerciseTitle();
   const showToast = useToast();
   const queryClient = useQueryClient();
-  const update = useWorkoutStore((state) => state.update);
   const { data: library = [] } = useExercises();
   const { data: settings } = useExerciseSettings();
   // The exercise picker: closed, adding, or swapping one exercise.
@@ -253,7 +260,7 @@ export function useWorkoutChanges(workout: ActiveWorkout) {
         randomUUID,
       ),
     );
-    const added = (useWorkoutStore.getState().active?.exercises ?? []).filter(
+    const added = (source.current()?.exercises ?? []).filter(
       (exercise) => !before.has(exercise.id),
     );
     fillFromLastTime(

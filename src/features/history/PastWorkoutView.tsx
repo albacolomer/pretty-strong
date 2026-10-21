@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Card, MenuButton, Text } from '@/components/ui';
+import { Button, Card, MenuButton, Text } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';import { formatDayTitle, fromDateKey } from '@/features/schedule/dates';
@@ -20,8 +20,16 @@ import { useDeleteWorkout, usePastWorkout } from './useHistory';
 
 // History → a workout (US-23, spec: Workout detail): when and how long,
 // totals, energy and note, then each exercise with its sets as saved.
-// ⋯ deletes it, with "Desfés".
-export function PastWorkoutView({ id, onDeleted }: { id: string; onDeleted: () => void }) {
+// "Edita" opens it in the editor; ⋯ also deletes it, with "Desfés".
+export function PastWorkoutView({
+  id,
+  onEdit,
+  onDeleted,
+}: {
+  id: string;
+  onEdit: () => void;
+  onDeleted: () => void;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { data: workout, isPending, isError } = usePastWorkout(id);
@@ -29,10 +37,18 @@ export function PastWorkoutView({ id, onDeleted }: { id: string; onDeleted: () =
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('history.loadError')}</Text>;
   if (!workout) return <Text color="textMuted">{t('history.notFound')}</Text>;
-  return <Details workout={workout} onDeleted={onDeleted} />;
+  return <Details workout={workout} onEdit={onEdit} onDeleted={onDeleted} />;
 }
 
-function Details({ workout, onDeleted }: { workout: PastWorkout; onDeleted: () => void }) {
+function Details({
+  workout,
+  onEdit,
+  onDeleted,
+}: {
+  workout: PastWorkout;
+  onEdit: () => void;
+  onDeleted: () => void;
+}) {
   const { t } = useTranslation();
   const { scheme } = useTheme();
   const language = useAppLanguage();
@@ -53,13 +69,14 @@ function Details({ workout, onDeleted }: { workout: PastWorkout; onDeleted: () =
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: name,
-        options: [t('history.delete'), t('common.cancel')],
-        destructiveButtonIndex: 0,
-        cancelButtonIndex: 1,
+        options: [t('history.edit'), t('history.delete'), t('common.cancel')],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 2,
         userInterfaceStyle: scheme,
       },
       (index) => {
-        if (index !== 0) return;
+        if (index === 0) onEdit();
+        if (index !== 1) return;
         remove.mutate(workout);
         onDeleted();
       },
@@ -93,6 +110,7 @@ function Details({ workout, onDeleted }: { workout: PastWorkout; onDeleted: () =
       ) : (
         workout.exercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} />)
       )}
+      <Button label={t('history.edit')} onPress={onEdit} />
     </View>
   );
 }

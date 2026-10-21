@@ -1,16 +1,17 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, Text, TextField } from '@/components/ui';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';
 import { useAppLanguage } from '@/lib/i18n';
-import { radius, spacing, touch, useTheme } from '@/theme';
+import { spacing, useTheme } from '@/theme';
 
 import type { ActiveWorkout, WrapUp } from './activeWorkout';
-import { ENERGY_LEVELS, SESSION_NOTES_MAX_LENGTH, type Energy } from './session';
+import { EnergyPicker } from './EnergyPicker';
+import { SESSION_NOTES_MAX_LENGTH, type Energy } from './session';
 import { VsLastTimeBadge } from './VsLastTimeBadge';
 import { useExerciseTitle } from './useExerciseTitle';
 import { summarize } from './workoutSummary';
@@ -105,40 +106,7 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
           </View>
         ) : null}
 
-        <View style={styles.section}>
-          <Text variant="bodyStrong">{t('workout.summary.energy')}</Text>
-          <View role="radiogroup" aria-label={t('workout.summary.energy')} style={styles.energyRow}>
-            {ENERGY_LEVELS.map((level) => {
-              const selected = level === energy;
-              return (
-                <Pressable
-                  key={level}
-                  role="radio"
-                  aria-checked={selected}
-                  aria-label={t('workout.summary.energyLevel', { level })}
-                  // Optional, so tapping the chosen one again clears it.
-                  onPress={() => setEnergy(selected ? null : level)}
-                  style={({ pressed }) => [
-                    styles.energy,
-                    { backgroundColor: selected ? colors.accent : colors.surfaceRaised },
-                    pressed && styles.pressed,
-                  ]}>
-                  <Text variant="bodyStrong" color={selected ? 'onAccent' : 'text'}>
-                    {level}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-          <View style={styles.energyEnds} aria-hidden>
-            <Text variant="caption" color="textMuted">
-              {t('workout.summary.energyLow')}
-            </Text>
-            <Text variant="caption" color="textMuted">
-              {t('workout.summary.energyHigh')}
-            </Text>
-          </View>
-        </View>
+        <EnergyPicker value={energy} onChange={setEnergy} />
 
         <TextField
           label={t('workout.summary.notes')}
@@ -205,21 +173,6 @@ const styles = StyleSheet.create({
   },
   highlightName: {
     flex: 1,
-  },
-  energyRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  energy: {
-    flex: 1,
-    minHeight: touch.min,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  energyEnds: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
   },
   notes: {
     minHeight: 96,

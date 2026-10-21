@@ -58,11 +58,14 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
   const discard = useWorkoutStore((state) => state.discard);
   const elapsed = useElapsed(workout.startedAt);
   const restTimer = useRestTimer(workout);
-  const changes = useWorkoutChanges(workout);
+  const changes = useWorkoutChanges(workout, {
+    update,
+    current: () => useWorkoutStore.getState().active,
+  });
   // Set once "Acaba" is tapped: the summary shows, with this as the end.
   const [finishingAt, setFinishingAt] = useState<string | null>(null);
   // Pre-fills from last time (US-13), once there's signal.
-  useLastTime(workout);
+  useLastTime(workout, update);
   // Gym UX rule 5: the screen stays on while the workout is open.
   useKeepAwake();
   // While it's open, "rest is over" shows here, not as a notification.
