@@ -1,24 +1,14 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui';
-import type { RoutineLabel } from '@/features/routines/routine';
+import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { entryDetails, formatShortDate, type HistoryEntry } from './entries';
-
-// Each routine type's icon (SF Symbols, iOS's own).
-const ICONS: Record<RoutineLabel | 'none', SFSymbol> = {
-  strength: 'dumbbell.fill',
-  run: 'figure.run',
-  hybrid: 'bolt.fill',
-  class: 'person.2.fill',
-  custom: 'star.fill',
-  none: 'figure.strengthtraining.traditional',
-};
 
 // One past workout in a list (spec: Past workouts): its type's icon, name,
 // date and what it was, e.g. "dc., 21 d’oct. · 1 h 32 min · 7.240 kg". A
@@ -49,7 +39,7 @@ export function WorkoutRow({ entry }: { entry: HistoryEntry }) {
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
         <SymbolView
-          name={ICONS[entry.routineLabel ?? 'none']}
+          name={ROUTINE_ICONS[entry.routineLabel ?? 'none']}
           size={20}
           tintColor={colors.accent}
         />

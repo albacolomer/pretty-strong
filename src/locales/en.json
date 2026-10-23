@@ -634,5 +634,26 @@
   },
   "settings": {
     "title": "Settings"
+  },
+  "progress": {
+    "perWeek": "Workouts per week",
+    "lastWeeks_one": "Last week",
+    "lastWeeks_other": "Last {{count}} weeks",
+    "goal_one": "Goal {{count}}",
+    "goal_other": "Goal {{count}}",
+    "now": "Now",
+    "chartLabel": "Workouts per week: {{counts}}, and {{current}} this week.",
+    "soFar": "{{month}} so far",
+    "versus": "vs {{month}} 1–{{day}}",
+    "time": "Time",
+    "volume": "Volume",
+    "run": "Run",
+    "average": "Avg. session",
+    "same": "Same",
+    "mix": "Training mix",
+    "mixCount_one": "{{count}} this month",
+    "mixCount_other": "{{count}} this month",
+    "mixEmpty": "No workouts this month yet.",
+    "mixItem": "{{name}}: {{count}}"
   }
 }

@@ -45,6 +45,7 @@ const workout = (date: string): HistoryEntry => ({
   sets: 14,
   volumeKg: 5000,
   distanceM: 0,
+  runDistanceM: 0,
   pace: null,
   pending: false,
 });

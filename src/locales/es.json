@@ -634,5 +634,26 @@
   },
   "settings": {
     "title": "Ajustes"
+  },
+  "progress": {
+    "perWeek": "Entrenamientos por semana",
+    "lastWeeks_one": "Última semana",
+    "lastWeeks_other": "Últimas {{count}} semanas",
+    "goal_one": "Objetivo {{count}}",
+    "goal_other": "Objetivo {{count}}",
+    "now": "Ahora",
+    "chartLabel": "Entrenamientos por semana: {{counts}}, y {{current}} esta semana.",
+    "soFar": "{{month}} hasta hoy",
+    "versus": "vs 1–{{dayMonth}}",
+    "time": "Tiempo",
+    "volume": "Volumen",
+    "run": "Correr",
+    "average": "Sesión media",
+    "same": "Igual",
+    "mix": "Tipo de entrenamiento",
+    "mixCount_one": "{{count}} este mes",
+    "mixCount_other": "{{count}} este mes",
+    "mixEmpty": "Aún no hay entrenamientos este mes.",
+    "mixItem": "{{name}}: {{count}}"
   }
 }

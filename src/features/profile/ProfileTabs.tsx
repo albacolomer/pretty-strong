@@ -6,10 +6,13 @@ import { Card, SegmentedControl, Text } from '@/components/ui';
 import { CalendarTab } from '@/features/history/CalendarTab';
 import { spacing } from '@/theme';
 
+import { ProgressTab } from './ProgressTab';
+
 type Tab = 'progress' | 'calendar' | 'body';
 
 // Progress | Calendar | Body under the profile header. Calendar is your
-// history (US-23, US-24); Progress and Body come next (US-26, US-28).
+// history (US-23, US-24), Progress your training over time (US-26); Body
+// comes next (US-28).
 export function ProfileTabs() {
   const { t } = useTranslation();
   const [tab, setTab] = useState<Tab>('calendar');
@@ -28,6 +31,8 @@ export function ProfileTabs() {
       />
       {tab === 'calendar' ? (
         <CalendarTab />
+      ) : tab === 'progress' ? (
+        <ProgressTab />
       ) : (
         <Card>
           <Text color="textMuted">{t('profile.comingSoon')}</Text>

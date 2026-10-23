@@ -29,6 +29,7 @@ export async function fetchHistoryEntries(): Promise<HistoryEntry[]> {
     sets: row.sets,
     volumeKg: Number(row.volume_kg),
     distanceM: row.distance_m,
+    runDistanceM: row.run_distance_m,
     pace: pace([{ distanceM: row.pace_distance_m, durationS: row.pace_duration_s }]),
     pending: false,
   }));

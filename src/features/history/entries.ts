@@ -22,7 +22,9 @@ export type HistoryEntry = {
   exercises: number;
   sets: number;
   volumeKg: number;
+  // Run and cardio machine distance, in metres; run sets alone.
   distanceM: number;
+  runDistanceM: number;
   // A run's seconds per km; null without distance and time.
   pace: number | null;
   // Finished with no signal: not in the database yet.
@@ -52,6 +54,7 @@ export function pendingEntry(
     sets: summary.sets,
     volumeKg: summary.volumeKg,
     distanceM: summary.distanceM,
+    runDistanceM: runSets.reduce((total, set) => total + (set.distanceM ?? 0), 0),
     pace: pace(runSets),
     pending: true,
   };

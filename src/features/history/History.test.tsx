@@ -47,6 +47,7 @@ function entry(values: Partial<HistoryEntry>): HistoryEntry {
     sets: 14,
     volumeKg: 7240,
     distanceM: 0,
+    runDistanceM: 0,
     pace: null,
     pending: false,
     ...values,

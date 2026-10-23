@@ -634,5 +634,26 @@
   },
   "settings": {
     "title": "Configuració"
+  },
+  "progress": {
+    "perWeek": "Entrenaments per setmana",
+    "lastWeeks_one": "Última setmana",
+    "lastWeeks_other": "Últimes {{count}} setmanes",
+    "goal_one": "Objectiu {{count}}",
+    "goal_other": "Objectiu {{count}}",
+    "now": "Ara",
+    "chartLabel": "Entrenaments per setmana: {{counts}}, i {{current}} aquesta setmana.",
+    "soFar": "{{month}} fins ara",
+    "versus": "vs 1–{{dayMonth}}",
+    "time": "Temps",
+    "volume": "Volum",
+    "run": "Córrer",
+    "average": "Sessió mitjana",
+    "same": "Igual",
+    "mix": "Tipus d'entrenament",
+    "mixCount_one": "{{count}} aquest mes",
+    "mixCount_other": "{{count}} aquest mes",
+    "mixEmpty": "Encara no hi ha entrenaments aquest mes.",
+    "mixItem": "{{name}}: {{count}}"
   }
 }

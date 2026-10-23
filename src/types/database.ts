@@ -573,6 +573,7 @@ export type Database = {
           routine_id: string
           routine_label: string
           routine_name: string
+          run_distance_m: number
           sets: number
           volume_kg: number
         }[]

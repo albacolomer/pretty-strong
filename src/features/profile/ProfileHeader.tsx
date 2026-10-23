@@ -3,14 +3,14 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui';
-import { streakWeeks, weeklyCounts, weeklyGoal } from '@/features/history/entries';
+import { streakWeeks, weeklyCounts } from '@/features/history/entries';
 import { useHistoryEntries } from '@/features/history/useHistory';
-import { useRoutines } from '@/features/routines/useRoutines';
 import { dateKey, startOfWeek } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { useProfile } from './useProfile';
+import { useWeeklyGoal } from './useWeeklyGoal';
 
 // The top of Profile: avatar, name, city and focus, then workouts in all,
 // the streak (weeks in a row at 75% of the goal or more) and this week
@@ -20,12 +20,11 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
   const { colors } = useTheme();
   const today = useToday();
   const { data: profile } = useProfile();
-  const { data: routines = [] } = useRoutines();
   const { entries } = useHistoryEntries();
 
   const name = profile?.display_name || (profile ? `@${profile.username}` : '');
   const line = [profile?.city, profile?.focus].filter(Boolean).join(' · ');
-  const goal = weeklyGoal(profile?.weekly_goal ?? null, routines);
+  const goal = useWeeklyGoal();
   const counts = weeklyCounts(entries);
   const thisWeek = counts.get(dateKey(startOfWeek(today))) ?? 0;
   const streak = streakWeeks(counts, goal, today);
