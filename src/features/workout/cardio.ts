@@ -9,7 +9,7 @@ import type { ActiveExercise, SetNumbers } from './activeWorkout';
 // Seconds per km over some sets: their total time over their total
 // distance, counting only the sets that have both. Worked out, never
 // stored (data rule 2).
-export function pace(sets: readonly SetNumbers[]): number | null {
+export function pace(sets: readonly Pick<SetNumbers, 'distanceM' | 'durationS'>[]): number | null {
   const timed = sets.filter(
     (set) => set.durationS !== null && set.distanceM !== null && set.distanceM > 0,
   );

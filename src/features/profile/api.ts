@@ -22,3 +22,20 @@ export async function updateProfileLanguage(userId: string, language: Language):
   if (error) throw error;
   return data;
 }
+
+// What Edita el perfil changes. Empty text is stored as null.
+export type ProfileDetails = Pick<Profile, 'display_name' | 'city' | 'focus' | 'weekly_goal'>;
+
+export async function updateProfileDetails(
+  userId: string,
+  details: ProfileDetails,
+): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(details)
+    .eq('id', userId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}

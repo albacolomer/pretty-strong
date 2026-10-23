@@ -1,3 +1,4 @@
+import { Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
 import { Screen } from '@/components/ui';
@@ -6,11 +7,18 @@ import { Credits } from '@/features/profile/Credits';
 import { LanguagePicker } from '@/features/profile/LanguagePicker';
 import { ProfileSummary } from '@/features/profile/ProfileSummary';
 
-export default function ProfileScreen() {
+export default function SettingsScreen() {
   const { t } = useTranslation();
 
   return (
-    <Screen title={t('tabs.profile')}>
+    <Screen>
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: t('settings.title'),
+          headerBackButtonDisplayMode: 'minimal',
+        }}
+      />
       <ProfileSummary />
       <LanguagePicker />
       <SignOutButton />

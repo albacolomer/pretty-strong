@@ -9,7 +9,6 @@
   },
   "tabs": {
     "today": "Avui",
-    "history": "Historial",
     "plan": "Pla",
     "profile": "Perfil"
   },
@@ -208,7 +207,33 @@
     "language": "Idioma",
     "languageSaveError": "No s'ha pogut desar l'idioma. Torna-ho a provar.",
     "credits": "Crèdits",
-    "repdbCredit": "Exercise data by RepDB (repdb.co)"
+    "repdbCredit": "Exercise data by RepDB (repdb.co)",
+    "workouts": "Entrenaments",
+    "streak": "Ratxa",
+    "streakValue": "{{count}} setm.",
+    "thisWeek": "Aquesta setmana",
+    "edit": "Edita el perfil",
+    "sections": "Seccions del perfil",
+    "progress": "Progrés",
+    "calendar": "Calendari",
+    "body": "Cos",
+    "comingSoon": "Aviat.",
+    "name": "Nom",
+    "city": "Ciutat",
+    "cityPlaceholder": "Barcelona",
+    "focus": "Què entrenes",
+    "focusPlaceholder": "HYROX i força",
+    "weeklyGoal": "Objectiu setmanal",
+    "goalValue_one": "{{count}} entrenament a la setmana",
+    "goalValue_other": "{{count}} entrenaments a la setmana",
+    "goalMinus": "Un entrenament menys",
+    "goalPlus": "Un entrenament més",
+    "goalFromPlan": "Els dies que tens planificats a la setmana. La ratxa continua les setmanes que en fas almenys el 75%.",
+    "goalOwn": "El teu objectiu. La ratxa continua les setmanes que en fas almenys el 75%.",
+    "goalUsePlan": "Fes servir els dies planificats ({{count}})",
+    "save": "Desa",
+    "saved": "Perfil desat ✓",
+    "saveError": "No s'ha pogut desar el perfil. Torna-ho a provar."
   },
   "languages": {
     "ca": "Català",
@@ -589,15 +614,24 @@
     "monthCount_one": "1 entrenament aquest mes",
     "monthCount_other": "{{count}} entrenaments aquest mes",
     "monthEmpty": "Aquest mes encara no hi ha entrenaments. Quan n'acabis un, sortirà aquí.",
-    "dayEmpty": "Aquest dia no hi ha cap entrenament.",
     "edit": "Edita",
     "editTitle": "Edita l'entrenament",
     "newTitle": "Registra un entrenament",
-    "logPast": "+ Registra un entrenament",
+    "logPast": "Registra un entrenament",
     "whichRoutine": "Quina rutina has fet?",
     "duration": "Durada (min)",
     "save": "Desa",
     "previousDay": "Dia anterior",
-    "nextDay": "Dia següent"
+    "nextDay": "Dia següent",
+    "stations_one": "{{count}} estació",
+    "stations_other": "{{count}} estacions",
+    "pastWorkouts": "Entrenaments",
+    "seeAll": "Mostra-ho tot",
+    "allTitle": "Tots els entrenaments",
+    "logOn": "Registra un entrenament: {{date}}",
+    "empty": "Encara no hi ha entrenaments. Quan n'acabis un, sortirà aquí."
+  },
+  "settings": {
+    "title": "Configuració"
   }
 }

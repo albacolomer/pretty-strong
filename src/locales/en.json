@@ -9,7 +9,6 @@
   },
   "tabs": {
     "today": "Today",
-    "history": "History",
     "plan": "Plan",
     "profile": "Profile"
   },
@@ -208,7 +207,33 @@
     "language": "Language",
     "languageSaveError": "Couldn't save the language. Try again.",
     "credits": "Credits",
-    "repdbCredit": "Exercise data by RepDB (repdb.co)"
+    "repdbCredit": "Exercise data by RepDB (repdb.co)",
+    "workouts": "Workouts",
+    "streak": "Streak",
+    "streakValue": "{{count}} wk",
+    "thisWeek": "This week",
+    "edit": "Edit profile",
+    "sections": "Profile sections",
+    "progress": "Progress",
+    "calendar": "Calendar",
+    "body": "Body",
+    "comingSoon": "Coming soon.",
+    "name": "Name",
+    "city": "City",
+    "cityPlaceholder": "Barcelona",
+    "focus": "What you train",
+    "focusPlaceholder": "HYROX & strength",
+    "weeklyGoal": "Weekly goal",
+    "goalValue_one": "{{count}} workout a week",
+    "goalValue_other": "{{count}} workouts a week",
+    "goalMinus": "One workout fewer",
+    "goalPlus": "One workout more",
+    "goalFromPlan": "The days you have planned in your week. The streak carries on in weeks where you do at least 75% of it.",
+    "goalOwn": "Your own goal. The streak carries on in weeks where you do at least 75% of it.",
+    "goalUsePlan": "Use your planned days ({{count}})",
+    "save": "Save",
+    "saved": "Profile saved ✓",
+    "saveError": "Couldn't save your profile. Try again."
   },
   "languages": {
     "ca": "Català",
@@ -589,15 +614,24 @@
     "monthCount_one": "1 workout this month",
     "monthCount_other": "{{count}} workouts this month",
     "monthEmpty": "No workouts this month yet. Once you finish one, it shows up here.",
-    "dayEmpty": "No workouts on this day.",
     "edit": "Edit",
     "editTitle": "Edit workout",
     "newTitle": "Log a workout",
-    "logPast": "+ Log a workout",
+    "logPast": "Log a workout",
     "whichRoutine": "Which routine did you do?",
     "duration": "Duration (min)",
     "save": "Save",
     "previousDay": "Previous day",
-    "nextDay": "Next day"
+    "nextDay": "Next day",
+    "stations_one": "{{count}} station",
+    "stations_other": "{{count}} stations",
+    "pastWorkouts": "Past workouts",
+    "seeAll": "See all",
+    "allTitle": "All workouts",
+    "logOn": "Log a workout: {{date}}",
+    "empty": "No workouts yet. Once you finish one, it shows up here."
+  },
+  "settings": {
+    "title": "Settings"
   }
 }

@@ -3,12 +3,13 @@ import { useTranslation } from 'react-i18next';
 
 import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { addDays, dateKey } from '@/features/schedule/dates';
+import { useRoutines } from '@/features/routines/useRoutines';
 import { deleteSession } from '@/features/workout/api';
+import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { isNetworkError } from '@/lib/errors';
 
-import { fetchHistory, fetchPastWorkout, saveWorkout } from './api';
-import { addMonths } from './calendar';
+import { fetchHistoryEntries, fetchPastWorkout, saveWorkout } from './api';
+import { pendingEntry, type HistoryEntry } from './entries';
 import type { PastWorkout } from './pastWorkout';
 
 // Everything History shows sits under ['history', userId, …], so one
@@ -17,17 +18,31 @@ export function historyQueryKey(userId: string | undefined) {
   return ['history', userId] as const;
 }
 
-// One month's workouts, for the calendar (`month`: its 1st).
-export function useHistoryMonth(month: Date) {
+// All your workouts, newest first, with the ones finished with no signal
+// (not in the database yet) among them.
+export function useHistoryEntries() {
   const { session } = useAuth();
   const userId = session?.user.id;
-  const from = dateKey(month);
-  const to = dateKey(addDays(addMonths(month, 1), -1));
-
-  return useQuery({
-    queryKey: [...historyQueryKey(userId), 'month', from],
-    queryFn: userId ? () => fetchHistory(from, to) : skipToken,
+  const pending = useWorkoutStore((state) => state.pending);
+  const { data: routines = [] } = useRoutines();
+  const query = useQuery({
+    queryKey: [...historyQueryKey(userId), 'entries'],
+    queryFn: userId ? fetchHistoryEntries : skipToken,
   });
+
+  const saved = query.data ?? [];
+  const waiting = pending
+    .filter((workout) => !saved.some((entry) => entry.id === workout.id))
+    .map((workout) =>
+      pendingEntry(
+        workout,
+        routines.find((routine) => routine.id === workout.routineId),
+      ),
+    );
+  const entries: HistoryEntry[] = [...waiting, ...saved].sort((a, b) =>
+    b.date.localeCompare(a.date),
+  );
+  return { ...query, entries };
 }
 
 export function usePastWorkout(id: string) {

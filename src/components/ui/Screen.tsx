@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { spacing, useTheme } from '@/theme';
@@ -8,6 +8,8 @@ import { Text } from './Text';
 
 export type ScreenProps = {
   title?: string;
+  // Next to the title, e.g. a settings button.
+  action?: ReactNode;
   // Centres the content vertically, e.g. for the sign-in screen.
   centered?: boolean;
   children?: ReactNode;
@@ -16,7 +18,7 @@ export type ScreenProps = {
 // The ScrollView is the screen's root view on purpose: iOS then adds the
 // status bar and tab bar insets for us, and tapping the current tab
 // scrolls it back to the top.
-export function Screen({ title, centered = false, children }: ScreenProps) {
+export function Screen({ title, action, centered = false, children }: ScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -39,9 +41,12 @@ export function Screen({ title, centered = false, children }: ScreenProps) {
       keyboardShouldPersistTaps="handled"
       keyboardDismissMode="interactive">
       {title ? (
-        <Text variant="title" accessibilityRole="header">
-          {title}
-        </Text>
+        <View style={styles.titleRow}>
+          <Text variant="title" accessibilityRole="header" style={styles.title}>
+            {title}
+          </Text>
+          {action}
+        </View>
       ) : null}
       {children}
     </ScrollView>
@@ -52,6 +57,13 @@ const styles = StyleSheet.create({
   content: {
     padding: spacing.lg,
     gap: spacing.lg,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  title: {
+    flex: 1,
   },
   centered: {
     flexGrow: 1,

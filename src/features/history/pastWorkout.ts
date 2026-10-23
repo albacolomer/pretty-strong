@@ -54,17 +54,6 @@ export type PastWorkout = {
   exercises: PastExercise[];
 };
 
-// A row of the History list.
-export type HistoryEntry = {
-  id: string;
-  date: string;
-  routineName: string | null;
-  logMode: 'live' | 'quick';
-  durationS: number | null;
-  exercises: number;
-  sets: number;
-};
-
 export function workoutDuration(
   workout: Pick<PastWorkout, 'durationS' | 'startedAt' | 'endedAt'>,
 ): number | null {

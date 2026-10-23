@@ -5,6 +5,8 @@ import type { TextStyle } from 'react-native';
 // timer doesn't shift sideways as its value changes.
 export const typography = {
   timer: { fontSize: 48, lineHeight: 56, fontWeight: '700', fontVariant: ['tabular-nums'] },
+  // Big numbers and letters: the avatar's initial, your weight.
+  display: { fontSize: 44, lineHeight: 52, fontWeight: '700' },
   title: { fontSize: 28, lineHeight: 34, fontWeight: '700' },
   cardTitle: { fontSize: 20, lineHeight: 25, fontWeight: '600' },
   body: { fontSize: 17, lineHeight: 22, fontWeight: '400' },

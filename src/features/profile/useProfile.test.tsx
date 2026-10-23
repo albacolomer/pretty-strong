@@ -16,6 +16,10 @@ const profile: Profile = {
   username: 'alba',
   language: 'ca',
   created_at: '2026-10-13T10:00:00Z',
+  display_name: null,
+  city: null,
+  focus: null,
+  weekly_goal: null,
 };
 
 function signedInAs(userId: string | null) {

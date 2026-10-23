@@ -9,7 +9,6 @@
   },
   "tabs": {
     "today": "Hoy",
-    "history": "Historial",
     "plan": "Plan",
     "profile": "Perfil"
   },
@@ -208,7 +207,33 @@
     "language": "Idioma",
     "languageSaveError": "No se ha podido guardar el idioma. Vuelve a intentarlo.",
     "credits": "Créditos",
-    "repdbCredit": "Exercise data by RepDB (repdb.co)"
+    "repdbCredit": "Exercise data by RepDB (repdb.co)",
+    "workouts": "Entrenamientos",
+    "streak": "Racha",
+    "streakValue": "{{count}} sem.",
+    "thisWeek": "Esta semana",
+    "edit": "Editar el perfil",
+    "sections": "Secciones del perfil",
+    "progress": "Progreso",
+    "calendar": "Calendario",
+    "body": "Cuerpo",
+    "comingSoon": "Pronto.",
+    "name": "Nombre",
+    "city": "Ciudad",
+    "cityPlaceholder": "Barcelona",
+    "focus": "Qué entrenas",
+    "focusPlaceholder": "HYROX y fuerza",
+    "weeklyGoal": "Objetivo semanal",
+    "goalValue_one": "{{count}} entrenamiento a la semana",
+    "goalValue_other": "{{count}} entrenamientos a la semana",
+    "goalMinus": "Un entrenamiento menos",
+    "goalPlus": "Un entrenamiento más",
+    "goalFromPlan": "Los días que tienes planificados en la semana. La racha sigue las semanas en que haces al menos el 75%.",
+    "goalOwn": "Tu objetivo. La racha sigue las semanas en que haces al menos el 75%.",
+    "goalUsePlan": "Usar los días planificados ({{count}})",
+    "save": "Guardar",
+    "saved": "Perfil guardado ✓",
+    "saveError": "No se ha podido guardar el perfil. Vuelve a intentarlo."
   },
   "languages": {
     "ca": "Català",
@@ -589,15 +614,24 @@
     "monthCount_one": "1 entrenamiento este mes",
     "monthCount_other": "{{count}} entrenamientos este mes",
     "monthEmpty": "Este mes aún no hay entrenamientos. Cuando termines uno, aparecerá aquí.",
-    "dayEmpty": "Este día no hay ningún entrenamiento.",
     "edit": "Editar",
     "editTitle": "Editar el entrenamiento",
     "newTitle": "Registrar un entrenamiento",
-    "logPast": "+ Registrar un entrenamiento",
+    "logPast": "Registrar un entrenamiento",
     "whichRoutine": "¿Qué rutina has hecho?",
     "duration": "Duración (min)",
     "save": "Guardar",
     "previousDay": "Día anterior",
-    "nextDay": "Día siguiente"
+    "nextDay": "Día siguiente",
+    "stations_one": "{{count}} estación",
+    "stations_other": "{{count}} estaciones",
+    "pastWorkouts": "Entrenamientos",
+    "seeAll": "Ver todo",
+    "allTitle": "Todos los entrenamientos",
+    "logOn": "Registrar un entrenamiento: {{date}}",
+    "empty": "Aún no hay entrenamientos. Cuando termines uno, aparecerá aquí."
+  },
+  "settings": {
+    "title": "Ajustes"
   }
 }

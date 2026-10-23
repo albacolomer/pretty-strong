@@ -19,11 +19,6 @@ export default function TabsLayout() {
         <NativeTabs.Trigger.Icon sf={{ default: 'dumbbell', selected: 'dumbbell.fill' }} />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="history">
-        <NativeTabs.Trigger.Label>{t('tabs.history')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'clock', selected: 'clock.fill' }} />
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="plan">
         <NativeTabs.Trigger.Label>{t('tabs.plan')}</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Card, Text } from '@/components/ui';
 import { WEEKDAYS } from '@/features/routines/routine';
 import { dateKey, formatDayTitle } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
@@ -13,23 +13,23 @@ type MonthCalendarProps = {
   // The 1st of the month shown.
   month: Date;
   today: Date;
-  // "2026-10-20", or null for the whole month.
+  // A day picked to see just its workouts ("2026-10-20"), or null.
   selected: string | null;
   // How many workouts each day has, by "2026-10-20".
   workouts: Map<string, number>;
-  onSelect: (day: string) => void;
+  onDayPress: (day: string) => void;
   onMonthChange: (months: -1 | 1) => void;
 };
 
-// History's month (US-23): Monday to Sunday, as the week strip draws days:
-// today filled pink, the chosen day ringed, a pink dot under each day with
-// a workout. ‹ › change month; there's nothing to see after this one.
+// Profile → Calendar (US-23): the month, Monday to Sunday, with a pink ✓
+// on each day you trained and a ring on today. ‹ › change month; there's
+// nothing to see after this one.
 export function MonthCalendar({
   month,
   today,
   selected,
   workouts,
-  onSelect,
+  onDayPress,
   onMonthChange,
 }: MonthCalendarProps) {
   const { t } = useTranslation();
@@ -38,18 +38,23 @@ export function MonthCalendar({
   const todayKey = dateKey(today);
   const isCurrentMonth =
     month.getFullYear() === today.getFullYear() && month.getMonth() === today.getMonth();
+  const monthPrefix = dateKey(month).slice(0, 7);
+  const count = [...workouts]
+    .filter(([day]) => day.startsWith(monthPrefix))
+    .reduce((total, [, workoutsThatDay]) => total + workoutsThatDay, 0);
 
   return (
-    <View style={styles.calendar}>
+    <Card style={styles.calendar}>
       <View style={styles.header}>
-        <MonthButton
-          symbol="‹"
-          label={t('history.previousMonth')}
-          onPress={() => onMonthChange(-1)}
-        />
-        <Text variant="cardTitle" accessibilityRole="header" style={styles.month}>
-          {formatMonth(month, language)}
-        </Text>
+        <View style={styles.title}>
+          <Text variant="cardTitle" accessibilityRole="header">
+            {formatMonth(month, language)}
+          </Text>
+          <Text variant="caption" color="textMuted">
+            {t('history.monthCount', { count })}
+          </Text>
+        </View>
+        <MonthButton symbol="‹" label={t('history.previousMonth')} onPress={() => onMonthChange(-1)} />
         <MonthButton
           symbol="›"
           label={t('history.nextMonth')}
@@ -71,41 +76,46 @@ export function MonthCalendar({
           {week.map((day, dayIndex) => {
             if (!day) return <View key={dayIndex} style={styles.day} />;
             const key = dateKey(day);
-            const count = workouts.get(key) ?? 0;
+            const done = (workouts.get(key) ?? 0) > 0;
             const isToday = key === todayKey;
-            const isSelected = key === selected;
             const future = key > todayKey;
             return (
               <Pressable
                 key={key}
                 role="button"
-                aria-selected={isSelected}
+                aria-selected={key === selected}
                 aria-label={t('history.day', {
                   date: formatDayTitle(day, language),
-                  count,
+                  count: workouts.get(key) ?? 0,
                 })}
-                onPress={() => onSelect(key)}
+                onPress={() => onDayPress(key)}
                 disabled={future}
                 style={({ pressed }) => [styles.day, pressed && styles.pressed]}>
                 <View
                   style={[
                     styles.date,
-                    isToday && { backgroundColor: colors.accent },
-                    isSelected && { borderColor: isToday ? colors.text : colors.accent },
+                    done && { backgroundColor: colors.accent, borderColor: colors.accent },
+                    isToday && !done && { borderColor: colors.accent },
+                    key === selected && { borderColor: colors.text },
                   ]}>
-                  <Text
-                    variant="bodyStrong"
-                    color={isToday ? 'onAccent' : future ? 'textMuted' : 'text'}>
-                    {day.getDate()}
-                  </Text>
+                  {done ? (
+                    <Text variant="bodyStrong" color="onAccent">
+                      ✓
+                    </Text>
+                  ) : (
+                    <Text
+                      variant={isToday ? 'bodyStrong' : 'body'}
+                      color={future ? 'textMuted' : 'text'}>
+                      {day.getDate()}
+                    </Text>
+                  )}
                 </View>
-                <View style={[styles.dot, count > 0 && { backgroundColor: colors.accent }]} />
               </Pressable>
             );
           })}
         </View>
       ))}
-    </View>
+    </Card>
   );
 }
 
@@ -128,14 +138,14 @@ function MonthButton({
       disabled={disabled}
       onPress={onPress}
       style={({ pressed }) => [styles.monthButton, (pressed || disabled) && styles.pressed]}>
-      <Text variant="title" color={disabled ? 'textMuted' : 'accent'}>
+      <Text variant="cardTitle" color={disabled ? 'textMuted' : 'text'}>
         {symbol}
       </Text>
     </Pressable>
   );
 }
 
-const DATE_SIZE = 36;
+const DATE_SIZE = 38;
 
 const styles = StyleSheet.create({
   calendar: {
@@ -144,13 +154,13 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: spacing.sm,
   },
-  month: {
+  title: {
     flex: 1,
-    textAlign: 'center',
   },
   monthButton: {
-    width: touch.min,
+    width: 40,
     height: touch.min,
     alignItems: 'center',
     justifyContent: 'center',
@@ -166,8 +176,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: touch.min,
     alignItems: 'center',
-    gap: 2,
-    paddingVertical: 2,
+    justifyContent: 'center',
   },
   date: {
     width: DATE_SIZE,
@@ -177,11 +186,6 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
   },
   pressed: {
     opacity: 0.5,

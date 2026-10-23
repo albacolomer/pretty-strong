@@ -5,7 +5,7 @@ import { useAuth } from '@/features/auth/AuthProvider';
 
 import { useProfile } from './useProfile';
 
-// Username and email at the top of the Profile tab.
+// Username and email, in Settings.
 export function ProfileSummary() {
   const { t } = useTranslation();
   const { session } = useAuth();

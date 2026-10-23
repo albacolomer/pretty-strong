@@ -1,39 +1,37 @@
 import { EXERCISE_COLUMNS, toExercise } from '@/features/exercises/exercise';
+import type { RoutineLabel } from '@/features/routines/routine';
 import type { SetType } from '@/features/workout/activeWorkout';
+import { pace } from '@/features/workout/cardio';
 import type { ChangeReason, Energy, ExerciseChangeReason } from '@/features/workout/session';
-import { liveDuration } from '@/features/workout/session';
 import { supabase } from '@/lib/supabase';
 
-import { toSavePayload, type HistoryEntry, type PastWorkout } from './pastWorkout';
+import type { HistoryEntry } from './entries';
+import { toSavePayload, type PastWorkout } from './pastWorkout';
 
-// Finished workouts from `from` to `to` ("2026-10-01" dates, both
-// included), newest first; skipped days aren't workouts. Counts come from
-// the database, nothing is stored (data rule 2). RLS only returns your own.
-export async function fetchHistory(from: string, to: string): Promise<HistoryEntry[]> {
-  const { data, error } = await supabase
-    .from('workout_sessions')
-    .select(
-      'id, date, log_mode, started_at, ended_at, duration_s, routine:routines!workout_sessions_routine_id_fkey(name), session_exercises(sets(count))',
-    )
-    .eq('status', 'completed')
-    .gte('date', from)
-    .lte('date', to)
-    .order('date', { ascending: false })
-    .order('created_at', { ascending: false });
+// All your finished workouts with their totals, newest first (see
+// workout_summaries()); skipped days aren't workouts. A few hundred rows a
+// year, so they're loaded at once and shared by the calendar, the lists
+// and Profile's numbers.
+export async function fetchHistoryEntries(): Promise<HistoryEntry[]> {
+  const { data, error } = await supabase.rpc('workout_summaries', {});
   if (error) throw error;
 
-  return data.map((row) => {
-    const counts = row.session_exercises.map((exercise) => exercise.sets[0]?.count ?? 0);
-    return {
-      id: row.id,
-      date: row.date,
-      routineName: row.routine?.name ?? null,
-      logMode: row.log_mode as HistoryEntry['logMode'],
-      durationS: row.duration_s ?? liveDuration(row.started_at, row.ended_at),
-      exercises: counts.filter((count) => count > 0).length,
-      sets: counts.reduce((total, count) => total + count, 0),
-    };
-  });
+  return data.map((row) => ({
+    id: row.id,
+    date: row.date,
+    routineName: row.routine_name ?? null,
+    // The database's check constraints guarantee the codes.
+    routineLabel: (row.routine_label ?? null) as RoutineLabel | null,
+    customLabel: row.routine_custom_label ?? null,
+    logMode: row.log_mode as HistoryEntry['logMode'],
+    durationS: row.duration_s ?? null,
+    exercises: row.exercises,
+    sets: row.sets,
+    volumeKg: Number(row.volume_kg),
+    distanceM: row.distance_m,
+    pace: pace([{ distanceM: row.pace_distance_m, durationS: row.pace_duration_s }]),
+    pending: false,
+  }));
 }
 
 const SET_COLUMNS =

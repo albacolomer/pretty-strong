@@ -89,22 +89,34 @@ export type Database = {
       }
       profiles: {
         Row: {
+          city: string | null
           created_at: string
+          display_name: string | null
+          focus: string | null
           id: string
           language: string
           username: string
+          weekly_goal: number | null
         }
         Insert: {
+          city?: string | null
           created_at?: string
+          display_name?: string | null
+          focus?: string | null
           id: string
           language?: string
           username: string
+          weekly_goal?: number | null
         }
         Update: {
+          city?: string | null
           created_at?: string
+          display_name?: string | null
+          focus?: string | null
           id?: string
           language?: string
           username?: string
+          weekly_goal?: number | null
         }
         Relationships: []
       }
@@ -545,6 +557,25 @@ export type Database = {
           p_weekdays: number[]
         }
         Returns: string
+      }
+      workout_summaries: {
+        Args: { p_from?: string; p_to?: string }
+        Returns: {
+          date: string
+          distance_m: number
+          duration_s: number
+          exercises: number
+          id: string
+          log_mode: string
+          pace_distance_m: number
+          pace_duration_s: number
+          routine_custom_label: string
+          routine_id: string
+          routine_label: string
+          routine_name: string
+          sets: number
+          volume_kg: number
+        }[]
       }
     }
     Enums: {

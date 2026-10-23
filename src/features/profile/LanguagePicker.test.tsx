@@ -16,6 +16,10 @@ const savedProfile = (language: Profile['language']): Profile => ({
   username: 'alba',
   language,
   created_at: '2026-10-13T10:00:00Z',
+  display_name: null,
+  city: null,
+  focus: null,
+  weekly_goal: null,
 });
 
 beforeEach(() => {

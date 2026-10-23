@@ -14,7 +14,7 @@ export default function PastWorkoutScreen() {
       <PastWorkoutView
         id={sessionId}
         onEdit={() =>
-          router.push({ pathname: '/history/edit/[sessionId]', params: { sessionId } })
+          router.push({ pathname: '/profile/history/edit/[sessionId]', params: { sessionId } })
         }
         onDeleted={() => router.back()}
       />
