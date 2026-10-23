@@ -1,35 +1,34 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Text } from '@/components/ui';
 import { useRoutines } from '@/features/routines/useRoutines';
-import { dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
+import { dateKey, formatDayTitle, fromDateKey, weekdayOf } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, touch, useTheme } from '@/theme';
+import { spacing, useTheme } from '@/theme';
 
-import { addMonths, startOfMonth } from './calendar';
+import { addMonths, dayToShow, startOfMonth } from './calendar';
 import { MonthCalendar } from './MonthCalendar';
 import { useHistoryEntries } from './useHistory';
 import { WorkoutRow } from './WorkoutRow';
 
-// The month's latest workouts shown under the calendar; "Mostra-ho tot"
-// has the rest.
-const MONTH_ROWS = 5;
-
 // Profile → Calendar (US-23, US-24): the month with a ✓ on each day you
-// trained, and its latest workouts under it. Tap a day with a ✓ for just
-// that day (again for the whole month); tap an empty past day, or +, to
-// log a workout done then.
+// trained, and under it the picked day's activities, today to begin with.
+// A day without any says so (or that it was a rest day), and every past
+// day can have one logged afterwards.
 export function CalendarTab() {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
   const language = useAppLanguage();
   const today = useToday();
+  const todayKey = dateKey(today);
   const [month, setMonth] = useState(() => startOfMonth(today));
-  const [selected, setSelected] = useState<string | null>(null);
+  // Null: today, so it moves on with the date.
+  const [picked, setPicked] = useState<string | null>(null);
+  const selected = picked ?? todayKey;
   const history = useHistoryEntries();
   const { data: routines = [] } = useRoutines();
 
@@ -37,13 +36,17 @@ export function CalendarTab() {
   for (const entry of history.entries) {
     workouts.set(entry.date, (workouts.get(entry.date) ?? 0) + 1);
   }
-  const monthPrefix = dateKey(month).slice(0, 7);
-  const shown = selected
-    ? history.entries.filter((entry) => entry.date === selected)
-    : history.entries.filter((entry) => entry.date.startsWith(monthPrefix)).slice(0, MONTH_ROWS);
+  const dayEntries = history.entries.filter((entry) => entry.date === selected);
+  const isToday = selected === todayKey;
+  // A rest day: nothing planned that weekday, when there is a plan.
+  const restDay =
+    routines.some((routine) => routine.weekdays.length > 0) &&
+    !routines.some((routine) => routine.weekdays.includes(weekdayOf(fromDateKey(selected))));
 
-  // "+ Registra un entrenament" (US-24): which routine, then the editor.
-  function logPastWorkout(date: string) {
+  // Logging an activity done that day (US-24): which routine, then the
+  // editor.
+  function logActivity() {
+    const date = selected;
     const open = (routineId: string | null) =>
       router.push({
         pathname: '/profile/history/new',
@@ -64,20 +67,14 @@ export function CalendarTab() {
     );
   }
 
-  function pressDay(day: string) {
-    if (!workouts.has(day)) {
-      logPastWorkout(day);
-      return;
-    }
-    setSelected((current) => (current === day ? null : day));
-  }
-
   function changeMonth(months: -1 | 1) {
-    setMonth((current) => addMonths(current, months));
-    setSelected(null);
+    const next = addMonths(month, months);
+    setMonth(next);
+    const day = dayToShow(next, today, new Set(workouts.keys()));
+    setPicked(day === todayKey ? null : day);
   }
 
-  function renderRows() {
+  function renderDay() {
     if (history.isPending) return <ActivityIndicator color={colors.accent} />;
     if (history.isError) {
       return (
@@ -91,8 +88,24 @@ export function CalendarTab() {
         </View>
       );
     }
-    if (shown.length === 0) return <Text color="textMuted">{t('history.monthEmpty')}</Text>;
-    return shown.map((entry) => <WorkoutRow key={entry.id} entry={entry} />);
+    return (
+      <>
+        {dayEntries.length > 0 ? (
+          dayEntries.map((entry) => <WorkoutRow key={entry.id} entry={entry} />)
+        ) : (
+          <Text color="textMuted">
+            {restDay
+              ? t(isToday ? 'history.restToday' : 'history.restDay')
+              : t(isToday ? 'history.nothingToday' : 'history.nothingThatDay')}
+          </Text>
+        )}
+        <Button
+          label={dayEntries.length > 0 ? t('history.logAnother') : t('history.logActivity')}
+          variant="secondary"
+          onPress={logActivity}
+        />
+      </>
+    );
   }
 
   return (
@@ -102,35 +115,14 @@ export function CalendarTab() {
         today={today}
         selected={selected}
         workouts={workouts}
-        onDayPress={pressDay}
+        onDayPress={(day) => setPicked(day === todayKey ? null : day)}
         onMonthChange={changeMonth}
       />
-      <Card>
-        <View style={styles.header}>
-          <Text variant="cardTitle" accessibilityRole="header" style={styles.title}>
-            {selected ? formatDayTitle(fromDateKey(selected), language) : t('history.pastWorkouts')}
-          </Text>
-          <Pressable
-            role="button"
-            aria-label={t('history.logPast')}
-            onPress={() => logPastWorkout(selected ?? dateKey(today))}
-            hitSlop={8}
-            style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
-            <Text variant="cardTitle" color="accent">
-              +
-            </Text>
-          </Pressable>
-          <Pressable
-            role="button"
-            onPress={() => router.push('/profile/history/all')}
-            hitSlop={8}
-            style={({ pressed }) => [styles.seeAll, pressed && styles.pressed]}>
-            <Text variant="bodyStrong" color="accent">
-              {t('history.seeAll')}
-            </Text>
-          </Pressable>
-        </View>
-        {renderRows()}
+      <Card style={styles.day}>
+        <Text variant="cardTitle" accessibilityRole="header">
+          {isToday ? t('history.today') : formatDayTitle(fromDateKey(selected), language)}
+        </Text>
+        {renderDay()}
       </Card>
     </View>
   );
@@ -140,28 +132,10 @@ const styles = StyleSheet.create({
   page: {
     gap: spacing.lg,
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  day: {
     gap: spacing.sm,
-  },
-  title: {
-    flex: 1,
-  },
-  add: {
-    width: touch.min,
-    height: touch.min,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  seeAll: {
-    minHeight: touch.min,
-    justifyContent: 'center',
   },
   gap: {
     gap: spacing.md,
-  },
-  pressed: {
-    opacity: 0.75,
   },
 });

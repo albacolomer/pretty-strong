@@ -613,11 +613,9 @@
     "monthCount_zero": "Ningún entrenamiento este mes",
     "monthCount_one": "1 entrenamiento este mes",
     "monthCount_other": "{{count}} entrenamientos este mes",
-    "monthEmpty": "Este mes aún no hay entrenamientos. Cuando termines uno, aparecerá aquí.",
     "edit": "Editar",
     "editTitle": "Editar el entrenamiento",
     "newTitle": "Registrar un entrenamiento",
-    "logPast": "Registrar un entrenamiento",
     "whichRoutine": "¿Qué rutina has hecho?",
     "duration": "Duración (min)",
     "save": "Guardar",
@@ -625,11 +623,14 @@
     "nextDay": "Día siguiente",
     "stations_one": "{{count}} estación",
     "stations_other": "{{count}} estaciones",
-    "pastWorkouts": "Entrenamientos",
-    "seeAll": "Ver todo",
-    "allTitle": "Todos los entrenamientos",
-    "logOn": "Registrar un entrenamiento: {{date}}",
-    "empty": "Aún no hay entrenamientos. Cuando termines uno, aparecerá aquí."
+    "logOn": "Registrar una actividad: {{date}}",
+    "today": "Hoy",
+    "restToday": "Hoy es tu día de descanso.",
+    "restDay": "Fue un día de descanso.",
+    "nothingToday": "Hoy aún no hay ninguna actividad.",
+    "nothingThatDay": "Este día no hay ninguna actividad.",
+    "logActivity": "+ Registrar una actividad",
+    "logAnother": "+ Registrar otra actividad"
   },
   "settings": {
     "title": "Ajustes"

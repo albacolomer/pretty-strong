@@ -613,11 +613,9 @@
     "monthCount_zero": "No workouts this month",
     "monthCount_one": "1 workout this month",
     "monthCount_other": "{{count}} workouts this month",
-    "monthEmpty": "No workouts this month yet. Once you finish one, it shows up here.",
     "edit": "Edit",
     "editTitle": "Edit workout",
     "newTitle": "Log a workout",
-    "logPast": "Log a workout",
     "whichRoutine": "Which routine did you do?",
     "duration": "Duration (min)",
     "save": "Save",
@@ -625,11 +623,14 @@
     "nextDay": "Next day",
     "stations_one": "{{count}} station",
     "stations_other": "{{count}} stations",
-    "pastWorkouts": "Past workouts",
-    "seeAll": "See all",
-    "allTitle": "All workouts",
-    "logOn": "Log a workout: {{date}}",
-    "empty": "No workouts yet. Once you finish one, it shows up here."
+    "logOn": "Log an activity: {{date}}",
+    "today": "Today",
+    "restToday": "Today is your rest day.",
+    "restDay": "It was a rest day.",
+    "nothingToday": "No activity today yet.",
+    "nothingThatDay": "No activity on this day.",
+    "logActivity": "+ Log an activity",
+    "logAnother": "+ Log another activity"
   },
   "settings": {
     "title": "Settings"

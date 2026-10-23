@@ -13,8 +13,8 @@ type MonthCalendarProps = {
   // The 1st of the month shown.
   month: Date;
   today: Date;
-  // A day picked to see just its workouts ("2026-10-20"), or null.
-  selected: string | null;
+  // The day whose activities show below ("2026-10-20").
+  selected: string;
   // How many workouts each day has, by "2026-10-20".
   workouts: Map<string, number>;
   onDayPress: (day: string) => void;
@@ -22,8 +22,9 @@ type MonthCalendarProps = {
 };
 
 // Profile → Calendar (US-23): the month, Monday to Sunday, with a pink ✓
-// on each day you trained and a ring on today. ‹ › change month; there's
-// nothing to see after this one.
+// on each day you trained and a ring on today; the picked day is filled
+// softly (a ✓ day gets a dark ring). ‹ › change month; there's nothing to
+// see after this one.
 export function MonthCalendar({
   month,
   today,
@@ -96,7 +97,10 @@ export function MonthCalendar({
                     styles.date,
                     done && { backgroundColor: colors.accent, borderColor: colors.accent },
                     isToday && !done && { borderColor: colors.accent },
-                    key === selected && { borderColor: colors.text },
+                    key === selected &&
+                      (done
+                        ? { borderColor: colors.text }
+                        : { backgroundColor: colors.accentSoft, borderColor: colors.accent }),
                   ]}>
                   {done ? (
                     <Text variant="bodyStrong" color="onAccent">

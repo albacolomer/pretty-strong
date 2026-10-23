@@ -1,4 +1,4 @@
-import { addDays, startOfWeek } from '@/features/schedule/dates';
+import { addDays, dateKey, startOfWeek } from '@/features/schedule/dates';
 import type { Language } from '@/lib/i18n';
 
 // History's month calendar (US-23). No React here.
@@ -34,4 +34,13 @@ export function monthWeeks(month: Date): (Date | null)[][] {
 export function formatMonth(month: Date, language: Language): string {
   const text = new Intl.DateTimeFormat(language, { month: 'long', year: 'numeric' }).format(month);
   return text.charAt(0).toLocaleUpperCase(language) + text.slice(1);
+}
+
+// The day picked after moving to `month`: today in today's month; in
+// another one, its latest day with a workout, else its last day.
+export function dayToShow(month: Date, today: Date, workoutDays: ReadonlySet<string>): string {
+  const prefix = dateKey(month).slice(0, 7);
+  if (dateKey(today).startsWith(prefix)) return dateKey(today);
+  const latest = [...workoutDays].filter((day) => day.startsWith(prefix)).sort().at(-1);
+  return latest ?? dateKey(addDays(addMonths(month, 1), -1));
 }

@@ -1,6 +1,6 @@
 import { dateKey } from '@/features/schedule/dates';
 
-import { addMonths, formatMonth, monthWeeks, startOfMonth } from './calendar';
+import { addMonths, dayToShow, formatMonth, monthWeeks, startOfMonth } from './calendar';
 
 const keys = (weeks: (Date | null)[][]) =>
   weeks.map((week) => week.map((day) => (day ? day.getDate() : null)));
@@ -29,5 +29,16 @@ describe('month calendar', () => {
     expect(dateKey(addMonths(new Date(2026, 0, 1), -1))).toBe('2025-12-01');
     expect(formatMonth(new Date(2026, 9, 1), 'ca')).toBe('Octubre del 2026');
     expect(formatMonth(new Date(2026, 9, 1), 'en')).toBe('October 2026');
+  });
+});
+
+describe('the day shown after changing month', () => {
+  const today = new Date(2026, 9, 21);
+  const workoutDays = new Set(['2026-09-14', '2026-09-28', '2026-10-20']);
+
+  test('today in this month; elsewhere the latest day trained, else the last day', () => {
+    expect(dayToShow(new Date(2026, 9, 1), today, workoutDays)).toBe('2026-10-21');
+    expect(dayToShow(new Date(2026, 8, 1), today, workoutDays)).toBe('2026-09-28');
+    expect(dayToShow(new Date(2026, 7, 1), today, workoutDays)).toBe('2026-08-31');
   });
 });

@@ -613,11 +613,9 @@
     "monthCount_zero": "Cap entrenament aquest mes",
     "monthCount_one": "1 entrenament aquest mes",
     "monthCount_other": "{{count}} entrenaments aquest mes",
-    "monthEmpty": "Aquest mes encara no hi ha entrenaments. Quan n'acabis un, sortirà aquí.",
     "edit": "Edita",
     "editTitle": "Edita l'entrenament",
     "newTitle": "Registra un entrenament",
-    "logPast": "Registra un entrenament",
     "whichRoutine": "Quina rutina has fet?",
     "duration": "Durada (min)",
     "save": "Desa",
@@ -625,11 +623,14 @@
     "nextDay": "Dia següent",
     "stations_one": "{{count}} estació",
     "stations_other": "{{count}} estacions",
-    "pastWorkouts": "Entrenaments",
-    "seeAll": "Mostra-ho tot",
-    "allTitle": "Tots els entrenaments",
-    "logOn": "Registra un entrenament: {{date}}",
-    "empty": "Encara no hi ha entrenaments. Quan n'acabis un, sortirà aquí."
+    "logOn": "Registra una activitat: {{date}}",
+    "today": "Avui",
+    "restToday": "Avui és el teu dia de descans.",
+    "restDay": "Va ser un dia de descans.",
+    "nothingToday": "Avui encara no hi ha cap activitat.",
+    "nothingThatDay": "Aquest dia no hi ha cap activitat.",
+    "logActivity": "+ Registra una activitat",
+    "logAnother": "+ Registra una altra activitat"
   },
   "settings": {
     "title": "Configuració"

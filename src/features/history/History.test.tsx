@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import { ActionSheetIOS } from 'react-native';
 
 import { NO_TARGETS } from '@/features/routines/routine';
+import { fetchRoutines } from '@/features/routines/api';
 import { testExercise, upperBody } from '@/features/routines/testData';
 import { deleteSession } from '@/features/workout/api';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
@@ -132,83 +133,94 @@ afterEach(() => {
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('History', () => {
-  test('the month with a ✓ on each day trained, its workouts below; a tap opens one', async () => {
+  test('opens on today: its activities, and another can be logged; a tap opens one', async () => {
     const user = userEvent.setup();
     jest.mocked(fetchHistoryEntries).mockResolvedValue([
-      entry({ id: 'session-1', date: '2026-10-20' }),
-      entry({ id: 'session-2', date: '2026-10-05', routineName: null, routineLabel: null, logMode: 'quick', durationS: 3000, exercises: 0, sets: 0, volumeKg: 0 }),
-      entry({ id: 'session-3', date: '2026-09-28', routineName: 'Diumenge', routineLabel: 'run', distanceM: 10100, pace: 342 }),
+      entry({ id: 'session-1', date: '2026-10-21' }),
+      entry({ id: 'session-2', date: '2026-10-20', routineName: 'Tren inferior 1' }),
     ]);
     await render(<CalendarTab />, { wrapper: createAppWrapper() });
 
     expect(screen.getByRole('header', { name: 'Octubre del 2026' })).toBeOnTheScreen();
-    expect(await screen.findByText('dt., 20 d’oct. · 1 h · 7.240 kg')).toBeOnTheScreen();
-    expect(screen.getByText('dl., 5 d’oct. · 50 min · Registre ràpid')).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Avui' })).toBeOnTheScreen();
+    expect(await screen.findByText('dc., 21 d’oct. · 1 h · 7.240 kg')).toBeOnTheScreen();
+    expect(screen.queryByText('Tren inferior 1')).not.toBeOnTheScreen();
     expect(screen.getByText('2 entrenaments aquest mes')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Dimarts, 20 d’octubre: 1 entrenament' })).toBeOnTheScreen();
-    expect(screen.queryByText('Diumenge')).not.toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '+ Registra una altra activitat' })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: /^Tren superior 1, / }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/profile/history/[sessionId]',
       params: { sessionId: 'session-1' },
     });
-    await user.press(screen.getByRole('button', { name: 'Mostra-ho tot' }));
-    expect(router.push).toHaveBeenLastCalledWith('/profile/history/all');
   });
 
-  test('a tap on a ✓ day shows only that day; again, the whole month', async () => {
+  test('today without activity says so, or that it is a rest day', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    // Nothing planned at all: no rest days either.
+    expect(await screen.findByText('Avui encara no hi ha cap activitat.')).toBeOnTheScreen();
+    sheetChoices.push('Tren superior 1');
+    await user.press(screen.getByRole('button', { name: '+ Registra una activitat' }));
+    expect(actionSheet.mock.lastCall?.[0].title).toBe('Registra una activitat: Dimecres, 21 d’octubre');
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: '/profile/history/new',
+      params: { date: '2026-10-21', routineId: 'routine-1' },
+    });
+  });
+
+  test('a day with nothing planned is a rest day', async () => {
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    // Only Mondays planned; today is a Wednesday.
+    jest.mocked(fetchRoutines).mockResolvedValueOnce([{ ...upperBody, weekdays: [1] }]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('Avui és el teu dia de descans.')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: '+ Registra una activitat' })).toBeOnTheScreen();
+  });
+
+  test('a tap on another day shows it; an empty one can have an activity logged', async () => {
     const user = userEvent.setup();
     jest.mocked(fetchHistoryEntries).mockResolvedValue([
-      entry({ id: 'session-1', date: '2026-10-20' }),
-      entry({ id: 'session-2', date: '2026-10-05', routineName: 'Tren inferior 1' }),
+      entry({ id: 'session-2', date: '2026-10-20', routineName: 'Tren inferior 1' }),
     ]);
     await render(<CalendarTab />, { wrapper: createAppWrapper() });
-    await screen.findByText('Tren inferior 1');
+    await screen.findByText('Avui encara no hi ha cap activitat.');
 
-    const day = screen.getByRole('button', { name: 'Dimarts, 20 d’octubre: 1 entrenament' });
-    await user.press(day);
+    await user.press(screen.getByRole('button', { name: 'Dimarts, 20 d’octubre: 1 entrenament' }));
     expect(screen.getByRole('header', { name: 'Dimarts, 20 d’octubre' })).toBeOnTheScreen();
-    expect(screen.queryByText('Tren inferior 1')).not.toBeOnTheScreen();
-
-    await user.press(day);
     expect(screen.getByText('Tren inferior 1')).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Dijous, 15 d’octubre: cap entrenament' }));
+    expect(screen.getByText('Aquest dia no hi ha cap activitat.')).toBeOnTheScreen();
+    sheetChoices.push('Entrenament sense rutina');
+    await user.press(screen.getByRole('button', { name: '+ Registra una activitat' }));
+    expect(router.push).toHaveBeenLastCalledWith({
+      pathname: '/profile/history/new',
+      params: { date: '2026-10-15' },
+    });
   });
 
-  test('‹ goes back a month; there is nothing after this one', async () => {
+  test('‹ shows last month at its latest activity; there is nothing after this one', async () => {
     const user = userEvent.setup();
-    jest.mocked(fetchHistoryEntries).mockResolvedValue([entry({ date: '2026-09-28' })]);
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([
+      entry({ id: 'session-3', date: '2026-09-28', routineName: 'Diumenge' }),
+    ]);
     await render(<CalendarTab />, { wrapper: createAppWrapper() });
+    await screen.findByText('Avui encara no hi ha cap activitat.');
 
-    expect(await screen.findByText(/Aquest mes encara no hi ha entrenaments/)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Mes següent' })).toBeDisabled();
     await user.press(screen.getByRole('button', { name: 'Mes anterior' }));
 
     expect(screen.getByRole('header', { name: 'Setembre del 2026' })).toBeOnTheScreen();
     expect(screen.getByText('1 entrenament aquest mes')).toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Mes següent' })).toBeEnabled();
-  });
+    expect(screen.getByRole('header', { name: 'Dilluns, 28 de setembre' })).toBeOnTheScreen();
+    expect(screen.getByText('Diumenge')).toBeOnTheScreen();
 
-  test('an empty past day, or +, logs a workout done then (US-24)', async () => {
-    const user = userEvent.setup();
-    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
-    await render(<CalendarTab />, { wrapper: createAppWrapper() });
-    await screen.findByText(/Aquest mes encara no hi ha entrenaments/);
-
-    sheetChoices.push('Tren superior 1');
-    await user.press(screen.getByRole('button', { name: 'Dijous, 15 d’octubre: cap entrenament' }));
-    expect(actionSheet.mock.lastCall?.[0].title).toBe('Registra un entrenament: Dijous, 15 d’octubre');
-    expect(router.push).toHaveBeenLastCalledWith({
-      pathname: '/profile/history/new',
-      params: { date: '2026-10-15', routineId: 'routine-1' },
-    });
-
-    sheetChoices.push('Entrenament sense rutina');
-    await user.press(screen.getByRole('button', { name: 'Registra un entrenament' }));
-    expect(router.push).toHaveBeenLastCalledWith({
-      pathname: '/profile/history/new',
-      params: { date: '2026-10-21' },
-    });
+    await user.press(screen.getByRole('button', { name: 'Mes següent' }));
+    expect(screen.getByRole('header', { name: 'Avui' })).toBeOnTheScreen();
   });
 
   test('a workout waiting for signal shows too', async () => {
