@@ -14,18 +14,25 @@ export type SegmentedControlProps<T extends string> = {
   label: string;
 };
 
-// A row of pill buttons where exactly one is selected (screen readers
-// announce it as a group of radio buttons).
+// A pill-shaped track with one option raised on it, iOS style (screen
+// readers announce it as a group of radio buttons).
 export function SegmentedControl<T extends string>({
   options,
   value,
   onChange,
   label,
 }: SegmentedControlProps<T>) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
+  // The selected option is the lighter one: white on pink in light mode,
+  // the raised surface on the plain one in dark mode.
+  const track = scheme === 'dark' ? colors.surface : colors.surfaceRaised;
+  const raised = scheme === 'dark' ? colors.surfaceRaised : colors.surface;
 
   return (
-    <View role="radiogroup" aria-label={label} style={styles.group}>
+    <View
+      role="radiogroup"
+      aria-label={label}
+      style={[styles.group, { backgroundColor: track }]}>
       {options.map((option) => {
         const selected = option.value === value;
         return (
@@ -38,10 +45,10 @@ export function SegmentedControl<T extends string>({
             }}
             style={({ pressed }) => [
               styles.option,
-              { backgroundColor: selected ? colors.accent : colors.surfaceRaised },
+              selected && [styles.selected, { backgroundColor: raised, shadowColor: colors.text }],
               pressed && !selected && styles.pressed,
             ]}>
-            <Text variant="bodyStrong" color={selected ? 'onAccent' : 'text'} numberOfLines={1}>
+            <Text variant="bodyStrong" color={selected ? 'text' : 'textMuted'} numberOfLines={1}>
               {option.label}
             </Text>
           </Pressable>
@@ -54,7 +61,8 @@ export function SegmentedControl<T extends string>({
 const styles = StyleSheet.create({
   group: {
     flexDirection: 'row',
-    gap: spacing.sm,
+    padding: spacing.xs,
+    borderRadius: radius.pill,
   },
   option: {
     flex: 1,
@@ -63,6 +71,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Raised off the track.
+  selected: {
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 1 },
   },
   pressed: {
     opacity: 0.75,
