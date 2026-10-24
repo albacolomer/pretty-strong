@@ -21,6 +21,8 @@ function entry(values: Partial<HistoryEntry>): HistoryEntry {
     routineName: 'Tren inferior 1',
     routineLabel: 'strength',
     customLabel: null,
+    sport: null,
+    sportName: null,
     logMode: 'live',
     durationS: 5520,
     exercises: 5,

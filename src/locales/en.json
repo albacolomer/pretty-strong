@@ -459,8 +459,8 @@
   "today": {
     "week": "This week",
     "stripDay": "{{day}} {{date}}, {{plan}}",
-    "planned_one": "{{count}} routine",
-    "planned_other": "{{count}} routines",
+    "planned_one": "{{count}} activity",
+    "planned_other": "{{count}} activities",
     "restShort": "rest",
     "rest": "Rest",
     "restToday": "Rest day today. Recover well!",

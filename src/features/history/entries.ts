@@ -1,4 +1,5 @@
 import { formatDuration, type RoutineLabel } from '@/features/routines/routine';
+import type { Sport } from '@/features/schedule/sports';
 import { addDays, dateKey, fromDateKey, startOfWeek } from '@/features/schedule/dates';
 import type { FinishedWorkout } from '@/features/workout/activeWorkout';
 import { shownNumbers } from '@/features/workout/activeWorkout';
@@ -17,6 +18,9 @@ export type HistoryEntry = {
   // a routine.
   routineLabel: RoutineLabel | null;
   customLabel: string | null;
+  // A sport's session: which sport, and its own name for "Altres".
+  sport: Sport | null;
+  sportName: string | null;
   logMode: 'live' | 'quick';
   durationS: number | null;
   exercises: number;
@@ -48,6 +52,8 @@ export function pendingEntry(
     routineName: workout.routineName === '' ? null : workout.routineName,
     routineLabel: routine?.label ?? null,
     customLabel: routine?.customLabel ?? null,
+    sport: null,
+    sportName: null,
     logMode: 'live',
     durationS: summary.durationS,
     exercises: summary.exercises,
@@ -90,13 +96,17 @@ export function streakWeeks(counts: Map<string, number>, goal: number | null, to
 }
 
 // How many workouts a week to aim for: your own goal, else the days your
-// routines are planned on (null when nothing is planned).
+// routines or sports are planned on (null when nothing is planned).
 export function weeklyGoal(
   ownGoal: number | null,
   routines: readonly { weekdays: readonly number[] }[],
+  sports: readonly { weekday: number }[] = [],
 ): number | null {
   if (ownGoal !== null) return ownGoal;
-  const days = new Set(routines.flatMap((routine) => routine.weekdays)).size;
+  const days = new Set([
+    ...routines.flatMap((routine) => routine.weekdays),
+    ...sports.map((sport) => sport.weekday),
+  ]).size;
   return days > 0 ? days : null;
 }
 
@@ -108,8 +118,8 @@ export type EntryLabels = {
 };
 
 // What a row says after its date, by the routine's type: a run its
-// distance and pace, a hybrid session its time and stations, the rest
-// their time and kg lifted (or sets). "1 h 32 min · 7.240 kg".
+// distance and pace, a hybrid session its time and stations, a sport its
+// time, the rest their time and kg lifted (or sets). "1 h 32 min · 7.240 kg".
 export function entryDetails(
   entry: HistoryEntry,
   language: Language,
@@ -118,8 +128,9 @@ export function entryDetails(
   const time = entry.durationS === null ? null : formatDuration(entry.durationS);
   const km = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
   const kg = new Intl.NumberFormat(language, { maximumFractionDigits: 0 });
-  const parts: (string | null)[] =
-    entry.routineLabel === 'run' && entry.distanceM > 0
+  const parts: (string | null)[] = entry.sport
+    ? [time]
+    : entry.routineLabel === 'run' && entry.distanceM > 0
       ? [
           `${km.format(entry.distanceM / 1000)} km`,
           entry.pace === null ? time : formatPace(entry.pace),
@@ -134,7 +145,7 @@ export function entryDetails(
                 ? labels.sets(entry.sets)
                 : null,
           ];
-  if (entry.sets === 0 && entry.logMode === 'quick') parts.push(labels.quick);
+  if (entry.sets === 0 && entry.logMode === 'quick' && !entry.sport) parts.push(labels.quick);
   return parts.filter((part) => part !== null);
 }
 

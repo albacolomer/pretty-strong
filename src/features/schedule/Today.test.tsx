@@ -10,6 +10,8 @@ import type { Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { deleteSession, fetchSessions, logQuickSession } from '@/features/workout/api';
+
+import { fetchWeeklySports } from './sportsApi';
 import type { WorkoutSession } from '@/features/workout/session';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { ensureNotificationPermission } from '@/lib/notifications';
@@ -40,6 +42,7 @@ jest.mock('expo-router', () => ({
 }));
 // Today is Tuesday 20 October 2026.
 jest.mock('./useToday', () => ({ useToday: () => new Date(2026, 9, 20) }));
+jest.mock('./sportsApi', () => ({ fetchWeeklySports: jest.fn() }));
 
 const routine = (
   id: string,
@@ -77,6 +80,9 @@ const session = (fields: Partial<WorkoutSession>): WorkoutSession => ({
   durationS: null,
   notes: null,
   changeReason: null,
+  plannedSportId: null,
+  sport: null,
+  sportName: null,
   ...fields,
 });
 
@@ -92,6 +98,7 @@ beforeEach(() => {
     >);
   jest.mocked(fetchRoutines).mockResolvedValue([upper, spinning, legs]);
   jest.mocked(fetchSessions).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchWeeklySports).mockResolvedValue([]);
   jest.mocked(logQuickSession).mockReset().mockResolvedValue();
   jest.mocked(deleteSession).mockReset().mockResolvedValue();
   localStorage.clear();
@@ -115,9 +122,9 @@ describe('<Today />', () => {
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('Dimarts, 20 d’octubre')).toBeOnTheScreen();
-    expect(screen.getByRole('radio', { name: 'Dimarts 20, 2 rutines' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Dimarts 20, 2 activitats' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Dijous 22, descans' })).not.toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Divendres 23, 1 rutina' })).toBeOnTheScreen();
+    expect(screen.getByRole('radio', { name: 'Divendres 23, 1 activitat' })).toBeOnTheScreen();
 
     // Asked for this week's sessions, Monday to Sunday.
     expect(fetchSessions).toHaveBeenCalledWith('2026-10-19', '2026-10-25');
@@ -142,12 +149,12 @@ describe('<Today />', () => {
     expect(screen.getByRole('header', { name: 'Dijous, 22 d’octubre' })).toBeOnTheScreen();
     expect(screen.getByText('Dia de descans.')).toBeOnTheScreen();
 
-    await user.press(screen.getByRole('radio', { name: 'Divendres 23, 1 rutina' }));
+    await user.press(screen.getByRole('radio', { name: 'Divendres 23, 1 activitat' }));
     expect(screen.getByText('Tren superior 1')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: /com a fet/ })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: 'Avui' }));
-    expect(screen.getByRole('radio', { name: 'Dimarts 20, 2 rutines' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Dimarts 20, 2 activitats' })).toBeChecked();
   });
 
   test('marks a class done with its planned duration and a note', async () => {
@@ -172,6 +179,72 @@ describe('<Today />', () => {
     expect(await screen.findByText('✓ Fet · 45 min')).toBeOnTheScreen();
     expect(screen.getByText('«Spinning»: fet ✓')).toBeOnTheScreen();
     expect(screen.getByRole('radio', { name: 'Dimarts 20, fet' })).toBeOnTheScreen();
+  });
+
+  test('a sport planned today: after its routines, marked done with its duration', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchWeeklySports).mockResolvedValue([
+      {
+        id: 'padel',
+        weekday: 2,
+        sport: 'padel',
+        customName: null,
+        startTime: '19:00',
+        durationS: 5400,
+        position: 2,
+      },
+    ]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('19:00 · 1 h 30 min')).toBeOnTheScreen();
+    expect(screen.getByRole('radio', { name: 'Dimarts 20, 3 activitats' })).toBeChecked();
+    await user.press(screen.getByRole('button', { name: 'Marca «Pàdel» com a fet' }));
+    // The sheet starts from its planned duration.
+    expect(screen.getByLabelText('Durada (min)').props.value).toBe('90');
+
+    const done = session({
+      plannedRoutineId: null,
+      routineId: null,
+      durationS: 5400,
+      plannedSportId: 'padel',
+      sport: 'padel',
+    });
+    jest.mocked(fetchSessions).mockResolvedValue([done]);
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(done);
+    expect(await screen.findByText('✓ Fet · 1 h 30 min')).toBeOnTheScreen();
+  });
+
+  test('a sport can be skipped, with a reason', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchWeeklySports).mockResolvedValue([
+      {
+        id: 'squash',
+        weekday: 2,
+        sport: 'other',
+        customName: 'Esquaix',
+        startTime: null,
+        durationS: null,
+        position: 2,
+      },
+    ]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Cansament');
+    await user.press(await screen.findByRole('button', { name: 'Salta «Esquaix»' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(
+      session({
+        plannedRoutineId: null,
+        routineId: null,
+        status: 'skipped',
+        changeReason: 'tired',
+        plannedSportId: 'squash',
+        sport: 'other',
+        sportName: 'Esquaix',
+      }),
+    );
   });
 
   test('skips a routine with a reason, and Desfés takes it back', async () => {

@@ -5,6 +5,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
+import { SPORT_ICONS } from '@/features/schedule/sports';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
@@ -17,7 +18,11 @@ export function WorkoutRow({ entry }: { entry: HistoryEntry }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const language = useAppLanguage();
-  const name = entry.routineName ?? t('history.noRoutine');
+  const name =
+    entry.sportName ??
+    (entry.sport ? t(`sports.${entry.sport}`) : null) ??
+    entry.routineName ??
+    t('history.noRoutine');
   const date = formatShortDate(entry.date, language);
   const details = [
     date,
@@ -39,7 +44,7 @@ export function WorkoutRow({ entry }: { entry: HistoryEntry }) {
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
         <SymbolView
-          name={ROUTINE_ICONS[entry.routineLabel ?? 'none']}
+          name={entry.sport ? SPORT_ICONS[entry.sport] : ROUTINE_ICONS[entry.routineLabel ?? 'none']}
           size={20}
           tintColor={colors.accent}
         />

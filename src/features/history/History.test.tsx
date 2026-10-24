@@ -19,6 +19,7 @@ import type { PastWorkout } from './pastWorkout';
 import { PastWorkoutView } from './PastWorkoutView';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
+jest.mock('@/features/schedule/sportsApi', () => ({ fetchWeeklySports: jest.fn(() => Promise.resolve([])) }));
 jest.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ session: { user: { id: 'user-1' } }, isLoading: false }),
 }));
@@ -41,6 +42,8 @@ function entry(values: Partial<HistoryEntry>): HistoryEntry {
     routineName: 'Tren superior 1',
     routineLabel: 'strength',
     customLabel: null,
+    sport: null,
+    sportName: null,
     logMode: 'live',
     durationS: 3600,
     exercises: 4,
@@ -67,6 +70,9 @@ const workout: PastWorkout = {
   durationS: null,
   energy: 4,
   notes: 'Molt bé',
+  plannedSportId: null,
+  sport: null,
+  sportName: null,
   exercises: [
     {
       id: 'se-1',
@@ -154,6 +160,27 @@ describe('History', () => {
       pathname: '/profile/history/[sessionId]',
       params: { sessionId: 'session-1' },
     });
+  });
+
+  test('a sport session shows with its name and time', async () => {
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([
+      entry({
+        id: 'session-9',
+        date: '2026-10-21',
+        routineName: null,
+        routineLabel: null,
+        sport: 'padel',
+        logMode: 'quick',
+        durationS: 5400,
+        exercises: 0,
+        sets: 0,
+        volumeKg: 0,
+      }),
+    ]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('Pàdel')).toBeOnTheScreen();
+    expect(screen.getByText('dc., 21 d’oct. · 1 h 30 min')).toBeOnTheScreen();
   });
 
   test('today without activity says so, or that it is a rest day', async () => {

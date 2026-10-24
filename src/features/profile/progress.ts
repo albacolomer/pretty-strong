@@ -1,6 +1,7 @@
 import type { HistoryEntry } from '@/features/history/entries';
 import { weeklyCounts } from '@/features/history/entries';
 import type { RoutineLabel } from '@/features/routines/routine';
+import type { Sport } from '@/features/schedule/sports';
 import { addDays, dateKey, startOfWeek } from '@/features/schedule/dates';
 import type { Language } from '@/lib/i18n';
 
@@ -90,16 +91,30 @@ export type MixItem = {
   label: RoutineLabel | null;
   // A custom type's own name.
   customLabel: string | null;
+  // A sport, with its own name for "Altres".
+  sport: Sport | null;
+  sportName: string | null;
   count: number;
 };
 
-// Workouts by routine type, most first; each custom type on its own.
+// Workouts by routine type, and by sport, most first; each custom type and
+// each sport of your own on its own.
 export function trainingMix(entries: readonly HistoryEntry[]): MixItem[] {
   const items = new Map<string, MixItem>();
   for (const entry of entries) {
-    const customLabel = entry.routineLabel === 'custom' ? entry.customLabel : null;
-    const key = customLabel ? `custom:${customLabel}` : (entry.routineLabel ?? 'none');
-    const item = items.get(key) ?? { label: entry.routineLabel, customLabel, count: 0 };
+    const customLabel = !entry.sport && entry.routineLabel === 'custom' ? entry.customLabel : null;
+    const key = entry.sport
+      ? `sport:${entry.sportName ?? entry.sport}`
+      : customLabel
+        ? `custom:${customLabel}`
+        : (entry.routineLabel ?? 'none');
+    const item = items.get(key) ?? {
+      label: entry.sport ? null : entry.routineLabel,
+      customLabel,
+      sport: entry.sport,
+      sportName: entry.sportName,
+      count: 0,
+    };
     items.set(key, { ...item, count: item.count + 1 });
   }
   return [...items.values()].sort((a, b) => b.count - a.count);

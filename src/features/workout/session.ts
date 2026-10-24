@@ -1,3 +1,5 @@
+import type { Sport } from '@/features/schedule/sports';
+
 // A workout session as the app uses it (workout_sessions). No React here.
 
 // Why a day was skipped or swapped, matching workout_sessions_change_reason_check.
@@ -29,6 +31,11 @@ export type WorkoutSession = {
   durationS: number | null;
   notes: string | null;
   changeReason: ChangeReason | null;
+  // A sport's session: the planned sport it was for, and which sport (with
+  // its own name for "Altres"), kept even if the plan changes.
+  plannedSportId: string | null;
+  sport: Sport | null;
+  sportName: string | null;
 };
 
 // A quick log's length: from 1 minute to 24 hours, as the database allows.

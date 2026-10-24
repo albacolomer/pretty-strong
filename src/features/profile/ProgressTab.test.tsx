@@ -11,6 +11,7 @@ import { createAppWrapper } from '@/test-utils/appWrapper';
 import { fetchProfile, type Profile } from './api';
 import { ProgressTab } from './ProgressTab';
 
+jest.mock('@/features/schedule/sportsApi', () => ({ fetchWeeklySports: jest.fn(() => Promise.resolve([])) }));
 jest.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ session: { user: { id: 'user-1' } }, isLoading: false }),
 }));
@@ -28,6 +29,8 @@ function entry(date: string, values: Partial<HistoryEntry> = {}): HistoryEntry {
     routineName: 'Tren superior 1',
     routineLabel: 'strength',
     customLabel: null,
+    sport: null,
+    sportName: null,
     logMode: 'live',
     durationS: 3600,
     exercises: 4,

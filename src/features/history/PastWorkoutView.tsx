@@ -54,7 +54,11 @@ function Details({
   const language = useAppLanguage();
   const remove = useDeleteWorkout();
   const totals = pastTotals(workout);
-  const name = workout.routineName ?? t('history.noRoutine');
+  const name =
+    workout.sportName ??
+    (workout.sport ? t(`sports.${workout.sport}`) : null) ??
+    workout.routineName ??
+    t('history.noRoutine');
   const number = new Intl.NumberFormat(language, { maximumFractionDigits: 2 });
 
   const stats = [

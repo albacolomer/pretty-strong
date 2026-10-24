@@ -25,15 +25,20 @@ import { ensureNotificationPermission } from '@/lib/notifications';
 import { spacing, useTheme } from '@/theme';
 
 import { addDays, dateKey, formatDayTitle, startOfWeek, weekdayOf } from './dates';
+import type { WeeklySport } from './sports';
 import { TodayRoutineCard } from './TodayRoutineCard';
+import { TodaySportCard } from './TodaySportCard';
+import { useActivityName } from './useActivityName';
 import { useSwaps } from './useSwaps';
 import { useToday } from './useToday';
-import { routinesOnDay } from './week';
+import { useWeeklySports } from './useWeeklySports';
+import { activitiesOnDay } from './week';
 import { WeekStrip, type DayState } from './WeekStrip';
 
 // The Today tab (US-11, US-12, US-20): the date, the week strip, and the
-// plan for today, or for the day picked in the strip: one card per routine,
-// to start, mark done, swap or skip; or rest.
+// plan for today, or for the day picked in the strip: one card per routine
+// (start, mark done, swap or skip) or sport (mark done or skip), in the
+// week's order; or rest.
 export function Today() {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
@@ -49,6 +54,8 @@ export function Today() {
   const from = dateKey(weekStart);
   const to = dateKey(addDays(weekStart, 6));
   const { data: routines, isPending, isError } = useRoutines();
+  const { data: sports = [] } = useWeeklySports();
+  const nameOf = useActivityName();
   const { data: savedSessions = [] } = useWeekSessions(from, to);
   const active = useWorkoutStore((state) => state.active);
   const pending = useWorkoutStore((state) => state.pending);
@@ -68,6 +75,9 @@ export function Today() {
         durationS: liveDuration(workout.startedAt, workout.endedAt),
         notes: null,
         changeReason: workout.changeReason,
+        plannedSportId: null,
+        sport: null,
+        sportName: null,
       })),
   ];
   const logSession = useLogSession(from, to);
@@ -113,8 +123,10 @@ export function Today() {
     router.setParams({ start: undefined });
     start(created, null, dateKey(today));
   });
-  // The routine whose "Fet" sheet is open.
-  const [logging, setLogging] = useState<{ planned: Routine; shown: Routine } | null>(null);
+  // What the "Fet" sheet is open for: a routine (as shown) or a sport.
+  const [logging, setLogging] = useState<
+    { kind: 'routine'; planned: Routine; shown: Routine } | { kind: 'sport'; sport: WeeklySport } | null
+  >(null);
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
@@ -123,8 +135,10 @@ export function Today() {
   // functions below.
   const allRoutines = routines;
   const day = dateKey(addDays(weekStart, selected - 1));
-  const planned = routinesOnDay(routines, selected);
-  const weekIsEmpty = WEEKDAYS.every((weekday) => routinesOnDay(routines, weekday).length === 0);
+  const planned = activitiesOnDay(routines, sports, selected);
+  const weekIsEmpty = WEEKDAYS.every(
+    (weekday) => activitiesOnDay(routines, sports, weekday).length === 0,
+  );
   const showingToday = selected === todayWeekday;
   // Today and earlier days of the week can be logged; days ahead can't yet.
   const canLog = selected <= todayWeekday;
@@ -133,6 +147,13 @@ export function Today() {
   function sessionFor(routine: Routine): WorkoutSession | undefined {
     return sessions
       .filter((session) => session.date === day && session.plannedRoutineId === routine.id)
+      .at(-1);
+  }
+
+  // A planned sport's session that day, the latest if there are several.
+  function sessionForSport(sport: WeeklySport): WorkoutSession | undefined {
+    return sessions
+      .filter((session) => session.date === day && session.plannedSportId === sport.id)
       .at(-1);
   }
 
@@ -145,7 +166,7 @@ export function Today() {
   function dayInfo(weekday: Weekday): { state: DayState; planned: number } {
     const key = dateKey(addDays(weekStart, weekday - 1));
     const daySessions = sessions.filter((session) => session.date === key);
-    const count = routinesOnDay(allRoutines, weekday).length;
+    const count = activitiesOnDay(allRoutines, sports, weekday).length;
     if (daySessions.some((session) => session.status === 'completed')) {
       return { state: 'done', planned: count };
     }
@@ -196,16 +217,62 @@ export function Today() {
           durationS: null,
           notes: null,
           changeReason: reason,
+          plannedSportId: null,
+          sport: null,
+          sportName: null,
         },
         t('today.skipped', { name: routine.name }),
       ),
     );
   }
 
+  function skipSport(sport: WeeklySport) {
+    askReason(t('today.skipReasonTitle'), (reason) =>
+      log(
+        {
+          id: randomUUID(),
+          date: day,
+          plannedRoutineId: null,
+          routineId: null,
+          status: 'skipped',
+          logMode: 'quick',
+          durationS: null,
+          notes: null,
+          changeReason: reason,
+          plannedSportId: sport.id,
+          sport: sport.sport,
+          sportName: sport.customName,
+        },
+        t('today.skipped', { name: nameOf({ kind: 'sport', sport }) }),
+      ),
+    );
+  }
+
   function saveDone({ durationS, notes }: QuickLog) {
     if (!logging) return;
-    const { planned: routine, shown } = logging;
     setLogging(null);
+    if (logging.kind === 'sport') {
+      const { sport } = logging;
+      log(
+        {
+          id: randomUUID(),
+          date: day,
+          plannedRoutineId: null,
+          routineId: null,
+          status: 'completed',
+          logMode: 'quick',
+          durationS,
+          notes,
+          changeReason: null,
+          plannedSportId: sport.id,
+          sport: sport.sport,
+          sportName: sport.customName,
+        },
+        t('today.logged', { name: nameOf({ kind: 'sport', sport }) }),
+      );
+      return;
+    }
+    const { planned: routine, shown } = logging;
     log(
       {
         id: randomUUID(),
@@ -217,8 +284,26 @@ export function Today() {
         durationS,
         notes,
         changeReason: swaps[day]?.[routine.id]?.reason ?? null,
+        plannedSportId: null,
+        sport: null,
+        sportName: null,
       },
       t('today.logged', { name: shown.name }),
+    );
+  }
+
+  // A logged sport's ⋯: "Desfés".
+  function openSportMenu(sport: WeeklySport, session: WorkoutSession) {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title: nameOf({ kind: 'sport', sport }),
+        options: [t('common.undo'), t('common.cancel')],
+        cancelButtonIndex: 1,
+        userInterfaceStyle: scheme,
+      },
+      (index) => {
+        if (index === 0) deleteSession.mutate(session);
+      },
     );
   }
 
@@ -318,7 +403,7 @@ export function Today() {
         </View>
       )}
 
-      {routines.length === 0 ? (
+      {routines.length === 0 && sports.length === 0 ? (
         <Card>
           <Text color="textMuted">{t('schedule.noRoutines')}</Text>
         </Card>
@@ -334,7 +419,23 @@ export function Today() {
           </Text>
         </Card>
       ) : (
-        planned.map((routine) => {
+        planned.map((activity) => {
+          if (activity.kind === 'sport') {
+            const { sport } = activity;
+            const session = sessionForSport(sport);
+            return (
+              <TodaySportCard
+                key={activity.key}
+                sport={sport}
+                session={session}
+                canLog={canLog}
+                onDone={() => setLogging({ kind: 'sport', sport })}
+                onSkip={() => skipSport(sport)}
+                onMenu={session ? () => openSportMenu(sport, session) : undefined}
+              />
+            );
+          }
+          const { routine } = activity;
           const session = sessionFor(routine);
           const shown = shownFor(routine, session);
           const swapped = !session && shown.id !== routine.id;
@@ -345,7 +446,7 @@ export function Today() {
             active.routineId === shown.id;
           return (
             <TodayRoutineCard
-              key={routine.id}
+              key={activity.key}
               planned={routine}
               shown={shown}
               session={session}
@@ -357,7 +458,7 @@ export function Today() {
                   : undefined
               }
               startLabel={isActive ? t('workout.resume') : t('workout.start')}
-              onDone={() => setLogging({ planned: routine, shown })}
+              onDone={() => setLogging({ kind: 'routine', planned: routine, shown })}
               onSwap={() => swap(routine, shown)}
               onSkip={() => skip(routine)}
               onMenu={session || swapped ? () => openMenu(routine, shown, session) : undefined}
@@ -372,8 +473,16 @@ export function Today() {
 
       <QuickLogSheet
         visible={logging !== null}
-        routineName={logging?.shown.name ?? ''}
-        plannedDurationS={logging?.shown.plannedDurationS ?? null}
+        routineName={
+          logging?.kind === 'sport'
+            ? nameOf({ kind: 'sport', sport: logging.sport })
+            : (logging?.shown.name ?? '')
+        }
+        plannedDurationS={
+          logging?.kind === 'sport'
+            ? logging.sport.durationS
+            : (logging?.shown.plannedDurationS ?? null)
+        }
         onCancel={() => setLogging(null)}
         onSave={saveDone}
       />

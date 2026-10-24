@@ -6,6 +6,7 @@ import { Card, Text } from '@/components/ui';
 import { useHistoryEntries } from '@/features/history/useHistory';
 import { formatDuration } from '@/features/routines/routine';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
+import { SPORT_ICONS } from '@/features/schedule/sports';
 import { fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { useAppLanguage, type Language } from '@/lib/i18n';
@@ -121,7 +122,7 @@ export function ProgressTab() {
         ) : (
           mix.map((item) => (
             <MixRow
-              key={item.customLabel ?? item.label ?? 'none'}
+              key={item.sportName ?? item.sport ?? item.customLabel ?? item.label ?? 'none'}
               item={item}
               total={month.entries.length}
               language={language}
@@ -180,6 +181,8 @@ function MixRow({ item, total, language }: { item: MixItem; total: number; langu
   const { t } = useTranslation();
   const { colors } = useTheme();
   const name =
+    item.sportName ??
+    (item.sport ? t(`sports.${item.sport}`) : null) ??
     item.customLabel ??
     (item.label ? t(`routines.labels.${item.label}`) : t('history.noRoutine'));
   const share = total > 0 ? item.count / total : 0;
@@ -191,7 +194,7 @@ function MixRow({ item, total, language }: { item: MixItem; total: number; langu
       aria-label={t('progress.mixItem', { name, count: item.count })}>
       <View style={styles.mixLabel}>
         <SymbolView
-          name={ROUTINE_ICONS[item.label ?? 'none']}
+          name={item.sport ? SPORT_ICONS[item.sport] : ROUTINE_ICONS[item.label ?? 'none']}
           size={16}
           tintColor={colors.accent}
         />

@@ -16,6 +16,8 @@ function entry(date: string, values: Partial<HistoryEntry> = {}): HistoryEntry {
     routineName: 'Tren superior 1',
     routineLabel: 'strength',
     customLabel: null,
+    sport: null,
+    sportName: null,
     logMode: 'live',
     durationS: 3600,
     exercises: 4,
@@ -87,20 +89,23 @@ describe('this month so far', () => {
 });
 
 describe('training mix', () => {
-  test('by routine type, most first; each custom type on its own', () => {
-    expect(
-      trainingMix([
-        entry('2026-10-01'),
-        entry('2026-10-02', { routineLabel: 'hybrid' }),
-        entry('2026-10-03'),
-        entry('2026-10-04', { routineLabel: 'custom', customLabel: 'Natació' }),
-        entry('2026-10-05', { routineLabel: null, routineName: null }),
-      ]),
-    ).toEqual([
-      { label: 'strength', customLabel: null, count: 2 },
-      { label: 'hybrid', customLabel: null, count: 1 },
-      { label: 'custom', customLabel: 'Natació', count: 1 },
-      { label: null, customLabel: null, count: 1 },
+  test('by routine type, most first; each custom type and sport on its own', () => {
+    const mix = trainingMix([
+      entry('2026-10-01'),
+      entry('2026-10-02', { routineLabel: 'hybrid' }),
+      entry('2026-10-03'),
+      entry('2026-10-04', { routineLabel: 'custom', customLabel: 'Natació' }),
+      entry('2026-10-05', { routineLabel: null, routineName: null }),
+      entry('2026-10-06', { routineLabel: null, routineName: null, sport: 'padel' }),
+      entry('2026-10-07', { routineLabel: null, routineName: null, sport: 'padel' }),
+    ]);
+
+    expect(mix.map((item) => [item.sport ?? item.customLabel ?? item.label, item.count])).toEqual([
+      ['strength', 2],
+      ['padel', 2],
+      ['hybrid', 1],
+      ['Natació', 1],
+      [null, 1],
     ]);
   });
 });

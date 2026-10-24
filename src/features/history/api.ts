@@ -1,5 +1,6 @@
 import { EXERCISE_COLUMNS, toExercise } from '@/features/exercises/exercise';
 import type { RoutineLabel } from '@/features/routines/routine';
+import type { Sport } from '@/features/schedule/sports';
 import type { SetType } from '@/features/workout/activeWorkout';
 import { pace } from '@/features/workout/cardio';
 import type { ChangeReason, Energy, ExerciseChangeReason } from '@/features/workout/session';
@@ -23,6 +24,8 @@ export async function fetchHistoryEntries(): Promise<HistoryEntry[]> {
     // The database's check constraints guarantee the codes.
     routineLabel: (row.routine_label ?? null) as RoutineLabel | null,
     customLabel: row.routine_custom_label ?? null,
+    sport: (row.sport ?? null) as Sport | null,
+    sportName: row.sport_name ?? null,
     logMode: row.log_mode as HistoryEntry['logMode'],
     durationS: row.duration_s ?? null,
     exercises: row.exercises,
@@ -43,7 +46,7 @@ export async function fetchPastWorkout(id: string): Promise<PastWorkout | null> 
   const { data, error } = await supabase
     .from('workout_sessions')
     .select(
-      `id, date, planned_routine_id, routine_id, change_reason, log_mode, started_at, ended_at, duration_s, energy, notes,
+      `id, date, planned_routine_id, routine_id, change_reason, log_mode, started_at, ended_at, duration_s, energy, notes, planned_sport_id, sport, sport_name,
       routine:routines!workout_sessions_routine_id_fkey(name),
       session_exercises(id, exercise_id, routine_exercise_id, position, group_key, rest_s, change, change_reason, notes,
         exercise:exercises!session_exercises_exercise_id_fkey(${EXERCISE_COLUMNS}),
@@ -69,6 +72,9 @@ export async function fetchPastWorkout(id: string): Promise<PastWorkout | null> 
     durationS: data.duration_s,
     energy: data.energy as Energy | null,
     notes: data.notes,
+    plannedSportId: data.planned_sport_id,
+    sport: data.sport as Sport | null,
+    sportName: data.sport_name,
     exercises: [...data.session_exercises]
       .sort((a, b) => a.position - b.position)
       .map((row) => ({

@@ -15,6 +15,7 @@ import { fetchProfile, updateProfileDetails, type Profile } from './api';
 import { EditProfile } from './EditProfile';
 import { ProfileHeader } from './ProfileHeader';
 
+jest.mock('@/features/schedule/sportsApi', () => ({ fetchWeeklySports: jest.fn(() => Promise.resolve([])) }));
 jest.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ session: { user: { id: 'user-1' } }, isLoading: false }),
 }));
@@ -59,6 +60,8 @@ const workout = (date: string): HistoryEntry => ({
   routineName: 'Tren superior 1',
   routineLabel: 'strength',
   customLabel: null,
+  sport: null,
+  sportName: null,
   logMode: 'live',
   durationS: 3600,
   exercises: 4,

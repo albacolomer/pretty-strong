@@ -1,6 +1,7 @@
 import type { Exercise } from '@/features/exercises/exercise';
 import type { TrackingType } from '@/features/exercises/vocabulary';
 import { formatInput } from '@/features/routines/targets';
+import type { Sport } from '@/features/schedule/sports';
 import type { SetNumbers, SetType } from '@/features/workout/activeWorkout';
 import { formatPace, pace } from '@/features/workout/cardio';
 import type { ChangeReason, Energy, ExerciseChangeReason } from '@/features/workout/session';
@@ -51,6 +52,10 @@ export type PastWorkout = {
   durationS: number | null;
   energy: Energy | null;
   notes: string | null;
+  // A sport's session (see HistoryEntry).
+  plannedSportId: string | null;
+  sport: Sport | null;
+  sportName: string | null;
   exercises: PastExercise[];
 };
 
@@ -153,6 +158,9 @@ export function toSavePayload(workout: PastWorkout) {
     duration_s: workout.durationS,
     energy: workout.energy,
     notes: workout.notes,
+    planned_sport_id: workout.plannedSportId,
+    sport: workout.sport,
+    sport_name: workout.sportName,
     exercises: workout.exercises.map((exercise) => ({
       id: exercise.id,
       exercise_id: exercise.exerciseId,

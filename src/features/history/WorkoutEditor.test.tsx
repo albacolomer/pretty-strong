@@ -52,6 +52,9 @@ const past: PastWorkout = {
   durationS: null,
   energy: null,
   notes: null,
+  plannedSportId: null,
+  sport: null,
+  sportName: null,
   exercises: [
     {
       id: 'se-1',

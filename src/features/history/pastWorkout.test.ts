@@ -48,6 +48,9 @@ const workout: PastWorkout = {
   durationS: null,
   energy: 4,
   notes: 'Molt bé',
+  plannedSportId: null,
+  sport: null,
+  sportName: null,
   exercises: [
     exercise('lat', [{ weightKg: 40, reps: 10 }, { weightKg: 42.5, reps: 8 }]),
     exercise('row', [], { change: 'skipped', changeReason: 'machine_busy' }),

@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Button, Stepper, Text, TextField } from '@/components/ui';
 import { weeklyGoal } from '@/features/history/entries';
 import { useRoutines } from '@/features/routines/useRoutines';
+import { useWeeklySports } from '@/features/schedule/useWeeklySports';
 import { spacing, useTheme } from '@/theme';
 
 import type { Profile } from './api';
@@ -32,7 +33,8 @@ function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
   const [focus, setFocus] = useState(profile.focus ?? '');
   // Null: as many as the days planned in the week.
   const [goal, setGoal] = useState(profile.weekly_goal);
-  const planned = weeklyGoal(null, routines);
+  const { data: sports = [] } = useWeeklySports();
+  const planned = weeklyGoal(null, routines, sports);
   const shown = goal ?? planned;
 
   const clean = (text: string) => (text.trim() === '' ? null : text.trim());
