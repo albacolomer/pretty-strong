@@ -705,5 +705,28 @@
     },
     "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
     "loadError": "No se ha podido cargar."
+  },
+  "photos": {
+    "title": "Fotos de progreso",
+    "add": "Añadir una foto de progreso",
+    "addShort": "Añadir",
+    "takePhoto": "Hacer una foto",
+    "fromLibrary": "Elegir una de la galería",
+    "cameraDenied": "Para hacer fotos, permite el acceso a la cámara en Ajustes.",
+    "photoOn": "Foto del {{date}}",
+    "compare": "Comparar",
+    "compareNeedsTwo": "Añade al menos dos fotos para compararlas.",
+    "compareHint": "Toca un lado y después la foto que quieres poner.",
+    "before": "Antes: {{date}}",
+    "after": "Después: {{date}}",
+    "putHere": "Poner la foto del {{date}}",
+    "delete": "Borrar la foto",
+    "deleteTitle": "¿Borrar esta foto? No se podrá recuperar.",
+    "saved": "Foto guardada ✓",
+    "deleted": "Foto borrada",
+    "avatar": "Foto de perfil",
+    "removeAvatar": "Quitar la foto",
+    "avatarSaved": "Foto de perfil guardada ✓",
+    "saveError": "No se ha podido guardar la foto. Vuelve a intentarlo."
   }
 }

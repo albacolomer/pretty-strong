@@ -143,6 +143,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_path: string | null
           city: string | null
           created_at: string
           display_name: string | null
@@ -153,6 +154,7 @@ export type Database = {
           weekly_goal: number | null
         }
         Insert: {
+          avatar_path?: string | null
           city?: string | null
           created_at?: string
           display_name?: string | null
@@ -163,6 +165,7 @@ export type Database = {
           weekly_goal?: number | null
         }
         Update: {
+          avatar_path?: string | null
           city?: string | null
           created_at?: string
           display_name?: string | null
@@ -171,6 +174,30 @@ export type Database = {
           language?: string
           username?: string
           weekly_goal?: number | null
+        }
+        Relationships: []
+      }
+      progress_photos: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          storage_path: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          storage_path: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          storage_path?: string
+          user_id?: string
         }
         Relationships: []
       }

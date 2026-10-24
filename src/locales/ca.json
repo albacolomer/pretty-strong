@@ -705,5 +705,28 @@
     },
     "saveError": "No s'ha pogut desar. Torna-ho a provar.",
     "loadError": "No s'ha pogut carregar."
+  },
+  "photos": {
+    "title": "Fotos de progrés",
+    "add": "Afegeix una foto de progrés",
+    "addShort": "Afegeix",
+    "takePhoto": "Fes una foto",
+    "fromLibrary": "Tria'n una de la galeria",
+    "cameraDenied": "Per fer fotos, permet l'accés a la càmera a Configuració.",
+    "photoOn": "Foto del {{date}}",
+    "compare": "Compara",
+    "compareNeedsTwo": "Afegeix almenys dues fotos per comparar-les.",
+    "compareHint": "Toca un costat i després la foto que vols posar-hi.",
+    "before": "Abans: {{date}}",
+    "after": "Després: {{date}}",
+    "putHere": "Posa la foto del {{date}}",
+    "delete": "Esborra la foto",
+    "deleteTitle": "Esborrar aquesta foto? No es podrà recuperar.",
+    "saved": "Foto desada ✓",
+    "deleted": "Foto esborrada",
+    "avatar": "Foto del perfil",
+    "removeAvatar": "Treu la foto",
+    "avatarSaved": "Foto del perfil desada ✓",
+    "saveError": "No s'ha pogut desar la foto. Torna-ho a provar."
   }
 }

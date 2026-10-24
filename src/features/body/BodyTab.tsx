@@ -22,6 +22,7 @@ import {
 } from './body';
 import { LogWeightSheet } from './LogWeightSheet';
 import { MeasurementsSheet } from './MeasurementsSheet';
+import { ProgressPhotos } from './ProgressPhotos';
 import { useMeasurements, useWeights } from './useBody';
 import { useMeasurementName } from './useMeasurementName';
 import { WeightChart } from './WeightChart';
@@ -35,13 +36,14 @@ function signed(value: number, language: Language, digits: number): string {
   return `${value < 0 ? '−' : value > 0 ? '+' : ''}${number}`;
 }
 
-// Profile → Body (US-28): body weight over time, and measurements with
-// their change since the time before.
+// Profile → Body (US-28): body weight over time, measurements with their
+// change since the time before, and progress photos.
 export function BodyTab() {
   return (
     <View style={styles.page}>
       <WeightCard />
       <MeasurementsCard />
+      <ProgressPhotos />
     </View>
   );
 }

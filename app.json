@@ -37,7 +37,15 @@
           }
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pretty Strong fa servir les teves fotos per a les fotos de progrés i la foto del perfil.",
+          "cameraPermission": "Pretty Strong fa servir la càmera per fer fotos de progrés i la foto del perfil.",
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

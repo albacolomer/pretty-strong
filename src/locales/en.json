@@ -705,5 +705,28 @@
     },
     "saveError": "Couldn't save. Try again.",
     "loadError": "Couldn't load it."
+  },
+  "photos": {
+    "title": "Progress photos",
+    "add": "Add a progress photo",
+    "addShort": "Add",
+    "takePhoto": "Take a photo",
+    "fromLibrary": "Choose from library",
+    "cameraDenied": "To take photos, allow camera access in Settings.",
+    "photoOn": "Photo from {{date}}",
+    "compare": "Compare",
+    "compareNeedsTwo": "Add at least two photos to compare them.",
+    "compareHint": "Tap a side, then the photo to put there.",
+    "before": "Before: {{date}}",
+    "after": "After: {{date}}",
+    "putHere": "Put the photo from {{date}} here",
+    "delete": "Delete photo",
+    "deleteTitle": "Delete this photo? It can't be recovered.",
+    "saved": "Photo saved ✓",
+    "deleted": "Photo deleted",
+    "avatar": "Profile picture",
+    "removeAvatar": "Remove picture",
+    "avatarSaved": "Profile picture saved ✓",
+    "saveError": "Couldn't save the photo. Try again."
   }
 }

@@ -1,6 +1,7 @@
 import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { launchImageLibraryAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { ActionSheetIOS } from 'react-native';
 
 import { createAppWrapper } from '@/test-utils/appWrapper';
@@ -13,6 +14,8 @@ import {
   saveWeight,
 } from './api';
 import { BodyTab } from './BodyTab';
+import { PhotoCompare } from './PhotoCompare';
+import { addProgressPhoto, deleteProgressPhoto, fetchProgressPhotos } from './photosApi';
 import { WeightHistory } from './WeightHistory';
 
 jest.mock('@/features/auth/AuthProvider', () => ({
@@ -24,6 +27,21 @@ jest.mock('./api', () => ({
   deleteWeight: jest.fn(() => Promise.resolve()),
   fetchMeasurements: jest.fn(),
   saveMeasurements: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('./photosApi', () => ({
+  SIGNED_URL_SECONDS: 3600,
+  fetchProgressPhotos: jest.fn(() => Promise.resolve([])),
+  fetchSignedUrls: jest.fn((paths: string[]) =>
+    Promise.resolve(Object.fromEntries(paths.map((path) => [path, `https://photos/${path}`]))),
+  ),
+  addProgressPhoto: jest.fn(() => Promise.resolve()),
+  deleteProgressPhoto: jest.fn(() => Promise.resolve()),
+  setAvatar: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+  launchCameraAsync: jest.fn(),
+  launchImageLibraryAsync: jest.fn(),
 }));
 // Today is Saturday 24 October 2026.
 jest.mock('@/features/schedule/useToday', () => ({ useToday: () => new Date(2026, 9, 24) }));
@@ -117,5 +135,94 @@ describe('Body (US-28)', () => {
     await user.press(await screen.findByRole('button', { name: 'Desfés' }));
     await waitFor(() => expect(saveWeight).toHaveBeenCalledWith('2026-10-10', 61.8));
     actionSheet.mockRestore();
+  });
+
+  describe('progress photos', () => {
+    const photos = [
+      { id: 'p-2', date: '2026-10-02', storagePath: 'user-1/progress/p-2.jpg' },
+      { id: 'p-1', date: '2026-09-02', storagePath: 'user-1/progress/p-1.jpg' },
+    ];
+    // Each action sheet picks the next of these labels.
+    const sheetChoices: string[] = [];
+    let actionSheet: jest.SpyInstance;
+
+    beforeEach(() => {
+      sheetChoices.length = 0;
+      actionSheet = jest
+        .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+        .mockImplementation((options, callback) =>
+          callback(options.options.indexOf(sheetChoices.shift() ?? '')),
+        );
+      jest.mocked(fetchProgressPhotos).mockResolvedValue(photos);
+      jest.mocked(addProgressPhoto).mockClear();
+      jest.mocked(deleteProgressPhoto).mockClear();
+    });
+    afterEach(() => actionSheet.mockRestore());
+
+    test('newest first; one from the library is dated the day it was taken', async () => {
+      const user = userEvent.setup();
+      jest.mocked(launchImageLibraryAsync).mockResolvedValue({
+        canceled: false,
+        assets: [
+          {
+            uri: 'file:///photo.jpg',
+            width: 3000,
+            height: 4000,
+            base64: 'SGk=',
+            exif: { '{Exif}': { DateTimeOriginal: '2026:10:20 08:30:00' } },
+          },
+        ],
+      });
+      await render(<BodyTab />, { wrapper: createAppWrapper() });
+
+      expect(await screen.findByRole('button', { name: 'Foto del Divendres, 2 d’octubre' })).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Compara' })).toBeOnTheScreen();
+
+      sheetChoices.push("Tria'n una de la galeria");
+      await user.press(screen.getByRole('button', { name: 'Afegeix una foto de progrés' }));
+      await waitFor(() => expect(addProgressPhoto).toHaveBeenCalledWith('user-1', '2026-10-20', 'SGk='));
+    });
+
+    test('without camera access, it says how to allow it', async () => {
+      const user = userEvent.setup();
+      jest.mocked(requestCameraPermissionsAsync).mockResolvedValueOnce({ granted: false } as never);
+      await render(<BodyTab />, { wrapper: createAppWrapper() });
+
+      sheetChoices.push('Fes una foto');
+      await user.press(await screen.findByRole('button', { name: 'Afegeix una foto de progrés' }));
+      expect(
+        await screen.findByText("Per fer fotos, permet l'accés a la càmera a Configuració."),
+      ).toBeOnTheScreen();
+      expect(addProgressPhoto).not.toHaveBeenCalled();
+    });
+
+    test('a photo opens big; deleting it asks first', async () => {
+      const user = userEvent.setup();
+      await render(<BodyTab />, { wrapper: createAppWrapper() });
+
+      await user.press(await screen.findByRole('button', { name: 'Foto del Dimecres, 2 de setembre' }));
+      expect(screen.getByRole('header', { name: 'Dimecres, 2 de setembre' })).toBeOnTheScreen();
+      sheetChoices.push('Esborra la foto');
+      await user.press(screen.getByRole('button', { name: 'Esborra la foto' }));
+
+      expect(actionSheet.mock.lastCall?.[0].title).toBe('Esborrar aquesta foto? No es podrà recuperar.');
+      await waitFor(() => expect(deleteProgressPhoto).toHaveBeenCalledWith(photos[1]));
+    });
+
+    test('Compara: the oldest and the newest; tap a side, then a photo', async () => {
+      const user = userEvent.setup();
+      jest.mocked(fetchProgressPhotos).mockResolvedValue([
+        { id: 'p-3', date: '2026-10-20', storagePath: 'user-1/progress/p-3.jpg' },
+        ...photos,
+      ]);
+      await render(<PhotoCompare />, { wrapper: createAppWrapper() });
+
+      expect(await screen.findByRole('radio', { name: 'Abans: 2 de setembre del 2026' })).toBeOnTheScreen();
+      expect(screen.getByRole('radio', { name: 'Després: 20 d’octubre del 2026' })).toBeChecked();
+
+      await user.press(screen.getByRole('radio', { name: 'Abans: 2 de setembre del 2026' }));
+      await user.press(screen.getByRole('button', { name: 'Posa la foto del 2 d’octubre del 2026' }));
+      expect(screen.getByRole('radio', { name: 'Abans: 2 d’octubre del 2026' })).toBeChecked();
+    });
   });
 });

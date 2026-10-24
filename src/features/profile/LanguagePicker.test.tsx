@@ -20,6 +20,7 @@ const savedProfile = (language: Profile['language']): Profile => ({
   city: null,
   focus: null,
   weekly_goal: null,
+  avatar_path: null,
 });
 
 beforeEach(() => {

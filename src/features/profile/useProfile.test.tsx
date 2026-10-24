@@ -20,6 +20,7 @@ const profile: Profile = {
   city: null,
   focus: null,
   weekly_goal: null,
+  avatar_path: null,
 };
 
 function signedInAs(userId: string | null) {

@@ -9,10 +9,11 @@ import { dateKey, startOfWeek } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
+import { Avatar } from './Avatar';
 import { useProfile } from './useProfile';
 import { useWeeklyGoal } from './useWeeklyGoal';
 
-// The top of Profile: avatar, name, city and focus, then workouts in all,
+// The top of Profile: your picture (or initial), name, city and focus, then workouts in all,
 // the streak (weeks in a row at 75% of the goal or more) and this week
 // against the goal; "Edita el perfil" under them.
 export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
@@ -40,13 +41,7 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
 
   return (
     <View style={styles.header}>
-      <View
-        style={[styles.avatar, { backgroundColor: colors.accentSoft, borderColor: colors.accent }]}
-        aria-hidden>
-        <Text variant="display" color="accent">
-          {(profile?.display_name || profile?.username || '').charAt(0).toUpperCase()}
-        </Text>
-      </View>
+      <Avatar profile={profile} />
       <View style={styles.identity}>
         <Text variant="cardTitle" accessibilityRole="header">
           {name}
@@ -91,20 +86,10 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
   );
 }
 
-const AVATAR_SIZE = 104;
-
 const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     gap: spacing.md,
-  },
-  avatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
-    borderRadius: radius.pill,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   identity: {
     alignItems: 'center',

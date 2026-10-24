@@ -1,10 +1,13 @@
 import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { launchImageLibraryAsync } from 'expo-image-picker';
+import { ActionSheetIOS } from 'react-native';
 
 import type { HistoryEntry } from '@/features/history/entries';
 import { fetchHistoryEntries } from '@/features/history/api';
 import { fetchRoutines } from '@/features/routines/api';
+import { setAvatar } from '@/features/body/photosApi';
 import { upperBody } from '@/features/routines/testData';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
@@ -19,6 +22,21 @@ jest.mock('./api', () => ({ fetchProfile: jest.fn(), updateProfileDetails: jest.
 jest.mock('@/features/history/api', () => ({ fetchHistoryEntries: jest.fn() }));
 jest.mock('@/features/routines/api', () => ({ fetchRoutines: jest.fn() }));
 jest.mock('@/features/workout/api', () => ({ deleteSession: jest.fn() }));
+jest.mock('@/features/body/photosApi', () => ({
+  SIGNED_URL_SECONDS: 3600,
+  fetchProgressPhotos: jest.fn(() => Promise.resolve([])),
+  fetchSignedUrls: jest.fn((paths: string[]) =>
+    Promise.resolve(Object.fromEntries(paths.map((path) => [path, `https://photos/${path}`]))),
+  ),
+  addProgressPhoto: jest.fn(() => Promise.resolve()),
+  deleteProgressPhoto: jest.fn(() => Promise.resolve()),
+  setAvatar: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('expo-image-picker', () => ({
+  requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
+  launchCameraAsync: jest.fn(),
+  launchImageLibraryAsync: jest.fn(),
+}));
 // Today is Wednesday 21 October 2026.
 jest.mock('@/features/schedule/useToday', () => ({ useToday: () => new Date(2026, 9, 21) }));
 
@@ -31,6 +49,7 @@ const profile: Profile = {
   city: 'Barcelona',
   focus: 'HYROX i força',
   weekly_goal: null,
+  avatar_path: null,
 };
 
 const workout = (date: string): HistoryEntry => ({
@@ -84,6 +103,30 @@ describe('Profile', () => {
 
     await user.press(screen.getByRole('button', { name: 'Edita el perfil' }));
     expect(onEdit).toHaveBeenCalled();
+  });
+
+  test('the camera badge sets a profile picture, cropped square', async () => {
+    const user = userEvent.setup();
+    const actionSheet = jest
+      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .mockImplementation((options, callback) =>
+        callback(options.options.indexOf("Tria'n una de la galeria")),
+      );
+    jest.mocked(launchImageLibraryAsync).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: 'file:///me.jpg', width: 800, height: 800, base64: 'SGk=' }],
+    });
+    await render(<ProfileHeader onEdit={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    // Once the profile is there.
+    await screen.findByRole('header', { name: 'Alba Colomer' });
+    await user.press(screen.getByRole('button', { name: 'Foto del perfil' }));
+    await waitFor(() => expect(setAvatar).toHaveBeenCalledWith('user-1', 'SGk=', null));
+    expect(jest.mocked(launchImageLibraryAsync).mock.lastCall?.[0]).toMatchObject({
+      allowsEditing: true,
+      aspect: [1, 1],
+    });
+    actionSheet.mockRestore();
   });
 
   test('without a name, the username', async () => {
