@@ -16,6 +16,7 @@ import { spacing, useTheme } from '@/theme';
 
 import {
   CUSTOM_LABEL_MAX_LENGTH,
+  ROUTINE_DESCRIPTION_MAX_LENGTH,
   ROUTINE_NAME_MAX_LENGTH,
   usesExercises,
   usesPlannedDuration,
@@ -264,6 +265,16 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         </View>
         <RoutineTypeButton value={draft.label} onChange={changeLabel} />
       </View>
+      <TextField
+        label={t('routines.editor.description')}
+        labelHidden
+        placeholder={t('routines.editor.descriptionPlaceholder')}
+        value={draft.description}
+        onChangeText={(description) => setDraft((current) => ({ ...current, description }))}
+        maxLength={ROUTINE_DESCRIPTION_MAX_LENGTH}
+        autoCapitalize="sentences"
+        returnKeyType="done"
+      />
 
       {draft.label === 'custom' ? (
         <TextField

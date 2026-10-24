@@ -352,7 +352,9 @@
       },
       "addNoteShort": "+ Nota",
       "addNote": "Afegeix una nota",
-      "typeButton": "Tipus: {{type}}"
+      "typeButton": "Tipus: {{type}}",
+      "description": "Descripció",
+      "descriptionPlaceholder": "Descripció (opcional): esquena i bíceps"
     },
     "sets": {
       "header": "Sèrie",
@@ -419,18 +421,40 @@
     }
   },
   "schedule": {
-    "hint": "Un dia pot tenir més d'una rutina. Toca'n una per obrir-la.",
     "today": "Avui",
-    "rest": "Descans",
     "add": "+ Afegeix",
-    "addFor": "{{day}}: afegeix una rutina",
-    "pickRoutine": "Quina rutina hi afegeixes?",
+    "addFor": "{{day}}: afegeix una activitat",
     "menuFor": "Opcions de «{{name}}», {{day}}",
     "open": "Obre la rutina",
-    "remove": "Treu-la d'aquest dia",
+    "remove": "Treu-ho d'aquest dia",
     "removed": "{{day}}: s'ha tret «{{name}}»",
     "saveError": "No s'ha pogut desar. Torna-ho a provar.",
-    "noRoutines": "Encara no tens rutines. Crea'n una a Rutines i després tria els dies que la fas."
+    "noRoutines": "Encara no tens rutines. Crea'n una a Rutines i després tria els dies que la fas.",
+    "usualWeek": "La teva setmana habitual",
+    "workouts_one": "{{count}} entrenament",
+    "workouts_other": "{{count}} entrenaments",
+    "sports_one": "{{count}} esport",
+    "sports_other": "{{count}} esports",
+    "restDays_one": "{{count}} dia de descans",
+    "restDays_other": "{{count}} dies de descans",
+    "repeats": "Es repeteix cada setmana.",
+    "restDay": "Dia de descans",
+    "activities_one": "{{count}} activitat",
+    "activities_other": "{{count}} activitats",
+    "changeTime": "Canvia l'hora i la durada",
+    "kind": "Què hi afegeixes?",
+    "routine": "Rutina",
+    "sport": "Esport",
+    "addToDay": "Afegeix al {{day}}",
+    "addNamed": "Afegeix «{{name}}» al {{dayLower}}",
+    "save": "Desa",
+    "noRoutinesLeft": "Totes les teves rutines ja són en aquest dia.",
+    "sportName": "Nom",
+    "sportNamePlaceholder": "Esquaix, rem…",
+    "time": "Hora (opcional)",
+    "durationMin": "Durada (min, opcional)",
+    "dragHandle": "Mou «{{name}}»",
+    "dragHint": "Arrossega per canviar-ne l’ordre en el dia."
   },
   "today": {
     "week": "Aquesta setmana",
@@ -734,5 +758,19 @@
     "unlockPrompt": "Desbloqueja les fotos de progrés",
     "hiddenOn": "Foto amagada del {{date}}",
     "needsPasscode": "Per amagar-les, primer posa un codi a l'iPhone (Configuració → Face ID i codi)."
+  },
+  "sports": {
+    "padel": "Pàdel",
+    "tennis": "Tennis",
+    "football": "Futbol",
+    "basketball": "Bàsquet",
+    "volleyball": "Voleibol",
+    "climbing": "Escalada",
+    "hiking": "Senderisme",
+    "swimming": "Natació",
+    "cycling": "Ciclisme",
+    "yoga": "Ioga",
+    "dance": "Dansa",
+    "other": "Altres"
   }
 }

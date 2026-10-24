@@ -24,6 +24,7 @@ export const upperBody: Routine = {
   customLabel: null,
   plannedDurationS: null,
   notes: null,
+  description: null,
   weekdays: [],
   dayPositions: {},
   exercises: ['Tracció al pit', 'Rem assegut amb politja', 'Face pull', 'Curl martell'].map(

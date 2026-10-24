@@ -117,6 +117,7 @@ describe('<RoutineEditor />', () => {
       // A hybrid session starts at 1 hour.
       plannedDurationS: 3600,
       notes: 'Simulació curta',
+      description: null,
       weekdays: [],
       exercises: [],
     });

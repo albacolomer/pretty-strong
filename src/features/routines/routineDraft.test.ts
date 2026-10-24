@@ -49,6 +49,7 @@ const upperBody: Routine = {
   customLabel: null,
   plannedDurationS: null,
   notes: null,
+  description: null,
   weekdays: [1, 4],
   dayPositions: { 1: 0, 4: 0 },
   exercises: [
@@ -112,6 +113,7 @@ describe('toSaveInput', () => {
       customLabel: null,
       plannedDurationS: null,
       notes: null,
+      description: null,
       weekdays: [1, 4],
       exercises: [
         { id: 're-1', exercise_id: 'lat', rest_s: 120, group_key: null, notes: null, sets: Array(4).fill(tenAt42) },

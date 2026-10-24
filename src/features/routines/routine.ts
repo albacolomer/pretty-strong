@@ -83,6 +83,8 @@ export type Routine = {
   customLabel: string | null;
   plannedDurationS: number | null;
   notes: string | null;
+  // A few words shown under it in the week: "Esquena i bíceps".
+  description: string | null;
   // The days it's planned on, Monday first.
   weekdays: Weekday[];
   // Its place on each of those days, which can hold several routines.
@@ -97,5 +99,45 @@ export const CUSTOM_LABEL_MAX_LENGTH = 30;
 // Sets per exercise: at least one, at most 20.
 export const PLANNED_SETS_MIN = 1;
 export const PLANNED_SETS_MAX = 20;
+// Matches routines_description_length.
+export const ROUTINE_DESCRIPTION_MAX_LENGTH = 80;
+
 // Matches routine_exercises_notes_length in the create_routines migration.
 export const EXERCISE_NOTES_MAX_LENGTH = 500;
+
+// Roughly how long a set takes when its plan doesn't say.
+const SET_WORK_S = 45;
+// A run's pace when only its distance is planned: 6 min/km.
+const RUN_S_PER_KM = 360;
+
+// How long a routine takes: its planned duration, or an estimate from its
+// sets and rests (rest after each set; in a superset or circuit, after each
+// round), to the nearest 5 minutes. Null with nothing to go on.
+export function routineDuration(
+  routine: Pick<Routine, 'plannedDurationS' | 'label' | 'exercises'>,
+  defaultRestS: number,
+): { seconds: number; estimated: boolean } | null {
+  if (routine.plannedDurationS !== null) {
+    return { seconds: routine.plannedDurationS, estimated: false };
+  }
+  if (routine.exercises.length === 0) return null;
+  const run = routine.label === 'run';
+  const groupSizes = new Map<string, number>();
+  for (const { groupKey } of routine.exercises) {
+    if (groupKey) groupSizes.set(groupKey, (groupSizes.get(groupKey) ?? 0) + 1);
+  }
+  const total = routine.exercises.reduce((sum, exercise) => {
+    const work = exercise.sets.reduce(
+      (time, set) =>
+        time +
+        (set.durationS ??
+          (run && set.distanceM !== null ? (set.distanceM / 1000) * RUN_S_PER_KM : SET_WORK_S)),
+      0,
+    );
+    // A run block rests only for its recovery.
+    const restS = exercise.restS ?? (run ? 0 : defaultRestS);
+    const sharedBy = exercise.groupKey ? (groupSizes.get(exercise.groupKey) ?? 1) : 1;
+    return sum + work + (restS / sharedBy) * exercise.sets.length;
+  }, 0);
+  return { seconds: Math.max(300, Math.round(total / 300) * 300), estimated: true };
+}

@@ -55,6 +55,7 @@ export type RoutineDraft = {
   customLabel: string;
   plannedDurationS: number | null;
   notes: string;
+  description: string;
   weekdays: Weekday[];
   exercises: DraftExercise[];
 };
@@ -76,6 +77,7 @@ export function emptyRoutineDraft(): RoutineDraft {
     customLabel: '',
     plannedDurationS: null,
     notes: '',
+    description: '',
     weekdays: [],
     exercises: [],
   };
@@ -88,6 +90,7 @@ export function draftFromRoutine(routine: Routine): RoutineDraft {
     customLabel: routine.customLabel ?? '',
     plannedDurationS: routine.plannedDurationS,
     notes: routine.notes ?? '',
+    description: routine.description ?? '',
     weekdays: routine.weekdays,
     exercises: routine.exercises.map((exercise) => ({
       key: exercise.id,
@@ -143,6 +146,7 @@ export function toSaveInput(draft: RoutineDraft, routineId: string | null): Save
     // that use it.
     plannedDurationS: usesPlannedDuration(draft.label) ? draft.plannedDurationS : null,
     notes: emptyAsNull(draft.notes),
+    description: emptyAsNull(draft.description),
     // Monday first, so the order of taps doesn't count as a change.
     weekdays: [...draft.weekdays].sort((a, b) => a - b),
     exercises: draft.exercises.map((exercise) => ({

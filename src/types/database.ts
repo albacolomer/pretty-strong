@@ -307,6 +307,7 @@ export type Database = {
           archived_at: string | null
           created_at: string
           custom_label: string | null
+          description: string | null
           id: string
           label: string
           name: string
@@ -318,6 +319,7 @@ export type Database = {
           archived_at?: string | null
           created_at?: string
           custom_label?: string | null
+          description?: string | null
           id?: string
           label?: string
           name: string
@@ -329,6 +331,7 @@ export type Database = {
           archived_at?: string | null
           created_at?: string
           custom_label?: string | null
+          description?: string | null
           id?: string
           label?: string
           name?: string
@@ -532,6 +535,42 @@ export type Database = {
           },
         ]
       }
+      weekly_sports: {
+        Row: {
+          created_at: string
+          custom_name: string | null
+          duration_s: number | null
+          id: string
+          position: number
+          sport: string
+          start_time: string | null
+          user_id: string
+          weekday: number
+        }
+        Insert: {
+          created_at?: string
+          custom_name?: string | null
+          duration_s?: number | null
+          id?: string
+          position?: number
+          sport: string
+          start_time?: string | null
+          user_id?: string
+          weekday: number
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string | null
+          duration_s?: number | null
+          id?: string
+          position?: number
+          sport?: string
+          start_time?: string | null
+          user_id?: string
+          weekday?: number
+        }
+        Relationships: []
+      }
       workout_sessions: {
         Row: {
           change_reason: string | null
@@ -545,8 +584,11 @@ export type Database = {
           log_mode: string
           notes: string | null
           planned_routine_id: string | null
+          planned_sport_id: string | null
           routine_id: string | null
           source: string
+          sport: string | null
+          sport_name: string | null
           started_at: string | null
           status: string
           user_id: string
@@ -563,8 +605,11 @@ export type Database = {
           log_mode?: string
           notes?: string | null
           planned_routine_id?: string | null
+          planned_sport_id?: string | null
           routine_id?: string | null
           source?: string
+          sport?: string | null
+          sport_name?: string | null
           started_at?: string | null
           status: string
           user_id?: string
@@ -581,8 +626,11 @@ export type Database = {
           log_mode?: string
           notes?: string | null
           planned_routine_id?: string | null
+          planned_sport_id?: string | null
           routine_id?: string | null
           source?: string
+          sport?: string | null
+          sport_name?: string | null
           started_at?: string | null
           status?: string
           user_id?: string
@@ -593,6 +641,13 @@ export type Database = {
             columns: ["planned_routine_id"]
             isOneToOne: false
             referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workout_sessions_planned_sport_id_fkey"
+            columns: ["planned_sport_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_sports"
             referencedColumns: ["id"]
           },
           {
@@ -629,9 +684,14 @@ export type Database = {
           weight_kg: number
         }[]
       }
+      reorder_day: {
+        Args: { p_items: Json; p_weekday: number }
+        Returns: undefined
+      }
       save_routine: {
         Args: {
           p_custom_label: string
+          p_description?: string
           p_exercises: Json
           p_id: string
           p_label: string
@@ -659,6 +719,8 @@ export type Database = {
           routine_name: string
           run_distance_m: number
           sets: number
+          sport: string
+          sport_name: string
           volume_kg: number
         }[]
       }

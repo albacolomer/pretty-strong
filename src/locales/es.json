@@ -352,7 +352,9 @@
       },
       "addNoteShort": "+ Nota",
       "addNote": "Añadir una nota",
-      "typeButton": "Tipo: {{type}}"
+      "typeButton": "Tipo: {{type}}",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Descripción (opcional): espalda y bíceps"
     },
     "sets": {
       "header": "Serie",
@@ -419,18 +421,40 @@
     }
   },
   "schedule": {
-    "hint": "Un día puede tener más de una rutina. Toca una para abrirla.",
     "today": "Hoy",
-    "rest": "Descanso",
     "add": "+ Añadir",
-    "addFor": "{{day}}: añadir una rutina",
-    "pickRoutine": "¿Qué rutina añades?",
+    "addFor": "{{day}}: añadir una actividad",
     "menuFor": "Opciones de «{{name}}», {{day}}",
     "open": "Abrir la rutina",
-    "remove": "Quitarla de este día",
+    "remove": "Quitarlo de este día",
     "removed": "{{day}}: se ha quitado «{{name}}»",
     "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
-    "noRoutines": "Todavía no tienes rutinas. Crea una en Rutinas y luego elige los días que la haces."
+    "noRoutines": "Todavía no tienes rutinas. Crea una en Rutinas y luego elige los días que la haces.",
+    "usualWeek": "Tu semana habitual",
+    "workouts_one": "{{count}} entrenamiento",
+    "workouts_other": "{{count}} entrenamientos",
+    "sports_one": "{{count}} deporte",
+    "sports_other": "{{count}} deportes",
+    "restDays_one": "{{count}} día de descanso",
+    "restDays_other": "{{count}} días de descanso",
+    "repeats": "Se repite cada semana.",
+    "restDay": "Día de descanso",
+    "activities_one": "{{count}} actividad",
+    "activities_other": "{{count}} actividades",
+    "changeTime": "Cambiar la hora y la duración",
+    "kind": "¿Qué añades?",
+    "routine": "Rutina",
+    "sport": "Deporte",
+    "addToDay": "Añadir al {{day}}",
+    "addNamed": "Añadir «{{name}}» al {{dayLower}}",
+    "save": "Guardar",
+    "noRoutinesLeft": "Todas tus rutinas ya están en este día.",
+    "sportName": "Nombre",
+    "sportNamePlaceholder": "Squash, remo…",
+    "time": "Hora (opcional)",
+    "durationMin": "Duración (min, opcional)",
+    "dragHandle": "Mover «{{name}}»",
+    "dragHint": "Arrastra para cambiar su orden en el día."
   },
   "today": {
     "week": "Esta semana",
@@ -734,5 +758,19 @@
     "unlockPrompt": "Desbloquear las fotos de progreso",
     "hiddenOn": "Foto oculta del {{date}}",
     "needsPasscode": "Para ocultarlas, primero pon un código en el iPhone (Ajustes → Face ID y código)."
+  },
+  "sports": {
+    "padel": "Pádel",
+    "tennis": "Tenis",
+    "football": "Fútbol",
+    "basketball": "Baloncesto",
+    "volleyball": "Voleibol",
+    "climbing": "Escalada",
+    "hiking": "Senderismo",
+    "swimming": "Natación",
+    "cycling": "Ciclismo",
+    "yoga": "Yoga",
+    "dance": "Baile",
+    "other": "Otro"
   }
 }

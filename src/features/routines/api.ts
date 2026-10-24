@@ -11,7 +11,7 @@ function selectRoutines() {
   return supabase
     .from('routines')
     .select(
-      `id, name, label, custom_label, planned_duration_s, notes, weekly_schedule(weekday, position), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}))`,
+      `id, name, label, custom_label, planned_duration_s, notes, description, weekly_schedule(weekday, position), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}))`,
     )
     .order('position', { referencedTable: 'routine_exercises' });
 }
@@ -56,6 +56,7 @@ function toRoutine(row: RoutineRow): Routine {
     customLabel: row.custom_label,
     plannedDurationS: row.planned_duration_s,
     notes: row.notes,
+    description: row.description,
     // Monday first; the check constraint guarantees 1–7.
     weekdays: WEEKDAYS.filter((day) => row.weekly_schedule.some((item) => item.weekday === day)),
     dayPositions: Object.fromEntries(
@@ -114,6 +115,7 @@ export type SaveRoutineInput = {
   customLabel: string | null;
   plannedDurationS: number | null;
   notes: string | null;
+  description: string | null;
   weekdays: Weekday[];
   exercises: SaveRoutineExercise[];
 };
@@ -135,6 +137,7 @@ export async function saveRoutine(input: SaveRoutineInput): Promise<string> {
     p_notes: input.notes,
     p_weekdays: input.weekdays,
     p_exercises: input.exercises,
+    p_description: input.description,
   } as SaveRoutineArgs;
   const { data, error } = await supabase.rpc('save_routine', args);
   if (error) throw error;
