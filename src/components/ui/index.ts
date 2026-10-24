@@ -5,6 +5,7 @@ export { MenuButton } from './MenuButton';
 export { KeyboardDoneBar, NumberInput, type NumberInputProps } from './NumberInput';
 export { Screen, type ScreenProps } from './Screen';
 export { SelectField, type SelectFieldProps } from './SelectField';
+export { Sheet, type SheetProps } from './Sheet';
 export {
   SegmentedControl,
   type SegmentedControlProps,

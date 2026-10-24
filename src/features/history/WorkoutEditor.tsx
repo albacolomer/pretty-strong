@@ -1,11 +1,12 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { Button, NumberInput, Text, TextField } from '@/components/ui';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { ReorderExercisesSheet } from '@/features/routines/ReorderExercisesSheet';
-import { addDays, dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
+import { dateKey } from '@/features/schedule/dates';
+import { DayStepper } from '@/features/schedule/DayStepper';
 import { useToday } from '@/features/schedule/useToday';
 import {
   dropWorkoutExercise,
@@ -18,8 +19,7 @@ import { readMinutes, SESSION_NOTES_MAX_LENGTH } from '@/features/workout/sessio
 import { useLastTime } from '@/features/workout/useLastTime';
 import { useWorkoutChanges } from '@/features/workout/useWorkoutChanges';
 import { WorkoutExerciseCard } from '@/features/workout/WorkoutExerciseCard';
-import { useAppLanguage } from '@/lib/i18n';
-import { spacing, touch } from '@/theme';
+import { spacing } from '@/theme';
 
 import type { PastWorkout } from './pastWorkout';
 import { useSaveWorkout } from './useHistory';
@@ -164,87 +164,9 @@ export function WorkoutEditor({ initialDraft, initialDetails, original, onClose 
   );
 }
 
-// ‹ Dimarts, 20 d'octubre ›: the day it was done, up to today.
-function DayStepper({
-  date,
-  latest,
-  onChange,
-}: {
-  date: string;
-  latest: string;
-  onChange: (date: string) => void;
-}) {
-  const { t } = useTranslation();
-  const language = useAppLanguage();
-  const day = fromDateKey(date);
-  const atLatest = date >= latest;
-
-  return (
-    <View style={styles.day}>
-      <DayButton
-        symbol="‹"
-        label={t('history.previousDay')}
-        onPress={() => onChange(dateKey(addDays(day, -1)))}
-      />
-      <Text variant="cardTitle" style={styles.dayTitle} accessibilityRole="header">
-        {formatDayTitle(day, language)}
-      </Text>
-      <DayButton
-        symbol="›"
-        label={t('history.nextDay')}
-        disabled={atLatest}
-        onPress={() => onChange(dateKey(addDays(day, 1)))}
-      />
-    </View>
-  );
-}
-
-function DayButton({
-  symbol,
-  label,
-  onPress,
-  disabled = false,
-}: {
-  symbol: string;
-  label: string;
-  onPress: () => void;
-  disabled?: boolean;
-}) {
-  return (
-    <Pressable
-      role="button"
-      aria-label={label}
-      aria-disabled={disabled}
-      disabled={disabled}
-      onPress={onPress}
-      style={({ pressed }) => [styles.dayButton, (pressed || disabled) && styles.dimmed]}>
-      <Text variant="title" color={disabled ? 'textMuted' : 'accent'}>
-        {symbol}
-      </Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   page: {
     gap: spacing.lg,
-  },
-  day: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dayTitle: {
-    flex: 1,
-    textAlign: 'center',
-  },
-  dayButton: {
-    width: touch.min,
-    height: touch.min,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dimmed: {
-    opacity: 0.5,
   },
   minutes: {
     alignSelf: 'flex-start',

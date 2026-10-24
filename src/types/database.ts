@@ -39,6 +39,60 @@ export type Database = {
   }
   public: {
     Tables: {
+      body_measurements: {
+        Row: {
+          created_at: string
+          custom_name: string | null
+          date: string
+          id: string
+          part: string
+          user_id: string
+          value_cm: number
+        }
+        Insert: {
+          created_at?: string
+          custom_name?: string | null
+          date: string
+          id?: string
+          part: string
+          user_id?: string
+          value_cm: number
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string | null
+          date?: string
+          id?: string
+          part?: string
+          user_id?: string
+          value_cm?: number
+        }
+        Relationships: []
+      }
+      body_weights: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          user_id: string
+          weight_kg: number
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          user_id?: string
+          weight_kg: number
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          user_id?: string
+          weight_kg?: number
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           archived_at: string | null

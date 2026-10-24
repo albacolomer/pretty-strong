@@ -217,7 +217,6 @@
     "progress": "Progress",
     "calendar": "Calendar",
     "body": "Body",
-    "comingSoon": "Coming soon.",
     "name": "Name",
     "city": "City",
     "cityPlaceholder": "Barcelona",
@@ -655,5 +654,56 @@
     "mixCount_other": "{{count}} this month",
     "mixEmpty": "No workouts this month yet.",
     "mixItem": "{{name}}: {{count}}"
+  },
+  "body": {
+    "weight": "Body weight",
+    "history": "History",
+    "noWeight": "You haven't logged your weight yet.",
+    "fewWeights": "Log your weight on a few days to see how it changes.",
+    "loggedToday": "logged today",
+    "loggedOn": "logged {{date}}",
+    "change": "{{change}} {{range}}",
+    "range": "Range",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1Y"
+    },
+    "rangeIn": {
+      "1m": "in 1 month",
+      "3m": "in 3 months",
+      "6m": "in 6 months",
+      "1y": "in 1 year"
+    },
+    "logWeightButton": "+ Log weight",
+    "logWeight": "Log weight",
+    "weightKg": "Weight (kg)",
+    "save": "Save",
+    "weightSaved": "Weight saved ✓",
+    "weightDeleted": "Weight deleted",
+    "deleteWeight": "Delete this weight",
+    "weightOn": "{{weight}}, {{date}}",
+    "chartLabel": "Weight from {{from}} to {{to}} kg.",
+    "measurements": "Measurements",
+    "updated": "Updated {{date}}",
+    "changeSince": "change since {{date}}",
+    "edit": "Edit",
+    "add": "+ Add",
+    "addMeasurement": "Add a measurement",
+    "measurementName": "Name",
+    "measurementNamePlaceholder": "Calf, neck…",
+    "newMeasurement": "Measurement",
+    "valueCm": "{{name}} (cm)",
+    "measurementsSaved": "Measurements saved ✓",
+    "parts": {
+      "waist": "Waist",
+      "hips": "Hips",
+      "chest": "Chest",
+      "arm": "Arm",
+      "thigh": "Thigh"
+    },
+    "saveError": "Couldn't save. Try again.",
+    "loadError": "Couldn't load it."
   }
 }

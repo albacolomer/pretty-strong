@@ -217,7 +217,6 @@
     "progress": "Progrés",
     "calendar": "Calendari",
     "body": "Cos",
-    "comingSoon": "Aviat.",
     "name": "Nom",
     "city": "Ciutat",
     "cityPlaceholder": "Barcelona",
@@ -655,5 +654,56 @@
     "mixCount_other": "{{count}} aquest mes",
     "mixEmpty": "Encara no hi ha entrenaments aquest mes.",
     "mixItem": "{{name}}: {{count}}"
+  },
+  "body": {
+    "weight": "Pes corporal",
+    "history": "Historial",
+    "noWeight": "Encara no has registrat el pes.",
+    "fewWeights": "Registra el pes uns quants dies per veure com canvia.",
+    "loggedToday": "registrat avui",
+    "loggedOn": "registrat el {{date}}",
+    "change": "{{change}} {{range}}",
+    "range": "Període",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1A"
+    },
+    "rangeIn": {
+      "1m": "en 1 mes",
+      "3m": "en 3 mesos",
+      "6m": "en 6 mesos",
+      "1y": "en 1 any"
+    },
+    "logWeightButton": "+ Registra el pes",
+    "logWeight": "Registra el pes",
+    "weightKg": "Pes (kg)",
+    "save": "Desa",
+    "weightSaved": "Pes desat ✓",
+    "weightDeleted": "Pes esborrat",
+    "deleteWeight": "Esborra aquest pes",
+    "weightOn": "{{weight}}, {{date}}",
+    "chartLabel": "Pes de {{from}} a {{to}} kg.",
+    "measurements": "Mesures",
+    "updated": "Actualitzat el {{date}}",
+    "changeSince": "canvi des del {{date}}",
+    "edit": "Edita",
+    "add": "+ Afegeix",
+    "addMeasurement": "Afegeix una mesura",
+    "measurementName": "Nom",
+    "measurementNamePlaceholder": "Bessó, coll…",
+    "newMeasurement": "Mesura",
+    "valueCm": "{{name}} (cm)",
+    "measurementsSaved": "Mesures desades ✓",
+    "parts": {
+      "waist": "Cintura",
+      "hips": "Malucs",
+      "chest": "Pit",
+      "arm": "Braç",
+      "thigh": "Cuixa"
+    },
+    "saveError": "No s'ha pogut desar. Torna-ho a provar.",
+    "loadError": "No s'ha pogut carregar."
   }
 }

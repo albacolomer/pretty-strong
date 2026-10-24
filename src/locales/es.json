@@ -217,7 +217,6 @@
     "progress": "Progreso",
     "calendar": "Calendario",
     "body": "Cuerpo",
-    "comingSoon": "Pronto.",
     "name": "Nombre",
     "city": "Ciudad",
     "cityPlaceholder": "Barcelona",
@@ -655,5 +654,56 @@
     "mixCount_other": "{{count}} este mes",
     "mixEmpty": "Aún no hay entrenamientos este mes.",
     "mixItem": "{{name}}: {{count}}"
+  },
+  "body": {
+    "weight": "Peso corporal",
+    "history": "Historial",
+    "noWeight": "Aún no has registrado tu peso.",
+    "fewWeights": "Registra tu peso unos días para ver cómo cambia.",
+    "loggedToday": "registrado hoy",
+    "loggedOn": "registrado el {{date}}",
+    "change": "{{change}} {{range}}",
+    "range": "Período",
+    "ranges": {
+      "1m": "1M",
+      "3m": "3M",
+      "6m": "6M",
+      "1y": "1A"
+    },
+    "rangeIn": {
+      "1m": "en 1 mes",
+      "3m": "en 3 meses",
+      "6m": "en 6 meses",
+      "1y": "en 1 año"
+    },
+    "logWeightButton": "+ Registrar el peso",
+    "logWeight": "Registrar el peso",
+    "weightKg": "Peso (kg)",
+    "save": "Guardar",
+    "weightSaved": "Peso guardado ✓",
+    "weightDeleted": "Peso borrado",
+    "deleteWeight": "Borrar este peso",
+    "weightOn": "{{weight}}, {{date}}",
+    "chartLabel": "Peso de {{from}} a {{to}} kg.",
+    "measurements": "Medidas",
+    "updated": "Actualizado el {{date}}",
+    "changeSince": "cambio desde el {{date}}",
+    "edit": "Editar",
+    "add": "+ Añadir",
+    "addMeasurement": "Añadir una medida",
+    "measurementName": "Nombre",
+    "measurementNamePlaceholder": "Gemelo, cuello…",
+    "newMeasurement": "Medida",
+    "valueCm": "{{name}} (cm)",
+    "measurementsSaved": "Medidas guardadas ✓",
+    "parts": {
+      "waist": "Cintura",
+      "hips": "Cadera",
+      "chest": "Pecho",
+      "arm": "Brazo",
+      "thigh": "Muslo"
+    },
+    "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
+    "loadError": "No se ha podido cargar."
   }
 }
