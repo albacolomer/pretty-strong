@@ -45,6 +45,12 @@
           "cameraPermission": "Pretty Strong fa servir la càmera per fer fotos de progrés i la foto del perfil.",
           "microphonePermission": false
         }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Pretty Strong fa servir Face ID per mostrar les fotos de progrés amagades."
+        }
       ]
     ],
     "experiments": {

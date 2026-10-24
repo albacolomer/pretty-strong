@@ -2,18 +2,19 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Button, Text } from '@/components/ui';
 import { fromDateKey } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
 import { defaultComparison } from './photos';
 import { PrivatePhoto } from './PrivatePhoto';
+import { useHiddenPhotos } from './usePhotoLock';
 import { usePhotoUrls, useProgressPhotos } from './usePhotos';
 
 // Body → Fotos de progrés → Compara (US-28): two photos side by side, the
 // oldest and the newest to begin with. Tap a side, then a photo below, to
-// put that one there.
+// put that one there. Hidden photos stay blurred until unlocked.
 export function PhotoCompare() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -23,6 +24,7 @@ export function PhotoCompare() {
   // The two shown, by id; null: the oldest and the newest.
   const [chosen, setChosen] = useState<[string, string] | null>(null);
   const [side, setSide] = useState<0 | 1>(1);
+  const { hidden, unlock } = useHiddenPhotos();
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   const pair = chosen ?? defaultComparison(photos);
@@ -40,6 +42,9 @@ export function PhotoCompare() {
 
   return (
     <View style={styles.page}>
+      {hidden ? (
+        <Button label={t('photos.unlock')} variant="secondary" onPress={() => void unlock()} />
+      ) : null}
       <View style={styles.pair}>
         {shown.map((photo, index) => {
           const date = long.format(fromDateKey(photo.date));
@@ -58,6 +63,7 @@ export function PhotoCompare() {
                 path={photo.storagePath}
                 url={urls[photo.storagePath]}
                 label=""
+                blurred={hidden}
                 style={styles.photo}
               />
               <Text variant="caption" color={side === index ? 'accent' : 'textMuted'} style={styles.date}>
@@ -83,7 +89,13 @@ export function PhotoCompare() {
               pair.includes(photo.id) && { borderColor: colors.accent },
               pressed && styles.pressed,
             ]}>
-            <PrivatePhoto path={photo.storagePath} url={urls[photo.storagePath]} label="" style={styles.thumb} />
+            <PrivatePhoto
+              path={photo.storagePath}
+              url={urls[photo.storagePath]}
+              label=""
+              blurred={hidden}
+              style={styles.thumb}
+            />
             <Text variant="caption" color="textMuted" style={styles.date}>
               {short.format(fromDateKey(photo.date))}
             </Text>

@@ -727,6 +727,12 @@
     "avatar": "Foto del perfil",
     "removeAvatar": "Treu la foto",
     "avatarSaved": "Foto del perfil desada ✓",
-    "saveError": "No s'ha pogut desar la foto. Torna-ho a provar."
+    "saveError": "No s'ha pogut desar la foto. Torna-ho a provar.",
+    "hide": "Amaga les fotos de progrés",
+    "hideHint": "Es veuran borroses fins que les desbloquegis amb Face ID o el codi de l'iPhone, com l'àlbum Ocult. Es tornen a amagar quan surts de l'app.",
+    "unlock": "Desbloqueja",
+    "unlockPrompt": "Desbloqueja les fotos de progrés",
+    "hiddenOn": "Foto amagada del {{date}}",
+    "needsPasscode": "Per amagar-les, primer posa un codi a l'iPhone (Configuració → Face ID i codi)."
   }
 }

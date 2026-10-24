@@ -21,6 +21,7 @@ const savedProfile = (language: Profile['language']): Profile => ({
   focus: null,
   weekly_goal: null,
   avatar_path: null,
+  hide_progress_photos: false,
 });
 
 beforeEach(() => {

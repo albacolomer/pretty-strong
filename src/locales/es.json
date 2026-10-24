@@ -727,6 +727,12 @@
     "avatar": "Foto de perfil",
     "removeAvatar": "Quitar la foto",
     "avatarSaved": "Foto de perfil guardada ✓",
-    "saveError": "No se ha podido guardar la foto. Vuelve a intentarlo."
+    "saveError": "No se ha podido guardar la foto. Vuelve a intentarlo.",
+    "hide": "Ocultar las fotos de progreso",
+    "hideHint": "Se verán borrosas hasta que las desbloquees con Face ID o el código del iPhone, como el álbum Oculto. Se vuelven a ocultar cuando sales de la app.",
+    "unlock": "Desbloquear",
+    "unlockPrompt": "Desbloquear las fotos de progreso",
+    "hiddenOn": "Foto oculta del {{date}}",
+    "needsPasscode": "Para ocultarlas, primero pon un código en el iPhone (Ajustes → Face ID y código)."
   }
 }

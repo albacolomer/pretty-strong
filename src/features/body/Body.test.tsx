@@ -2,8 +2,10 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { launchImageLibraryAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
+import { authenticateAsync } from 'expo-local-authentication';
 import { ActionSheetIOS } from 'react-native';
 
+import { fetchProfile, type Profile } from '@/features/profile/api';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import {
@@ -15,6 +17,7 @@ import {
 } from './api';
 import { BodyTab } from './BodyTab';
 import { PhotoCompare } from './PhotoCompare';
+import { lockPhotos } from './usePhotoLock';
 import { addProgressPhoto, deleteProgressPhoto, fetchProgressPhotos } from './photosApi';
 import { WeightHistory } from './WeightHistory';
 
@@ -38,6 +41,12 @@ jest.mock('./photosApi', () => ({
   deleteProgressPhoto: jest.fn(() => Promise.resolve()),
   setAvatar: jest.fn(() => Promise.resolve()),
 }));
+jest.mock('@/features/profile/api', () => ({ fetchProfile: jest.fn() }));
+jest.mock('expo-local-authentication', () => ({
+  authenticateAsync: jest.fn(() => Promise.resolve({ success: true })),
+  getEnrolledLevelAsync: jest.fn(() => Promise.resolve(1)),
+  SecurityLevel: { NONE: 0 },
+}));
 jest.mock('expo-image-picker', () => ({
   requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
   launchCameraAsync: jest.fn(),
@@ -47,6 +56,8 @@ jest.mock('expo-image-picker', () => ({
 jest.mock('@/features/schedule/useToday', () => ({ useToday: () => new Date(2026, 9, 24) }));
 
 beforeEach(() => {
+  jest.mocked(fetchProfile).mockResolvedValue({ hide_progress_photos: false } as Profile);
+  lockPhotos();
   jest.mocked(fetchWeights).mockResolvedValue([
     { id: 'w-3', date: '2026-10-24', weightKg: 61.4 },
     { id: 'w-2', date: '2026-10-10', weightKg: 61.8 },
@@ -207,6 +218,36 @@ describe('Body (US-28)', () => {
 
       expect(actionSheet.mock.lastCall?.[0].title).toBe('Esborrar aquesta foto? No es podrà recuperar.');
       await waitFor(() => expect(deleteProgressPhoto).toHaveBeenCalledWith(photos[1]));
+    });
+
+    test('hidden: blurred until Face ID unlocks them; a failed try leaves them hidden', async () => {
+      const user = userEvent.setup();
+      jest.mocked(fetchProfile).mockResolvedValue({ hide_progress_photos: true } as Profile);
+      jest.mocked(authenticateAsync).mockResolvedValueOnce({ success: false, error: 'user_cancel' });
+      await render(<BodyTab />, { wrapper: createAppWrapper() });
+
+      const hidden = await screen.findByRole('button', { name: 'Foto amagada del Divendres, 2 d’octubre' });
+      await user.press(hidden);
+      expect(authenticateAsync).toHaveBeenLastCalledWith({
+        promptMessage: 'Desbloqueja les fotos de progrés',
+        cancelLabel: 'Cancel·la',
+      });
+      expect(screen.queryByRole('header', { name: 'Divendres, 2 d’octubre' })).not.toBeOnTheScreen();
+
+      // Face ID this time: the photo opens, and they all show.
+      await user.press(hidden);
+      expect(await screen.findByRole('header', { name: 'Divendres, 2 d’octubre' })).toBeOnTheScreen();
+      expect(screen.getByRole('button', { name: 'Foto del Divendres, 2 d’octubre' })).toBeOnTheScreen();
+    });
+
+    test('hidden: Desbloqueja shows them all at once', async () => {
+      const user = userEvent.setup();
+      jest.mocked(fetchProfile).mockResolvedValue({ hide_progress_photos: true } as Profile);
+      await render(<BodyTab />, { wrapper: createAppWrapper() });
+
+      await user.press(await screen.findByRole('button', { name: 'Desbloqueja' }));
+      expect(await screen.findByRole('button', { name: 'Foto del Dimecres, 2 de setembre' })).toBeOnTheScreen();
+      expect(screen.queryByRole('button', { name: 'Desbloqueja' })).not.toBeOnTheScreen();
     });
 
     test('Compara: the oldest and the newest; tap a side, then a photo', async () => {

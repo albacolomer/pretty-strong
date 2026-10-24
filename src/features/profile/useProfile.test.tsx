@@ -21,6 +21,7 @@ const profile: Profile = {
   focus: null,
   weekly_goal: null,
   avatar_path: null,
+  hide_progress_photos: false,
 };
 
 function signedInAs(userId: string | null) {

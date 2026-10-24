@@ -39,3 +39,15 @@ export async function updateProfileDetails(
   if (error) throw error;
   return data;
 }
+
+// "Amaga les fotos de progrés".
+export async function updateHidePhotos(userId: string, hide: boolean): Promise<Profile> {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ hide_progress_photos: hide })
+    .eq('id', userId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}

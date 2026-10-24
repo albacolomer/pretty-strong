@@ -727,6 +727,12 @@
     "avatar": "Profile picture",
     "removeAvatar": "Remove picture",
     "avatarSaved": "Profile picture saved ✓",
-    "saveError": "Couldn't save the photo. Try again."
+    "saveError": "Couldn't save the photo. Try again.",
+    "hide": "Hide progress photos",
+    "hideHint": "They show blurred until you unlock them with Face ID or your iPhone passcode, like the Hidden album. They hide again when you leave the app.",
+    "unlock": "Unlock",
+    "unlockPrompt": "Unlock your progress photos",
+    "hiddenOn": "Hidden photo from {{date}}",
+    "needsPasscode": "To hide them, first set a passcode on your iPhone (Settings → Face ID & Passcode)."
   }
 }

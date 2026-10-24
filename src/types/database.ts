@@ -148,6 +148,7 @@ export type Database = {
           created_at: string
           display_name: string | null
           focus: string | null
+          hide_progress_photos: boolean
           id: string
           language: string
           username: string
@@ -159,6 +160,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           focus?: string | null
+          hide_progress_photos?: boolean
           id: string
           language?: string
           username: string
@@ -170,6 +172,7 @@ export type Database = {
           created_at?: string
           display_name?: string | null
           focus?: string | null
+          hide_progress_photos?: boolean
           id?: string
           language?: string
           username?: string

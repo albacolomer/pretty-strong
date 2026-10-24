@@ -14,6 +14,7 @@ import { radius, spacing, touch, useTheme } from '@/theme';
 import type { ProgressPhoto } from './photos';
 import { PrivatePhoto } from './PrivatePhoto';
 import { useAddProgressPhoto, useDeleteProgressPhoto, usePhotoUrls, useProgressPhotos } from './usePhotos';
+import { useHiddenPhotos } from './usePhotoLock';
 import { usePickPhoto } from './usePickPhoto';
 
 const THUMB_WIDTH = 100;
@@ -21,7 +22,8 @@ const THUMB_HEIGHT = 132;
 
 // Body → Fotos de progrés (US-28): add one from the camera or the
 // library (dated the day it was taken), newest first; tap one to see it
-// big. "Compara" puts two side by side.
+// big. "Compara" puts two side by side. Hidden ones (see useHiddenPhotos)
+// show blurred until unlocked.
 export function ProgressPhotos() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -32,6 +34,7 @@ export function ProgressPhotos() {
   const add = useAddProgressPhoto();
   const pickPhoto = usePickPhoto();
   const [open, setOpen] = useState<ProgressPhoto | null>(null);
+  const { hidden, unlock } = useHiddenPhotos();
   const short = (date: string) =>
     new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' }).format(fromDateKey(date));
 
@@ -49,6 +52,17 @@ export function ProgressPhotos() {
         <Text variant="cardTitle" accessibilityRole="header" style={styles.grow}>
           {t('photos.title')}
         </Text>
+        {hidden && photos.length > 0 ? (
+          <Pressable
+            role="button"
+            onPress={() => void unlock()}
+            hitSlop={8}
+            style={({ pressed }) => [styles.link, pressed && styles.pressed]}>
+            <Text variant="bodyStrong" color="accent">
+              {t('photos.unlock')}
+            </Text>
+          </Pressable>
+        ) : null}
         {photos.length >= 2 ? (
           <Pressable
             role="button"
@@ -88,13 +102,18 @@ export function ProgressPhotos() {
           <Pressable
             key={photo.id}
             role="button"
-            aria-label={t('photos.photoOn', { date: formatDayTitle(fromDateKey(photo.date), language) })}
-            onPress={() => setOpen(photo)}
+            aria-label={t(hidden ? 'photos.hiddenOn' : 'photos.photoOn', {
+              date: formatDayTitle(fromDateKey(photo.date), language),
+            })}
+            onPress={async () => {
+              if (await unlock()) setOpen(photo);
+            }}
             style={({ pressed }) => pressed && styles.pressed}>
             <PrivatePhoto
               path={photo.storagePath}
               url={urls[photo.storagePath]}
               label=""
+              blurred={hidden}
               style={styles.thumb}
             />
             <View style={[styles.dateTag, { backgroundColor: colors.surface }]}>
@@ -104,7 +123,12 @@ export function ProgressPhotos() {
         ))}
       </ScrollView>
 
-      <PhotoViewer photo={open} url={open ? urls[open.storagePath] : undefined} onClose={() => setOpen(null)} />
+      <PhotoViewer
+        photo={open}
+        url={open ? urls[open.storagePath] : undefined}
+        blurred={hidden}
+        onClose={() => setOpen(null)}
+      />
     </Card>
   );
 }
@@ -114,10 +138,13 @@ export function ProgressPhotos() {
 function PhotoViewer({
   photo,
   url,
+  blurred,
   onClose,
 }: {
   photo: ProgressPhoto | null;
   url: string | undefined;
+  // Hidden again, say if the app went to the background meanwhile.
+  blurred: boolean;
   onClose: () => void;
 }) {
   const { t } = useTranslation();
@@ -156,6 +183,7 @@ function PhotoViewer({
               url={url}
               label={t('photos.photoOn', { date: formatDayTitle(fromDateKey(photo.date), language) })}
               fit="contain"
+              blurred={blurred}
               style={styles.big}
             />
             <View style={styles.viewerButtons}>
