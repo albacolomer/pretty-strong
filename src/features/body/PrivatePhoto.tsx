@@ -1,19 +1,19 @@
+import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/theme';
 
-// A hidden photo is drawn this many times smaller, then scaled back up:
-// only soft colour is left, however big the photo is. (Blurring alone
-// works on the photo's own pixels, so a large one stayed recognisable.)
-const HIDDEN_SHRINK = 24;
-const HIDDEN_BLUR = 8;
+// A hidden photo: softened itself, then under iOS's frosted glass at full
+// strength. The glass blurs what's on screen, so it's as strong on a big
+// photo as on a thumbnail (blurring the photo alone wasn't).
+const HIDDEN_PHOTO_BLUR = 40;
+const HIDDEN_GLASS = 100;
 
 // A picture from the private bucket, through its signed link. Cached by
 // its path, so a new link (they run out) doesn't download it again. A
-// hidden one shows as a heavy blur, with a lock.
+// hidden one shows frosted over, with a lock.
 export function PrivatePhoto({
   path,
   url,
@@ -31,44 +31,27 @@ export function PrivatePhoto({
   style: StyleProp<ViewStyle>;
 }) {
   const { colors } = useTheme();
-  // The frame's size, to draw a hidden photo small inside it.
-  const [frame, setFrame] = useState<{ width: number; height: number } | null>(null);
 
   return (
-    <View
-      onLayout={(event) => setFrame(event.nativeEvent.layout)}
-      style={[styles.frame, { backgroundColor: colors.surfaceRaised }, style]}>
-      {url && !blurred ? (
+    <View style={[styles.frame, { backgroundColor: colors.surfaceRaised }, style]}>
+      {url ? (
         <Image
           source={{ uri: url, cacheKey: path }}
-          accessibilityLabel={label}
+          accessibilityLabel={blurred ? undefined : label}
           contentFit={fit}
           cachePolicy="memory-disk"
+          blurRadius={blurred ? HIDDEN_PHOTO_BLUR : 0}
           transition={150}
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      {url && blurred && frame ? (
-        <Image
-          source={{ uri: url, cacheKey: path }}
-          contentFit={fit}
-          cachePolicy="memory-disk"
-          blurRadius={HIDDEN_BLUR}
-          style={{
-            position: 'absolute',
-            width: frame.width / HIDDEN_SHRINK,
-            height: frame.height / HIDDEN_SHRINK,
-            // Centred, then scaled up from its centre to fill the frame.
-            left: (frame.width - frame.width / HIDDEN_SHRINK) / 2,
-            top: (frame.height - frame.height / HIDDEN_SHRINK) / 2,
-            transform: [{ scale: HIDDEN_SHRINK }],
-          }}
-        />
-      ) : null}
       {blurred ? (
-        <View style={styles.lock} aria-hidden>
-          <SymbolView name="lock.fill" size={22} tintColor={colors.text} />
-        </View>
+        <>
+          <BlurView intensity={HIDDEN_GLASS} tint="systemThickMaterial" style={StyleSheet.absoluteFill} />
+          <View style={styles.lock} aria-hidden>
+            <SymbolView name="lock.fill" size={22} tintColor={colors.text} />
+          </View>
+        </>
       ) : null}
     </View>
   );
