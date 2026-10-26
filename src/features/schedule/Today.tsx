@@ -4,10 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text, useToast } from '@/components/ui';
+import { Card, Text, useToast } from '@/components/ui';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
-import { usesExercises, WEEKDAYS, type Routine, type Weekday } from '@/features/routines/routine';
+import { SmallAvatar } from '@/features/profile/SmallAvatar';
+import { useWeeklyGoal } from '@/features/profile/useWeeklyGoal';
+import {
+  formatDuration,
+  routineDuration,
+  usesExercises,
+  WEEKDAYS,
+  type Routine,
+} from '@/features/routines/routine';
+import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { useRoutines } from '@/features/routines/useRoutines';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { QuickLogSheet, type QuickLog } from '@/features/workout/QuickLogSheet';
@@ -24,38 +33,39 @@ import { useAppLanguage } from '@/lib/i18n';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { spacing, useTheme } from '@/theme';
 
+import { AlsoToday, type AlsoTodayItem } from './AlsoToday';
 import { addDays, dateKey, formatDayTitle, startOfWeek, weekdayOf } from './dates';
-import type { WeeklySport } from './sports';
-import { TodayRoutineCard } from './TodayRoutineCard';
-import { TodaySportCard } from './TodaySportCard';
+import { LogSportSheet, type LoggedSport } from './LogSportSheet';
+import { RoutinePreviewSheet } from './RoutinePreviewSheet';
+import { SPORT_ICONS, type WeeklySport } from './sports';
+import { TodayHero, type HeroAction } from './TodayHero';
 import { useActivityName } from './useActivityName';
 import { useSwaps } from './useSwaps';
 import { useToday } from './useToday';
 import { useWeeklySports } from './useWeeklySports';
-import { activitiesOnDay } from './week';
-import { WeekStrip, type DayState } from './WeekStrip';
+import { activitiesOnDay, type DayActivity } from './week';
 
-// The Today tab (US-11, US-12, US-20): the date, the week strip, and the
-// plan for today, or for the day picked in the strip: one card per routine
-// (start, mark done, swap or skip) or sport (mark done or skip), in the
-// week's order; or rest.
+type Action = { label: string; run: () => void };
+
+// The Avui tab (US-11, US-12, US-20): the date and your picture, then the
+// day's main activity in a big button inside the week's ring (Comença, or
+// Fet for a class or a sport), with Previsualitza / Canvia / Salta; under
+// it, "També avui" with the day's other activities and a + to log more.
 export function Today() {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
   const language = useAppLanguage();
   const showToast = useToast();
+  const nameOf = useActivityName();
   const today = useToday();
-  const todayWeekday = weekdayOf(today);
-  // A day picked in the strip; null shows today. A weekday rather than a
-  // date, so it stays in the current week when the date changes.
-  const [picked, setPicked] = useState<Weekday | null>(null);
-  const selected = picked ?? todayWeekday;
+  const weekday = weekdayOf(today);
+  const day = dateKey(today);
   const weekStart = startOfWeek(today);
   const from = dateKey(weekStart);
   const to = dateKey(addDays(weekStart, 6));
   const { data: routines, isPending, isError } = useRoutines();
   const { data: sports = [] } = useWeeklySports();
-  const nameOf = useActivityName();
+  const goal = useWeeklyGoal();
   const { data: savedSessions = [] } = useWeekSessions(from, to);
   const active = useWorkoutStore((state) => state.active);
   const pending = useWorkoutStore((state) => state.pending);
@@ -85,10 +95,22 @@ export function Today() {
   const { swaps, setSwap } = useSwaps(from);
   // Your own default rest per exercise, fixed into the workout when it starts.
   const { data: settings } = useExerciseSettings();
+  // What the "Fet" sheet is open for: a routine (as shown) or a sport.
+  const [logging, setLogging] = useState<
+    | { kind: 'routine'; planned: Routine; shown: Routine }
+    | { kind: 'sport'; sport: WeeklySport }
+    | null
+  >(null);
+  const [previewing, setPreviewing] = useState<{ routine: Routine; planned: Routine } | null>(
+    null,
+  );
+  // The "Registra un esport" sheet, and a count that gives each opening a
+  // fresh start.
+  const [loggingSport, setLoggingSport] = useState({ visible: false, opened: 0 });
 
   // Copies the routine into a new workout and opens it. Only one at a time:
   // with another one going, it offers to go back to that one instead.
-  function start(routine: Routine, plannedRoutineId: string | null, date: string) {
+  function start(routine: Routine, plannedRoutineId: string | null) {
     if (active) {
       showToast({
         message: t('workout.alreadyActive'),
@@ -100,9 +122,9 @@ export function Today() {
     void ensureNotificationPermission();
     startWorkout(
       workoutFromRoutine(routine, {
-        date,
+        date: day,
         plannedRoutineId,
-        changeReason: plannedRoutineId ? (swaps[date]?.[plannedRoutineId]?.reason ?? null) : null,
+        changeReason: plannedRoutineId ? (swaps[day]?.[plannedRoutineId]?.reason ?? null) : null,
         startedAt: new Date().toISOString(),
         newId: randomUUID,
         defaultRestS: (exerciseId) => settings?.[exerciseId]?.defaultRestS ?? APP_DEFAULT_REST_S,
@@ -111,8 +133,8 @@ export function Today() {
     router.push('/workout');
   }
 
-  // A routine just created from "Fes una altra rutina" (routines/new sends
-  // its id back): start it as soon as it's in the list.
+  // A routine just created from "+" → "Crea una rutina nova" (routines/new
+  // sends its id back): start it as soon as it's in the list.
   const { start: createdRoutineId } = useLocalSearchParams<{ start?: string }>();
   // Started once, even if the screen redraws before the link is cleared.
   const startedCreated = useRef<string | null>(null);
@@ -121,59 +143,99 @@ export function Today() {
     if (!created || startedCreated.current === created.id) return;
     startedCreated.current = created.id;
     router.setParams({ start: undefined });
-    start(created, null, dateKey(today));
+    start(created, null);
   });
-  // What the "Fet" sheet is open for: a routine (as shown) or a sport.
-  const [logging, setLogging] = useState<
-    { kind: 'routine'; planned: Routine; shown: Routine } | { kind: 'sport'; sport: WeeklySport } | null
-  >(null);
 
-  if (isPending) return <ActivityIndicator color={colors.accent} />;
+  const header = (
+    <View style={styles.header}>
+      <View style={styles.headerText}>
+        <Text variant="bodyStrong" color="textMuted">
+          {formatDayTitle(today, language)}
+        </Text>
+        <Text variant="title" accessibilityRole="header">
+          {t('tabs.today')}
+        </Text>
+      </View>
+      <SmallAvatar label={t('tabs.profile')} onPress={() => router.navigate('/profile')} />
+    </View>
+  );
+
+  if (isPending) {
+    return (
+      <View style={styles.today}>
+        {header}
+        <ActivityIndicator color={colors.accent} />
+      </View>
+    );
+  }
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
 
   // Loaded by now; named again because TypeScript forgets that inside the
   // functions below.
   const allRoutines = routines;
-  const day = dateKey(addDays(weekStart, selected - 1));
-  const planned = activitiesOnDay(routines, sports, selected);
+  const planned = activitiesOnDay(routines, sports, weekday);
   const weekIsEmpty = WEEKDAYS.every(
-    (weekday) => activitiesOnDay(routines, sports, weekday).length === 0,
+    (other) => activitiesOnDay(routines, sports, other).length === 0,
   );
-  const showingToday = selected === todayWeekday;
-  // Today and earlier days of the week can be logged; days ahead can't yet.
-  const canLog = selected <= todayWeekday;
+  const doneThisWeek = sessions.filter((session) => session.status === 'completed').length;
 
-  // A planned routine's session that day, the latest if there are several.
-  function sessionFor(routine: Routine): WorkoutSession | undefined {
+  // A planned activity's session today, the latest if there are several.
+  function sessionOf(activity: DayActivity): WorkoutSession | undefined {
     return sessions
-      .filter((session) => session.date === day && session.plannedRoutineId === routine.id)
+      .filter(
+        (session) =>
+          session.date === day &&
+          (activity.kind === 'routine'
+            ? session.plannedRoutineId === activity.routine.id
+            : session.plannedSportId === activity.sport.id),
+      )
       .at(-1);
   }
 
-  // A planned sport's session that day, the latest if there are several.
-  function sessionForSport(sport: WeeklySport): WorkoutSession | undefined {
-    return sessions
-      .filter((session) => session.date === day && session.plannedSportId === sport.id)
-      .at(-1);
-  }
-
-  // What the card shows: what was done, else the swap, else the plan.
+  // What a routine shows: what was done, else the swap, else the plan.
   function shownFor(routine: Routine, session: WorkoutSession | undefined): Routine {
     const id = session?.routineId ?? swaps[day]?.[routine.id]?.routineId;
     return allRoutines.find((other) => other.id === id) ?? routine;
   }
 
-  function dayInfo(weekday: Weekday): { state: DayState; planned: number } {
-    const key = dateKey(addDays(weekStart, weekday - 1));
-    const daySessions = sessions.filter((session) => session.date === key);
-    const count = activitiesOnDay(allRoutines, sports, weekday).length;
-    if (daySessions.some((session) => session.status === 'completed')) {
-      return { state: 'done', planned: count };
+  // The main one: the first routine to start still to do, else any routine
+  // or sport still to do, else (all logged) the first of the day.
+  const open = planned.filter((activity) => !sessionOf(activity));
+  const main =
+    open.find(
+      (activity) => activity.kind === 'routine' && usesExercises(activity.routine.label),
+    ) ??
+    open.find((activity) => activity.kind === 'routine') ??
+    open[0] ??
+    planned.find((activity) => activity.kind === 'routine') ??
+    planned[0] ??
+    null;
+  const others = planned.filter((activity) => activity !== main);
+
+  // "Esquena i bíceps · 7 exercicis · ~1 h 30 min", or "19:00 · 1 h".
+  function detailsOf(activity: DayActivity, shown?: Routine): string {
+    if (activity.kind === 'sport') {
+      return [
+        activity.sport.startTime,
+        activity.sport.durationS ? formatDuration(activity.sport.durationS) : null,
+      ]
+        .filter(Boolean)
+        .join(' · ');
     }
-    if (daySessions.some((session) => session.status === 'skipped')) {
-      return { state: 'skipped', planned: count };
-    }
-    return { state: count > 0 ? 'planned' : 'rest', planned: count };
+    const routine = shown ?? activity.routine;
+    const duration = routineDuration(routine, APP_DEFAULT_REST_S);
+    const count = routine.exercises.length;
+    return [
+      routine.description,
+      usesExercises(routine.label) && count > 0
+        ? routine.label === 'run'
+          ? t('routines.blockCount', { count })
+          : t('routines.exerciseCount', { count })
+        : null,
+      duration ? `${duration.estimated ? '~' : ''}${formatDuration(duration.seconds)}` : null,
+    ]
+      .filter(Boolean)
+      .join(' · ');
   }
 
   // The native list of reasons, optional: "Sense motiu" logs without one.
@@ -196,6 +258,18 @@ export function Today() {
     );
   }
 
+  function sheet(title: string, actions: Action[]) {
+    ActionSheetIOS.showActionSheetWithOptions(
+      {
+        title,
+        options: [...actions.map((action) => action.label), t('common.cancel')],
+        cancelButtonIndex: actions.length,
+        userInterfaceStyle: scheme,
+      },
+      (index) => actions[index]?.run(),
+    );
+  }
+
   function log(session: WorkoutSession, message: string) {
     logSession.mutate(session);
     showToast({
@@ -204,48 +278,41 @@ export function Today() {
     });
   }
 
-  function skip(routine: Routine) {
+  const noSport = { plannedSportId: null, sport: null, sportName: null };
+
+  function skip(activity: DayActivity) {
     askReason(t('today.skipReasonTitle'), (reason) =>
       log(
         {
           id: randomUUID(),
           date: day,
-          plannedRoutineId: routine.id,
+          plannedRoutineId: activity.kind === 'routine' ? activity.routine.id : null,
           routineId: null,
           status: 'skipped',
           logMode: 'quick',
           durationS: null,
           notes: null,
           changeReason: reason,
-          plannedSportId: null,
-          sport: null,
-          sportName: null,
+          ...(activity.kind === 'sport'
+            ? {
+                plannedSportId: activity.sport.id,
+                sport: activity.sport.sport,
+                sportName: activity.sport.customName,
+              }
+            : noSport),
         },
-        t('today.skipped', { name: routine.name }),
+        t('today.skipped', { name: nameOf(activity) }),
       ),
     );
   }
 
-  function skipSport(sport: WeeklySport) {
-    askReason(t('today.skipReasonTitle'), (reason) =>
-      log(
-        {
-          id: randomUUID(),
-          date: day,
-          plannedRoutineId: null,
-          routineId: null,
-          status: 'skipped',
-          logMode: 'quick',
-          durationS: null,
-          notes: null,
-          changeReason: reason,
-          plannedSportId: sport.id,
-          sport: sport.sport,
-          sportName: sport.customName,
-        },
-        t('today.skipped', { name: nameOf({ kind: 'sport', sport }) }),
-      ),
-    );
+  function markDone(activity: DayActivity) {
+    if (activity.kind === 'sport') {
+      setLogging({ kind: 'sport', sport: activity.sport });
+      return;
+    }
+    const shown = shownFor(activity.routine, undefined);
+    setLogging({ kind: 'routine', planned: activity.routine, shown });
   }
 
   function saveDone({ durationS, notes }: QuickLog) {
@@ -284,126 +351,265 @@ export function Today() {
         durationS,
         notes,
         changeReason: swaps[day]?.[routine.id]?.reason ?? null,
-        plannedSportId: null,
-        sport: null,
-        sportName: null,
+        ...noSport,
       },
       t('today.logged', { name: shown.name }),
     );
   }
 
-  // A logged sport's ⋯: "Desfés".
-  function openSportMenu(sport: WeeklySport, session: WorkoutSession) {
-    ActionSheetIOS.showActionSheetWithOptions(
+  // A sport done today that wasn't planned (from +).
+  function saveSport({ sport, customName, durationS }: LoggedSport) {
+    log(
       {
-        title: nameOf({ kind: 'sport', sport }),
-        options: [t('common.undo'), t('common.cancel')],
-        cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
+        id: randomUUID(),
+        date: day,
+        plannedRoutineId: null,
+        routineId: null,
+        status: 'completed',
+        logMode: 'quick',
+        durationS,
+        notes: null,
+        changeReason: null,
+        plannedSportId: null,
+        sport,
+        sportName: customName,
       },
-      (index) => {
-        if (index === 0) deleteSession.mutate(session);
-      },
+      t('today.logged', { name: nameOf({ kind: 'sport', sport: { sport, customName } }) }),
     );
   }
 
-  // Another routine instead of the planned one, for this day only.
+  // Another routine instead of the planned one, for today only.
   function swap(routine: Routine, shown: Routine) {
-    const others = allRoutines.filter((other) => other.id !== shown.id);
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: t('today.swapTitle', { name: routine.name }),
-        options: [...others.map((other) => other.name), t('common.cancel')],
-        cancelButtonIndex: others.length,
-        userInterfaceStyle: scheme,
-      },
-      (index) => {
-        const chosen = others[index];
-        if (!chosen) return;
-        // Back to the plan: nothing to explain.
-        if (chosen.id === routine.id) {
-          setSwap(day, routine.id, null);
-          return;
-        }
-        askReason(t('today.swapReasonTitle'), (reason) =>
-          setSwap(day, routine.id, { routineId: chosen.id, reason }),
-        );
-      },
+    const choices = allRoutines.filter((other) => other.id !== shown.id);
+    sheet(
+      t('today.swapTitle', { name: routine.name }),
+      choices.map((chosen) => ({
+        label: chosen.name,
+        run: () => {
+          // Back to the plan: nothing to explain.
+          if (chosen.id === routine.id) {
+            setSwap(day, routine.id, null);
+            return;
+          }
+          askReason(t('today.swapReasonTitle'), (reason) =>
+            setSwap(day, routine.id, { routineId: chosen.id, reason }),
+          );
+        },
+      })),
     );
   }
 
-  // "Fes una altra rutina": any routine, unplanned, today; or a new one,
-  // made in the routine editor and started once it's saved.
-  function startAnother() {
+  // "+": any routine, unplanned (or a new one, started once it's saved),
+  // or a sport done today.
+  function addActivity() {
     const startable = allRoutines.filter((routine) => usesExercises(routine.label));
-    ActionSheetIOS.showActionSheetWithOptions(
+    sheet(t('today.addActivity'), [
+      ...startable.map((routine) => ({ label: routine.name, run: () => start(routine, null) })),
       {
-        title: t('workout.otherRoutineTitle'),
-        options: [
-          ...startable.map((routine) => routine.name),
-          t('workout.newRoutine'),
-          t('common.cancel'),
-        ],
-        cancelButtonIndex: startable.length + 1,
-        userInterfaceStyle: scheme,
+        label: t('workout.newRoutine'),
+        run: () => router.push({ pathname: '/plan/routines/new', params: { start: '1' } }),
       },
-      (index) => {
-        const routine = startable[index];
-        if (routine) start(routine, null, day);
-        else if (index === startable.length) {
-          router.push({ pathname: '/plan/routines/new', params: { start: '1' } });
-        }
+      {
+        label: t('today.logSport'),
+        run: () => setLoggingSport((current) => ({ visible: true, opened: current.opened + 1 })),
       },
+    ]);
+  }
+
+  // A logged activity's ⋯: "Desfés".
+  function undoMenu(activity: DayActivity, session: WorkoutSession) {
+    sheet(nameOf(activity), [
+      { label: t('common.undo'), run: () => deleteSession.mutate(session) },
+    ]);
+  }
+
+  // Is this routine the workout going now?
+  function isActive(routine: Routine, shown: Routine) {
+    return (
+      active?.date === day &&
+      active.plannedRoutineId === routine.id &&
+      active.routineId === shown.id
     );
   }
 
-  // ⋯: "Desfés" once logged; "Torna a «…»" while swapped.
-  function openMenu(routine: Routine, shown: Routine, session: WorkoutSession | undefined) {
-    const actions = session
-      ? [{ label: t('common.undo'), run: () => deleteSession.mutate(session) }]
+  function statusText(session: WorkoutSession): string {
+    const parts =
+      session.status === 'completed'
+        ? [t('today.statusDone'), session.durationS ? formatDuration(session.durationS) : null]
+        : [
+            t('today.statusSkipped'),
+            session.changeReason ? t(`workout.reasons.${session.changeReason}`) : null,
+          ];
+    return parts.filter(Boolean).join(' · ');
+  }
+
+  function renderHero(activity: DayActivity) {
+    const session = sessionOf(activity);
+    const segments = Math.max(goal ?? 0, doneThisWeek, 1);
+    const progress =
+      goal === null
+        ? t('today.weekDone', { count: doneThisWeek })
+        : t('today.weekProgress', { done: doneThisWeek, count: goal });
+    const status = session
+      ? {
+          label: t('today.optionsFor', { name: nameOf(activity) }),
+          text: statusText(session),
+          skipped: session.status === 'skipped',
+          onPress: () => undoMenu(activity, session),
+        }
+      : null;
+    const ring = { segments, done: doneThisWeek, progress, status };
+
+    if (activity.kind === 'sport') {
+      const name = nameOf(activity);
+      return (
+        <TodayHero
+          {...ring}
+          name={name}
+          insteadOf={null}
+          details={detailsOf(activity)}
+          main={
+            session
+              ? null
+              : {
+                  label: t('today.done'),
+                  aria: t('today.doneFor', { name }),
+                  icon: 'checkmark',
+                  onPress: () => markDone(activity),
+                }
+          }
+          actions={
+            session
+              ? []
+              : [
+                  {
+                    label: t('today.skip'),
+                    aria: t('today.skipFor', { name }),
+                    icon: 'forward.end',
+                    onPress: () => skip(activity),
+                  },
+                ]
+          }
+        />
+      );
+    }
+
+    const { routine } = activity;
+    const shown = shownFor(routine, session);
+    const startable = usesExercises(shown.label);
+    const going = isActive(routine, shown);
+    const actions: HeroAction[] = session
+      ? []
       : [
+          ...(startable && shown.exercises.length > 0
+            ? [
+                {
+                  label: t('today.preview'),
+                  aria: t('today.previewFor', { name: shown.name }),
+                  icon: 'list.bullet' as const,
+                  onPress: () => setPreviewing({ routine: shown, planned: routine }),
+                },
+              ]
+            : []),
           {
-            label: t('today.backToPlanned', { name: routine.name }),
-            run: () => setSwap(day, routine.id, null),
+            label: t('today.swap'),
+            aria: t('today.swapFor', { name: shown.name }),
+            icon: 'arrow.left.arrow.right',
+            onPress: () => swap(routine, shown),
+          },
+          {
+            label: t('today.skip'),
+            aria: t('today.skipFor', { name: shown.name }),
+            icon: 'forward.end',
+            onPress: () => skip(activity),
           },
         ];
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        title: shown.name,
-        options: [...actions.map((action) => action.label), t('common.cancel')],
-        cancelButtonIndex: actions.length,
-        userInterfaceStyle: scheme,
-      },
-      (index) => actions[index]?.run(),
+    return (
+      <TodayHero
+        {...ring}
+        name={shown.name}
+        insteadOf={shown.id !== routine.id ? t('today.insteadOf', { name: routine.name }) : null}
+        details={detailsOf(activity, shown)}
+        main={
+          session
+            ? null
+            : startable
+              ? {
+                  label: going ? t('workout.resume') : t('workout.start'),
+                  aria: t('workout.startFor', { name: shown.name }),
+                  icon: 'play.fill',
+                  onPress: () => (going ? router.push('/workout') : start(shown, routine.id)),
+                }
+              : {
+                  // A class: marked done, not started.
+                  label: t('today.done'),
+                  aria: t('today.doneFor', { name: shown.name }),
+                  icon: 'checkmark',
+                  onPress: () => markDone(activity),
+                }
+        }
+        actions={actions}
+      />
     );
   }
+
+  const alsoToday: AlsoTodayItem[] = others.map((activity) => {
+    const session = sessionOf(activity);
+    const state = !session ? 'open' : session.status === 'skipped' ? 'skipped' : 'done';
+    const check = () => (session ? undoMenu(activity, session) : markDone(activity));
+    if (activity.kind === 'sport') {
+      const name = nameOf(activity);
+      return {
+        key: activity.key,
+        icon: SPORT_ICONS[activity.sport.sport],
+        name,
+        details: session ? statusText(session) : detailsOf(activity),
+        state,
+        onCheck: check,
+        onPress: () =>
+          session
+            ? undoMenu(activity, session)
+            : sheet(name, [{ label: t('today.skip'), run: () => skip(activity) }]),
+      };
+    }
+    const { routine } = activity;
+    const shown = shownFor(routine, session);
+    const going = isActive(routine, shown);
+    return {
+      key: activity.key,
+      icon: ROUTINE_ICONS[shown.label],
+      name: shown.name,
+      details: session ? statusText(session) : detailsOf(activity, shown),
+      state,
+      onCheck: check,
+      onPress: () =>
+        session
+          ? undoMenu(activity, session)
+          : sheet(shown.name, [
+              ...(usesExercises(shown.label)
+                ? [
+                    {
+                      label: going ? t('workout.resume') : t('workout.start'),
+                      run: () => (going ? router.push('/workout') : start(shown, routine.id)),
+                    },
+                    {
+                      label: t('today.preview'),
+                      run: () => setPreviewing({ routine: shown, planned: routine }),
+                    },
+                  ]
+                : []),
+              { label: t('today.swap'), run: () => swap(routine, shown) },
+              { label: t('today.skip'), run: () => skip(activity) },
+            ]),
+    };
+  });
 
   return (
     <View style={styles.today}>
-      <Text variant="bodyStrong" color="textMuted">
-        {formatDayTitle(today, language)}
-      </Text>
-
+      {header}
       {active ? <ResumeBanner workout={active} /> : null}
 
-      <WeekStrip
-        weekStart={weekStart}
-        today={todayWeekday}
-        selected={selected}
-        dayInfo={dayInfo}
-        onSelect={(weekday) => setPicked(weekday === todayWeekday ? null : weekday)}
-      />
-
-      {showingToday ? null : (
-        <View style={styles.pickedHeader}>
-          <Text variant="cardTitle" accessibilityRole="header" style={styles.pickedTitle}>
-            {formatDayTitle(addDays(weekStart, selected - 1), language)}
-          </Text>
-          <Button label={t('today.backToToday')} variant="ghost" onPress={() => setPicked(null)} />
-        </View>
-      )}
-
-      {routines.length === 0 && sports.length === 0 ? (
+      {allRoutines.length === 0 && sports.length === 0 ? (
         <Card>
           <Text color="textMuted">{t('schedule.noRoutines')}</Text>
         </Card>
@@ -411,65 +617,16 @@ export function Today() {
         <Card>
           <Text color="textMuted">{t('today.noWeek')}</Text>
         </Card>
-      ) : planned.length === 0 ? (
+      ) : main ? (
+        renderHero(main)
+      ) : (
         <Card>
           <Text variant="cardTitle">{t('today.rest')}</Text>
-          <Text color="textMuted">
-            {showingToday ? t('today.restToday') : t('today.restOther')}
-          </Text>
+          <Text color="textMuted">{t('today.restToday')}</Text>
         </Card>
-      ) : (
-        planned.map((activity) => {
-          if (activity.kind === 'sport') {
-            const { sport } = activity;
-            const session = sessionForSport(sport);
-            return (
-              <TodaySportCard
-                key={activity.key}
-                sport={sport}
-                session={session}
-                canLog={canLog}
-                onDone={() => setLogging({ kind: 'sport', sport })}
-                onSkip={() => skipSport(sport)}
-                onMenu={session ? () => openSportMenu(sport, session) : undefined}
-              />
-            );
-          }
-          const { routine } = activity;
-          const session = sessionFor(routine);
-          const shown = shownFor(routine, session);
-          const swapped = !session && shown.id !== routine.id;
-          // This card's own workout, if it's the one going.
-          const isActive =
-            active?.date === day &&
-            active.plannedRoutineId === routine.id &&
-            active.routineId === shown.id;
-          return (
-            <TodayRoutineCard
-              key={activity.key}
-              planned={routine}
-              shown={shown}
-              session={session}
-              canLog={canLog}
-              // Live workouts are for today; a class is only marked done.
-              onStart={
-                showingToday && usesExercises(shown.label)
-                  ? () => (isActive ? router.push('/workout') : start(shown, routine.id, day))
-                  : undefined
-              }
-              startLabel={isActive ? t('workout.resume') : t('workout.start')}
-              onDone={() => setLogging({ kind: 'routine', planned: routine, shown })}
-              onSwap={() => swap(routine, shown)}
-              onSkip={() => skip(routine)}
-              onMenu={session || swapped ? () => openMenu(routine, shown, session) : undefined}
-            />
-          );
-        })
       )}
 
-      {showingToday ? (
-        <Button label={t('workout.otherRoutine')} variant="ghost" onPress={startAnother} />
-      ) : null}
+      <AlsoToday items={alsoToday} onAdd={addActivity} />
 
       <QuickLogSheet
         visible={logging !== null}
@@ -486,20 +643,40 @@ export function Today() {
         onCancel={() => setLogging(null)}
         onSave={saveDone}
       />
+      <RoutinePreviewSheet
+        routine={previewing?.routine ?? null}
+        visible={previewing !== null}
+        onClose={() => setPreviewing(null)}
+        onStart={
+          previewing
+            ? () => {
+                const { routine, planned: plannedRoutine } = previewing;
+                setPreviewing(null);
+                start(routine, plannedRoutine.id);
+              }
+            : undefined
+        }
+      />
+      <LogSportSheet
+        key={loggingSport.opened}
+        visible={loggingSport.visible}
+        onClose={() => setLoggingSport((current) => ({ ...current, visible: false }))}
+        onSave={saveSport}
+      />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   today: {
-    gap: spacing.lg,
+    gap: spacing.xl,
   },
-  pickedHeader: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.sm,
+    gap: spacing.md,
   },
-  pickedTitle: {
+  headerText: {
     flex: 1,
   },
 });

@@ -457,15 +457,8 @@
     "dragHint": "Arrastra para cambiar su orden en el día."
   },
   "today": {
-    "week": "Esta semana",
-    "stripDay": "{{day}} {{date}}, {{plan}}",
-    "planned_one": "{{count}} actividad",
-    "planned_other": "{{count}} actividades",
-    "restShort": "descanso",
     "rest": "Descanso",
     "restToday": "Hoy toca descansar. ¡Recupérate bien!",
-    "restOther": "Día de descanso.",
-    "backToToday": "Hoy",
     "noWeek": "Esta semana todavía no tienes nada. Elige los días de cada rutina en Plan → Semana.",
     "done": "Hecho",
     "swap": "Cambiar",
@@ -482,10 +475,18 @@
     "skipReasonTitle": "¿Por qué la saltas?",
     "skipped": "Se ha saltado «{{name}}»",
     "logged": "«{{name}}»: hecho ✓",
-    "stripState": {
-      "done": "hecho",
-      "skipped": "saltado"
-    }
+    "alsoToday": "También hoy",
+    "nothingElse": "Nada más hoy.",
+    "addActivity": "Registrar otra actividad",
+    "optionsFor": "Opciones de «{{name}}»",
+    "logSport": "Registrar un deporte hecho hoy",
+    "logSportTitle": "Registrar un deporte",
+    "preview": "Ver",
+    "previewFor": "Ver «{{name}}»",
+    "weekProgress_one": "{{done}} de {{count}} entrenamiento esta semana",
+    "weekProgress_other": "{{done}} de {{count}} entrenamientos esta semana",
+    "weekDone_one": "{{count}} entrenamiento esta semana",
+    "weekDone_other": "{{count}} entrenamientos esta semana"
   },
   "workout": {
     "saveError": "No se ha podido guardar. Vuelve a intentarlo.",

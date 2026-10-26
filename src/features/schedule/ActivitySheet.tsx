@@ -1,24 +1,22 @@
 import { randomUUID } from 'expo-crypto';
-import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { NumberInput, SegmentedControl, Sheet, Text, TextField } from '@/components/ui';
 import type { Routine, Weekday } from '@/features/routines/routine';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { readMinutes } from '@/features/workout/session';
-import { radius, spacing, touch, useTheme } from '@/theme';
+import { spacing } from '@/theme';
 
 import {
   formatTimeTyping,
   readTime,
-  SPORT_ICONS,
   SPORT_NAME_MAX_LENGTH,
-  SPORTS,
   type Sport,
   type WeeklySport,
 } from './sports';
+import { IconChoice, SportGrid } from './SportGrid';
 import { useActivityName } from './useActivityName';
 
 export type ActivitySheetMode =
@@ -134,7 +132,7 @@ export function ActivitySheet({
         ) : (
           <View role="radiogroup" aria-label={t('schedule.routine')} style={styles.list}>
             {routines.map((item) => (
-              <Choice
+              <IconChoice
                 key={item.id}
                 icon={ROUTINE_ICONS[item.label]}
                 label={item.name}
@@ -148,17 +146,7 @@ export function ActivitySheet({
       ) : (
         <>
           {editing ? null : (
-            <View role="radiogroup" aria-label={t('schedule.sport')} style={styles.grid}>
-              {SPORTS.map((item) => (
-                <Choice
-                  key={item}
-                  icon={SPORT_ICONS[item]}
-                  label={t(`sports.${item}`)}
-                  selected={item === sport}
-                  onPress={() => setSport(item)}
-                />
-              ))}
-            </View>
+            <SportGrid value={sport} onChange={setSport} />
           )}
           {sport === 'other' && !editing ? (
             <TextField
@@ -194,89 +182,9 @@ export function ActivitySheet({
   );
 }
 
-// One option: an icon and its name; the chosen one is pink with a ✓.
-function Choice({
-  icon,
-  label,
-  selected,
-  onPress,
-  wide = false,
-}: {
-  icon: (typeof SPORT_ICONS)[Sport];
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  wide?: boolean;
-}) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      role="radio"
-      aria-checked={selected}
-      aria-label={label}
-      onPress={onPress}
-      style={({ pressed }) => [
-        wide ? styles.wide : styles.tile,
-        {
-          borderColor: selected ? colors.accent : colors.surfaceRaised,
-          backgroundColor: selected ? colors.accentSoft : colors.surface,
-        },
-        pressed && styles.pressed,
-      ]}>
-      <SymbolView name={icon} size={22} tintColor={selected ? colors.accent : colors.text} />
-      <Text variant="bodyStrong" numberOfLines={1} style={wide ? styles.wideLabel : undefined}>
-        {label}
-      </Text>
-      {selected ? (
-        <View style={[styles.check, { backgroundColor: colors.accent }]}>
-          <SymbolView name="checkmark" size={10} tintColor={colors.onAccent} />
-        </View>
-      ) : null}
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   list: {
     gap: spacing.sm,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  tile: {
-    flexBasis: '30%',
-    flexGrow: 1,
-    minHeight: 76,
-    borderWidth: 1.5,
-    borderRadius: radius.input,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    paddingHorizontal: spacing.xs,
-  },
-  wide: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    minHeight: touch.min,
-    borderWidth: 1.5,
-    borderRadius: radius.input,
-    paddingHorizontal: spacing.md,
-  },
-  wideLabel: {
-    flex: 1,
-  },
-  check: {
-    position: 'absolute',
-    top: spacing.xs,
-    right: spacing.xs,
-    width: 18,
-    height: 18,
-    borderRadius: radius.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   row: {
     flexDirection: 'row',

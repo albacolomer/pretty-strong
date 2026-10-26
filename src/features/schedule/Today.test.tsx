@@ -1,26 +1,32 @@
 import '@/lib/i18n';
 
-import { render, screen, userEvent } from '@testing-library/react-native';
+import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 import { ActionSheetIOS } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
+import { fetchProfile, type Profile } from '@/features/profile/api';
 import { fetchRoutines } from '@/features/routines/api';
 import type { Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { deleteSession, fetchSessions, logQuickSession } from '@/features/workout/api';
-
-import { fetchWeeklySports } from './sportsApi';
 import type { WorkoutSession } from '@/features/workout/session';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
+import type { WeeklySport } from './sports';
+import { fetchWeeklySports } from './sportsApi';
 import { Today } from './Today';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('@/features/routines/api', () => ({ fetchRoutines: jest.fn() }));
+jest.mock('@/features/profile/api', () => ({ fetchProfile: jest.fn() }));
+jest.mock('@/features/body/photosApi', () => ({
+  SIGNED_URL_SECONDS: 3600,
+  fetchSignedUrls: jest.fn(() => Promise.resolve({})),
+}));
 // Your default rest: 2:30 for the first exercise, the app's for the rest.
 jest.mock('@/features/exercises/api', () => ({
   fetchExerciseSettings: jest.fn(() =>
@@ -37,7 +43,7 @@ jest.mock('expo-crypto', () => ({ randomUUID: () => 'session-1' }));
 // The screen's link parameters, e.g. { start } from the routine editor.
 let mockParams: { start?: string } = {};
 jest.mock('expo-router', () => ({
-  router: { push: jest.fn(), setParams: jest.fn() },
+  router: { push: jest.fn(), navigate: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
 }));
 // Today is Tuesday 20 October 2026.
@@ -70,6 +76,17 @@ const spinning = routine('spinning', 'Spinning', { 2: 0 }, {
 });
 const legs = routine('legs', 'Cames', {});
 
+const sport = (values: Partial<WeeklySport>): WeeklySport => ({
+  id: 'padel',
+  weekday: 2,
+  sport: 'padel',
+  customName: null,
+  startTime: '19:00',
+  durationS: 5400,
+  position: 2,
+  ...values,
+});
+
 const session = (fields: Partial<WorkoutSession>): WorkoutSession => ({
   id: 'session-1',
   date: '2026-10-20',
@@ -96,6 +113,7 @@ beforeEach(() => {
     .mockReturnValue({ session: { user: { id: 'user-1' } }, isLoading: false } as ReturnType<
       typeof useAuth
     >);
+  jest.mocked(fetchProfile).mockResolvedValue({ username: 'alba', weekly_goal: 4 } as Profile);
   jest.mocked(fetchRoutines).mockResolvedValue([upper, spinning, legs]);
   jest.mocked(fetchSessions).mockReset().mockResolvedValue([]);
   jest.mocked(fetchWeeklySports).mockResolvedValue([]);
@@ -105,6 +123,7 @@ beforeEach(() => {
   useWorkoutStore.setState({ active: null, pending: [] });
   mockParams = {};
   jest.mocked(router.push).mockClear();
+  jest.mocked(router.navigate).mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
     .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
@@ -117,51 +136,32 @@ afterEach(() => actionSheet.mockRestore());
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<Today />', () => {
-  test('shows the date, the week, and one card per routine planned today', async () => {
+  test('the date, the routine to start in the big button, and the rest "també avui"', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('Dimarts, 20 d’octubre')).toBeOnTheScreen();
-    expect(screen.getByRole('radio', { name: 'Dimarts 20, 2 activitats' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Dijous 22, descans' })).not.toBeChecked();
-    expect(screen.getByRole('radio', { name: 'Divendres 23, 1 activitat' })).toBeOnTheScreen();
-
-    // Asked for this week's sessions, Monday to Sunday.
+    expect(screen.getByRole('header', { name: 'Avui' })).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
+    expect(screen.getByText('4 exercicis · ~25 min')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Comença «Tren superior 1»' })).toBeOnTheScreen();
+    expect(await screen.findByText('0 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
+    // The class, earlier in the day, is under "També avui".
+    expect(screen.getByRole('header', { name: 'També avui' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Opcions de «Spinning»' })).toBeOnTheScreen();
+    expect(screen.getByText('45 min')).toBeOnTheScreen();
+    // This week's sessions, Monday to Sunday.
     expect(fetchSessions).toHaveBeenCalledWith('2026-10-19', '2026-10-25');
 
-    // In their order on the day: the class first, with its duration.
-    const cards = screen.getAllByRole('button', { name: /^(Spinning|Tren superior 1)/ });
-    expect(cards[0]).toHaveTextContent(/Spinning.*45 min/);
-    expect(cards[1]).toHaveTextContent(/Tren superior 1.*4 exercicis · Tracció al pit/);
-
-    await user.press(cards[1]);
-    expect(router.push).toHaveBeenCalledWith({
-      pathname: '/plan/routines/[id]',
-      params: { id: 'upper' },
-    });
+    await user.press(screen.getByRole('button', { name: 'Perfil' }));
+    expect(router.navigate).toHaveBeenCalledWith('/profile');
   });
 
-  test('looks at another day of the week, then back to today; days ahead can’t be logged', async () => {
+  test('a class "també avui": its circle marks it done, with its duration and a note', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    await user.press(await screen.findByRole('radio', { name: 'Dijous 22, descans' }));
-    expect(screen.getByRole('header', { name: 'Dijous, 22 d’octubre' })).toBeOnTheScreen();
-    expect(screen.getByText('Dia de descans.')).toBeOnTheScreen();
-
-    await user.press(screen.getByRole('radio', { name: 'Divendres 23, 1 activitat' }));
-    expect(screen.getByText('Tren superior 1')).toBeOnTheScreen();
-    expect(screen.queryByRole('button', { name: /com a fet/ })).not.toBeOnTheScreen();
-
-    await user.press(screen.getByRole('button', { name: 'Avui' }));
-    expect(screen.getByRole('radio', { name: 'Dimarts 20, 2 activitats' })).toBeChecked();
-  });
-
-  test('marks a class done with its planned duration and a note', async () => {
-    const user = userEvent.setup();
-    await render(<Today />, { wrapper: createAppWrapper() });
-
-    await user.press(await screen.findByRole('button', { name: 'Marca «Spinning» com a fet' }));
+    await user.press(await screen.findByRole('checkbox', { name: 'Marca «Spinning» com a fet' }));
     expect(screen.getByRole('header', { name: 'Fet: Spinning' })).toBeOnTheScreen();
     expect(screen.getByLabelText('Durada (min)')).toHaveDisplayValue('45');
     await user.type(screen.getByLabelText('Nota (opcional)'), 'Bona classe');
@@ -177,62 +177,40 @@ describe('<Today />', () => {
 
     expect(logQuickSession).toHaveBeenCalledWith(done);
     expect(await screen.findByText('✓ Fet · 45 min')).toBeOnTheScreen();
-    expect(screen.getByText('«Spinning»: fet ✓')).toBeOnTheScreen();
-    expect(screen.getByRole('radio', { name: 'Dimarts 20, fet' })).toBeOnTheScreen();
+    expect(screen.getByRole('checkbox', { name: 'Marca «Spinning» com a fet' })).toBeChecked();
+    expect(screen.getByText('1 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
   });
 
-  test('a sport planned today: after its routines, marked done with its duration', async () => {
+  test('a sport planned today: marked done from its circle, with its planned duration', async () => {
     const user = userEvent.setup();
-    jest.mocked(fetchWeeklySports).mockResolvedValue([
-      {
-        id: 'padel',
-        weekday: 2,
-        sport: 'padel',
-        customName: null,
-        startTime: '19:00',
-        durationS: 5400,
-        position: 2,
-      },
-    ]);
+    jest.mocked(fetchWeeklySports).mockResolvedValue([sport({})]);
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('19:00 · 1 h 30 min')).toBeOnTheScreen();
-    expect(screen.getByRole('radio', { name: 'Dimarts 20, 3 activitats' })).toBeChecked();
-    await user.press(screen.getByRole('button', { name: 'Marca «Pàdel» com a fet' }));
-    // The sheet starts from its planned duration.
+    await user.press(screen.getByRole('checkbox', { name: 'Marca «Pàdel» com a fet' }));
     expect(screen.getByLabelText('Durada (min)').props.value).toBe('90');
-
-    const done = session({
-      plannedRoutineId: null,
-      routineId: null,
-      durationS: 5400,
-      plannedSportId: 'padel',
-      sport: 'padel',
-    });
-    jest.mocked(fetchSessions).mockResolvedValue([done]);
     await user.press(screen.getByRole('button', { name: 'Desa' }));
 
-    expect(logQuickSession).toHaveBeenCalledWith(done);
-    expect(await screen.findByText('✓ Fet · 1 h 30 min')).toBeOnTheScreen();
+    expect(logQuickSession).toHaveBeenCalledWith(
+      session({
+        plannedRoutineId: null,
+        routineId: null,
+        durationS: 5400,
+        plannedSportId: 'padel',
+        sport: 'padel',
+      }),
+    );
   });
 
-  test('a sport can be skipped, with a reason', async () => {
+  test('a sport can be skipped from its row, with a reason', async () => {
     const user = userEvent.setup();
-    jest.mocked(fetchWeeklySports).mockResolvedValue([
-      {
-        id: 'squash',
-        weekday: 2,
-        sport: 'other',
-        customName: 'Esquaix',
-        startTime: null,
-        durationS: null,
-        position: 2,
-      },
-    ]);
+    jest
+      .mocked(fetchWeeklySports)
+      .mockResolvedValue([sport({ id: 'squash', sport: 'other', customName: 'Esquaix' })]);
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    sheetChoices.push('Cansament');
-    await user.press(await screen.findByRole('button', { name: 'Salta «Esquaix»' }));
+    sheetChoices.push('Salta', 'Cansament');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de «Esquaix»' }));
 
     expect(logQuickSession).toHaveBeenCalledWith(
       session({
@@ -247,7 +225,7 @@ describe('<Today />', () => {
     );
   });
 
-  test('skips a routine with a reason, and Desfés takes it back', async () => {
+  test('Salta skips the main routine with a reason, and Desfés takes it back', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
@@ -265,12 +243,13 @@ describe('<Today />', () => {
     expect(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' })).toBeOnTheScreen();
   });
 
-  test('swaps a routine for today, keeps the swap after closing, and logs both', async () => {
+  test('Canvia swaps the routine for today, kept after closing, and back again', async () => {
     const user = userEvent.setup();
     const { unmount } = await render(<Today />, { wrapper: createAppWrapper() });
 
     sheetChoices.push('Cames', 'Cansament');
     await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
+    expect(screen.getByRole('header', { name: 'Cames' })).toBeOnTheScreen();
     expect(screen.getByText('En lloc de «Tren superior 1»')).toBeOnTheScreen();
 
     // Closing and opening the app keeps it.
@@ -278,43 +257,46 @@ describe('<Today />', () => {
     await render(<Today />, { wrapper: createAppWrapper() });
     expect(await screen.findByText('En lloc de «Tren superior 1»')).toBeOnTheScreen();
 
-    await user.press(screen.getByRole('button', { name: 'Marca «Cames» com a fet' }));
-    await user.press(screen.getByRole('button', { name: 'Desa' }));
-    expect(logQuickSession).toHaveBeenCalledWith(
-      session({ plannedRoutineId: 'upper', routineId: 'legs', changeReason: 'tired' }),
-    );
+    // It starts with the reason.
+    await user.press(screen.getByRole('button', { name: 'Comença «Cames»' }));
+    expect(useWorkoutStore.getState().active).toMatchObject({
+      plannedRoutineId: 'upper',
+      routineId: 'legs',
+      changeReason: 'tired',
+    });
   });
 
-  test('a swap can go back to the plan from ⋯', async () => {
+  test('Canvia back to the planned routine', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
     sheetChoices.push('Cames', 'Sense motiu');
     await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
-    sheetChoices.push('Torna a «Tren superior 1»');
-    await user.press(screen.getByRole('button', { name: 'Opcions de «Cames»' }));
+    sheetChoices.push('Tren superior 1');
+    await user.press(screen.getByRole('button', { name: 'Canvia «Cames»' }));
 
     expect(screen.queryByText('En lloc de «Tren superior 1»')).not.toBeOnTheScreen();
-    expect(screen.getByRole('button', { name: 'Canvia «Tren superior 1»' })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
   });
 
-  test('a session already logged shows as done, and ⋯ → Desfés deletes it', async () => {
+  test('once everything is logged, the big button shows how it went; ⋯ → Desfés', async () => {
     const user = userEvent.setup();
+    jest.mocked(fetchRoutines).mockResolvedValue([routine('upper', 'Tren superior 1', { 2: 0 })]);
     jest.mocked(fetchSessions).mockResolvedValue([session({ durationS: 3600 })]);
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('✓ Fet · 1 h')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /^Comença/ })).not.toBeOnTheScreen();
     sheetChoices.push('Desfés');
     await user.press(screen.getByRole('button', { name: 'Opcions de «Tren superior 1»' }));
 
     expect(deleteSession).toHaveBeenCalledWith('session-1');
   });
 
-  test('Comença copies the routine into a workout and opens it; a class has no Comença', async () => {
+  test('Comença copies the routine into a workout and opens it', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    expect(screen.queryByRole('button', { name: 'Comença «Spinning»' })).not.toBeOnTheScreen();
     await user.press(await screen.findByRole('button', { name: 'Comença «Tren superior 1»' }));
 
     expect(useWorkoutStore.getState().active).toMatchObject({
@@ -331,6 +313,18 @@ describe('<Today />', () => {
     expect(router.push).toHaveBeenCalledWith('/workout');
   });
 
+  test('Previsualitza lists its exercises, and can start it from there', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    await user.press(await screen.findByRole('button', { name: 'Previsualitza «Tren superior 1»' }));
+    expect(screen.getByText('Tracció al pit')).toBeOnTheScreen();
+    expect(screen.getAllByText('3 sèries')).toHaveLength(4);
+    await user.press(screen.getByRole('button', { name: 'Comença' }));
+
+    expect(useWorkoutStore.getState().active).toMatchObject({ routineId: 'upper' });
+  });
+
   test('a workout going shows "Reprèn", and no second one can start', async () => {
     const user = userEvent.setup();
     useWorkoutStore.setState({
@@ -340,39 +334,35 @@ describe('<Today />', () => {
         changeReason: null,
         startedAt: new Date().toISOString(),
         newId: () => Math.random().toString(),
-
         defaultRestS: () => 90,
       }),
     });
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('En marxa: Tren superior 1')).toBeOnTheScreen();
-    // The card of the workout going says "Reprèn" too.
     expect(screen.getByRole('button', { name: 'Comença «Tren superior 1»' })).toHaveTextContent(
       'Reprèn',
     );
 
     sheetChoices.push('Cames');
-    await user.press(screen.getByRole('button', { name: 'Fes una altra rutina' }));
+    await user.press(screen.getByRole('button', { name: 'Registra una altra activitat' }));
     expect(screen.getByText('Ja tens un entrenament en marxa.')).toBeOnTheScreen();
     expect(router.push).not.toHaveBeenCalled();
-
-    await user.press(screen.getAllByRole('button', { name: 'Reprèn' })[0]);
-    expect(router.push).toHaveBeenCalledWith('/workout');
   });
 
-  test('"Fes una altra rutina" starts any routine, unplanned', async () => {
+  test('+ starts any routine, unplanned, or a new one', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
     sheetChoices.push('Cames');
-    await user.press(await screen.findByRole('button', { name: 'Fes una altra rutina' }));
+    await user.press(await screen.findByRole('button', { name: 'Registra una altra activitat' }));
 
     // A class isn't offered: there's nothing to log set by set.
     expect(actionSheet.mock.lastCall?.[0].options).toEqual([
       'Tren superior 1',
       'Cames',
       'Crea una rutina nova',
+      'Registra un esport fet avui',
       'Cancel·la',
     ]);
     expect(useWorkoutStore.getState().active).toMatchObject({
@@ -381,12 +371,12 @@ describe('<Today />', () => {
     });
   });
 
-  test('"Crea una rutina nova" opens the editor, and the new routine starts once saved', async () => {
+  test('+ → "Crea una rutina nova" opens the editor, and the routine starts once saved', async () => {
     const user = userEvent.setup();
     const { unmount } = await render(<Today />, { wrapper: createAppWrapper() });
 
     sheetChoices.push('Crea una rutina nova');
-    await user.press(await screen.findByRole('button', { name: 'Fes una altra rutina' }));
+    await user.press(await screen.findByRole('button', { name: 'Registra una altra activitat' }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/plan/routines/new',
       params: { start: '1' },
@@ -397,13 +387,34 @@ describe('<Today />', () => {
     mockParams = { start: 'legs' };
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    await screen.findByRole('button', { name: 'Fes una altra rutina' });
-    expect(useWorkoutStore.getState().active).toMatchObject({
-      plannedRoutineId: null,
-      routineId: 'legs',
-    });
+    await waitFor(() =>
+      expect(useWorkoutStore.getState().active).toMatchObject({
+        plannedRoutineId: null,
+        routineId: 'legs',
+      }),
+    );
     expect(router.setParams).toHaveBeenCalledWith({ start: undefined });
     expect(router.push).toHaveBeenLastCalledWith('/workout');
+  });
+
+  test('+ → a sport done today, not planned', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Registra un esport fet avui');
+    await user.press(await screen.findByRole('button', { name: 'Registra una altra activitat' }));
+    await user.press(screen.getByRole('radio', { name: 'Ioga' }));
+    await user.type(screen.getByLabelText('Durada (min)'), '30');
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(
+      session({
+        plannedRoutineId: null,
+        routineId: null,
+        durationS: 1800,
+        sport: 'yoga',
+      }),
+    );
   });
 
   test('a finished workout not saved yet already counts as done', async () => {
@@ -413,13 +424,15 @@ describe('<Today />', () => {
       changeReason: null,
       startedAt: '2026-10-20T07:00:00.000Z',
       newId: () => Math.random().toString(),
-
       defaultRestS: () => 90,
     });
-    useWorkoutStore.setState({ pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z', energy: null, notes: null }] });
+    useWorkoutStore.setState({
+      pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z', energy: null, notes: null }],
+    });
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('✓ Fet · 1 h')).toBeOnTheScreen();
+    expect(screen.getByText('1 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
   });
 
   test('a rest day today says so', async () => {

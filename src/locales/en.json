@@ -457,15 +457,8 @@
     "dragHint": "Drag to change its order in the day."
   },
   "today": {
-    "week": "This week",
-    "stripDay": "{{day}} {{date}}, {{plan}}",
-    "planned_one": "{{count}} activity",
-    "planned_other": "{{count}} activities",
-    "restShort": "rest",
     "rest": "Rest",
     "restToday": "Rest day today. Recover well!",
-    "restOther": "Rest day.",
-    "backToToday": "Today",
     "noWeek": "Nothing planned this week yet. Choose each routine's days in Plan → Week.",
     "done": "Done",
     "swap": "Swap",
@@ -482,10 +475,18 @@
     "skipReasonTitle": "Why skip it?",
     "skipped": "“{{name}}” skipped",
     "logged": "“{{name}}”: done ✓",
-    "stripState": {
-      "done": "done",
-      "skipped": "skipped"
-    }
+    "alsoToday": "Also today",
+    "nothingElse": "Nothing else today.",
+    "addActivity": "Log another activity",
+    "optionsFor": "Options for “{{name}}”",
+    "logSport": "Log a sport done today",
+    "logSportTitle": "Log a sport",
+    "preview": "Preview",
+    "previewFor": "Preview “{{name}}”",
+    "weekProgress_one": "{{done}} of {{count}} workout this week",
+    "weekProgress_other": "{{done}} of {{count}} workouts this week",
+    "weekDone_one": "{{count}} workout this week",
+    "weekDone_other": "{{count}} workouts this week"
   },
   "workout": {
     "saveError": "Couldn't save it. Try again.",

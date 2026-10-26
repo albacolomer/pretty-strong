@@ -12,9 +12,13 @@ export type SheetProps = {
   visible: boolean;
   title: string;
   onCancel: () => void;
-  onSave: () => void;
-  saveLabel: string;
+  // Left out for a sheet that only shows something (then just the cancel
+  // button, e.g. "Tanca").
+  onSave?: () => void;
+  saveLabel?: string;
   saveDisabled?: boolean;
+  // "Cancel·la" unless said.
+  cancelLabel?: string;
   // Only mounted while open, so it starts afresh each time.
   children: ReactNode;
 };
@@ -29,6 +33,7 @@ export function Sheet({
   onSave,
   saveLabel,
   saveDisabled = false,
+  cancelLabel,
   children,
 }: SheetProps) {
   const { t } = useTranslation();
@@ -62,17 +67,19 @@ export function Sheet({
                 { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
               ]}>
               <Button
-                label={t('common.cancel')}
+                label={cancelLabel ?? t('common.cancel')}
                 variant="secondary"
                 onPress={onCancel}
                 style={styles.footerButton}
               />
-              <Button
-                label={saveLabel}
-                onPress={onSave}
-                disabled={saveDisabled}
-                style={styles.footerButton}
-              />
+              {onSave && saveLabel ? (
+                <Button
+                  label={saveLabel}
+                  onPress={onSave}
+                  disabled={saveDisabled}
+                  style={styles.footerButton}
+                />
+              ) : null}
             </View>
           </>
         ) : null}

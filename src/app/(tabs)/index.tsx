@@ -1,13 +1,10 @@
-import { useTranslation } from 'react-i18next';
-
 import { Screen } from '@/components/ui';
 import { Today } from '@/features/schedule/Today';
 
+// Avui has its own header (the date, "Avui" and your picture).
 export default function TodayScreen() {
-  const { t } = useTranslation();
-
   return (
-    <Screen title={t('tabs.today')}>
+    <Screen>
       <Today />
     </Screen>
   );
