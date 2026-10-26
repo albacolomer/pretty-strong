@@ -1,5 +1,11 @@
 import type { Ref } from 'react';
-import { StyleSheet, TextInput, View, type TextInputProps } from 'react-native';
+import {
+  StyleSheet,
+  TextInput,
+  View,
+  type TextInputInstance,
+  type TextInputProps,
+} from 'react-native';
 
 import { radius, spacing, touch, typography, useTheme } from '@/theme';
 
@@ -13,7 +19,7 @@ export type TextFieldProps = TextInputProps & {
   error?: string;
   // Only for screen readers, when the placeholder already says what it is.
   labelHidden?: boolean;
-  ref?: Ref<TextInput>;
+  ref?: Ref<TextInputInstance>;
 };
 
 export function TextField({

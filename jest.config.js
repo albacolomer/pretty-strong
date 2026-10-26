@@ -12,8 +12,9 @@ module.exports = {
   // userEvent types one character at a time, like a person; on a busy
   // laptop that can pass Jest's default 5 s.
   testTimeout: 15000,
-  // Loads Worklets' (Reanimated's engine) non-native code, which runs in Jest.
-  resolver: 'react-native-worklets/jest/resolver',
+  // Loads the web versions of Reanimated and Worklets (its engine), which
+  // run in Jest; the native ones need the phone (Reanimated's Jest guide).
+  resolver: 'react-native-reanimated/jest/resolver',
   transform: {
     ...expoPreset.transform,
     [SCRIPTS]: [

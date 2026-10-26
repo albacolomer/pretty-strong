@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, type TextInput } from 'react-native';
+import { View, type TextInputInstance } from 'react-native';
 
 import { Button, Text, TextField } from '@/components/ui';
 import { appLanguage } from '@/lib/i18n';
@@ -31,8 +31,8 @@ export function SignUpForm() {
   const [formError, setFormError] = useState<AuthErrorReason | null>(null);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const emailRef = useRef<TextInput>(null);
-  const passwordRef = useRef<TextInput>(null);
+  const emailRef = useRef<TextInputInstance>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   const errorText = (error: FieldError | undefined) =>
     error && t(`auth.errors.${error}`, { min: PASSWORD_MIN_LENGTH });

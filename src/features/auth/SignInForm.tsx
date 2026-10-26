@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, type TextInput } from 'react-native';
+import { View, type TextInputInstance } from 'react-native';
 
 import { Button, Text, TextField } from '@/components/ui';
 import { spacing } from '@/theme';
@@ -16,7 +16,7 @@ export function SignInForm() {
   const [fieldErrors, setFieldErrors] = useState<SignInErrors>({});
   const [formError, setFormError] = useState<AuthErrorReason | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const passwordRef = useRef<TextInput>(null);
+  const passwordRef = useRef<TextInputInstance>(null);
 
   async function handleSubmit() {
     const errors = validateSignIn({ email, password });
