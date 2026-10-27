@@ -230,6 +230,11 @@
     "goalFromPlan": "Els dies que tens planificats a la setmana. La ratxa continua les setmanes que en fas almenys el 75%.",
     "goalOwn": "El teu objectiu. La ratxa continua les setmanes que en fas almenys el 75%.",
     "goalUsePlan": "Fes servir els dies planificats ({{count}})",
+    "stepGoal": "Objectiu de passos",
+    "stepGoalValue": "{{steps}} passos al dia",
+    "stepGoalMinus": "500 passos menys",
+    "stepGoalPlus": "500 passos més",
+    "stepGoalHint": "Es mostra a Avui, amb els passos que compta el teu iPhone.",
     "save": "Desa",
     "saved": "Perfil desat ✓",
     "saveError": "No s'ha pogut desar el perfil. Torna-ho a provar."
@@ -487,6 +492,16 @@
     "weekProgress_other": "{{done}} de {{count}} entrenaments aquesta setmana",
     "weekDone_one": "{{count}} entrenament aquesta setmana",
     "weekDone_other": "{{count}} entrenaments aquesta setmana"
+  },
+  "steps": {
+    "title": "Passos d'avui",
+    "count": "{{steps}} / {{goal}} passos",
+    "remaining": "{{steps}} per arribar",
+    "reached": "Objectiu assolit",
+    "askText": "Mostra els passos que compta el teu iPhone.",
+    "allow": "Mostra els passos",
+    "deniedText": "Per veure-ls, permet Moviment i forma física a Configuració.",
+    "openSettings": "Obre Configuració"
   },
   "workout": {
     "saveError": "No s'ha pogut desar. Torna-ho a provar.",

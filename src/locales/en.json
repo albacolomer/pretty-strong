@@ -230,6 +230,11 @@
     "goalFromPlan": "The days you have planned in your week. The streak carries on in weeks where you do at least 75% of it.",
     "goalOwn": "Your own goal. The streak carries on in weeks where you do at least 75% of it.",
     "goalUsePlan": "Use your planned days ({{count}})",
+    "stepGoal": "Step goal",
+    "stepGoalValue": "{{steps}} steps a day",
+    "stepGoalMinus": "500 steps fewer",
+    "stepGoalPlus": "500 steps more",
+    "stepGoalHint": "Shown on Today, with the steps your iPhone counts.",
     "save": "Save",
     "saved": "Profile saved ✓",
     "saveError": "Couldn't save your profile. Try again."
@@ -487,6 +492,16 @@
     "weekProgress_other": "{{done}} of {{count}} workouts this week",
     "weekDone_one": "{{count}} workout this week",
     "weekDone_other": "{{count}} workouts this week"
+  },
+  "steps": {
+    "title": "Today's steps",
+    "count": "{{steps}} / {{goal}} steps",
+    "remaining": "{{steps}} to go",
+    "reached": "Goal reached",
+    "askText": "See the steps your iPhone counts.",
+    "allow": "Show my steps",
+    "deniedText": "To see them, allow Motion & Fitness in Settings.",
+    "openSettings": "Open Settings"
   },
   "workout": {
     "saveError": "Couldn't save it. Try again.",

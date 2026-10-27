@@ -9,6 +9,7 @@ import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { SmallAvatar } from '@/features/profile/SmallAvatar';
 import { useWeeklyGoal } from '@/features/profile/useWeeklyGoal';
+import { StepsCard } from '@/features/steps/StepsCard';
 import {
   formatDuration,
   routineDuration,
@@ -47,8 +48,8 @@ import { activitiesOnDay, type DayActivity } from './week';
 
 type Action = { label: string; run: () => void };
 
-// The Avui tab (US-11, US-12, US-20): the date and your picture, then the
-// day's main activity in a big button inside the week's ring (Comença, or
+// The Avui tab (US-11, US-12, US-20): the date and your picture, today's
+// steps, then the day's main activity in a big button inside the week's ring (Comença, or
 // Fet for a class or a sport), with Previsualitza / Canvia / Salta; under
 // it, "També avui" with the day's other activities and a + to log more.
 export function Today() {
@@ -608,6 +609,7 @@ export function Today() {
     <View style={styles.today}>
       {header}
       {active ? <ResumeBanner workout={active} /> : null}
+      <StepsCard today={today} />
 
       {allRoutines.length === 0 && sports.length === 0 ? (
         <Card>

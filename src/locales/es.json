@@ -230,6 +230,11 @@
     "goalFromPlan": "Los días que tienes planificados en la semana. La racha sigue las semanas en que haces al menos el 75%.",
     "goalOwn": "Tu objetivo. La racha sigue las semanas en que haces al menos el 75%.",
     "goalUsePlan": "Usar los días planificados ({{count}})",
+    "stepGoal": "Objetivo de pasos",
+    "stepGoalValue": "{{steps}} pasos al día",
+    "stepGoalMinus": "500 pasos menos",
+    "stepGoalPlus": "500 pasos más",
+    "stepGoalHint": "Se muestra en Hoy, con los pasos que cuenta tu iPhone.",
     "save": "Guardar",
     "saved": "Perfil guardado ✓",
     "saveError": "No se ha podido guardar el perfil. Vuelve a intentarlo."
@@ -487,6 +492,16 @@
     "weekProgress_other": "{{done}} de {{count}} entrenamientos esta semana",
     "weekDone_one": "{{count}} entrenamiento esta semana",
     "weekDone_other": "{{count}} entrenamientos esta semana"
+  },
+  "steps": {
+    "title": "Pasos de hoy",
+    "count": "{{steps}} / {{goal}} pasos",
+    "remaining": "Faltan {{steps}}",
+    "reached": "Objetivo cumplido",
+    "askText": "Muestra los pasos que cuenta tu iPhone.",
+    "allow": "Mostrar los pasos",
+    "deniedText": "Para verlos, permite Movimiento y forma física en Ajustes.",
+    "openSettings": "Abrir Ajustes"
   },
   "workout": {
     "saveError": "No se ha podido guardar. Vuelve a intentarlo.",

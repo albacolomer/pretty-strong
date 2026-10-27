@@ -22,6 +22,7 @@ const profile: Profile = {
   weekly_goal: null,
   avatar_path: null,
   hide_progress_photos: false,
+  daily_step_goal: 10000,
 };
 
 function signedInAs(userId: string | null) {

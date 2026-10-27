@@ -52,6 +52,7 @@ const profile: Profile = {
   weekly_goal: null,
   avatar_path: null,
   hide_progress_photos: false,
+  daily_step_goal: 10000,
 };
 
 const workout = (date: string): HistoryEntry => ({
@@ -140,7 +141,7 @@ describe('Profile', () => {
     expect(await screen.findByRole('header', { name: '@alba' })).toBeOnTheScreen();
   });
 
-  test('Edita el perfil: name, city, focus, and a goal of your own', async () => {
+  test('Edita el perfil: name, city, focus, and goals of your own', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();
     jest.mocked(updateProfileDetails).mockImplementation((_id, details) =>
@@ -159,6 +160,11 @@ describe('Profile', () => {
     await user.press(screen.getByRole('button', { name: 'Un entrenament més' }));
     expect(screen.getByLabelText('5 entrenaments a la setmana')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Fes servir els dies planificats (4)' })).toBeOnTheScreen();
+    // 10.000 steps a day until changed, 500 at a time.
+    expect(screen.getByLabelText('10.000 passos al dia')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: '500 passos més' }));
+    await user.press(screen.getByRole('button', { name: '500 passos més' }));
+    expect(screen.getByLabelText('11.000 passos al dia')).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: 'Desa' }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -167,6 +173,7 @@ describe('Profile', () => {
       city: 'Girona',
       focus: 'HYROX i força',
       weekly_goal: 5,
+      daily_step_goal: 11000,
     });
   });
 

@@ -6,6 +6,8 @@ import { Button, Stepper, Text, TextField } from '@/components/ui';
 import { weeklyGoal } from '@/features/history/entries';
 import { useRoutines } from '@/features/routines/useRoutines';
 import { useWeeklySports } from '@/features/schedule/useWeeklySports';
+import { changeStepGoal, STEP_GOAL_MAX, STEP_GOAL_MIN } from '@/features/steps/steps';
+import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
 import type { Profile } from './api';
@@ -16,7 +18,8 @@ import { useUpdateProfile } from './useUpdateProfile';
 const GOAL_MIN = 1;
 const GOAL_MAX = 14;
 
-// Profile → Edita el perfil: name, city, focus and the weekly goal.
+// Profile → Edita el perfil: name, city, focus, the weekly goal and the
+// daily step goal.
 export function EditProfile({ onClose }: { onClose: () => void }) {
   const { colors } = useTheme();
   const { data: profile } = useProfile();
@@ -26,6 +29,7 @@ export function EditProfile({ onClose }: { onClose: () => void }) {
 
 function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
   const { t } = useTranslation();
+  const language = useAppLanguage();
   const { data: routines = [] } = useRoutines();
   const save = useUpdateProfile();
   const [name, setName] = useState(profile.display_name ?? '');
@@ -36,12 +40,20 @@ function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
   const { data: sports = [] } = useWeeklySports();
   const planned = weeklyGoal(null, routines, sports);
   const shown = goal ?? planned;
+  const [stepGoal, setStepGoal] = useState(profile.daily_step_goal);
+  const stepCount = new Intl.NumberFormat(language).format(stepGoal);
 
   const clean = (text: string) => (text.trim() === '' ? null : text.trim());
 
   function submit() {
     save.mutate(
-      { display_name: clean(name), city: clean(city), focus: clean(focus), weekly_goal: goal },
+      {
+        display_name: clean(name),
+        city: clean(city),
+        focus: clean(focus),
+        weekly_goal: goal,
+        daily_step_goal: stepGoal,
+      },
       { onSuccess: onClose },
     );
   }
@@ -95,6 +107,23 @@ function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
             style={styles.reset}
           />
         ) : null}
+      </View>
+
+      <View style={styles.goal}>
+        <Text variant="bodyStrong">{t('profile.stepGoal')}</Text>
+        <Stepper
+          value={stepCount}
+          valueLabel={t('profile.stepGoalValue', { steps: stepCount })}
+          onDecrement={() => setStepGoal(changeStepGoal(stepGoal, -1))}
+          onIncrement={() => setStepGoal(changeStepGoal(stepGoal, 1))}
+          decrementLabel={t('profile.stepGoalMinus')}
+          incrementLabel={t('profile.stepGoalPlus')}
+          canDecrement={stepGoal > STEP_GOAL_MIN}
+          canIncrement={stepGoal < STEP_GOAL_MAX}
+        />
+        <Text variant="caption" color="textMuted">
+          {t('profile.stepGoalHint')}
+        </Text>
       </View>
 
       <View style={styles.footer}>

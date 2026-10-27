@@ -146,6 +146,7 @@ export type Database = {
           avatar_path: string | null
           city: string | null
           created_at: string
+          daily_step_goal: number
           display_name: string | null
           focus: string | null
           hide_progress_photos: boolean
@@ -158,6 +159,7 @@ export type Database = {
           avatar_path?: string | null
           city?: string | null
           created_at?: string
+          daily_step_goal?: number
           display_name?: string | null
           focus?: string | null
           hide_progress_photos?: boolean
@@ -170,6 +172,7 @@ export type Database = {
           avatar_path?: string | null
           city?: string | null
           created_at?: string
+          daily_step_goal?: number
           display_name?: string | null
           focus?: string | null
           hide_progress_photos?: boolean

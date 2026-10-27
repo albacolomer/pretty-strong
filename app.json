@@ -51,6 +51,12 @@
         {
           "faceIDPermission": "Pretty Strong fa servir Face ID per mostrar les fotos de progrés amagades."
         }
+      ],
+      [
+        "expo-sensors",
+        {
+          "motionPermission": "Pretty Strong fa servir el comptador de passos de l'iPhone per mostrar els passos d'avui."
+        }
       ]
     ],
     "experiments": {
