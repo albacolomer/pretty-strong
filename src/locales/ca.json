@@ -462,8 +462,13 @@
     "dragHint": "Arrossega per canviar-ne l’ordre en el dia."
   },
   "today": {
-    "rest": "Descans",
-    "restToday": "Avui toca descans. Recupera bé!",
+    "rest": "Dia de descans",
+    "restMessage1": "El descans també és entrenament: avui els músculs es reparen i es fan més forts.",
+    "restMessage2": "Dorm bé, menja bé i beu aigua. Demà ho notaràs.",
+    "restMessage3": "Un dia tranquil també compta. Mou-te suau si et ve de gust.",
+    "tomorrow": "Demà",
+    "restMove": "Et ve de gust moure't una mica?",
+    "logRecovery": "Registra «{{name}}»",
     "noWeek": "Aquesta setmana encara no hi tens res. Tria els dies de cada rutina a Pla → Setmana.",
     "done": "Fet",
     "swap": "Canvia",
@@ -787,6 +792,8 @@
     "cycling": "Ciclisme",
     "yoga": "Ioga",
     "dance": "Dansa",
+    "walking": "Caminar",
+    "stretching": "Estiraments",
     "other": "Altres"
   }
 }

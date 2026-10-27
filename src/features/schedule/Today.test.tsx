@@ -103,6 +103,14 @@ const session = (fields: Partial<WorkoutSession>): WorkoutSession => ({
   ...fields,
 });
 
+// What the database holds once a session is logged, for the refetch after.
+function keepLogged() {
+  jest.mocked(logQuickSession).mockImplementation((logged) => {
+    jest.mocked(fetchSessions).mockResolvedValue([logged]);
+    return Promise.resolve();
+  });
+}
+
 // Each native action sheet picks the next of these labels.
 const sheetChoices: string[] = [];
 let actionSheet: jest.SpyInstance;
@@ -399,6 +407,7 @@ describe('<Today />', () => {
 
   test('+ → a sport done today, not planned', async () => {
     const user = userEvent.setup();
+    keepLogged();
     await render(<Today />, { wrapper: createAppWrapper() });
 
     sheetChoices.push('Registra un esport fet avui');
@@ -415,6 +424,19 @@ describe('<Today />', () => {
         sport: 'yoga',
       }),
     );
+    // Then it's under "També avui", done.
+    expect(await screen.findByText('✓ Fet · 30 min')).toBeOnTheScreen();
+  });
+
+  test('a walk shows under "També avui" but is no workout for the week', async () => {
+    jest.mocked(fetchSessions).mockResolvedValue([
+      session({ plannedRoutineId: null, routineId: null, sport: 'walking', durationS: 1800 }),
+    ]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('Caminar')).toBeOnTheScreen();
+    expect(screen.getByText('✓ Fet · 30 min')).toBeOnTheScreen();
+    expect(screen.getByText('0 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
   });
 
   test('a finished workout not saved yet already counts as done', async () => {
@@ -435,11 +457,36 @@ describe('<Today />', () => {
     expect(screen.getByText('1 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
   });
 
-  test('a rest day today says so', async () => {
+  test('a rest day: a word on recovery, what comes next, and a quick walk', async () => {
+    const user = userEvent.setup();
+    // Thursday: upper body, then padel. Nothing on Tuesday or Wednesday.
     jest.mocked(fetchRoutines).mockResolvedValue([routine('upper', 'Tren superior 1', { 4: 0 })]);
+    jest.mocked(fetchWeeklySports).mockResolvedValue([sport({ weekday: 4, position: 1 })]);
+    keepLogged();
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByText('Avui toca descans. Recupera bé!')).toBeOnTheScreen();
+    expect(await screen.findByRole('header', { name: 'Dia de descans' })).toBeOnTheScreen();
+    // One of three messages, a different one each day.
+    expect(screen.getByText('Dorm bé, menja bé i beu aigua. Demà ho notaràs.')).toBeOnTheScreen();
+    expect(screen.getByText('Dijous')).toBeOnTheScreen();
+    expect(screen.getByText('Tren superior 1 · Pàdel 19:00')).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Registra «Caminar»' }));
+    await user.type(screen.getByLabelText('Durada (min)'), '40');
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(
+      session({ plannedRoutineId: null, routineId: null, durationS: 2400, sport: 'walking' }),
+    );
+    expect(await screen.findByText('✓ Fet · 40 min')).toBeOnTheScreen();
+  });
+
+  test('a rest day before a planned one says "Demà"', async () => {
+    jest.mocked(fetchRoutines).mockResolvedValue([routine('upper', 'Tren superior 1', { 3: 0 })]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('Demà')).toBeOnTheScreen();
+    expect(screen.getByText('Tren superior 1')).toBeOnTheScreen();
   });
 
   test('with nothing planned all week, points to Pla → Setmana', async () => {

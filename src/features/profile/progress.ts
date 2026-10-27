@@ -1,7 +1,7 @@
 import type { HistoryEntry } from '@/features/history/entries';
 import { weeklyCounts } from '@/features/history/entries';
 import type { RoutineLabel } from '@/features/routines/routine';
-import type { Sport } from '@/features/schedule/sports';
+import { countsAsWorkout, type Sport } from '@/features/schedule/sports';
 import { addDays, dateKey, startOfWeek } from '@/features/schedule/dates';
 import type { Language } from '@/lib/i18n';
 
@@ -19,7 +19,7 @@ export type WeekPoint = {
 
 // The last `weeks` weeks, this one last.
 export function weeklySeries(
-  entries: readonly Pick<HistoryEntry, 'date'>[],
+  entries: readonly Pick<HistoryEntry, 'date' | 'sport'>[],
   today: Date,
   weeks = 6,
 ): WeekPoint[] {
@@ -40,14 +40,16 @@ export type PeriodTotals = {
   averageS: number | null;
 };
 
+// Workouts only: a walk or stretching is left out.
 export function periodTotals(entries: readonly HistoryEntry[]): PeriodTotals {
-  const timeS = entries.reduce((total, entry) => total + (entry.durationS ?? 0), 0);
+  const workouts = entries.filter(countsAsWorkout);
+  const timeS = workouts.reduce((total, entry) => total + (entry.durationS ?? 0), 0);
   return {
-    workouts: entries.length,
+    workouts: workouts.length,
     timeS,
-    volumeKg: Math.round(entries.reduce((total, entry) => total + entry.volumeKg, 0) * 100) / 100,
-    runDistanceM: entries.reduce((total, entry) => total + entry.runDistanceM, 0),
-    averageS: entries.length > 0 ? Math.round(timeS / entries.length) : null,
+    volumeKg: Math.round(workouts.reduce((total, entry) => total + entry.volumeKg, 0) * 100) / 100,
+    runDistanceM: workouts.reduce((total, entry) => total + entry.runDistanceM, 0),
+    averageS: workouts.length > 0 ? Math.round(timeS / workouts.length) : null,
   };
 }
 

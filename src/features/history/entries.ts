@@ -1,5 +1,5 @@
 import { formatDuration, type RoutineLabel } from '@/features/routines/routine';
-import type { Sport } from '@/features/schedule/sports';
+import { countsAsWorkout, type Sport } from '@/features/schedule/sports';
 import { addDays, dateKey, fromDateKey, startOfWeek } from '@/features/schedule/dates';
 import type { FinishedWorkout } from '@/features/workout/activeWorkout';
 import { shownNumbers } from '@/features/workout/activeWorkout';
@@ -66,10 +66,14 @@ export function pendingEntry(
   };
 }
 
-// Workouts per week, by the week's Monday ("2026-10-19").
-export function weeklyCounts(entries: readonly Pick<HistoryEntry, 'date'>[]): Map<string, number> {
+// Workouts per week, by the week's Monday ("2026-10-19"). A walk or
+// stretching doesn't count.
+export function weeklyCounts(
+  entries: readonly Pick<HistoryEntry, 'date' | 'sport'>[],
+): Map<string, number> {
   const counts = new Map<string, number>();
   for (const entry of entries) {
+    if (!countsAsWorkout(entry)) continue;
     const week = dateKey(startOfWeek(fromDateKey(entry.date)));
     counts.set(week, (counts.get(week) ?? 0) + 1);
   }

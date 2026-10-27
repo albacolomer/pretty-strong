@@ -25,6 +25,13 @@ export function startOfWeek(date: Date): Date {
   return addDays(date, 1 - weekdayOf(date));
 }
 
+// Whole days since 1 January 1970, counted by calendar day: each day one
+// more than the day before, whatever the clock or time zone. To pick
+// something by day, e.g. a rest day's message.
+export function dayNumber(date: Date): number {
+  return Math.round(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000);
+}
+
 // "2026-10-20": the day as the database stores dates, in local time.
 export function dateKey(date: Date): string {
   const month = String(date.getMonth() + 1).padStart(2, '0');

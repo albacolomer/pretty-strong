@@ -5,7 +5,8 @@ import type { Weekday } from '@/features/routines/routine';
 // Sports in the week (Pla → Setmana): padel, basketball… on a day, with an
 // optional time and duration. No React here.
 
-// Matches weekly_sports_sport_check and workout_sessions_sport_check.
+// Matches workout_sessions_sport_check; weekly_sports_sport_check has all
+// but RECOVERY_SPORTS.
 export const SPORTS = [
   'padel',
   'tennis',
@@ -18,9 +19,24 @@ export const SPORTS = [
   'cycling',
   'yoga',
   'dance',
+  'walking',
+  'stretching',
   'other',
 ] as const;
 export type Sport = (typeof SPORTS)[number];
+
+// Caminar and Estiraments: logged on Avui (a rest day's quick buttons, or
+// +), never planned in the week, and activity rather than workouts.
+export const RECOVERY_SPORTS: readonly Sport[] = ['walking', 'stretching'];
+
+// The ones Pla → Setmana offers.
+export const PLANNABLE_SPORTS = SPORTS.filter((sport) => !RECOVERY_SPORTS.includes(sport));
+
+// Whether a session counts toward the weekly goal, the streak and the
+// workout totals: everything but a walk or stretching.
+export function countsAsWorkout(session: { sport: Sport | null }): boolean {
+  return session.sport === null || !RECOVERY_SPORTS.includes(session.sport);
+}
 
 // Each sport's icon (SF Symbols, iOS's own).
 export const SPORT_ICONS: Record<Sport, SFSymbol> = {
@@ -35,6 +51,8 @@ export const SPORT_ICONS: Record<Sport, SFSymbol> = {
   cycling: 'bicycle',
   yoga: 'figure.yoga',
   dance: 'figure.dance',
+  walking: 'figure.walk',
+  stretching: 'figure.flexibility',
   other: 'plus',
 };
 

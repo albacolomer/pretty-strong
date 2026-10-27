@@ -5,21 +5,24 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
-import { SPORT_ICONS, SPORTS, type Sport } from './sports';
+import { PLANNABLE_SPORTS, SPORT_ICONS, type Sport } from './sports';
 
-// The 12 sports, three to a row, to pick one: planning it on a day, or
-// logging one done today.
+// The sports, three to a row, to pick one: planning it on a day (the
+// plannable ones), or logging one done today (all of them, Caminar and
+// Estiraments too).
 export function SportGrid({
   value,
   onChange,
+  sports = PLANNABLE_SPORTS,
 }: {
   value: Sport | null;
   onChange: (sport: Sport) => void;
+  sports?: readonly Sport[];
 }) {
   const { t } = useTranslation();
   return (
     <View role="radiogroup" aria-label={t('schedule.sport')} style={styles.grid}>
-      {SPORTS.map((sport) => (
+      {sports.map((sport) => (
         <IconChoice
           key={sport}
           icon={SPORT_ICONS[sport]}

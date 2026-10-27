@@ -462,8 +462,13 @@
     "dragHint": "Arrastra para cambiar su orden en el día."
   },
   "today": {
-    "rest": "Descanso",
-    "restToday": "Hoy toca descansar. ¡Recupérate bien!",
+    "rest": "Día de descanso",
+    "restMessage1": "El descanso también es entrenamiento: hoy los músculos se reparan y se hacen más fuertes.",
+    "restMessage2": "Duerme bien, come bien y bebe agua. Mañana lo notarás.",
+    "restMessage3": "Un día tranquilo también cuenta. Muévete suave si te apetece.",
+    "tomorrow": "Mañana",
+    "restMove": "¿Te apetece moverte un poco?",
+    "logRecovery": "Registrar «{{name}}»",
     "noWeek": "Esta semana todavía no tienes nada. Elige los días de cada rutina en Plan → Semana.",
     "done": "Hecho",
     "swap": "Cambiar",
@@ -787,6 +792,8 @@
     "cycling": "Ciclismo",
     "yoga": "Yoga",
     "dance": "Baile",
+    "walking": "Caminar",
+    "stretching": "Estiramientos",
     "other": "Otro"
   }
 }

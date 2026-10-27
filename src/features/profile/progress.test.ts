@@ -83,6 +83,21 @@ describe('this month so far', () => {
     expect(monthSoFar([], new Date(2026, 2, 30)).previousTo).toBe('2026-02-28');
   });
 
+  test('a walk or stretching is activity, not a workout', () => {
+    const walk = entry('2026-10-20', {
+      sport: 'walking',
+      routineName: null,
+      routineLabel: null,
+      durationS: 1800,
+      volumeKg: 0,
+    });
+    const result = monthSoFar([entry('2026-10-21'), walk], today);
+    expect(result.current).toMatchObject({ workouts: 1, timeS: 3600, averageS: 3600 });
+    // Still in the month's mix.
+    expect(result.entries).toHaveLength(2);
+    expect(weeklySeries([entry('2026-10-21'), walk], today).at(-1)?.count).toBe(1);
+  });
+
   test('nothing yet: no average', () => {
     expect(periodTotals([])).toEqual({ workouts: 0, timeS: 0, volumeKg: 0, runDistanceM: 0, averageS: null });
   });

@@ -1,4 +1,12 @@
-import { addDays, dateKey, formatDayTitle, startOfDay, startOfWeek, weekdayOf } from './dates';
+import {
+  addDays,
+  dateKey,
+  dayNumber,
+  formatDayTitle,
+  startOfDay,
+  startOfWeek,
+  weekdayOf,
+} from './dates';
 
 // Tuesday 20 October 2026, mid-afternoon.
 const tuesday = new Date(2026, 9, 20, 15, 30);
@@ -8,6 +16,15 @@ describe('weekdayOf', () => {
     expect(weekdayOf(new Date(2026, 9, 19))).toBe(1);
     expect(weekdayOf(tuesday)).toBe(2);
     expect(weekdayOf(new Date(2026, 9, 25))).toBe(7);
+  });
+});
+
+describe('dayNumber', () => {
+  test('goes up by one each calendar day, whatever the time', () => {
+    expect(dayNumber(new Date(1970, 0, 1, 23, 59))).toBe(0);
+    expect(dayNumber(tuesday) - dayNumber(new Date(2026, 9, 19))).toBe(1);
+    // Across the end of summer time (25 October 2026 in Europe).
+    expect(dayNumber(new Date(2026, 9, 26)) - dayNumber(new Date(2026, 9, 25))).toBe(1);
   });
 });
 

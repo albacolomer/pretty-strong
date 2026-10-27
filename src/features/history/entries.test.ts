@@ -37,7 +37,7 @@ function entry(values: Partial<HistoryEntry>): HistoryEntry {
 }
 
 // Workouts on these days (Mondays: 28 Sep, 5, 12 and 19 Oct 2026).
-const days = (...dates: string[]) => weeklyCounts(dates.map((date) => ({ date })));
+const days = (...dates: string[]) => weeklyCounts(dates.map((date) => ({ date, sport: null })));
 
 describe('weekly numbers', () => {
   test('workouts per week, by its Monday', () => {
@@ -47,6 +47,17 @@ describe('weekly numbers', () => {
         ['2026-10-12', 1],
       ]),
     );
+  });
+
+  test('a walk or stretching is no workout', () => {
+    expect(
+      weeklyCounts([
+        { date: '2026-10-19', sport: null },
+        { date: '2026-10-20', sport: 'walking' },
+        { date: '2026-10-21', sport: 'stretching' },
+        { date: '2026-10-22', sport: 'padel' },
+      ]),
+    ).toEqual(new Map([['2026-10-19', 2]]));
   });
 
   test('a week keeps the streak at 75% of the goal, rounded', () => {

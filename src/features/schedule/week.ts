@@ -1,5 +1,6 @@
 import { WEEKDAYS, type Routine, type Weekday } from '@/features/routines/routine';
 
+import { addDays, weekdayOf } from './dates';
 import type { WeeklySport } from './sports';
 
 // The week as your routines' days (weekly_schedule) and your sports
@@ -72,6 +73,22 @@ export function activitiesOnDay(
   return planned
     .sort((a, b) => a.position - b.position || a.order - b.order)
     .map(({ activity }) => activity);
+}
+
+// The next day after `today` with something planned, up to a week ahead
+// (the same weekday next week included): how many days away, its weekday
+// and what's on it. Null when nothing is planned all week.
+export function nextPlannedDay(
+  routines: readonly Routine[],
+  sports: readonly WeeklySport[],
+  today: Date,
+): { inDays: number; weekday: Weekday; activities: DayActivity[] } | null {
+  for (let inDays = 1; inDays <= 7; inDays += 1) {
+    const weekday = weekdayOf(addDays(today, inDays));
+    const activities = activitiesOnDay(routines, sports, weekday);
+    if (activities.length > 0) return { inDays, weekday, activities };
+  }
+  return null;
 }
 
 // Where something added to a day goes: after its routines and sports.

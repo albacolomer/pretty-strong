@@ -5,7 +5,7 @@ import { StyleSheet } from 'react-native';
 import { NumberInput, Sheet, TextField } from '@/components/ui';
 import { readMinutes } from '@/features/workout/session';
 
-import { SPORT_NAME_MAX_LENGTH, type Sport } from './sports';
+import { SPORT_NAME_MAX_LENGTH, SPORTS, type Sport } from './sports';
 import { SportGrid } from './SportGrid';
 
 export type LoggedSport = { sport: Sport; customName: string | null; durationS: number | null };
@@ -45,7 +45,7 @@ export function LogSportSheet({
         });
         onClose();
       }}>
-      <SportGrid value={sport} onChange={setSport} />
+      <SportGrid value={sport} onChange={setSport} sports={SPORTS} />
       {sport === 'other' ? (
         <TextField
           label={t('schedule.sportName')}

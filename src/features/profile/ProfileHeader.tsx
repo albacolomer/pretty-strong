@@ -6,6 +6,7 @@ import { Text } from '@/components/ui';
 import { streakWeeks, weeklyCounts } from '@/features/history/entries';
 import { useHistoryEntries } from '@/features/history/useHistory';
 import { dateKey, startOfWeek } from '@/features/schedule/dates';
+import { countsAsWorkout } from '@/features/schedule/sports';
 import { useToday } from '@/features/schedule/useToday';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
@@ -15,7 +16,8 @@ import { useWeeklyGoal } from './useWeeklyGoal';
 
 // The top of Profile: your picture (or initial), name, city and focus, then workouts in all,
 // the streak (weeks in a row at 75% of the goal or more) and this week
-// against the goal; "Edita el perfil" under them.
+// against the goal (walks and stretching left out); "Edita el perfil"
+// under them.
 export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -31,7 +33,7 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
   const streak = streakWeeks(counts, goal, today);
 
   const stats = [
-    { value: String(entries.length), label: t('profile.workouts') },
+    { value: String(entries.filter(countsAsWorkout).length), label: t('profile.workouts') },
     { value: t('profile.streakValue', { count: streak }), label: t('profile.streak') },
     {
       value: goal === null ? String(thisWeek) : `${thisWeek} / ${goal}`,

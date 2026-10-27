@@ -1,8 +1,15 @@
 import { NO_TARGETS, routineDuration, type Routine } from '@/features/routines/routine';
 import { sundayRun, upperBody } from '@/features/routines/testData';
 
-import { formatTimeTyping, readTime, type WeeklySport } from './sports';
-import { activitiesOnDay, nextDayPosition, weekSummary } from './week';
+import {
+  countsAsWorkout,
+  formatTimeTyping,
+  PLANNABLE_SPORTS,
+  readTime,
+  SPORTS,
+  type WeeklySport,
+} from './sports';
+import { activitiesOnDay, nextDayPosition, nextPlannedDay, weekSummary } from './week';
 
 const sport = (values: Partial<WeeklySport>): WeeklySport => ({
   id: 'sport-1',
@@ -38,6 +45,37 @@ describe('sports in the week', () => {
       sports: 2,
       restDays: 4,
     });
+  });
+
+  test('the next day with something planned, a week ahead at most', () => {
+    // Wednesday 21 October 2026: Thursday is tomorrow.
+    const wednesday = new Date(2026, 9, 21);
+    expect(nextPlannedDay(routines, [], wednesday)).toMatchObject({ inDays: 1, weekday: 4 });
+    // Friday: Monday, three days on, with its padel.
+    const monday = nextPlannedDay(routines, [sport({})], new Date(2026, 9, 23));
+    expect(monday).toMatchObject({ inDays: 3, weekday: 1 });
+    expect(monday?.activities.map((activity) => activity.key)).toEqual([
+      'routine:routine-1',
+      'sport:sport-1',
+    ]);
+    // Only on Thursdays: next Thursday.
+    const thursdays = [{ ...upperBody, weekdays: [4], dayPositions: { 4: 0 } }] as Routine[];
+    expect(nextPlannedDay(thursdays, [], new Date(2026, 9, 22))).toMatchObject({
+      inDays: 7,
+      weekday: 4,
+    });
+    expect(nextPlannedDay([], [], wednesday)).toBeNull();
+  });
+
+  test('walks and stretching: logged, not planned, and not workouts', () => {
+    expect(SPORTS).toEqual(expect.arrayContaining(['walking', 'stretching']));
+    expect(PLANNABLE_SPORTS).not.toContain('walking');
+    expect(PLANNABLE_SPORTS).not.toContain('stretching');
+    expect(PLANNABLE_SPORTS).toHaveLength(12);
+    expect(countsAsWorkout({ sport: 'walking' })).toBe(false);
+    expect(countsAsWorkout({ sport: 'stretching' })).toBe(false);
+    expect(countsAsWorkout({ sport: 'padel' })).toBe(true);
+    expect(countsAsWorkout({ sport: null })).toBe(true);
   });
 
   test('a time typed on the number keypad', () => {

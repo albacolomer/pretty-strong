@@ -462,8 +462,13 @@
     "dragHint": "Drag to change its order in the day."
   },
   "today": {
-    "rest": "Rest",
-    "restToday": "Rest day today. Recover well!",
+    "rest": "Rest day",
+    "restMessage1": "Rest is training too: today your muscles repair and get stronger.",
+    "restMessage2": "Sleep well, eat well and drink water. You'll feel it tomorrow.",
+    "restMessage3": "A quiet day counts too. Move gently if you feel like it.",
+    "tomorrow": "Tomorrow",
+    "restMove": "Fancy moving a little?",
+    "logRecovery": "Log {{name}}",
     "noWeek": "Nothing planned this week yet. Choose each routine's days in Plan → Week.",
     "done": "Done",
     "swap": "Swap",
@@ -787,6 +792,8 @@
     "cycling": "Cycling",
     "yoga": "Yoga",
     "dance": "Dance",
+    "walking": "Walking",
+    "stretching": "Stretching",
     "other": "Other"
   }
 }
