@@ -61,15 +61,18 @@ export async function logQuickSession(session: WorkoutSession): Promise<void> {
 
 // Each exercise's sets the last time it was done, in this routine (when
 // there is one) and anywhere: once, when a workout starts (see last_sets()).
+// For a finished workout, `beforeSessionId` looks back from it instead.
 export async function fetchLastTime(
   routineId: string | null,
   exerciseIds: string[],
+  beforeSessionId?: string,
 ): Promise<Record<string, LastTime>> {
   const { data, error } = await supabase.rpc('last_sets', {
     // A null routine (an unplanned workout, or an exercise added in it)
     // only finds last time anywhere.
     p_routine_id: routineId as string,
     p_exercise_ids: exerciseIds,
+    p_before_session_id: beforeSessionId,
   });
   if (error) throw error;
 

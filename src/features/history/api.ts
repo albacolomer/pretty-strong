@@ -2,12 +2,13 @@ import { EXERCISE_COLUMNS, toExercise } from '@/features/exercises/exercise';
 import type { RoutineLabel } from '@/features/routines/routine';
 import type { Sport } from '@/features/schedule/sports';
 import type { SetType } from '@/features/workout/activeWorkout';
+import { fetchLastTime } from '@/features/workout/api';
 import { pace } from '@/features/workout/cardio';
 import type { ChangeReason, Energy, ExerciseChangeReason } from '@/features/workout/session';
 import { supabase } from '@/lib/supabase';
 
 import type { HistoryEntry } from './entries';
-import { toSavePayload, type PastWorkout } from './pastWorkout';
+import { pastBeats, toSavePayload, type PastWorkout } from './pastWorkout';
 
 // All your finished workouts with their totals, newest first (see
 // workout_summaries()); skipped days aren't workouts. A few hundred rows a
@@ -107,6 +108,23 @@ export async function fetchPastWorkout(id: string): Promise<PastWorkout | null> 
           })),
       })),
   };
+}
+
+// How many exercises beat last time in these workouts (US-14): each one's
+// sets, and last time from the workouts before it (see last_sets()).
+export async function fetchBeats(
+  workouts: readonly Pick<HistoryEntry, 'id' | 'routineLabel'>[],
+): Promise<number> {
+  const counts = await Promise.all(
+    workouts.map(async ({ id, routineLabel }) => {
+      const workout = await fetchPastWorkout(id);
+      if (!workout) return 0;
+      const exerciseIds = [...new Set(workout.exercises.map((exercise) => exercise.exerciseId))];
+      const lastTime = await fetchLastTime(workout.routineId, exerciseIds, workout.id);
+      return pastBeats(workout, lastTime, routineLabel);
+    }),
+  );
+  return counts.reduce((total, count) => total + count, 0);
 }
 
 // Saves a whole workout in one transaction (see finish_workout()): after

@@ -1,9 +1,16 @@
 import type { Exercise } from '@/features/exercises/exercise';
 import type { TrackingType } from '@/features/exercises/vocabulary';
+import type { RoutineLabel } from '@/features/routines/routine';
 import { formatInput } from '@/features/routines/targets';
 import type { Sport } from '@/features/schedule/sports';
-import type { SetNumbers, SetType } from '@/features/workout/activeWorkout';
+import {
+  previousSets,
+  type LastTime,
+  type SetNumbers,
+  type SetType,
+} from '@/features/workout/activeWorkout';
 import { formatPace, pace } from '@/features/workout/cardio';
+import { compareToLastTime } from '@/features/workout/compareToLastTime';
 import type { ChangeReason, Energy, ExerciseChangeReason } from '@/features/workout/session';
 import { liveDuration } from '@/features/workout/session';
 import { formatElapsed } from '@/features/workout/useElapsed';
@@ -92,6 +99,31 @@ export function pastTotals(workout: PastWorkout): PastTotals {
     volumeKg: Math.round(volumeKg * 100) / 100,
     distanceM,
   };
+}
+
+// How many exercises beat last time (US-14), compared as the finish summary
+// does it: with last time in this routine, else anywhere, from the
+// workouts before this one. `routineLabel` tells a run routine's blocks.
+export function pastBeats(
+  workout: PastWorkout,
+  lastTime: Record<string, LastTime>,
+  routineLabel: RoutineLabel | null,
+): number {
+  return workout.exercises.filter((exercise) => {
+    if (exercise.change === 'skipped' || exercise.sets.length === 0) return false;
+    const { trackingType } = exercise.exercise;
+    const previous = previousSets(
+      {
+        routineExerciseId: exercise.routineExerciseId,
+        runBlock:
+          routineLabel === 'run' && trackingType === 'run' && exercise.routineExerciseId !== null,
+      },
+      lastTime[exercise.exerciseId],
+    );
+    if (!previous) return false;
+    const done = exercise.sets.map((set) => set.numbers);
+    return compareToLastTime(trackingType, done, previous)?.direction === 'up';
+  }).length;
 }
 
 // The words a set's line needs, already translated.

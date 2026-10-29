@@ -5,10 +5,11 @@ import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useRoutines } from '@/features/routines/useRoutines';
 import { deleteSession } from '@/features/workout/api';
+import { summarize } from '@/features/workout/workoutSummary';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { isNetworkError } from '@/lib/errors';
 
-import { fetchHistoryEntries, fetchPastWorkout, saveWorkout } from './api';
+import { fetchBeats, fetchHistoryEntries, fetchPastWorkout, saveWorkout } from './api';
 import { pendingEntry, type HistoryEntry } from './entries';
 import type { PastWorkout } from './pastWorkout';
 
@@ -43,6 +44,28 @@ export function useHistoryEntries() {
     b.date.localeCompare(a.date),
   );
   return { ...query, entries };
+}
+
+// How many exercises beat last time in these workouts (Avui's "Tot fet"):
+// the saved ones from the database, the ones waiting for signal from the
+// phone's copy, which still knows its last time. Null while loading or
+// without signal.
+export function useBeats(entries: readonly HistoryEntry[]): number | null {
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const pending = useWorkoutStore((state) => state.pending);
+  // Only workouts with exercises can beat anything.
+  const saved = entries.filter((entry) => !entry.pending && entry.exercises > 0);
+  const query = useQuery({
+    queryKey: [...historyQueryKey(userId), 'beats', ...saved.map((entry) => entry.id)],
+    queryFn: userId && saved.length > 0 ? () => fetchBeats(saved) : skipToken,
+  });
+
+  const waiting = pending
+    .filter((workout) => entries.some((entry) => entry.pending && entry.id === workout.id))
+    .reduce((total, workout) => total + summarize(workout, workout.endedAt).highlights.length, 0);
+  if (saved.length === 0) return waiting;
+  return query.data === undefined ? null : query.data + waiting;
 }
 
 export function usePastWorkout(id: string) {

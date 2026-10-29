@@ -7,6 +7,7 @@ import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-nativ
 import { Card, Text, useToast } from '@/components/ui';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
+import { useBeats, useHistoryEntries } from '@/features/history/useHistory';
 import { SmallAvatar } from '@/features/profile/SmallAvatar';
 import { useWeeklyGoal } from '@/features/profile/useWeeklyGoal';
 import { StepsCard } from '@/features/steps/StepsCard';
@@ -36,6 +37,7 @@ import { spacing, useTheme } from '@/theme';
 
 import { AlsoToday, type AlsoTodayItem } from './AlsoToday';
 import { addDays, dateKey, formatDayTitle, startOfWeek, weekdayOf } from './dates';
+import { DayDone } from './DayDone';
 import { LogSportSheet, type LoggedSport } from './LogSportSheet';
 import { RestDay } from './RestDay';
 import { RoutinePreviewSheet } from './RoutinePreviewSheet';
@@ -52,7 +54,8 @@ type Action = { label: string; run: () => void };
 // The Avui tab (US-11, US-12, US-20): the date and your picture, today's
 // steps, then the day's main activity in a big button inside the week's ring (Comença, or
 // Fet for a class or a sport), with Previsualitza / Canvia / Salta; on a
-// rest day, a word on recovery, what's next and Caminar / Estiraments.
+// rest day, a word on recovery, what's next and Caminar / Estiraments; once
+// it's all done, "Tot fet" with the day in numbers.
 // Under it, "També avui" with the day's other activities, what was logged
 // without being planned, and a + to log more.
 export function Today() {
@@ -94,6 +97,10 @@ export function Today() {
         sportName: null,
       })),
   ];
+  // Today's finished workouts with their totals, for "Tot fet".
+  const { entries: history } = useHistoryEntries();
+  const doneToday = history.filter((entry) => entry.date === day);
+  const beats = useBeats(doneToday);
   const logSession = useLogSession(from, to);
   const deleteSession = useDeleteSession(from, to);
   const { swaps, setSwap } = useSwaps(from);
@@ -187,6 +194,12 @@ export function Today() {
   const doneThisWeek = sessions.filter(
     (session) => session.status === 'completed' && countsAsWorkout(session),
   ).length;
+  // The week ring around the main button (or "Tot fet").
+  const segments = Math.max(goal ?? 0, doneThisWeek, 1);
+  const progress =
+    goal === null
+      ? t('today.weekDone', { count: doneThisWeek })
+      : t('today.weekProgress', { done: doneThisWeek, count: goal });
 
   // A planned activity's session today, the latest if there are several.
   function sessionOf(activity: DayActivity): WorkoutSession | undefined {
@@ -219,7 +232,13 @@ export function Today() {
     planned.find((activity) => activity.kind === 'routine') ??
     planned[0] ??
     null;
-  const others = planned.filter((activity) => activity !== main);
+  // Everything planned is logged, and not all skipped: "Tot fet", with all
+  // of the day's activities under "També avui".
+  const allDone =
+    planned.length > 0 &&
+    open.length === 0 &&
+    planned.some((activity) => sessionOf(activity)?.status === 'completed');
+  const others = allDone ? planned : planned.filter((activity) => activity !== main);
 
   // "Esquena i bíceps · 7 exercicis · ~1 h 30 min", or "19:00 · 1 h".
   function detailsOf(activity: DayActivity, shown?: Routine): string {
@@ -473,11 +492,6 @@ export function Today() {
 
   function renderHero(activity: DayActivity) {
     const session = sessionOf(activity);
-    const segments = Math.max(goal ?? 0, doneThisWeek, 1);
-    const progress =
-      goal === null
-        ? t('today.weekDone', { count: doneThisWeek })
-        : t('today.weekProgress', { done: doneThisWeek, count: goal });
     const status = session
       ? {
           label: t('today.optionsFor', { name: nameOf(activity) }),
@@ -687,6 +701,15 @@ export function Today() {
         <Card>
           <Text color="textMuted">{t('today.noWeek')}</Text>
         </Card>
+      ) : allDone ? (
+        <DayDone
+          segments={segments}
+          done={doneThisWeek}
+          progress={progress}
+          timeS={doneToday.reduce((total, entry) => total + (entry.durationS ?? 0), 0)}
+          volumeKg={doneToday.reduce((total, entry) => total + entry.volumeKg, 0)}
+          beats={beats}
+        />
       ) : main ? (
         renderHero(main)
       ) : (

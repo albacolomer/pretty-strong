@@ -3,6 +3,7 @@ import { cardioExercise, testExercise } from '@/features/routines/testData';
 
 import {
   formatSetNumbers,
+  pastBeats,
   pastTotals,
   toSavePayload,
   type PastExercise,
@@ -75,6 +76,51 @@ describe('pastTotals', () => {
   test('a quick log has the duration typed in', () => {
     expect(pastTotals({ ...workout, logMode: 'quick', startedAt: null, endedAt: null, durationS: 3000, exercises: [] }))
       .toMatchObject({ durationS: 3000, exercises: 0, sets: 0 });
+  });
+});
+
+describe('pastBeats', () => {
+  const sets = (...values: Partial<typeof NO_TARGETS>[]) => values.map(numbers);
+
+  test('counts the exercises that beat last time', () => {
+    const lastTime = {
+      // Heavier today: 42.5 kg against 40.
+      lat: { routine: [], any: sets({ weightKg: 40, reps: 10 }) },
+      // Skipped today: never counts.
+      row: { routine: [], any: sets({ weightKg: 30, reps: 10 }) },
+      // Cardio machines aren't compared.
+      stairs: { routine: [], any: sets({ durationS: 600, distanceM: 800 }) },
+    };
+    expect(pastBeats(workout, lastTime, 'strength')).toBe(1);
+  });
+
+  test('last time in this routine comes first, row by row', () => {
+    const today = {
+      ...workout,
+      exercises: [exercise('lat', [{ weightKg: 42.5, reps: 8 }], { routineExerciseId: 're-1' })],
+    };
+    const lastTime = {
+      lat: {
+        // In this routine: 45 kg, so today is down…
+        routine: [{ routineExerciseId: 're-1', sets: sets({ weightKg: 45, reps: 6 }) }],
+        // …even if it beats another routine's 40 kg.
+        any: sets({ weightKg: 40, reps: 10 }),
+      },
+    };
+    expect(pastBeats(today, lastTime, 'strength')).toBe(0);
+  });
+
+  test("a run routine's block only against itself, and nothing the first time", () => {
+    const run = (routineExerciseId: string | null) => ({
+      ...exercise('run', [{ distanceM: 400, durationS: 90 }], { routineExerciseId }),
+      exercise: { ...testExercise('run', 'Córrer'), trackingType: 'run' as const },
+    });
+    // Faster than a 10 km run somewhere else, but that says nothing.
+    const lastTime = { run: { routine: [], any: sets({ distanceM: 10000, durationS: 3600 }) } };
+    expect(pastBeats({ ...workout, exercises: [run('re-1')] }, lastTime, 'run')).toBe(0);
+    // Added that day (no routine row): compared with anywhere.
+    expect(pastBeats({ ...workout, exercises: [run(null)] }, lastTime, 'run')).toBe(1);
+    expect(pastBeats(workout, {}, 'strength')).toBe(0);
   });
 });
 

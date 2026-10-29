@@ -670,7 +670,11 @@ export type Database = {
       finish_workout: { Args: { p_session: Json }; Returns: string }
       is_username_available: { Args: { candidate: string }; Returns: boolean }
       last_sets: {
-        Args: { p_exercise_ids: string[]; p_routine_id: string }
+        Args: {
+          p_before_session_id?: string
+          p_exercise_ids: string[]
+          p_routine_id: string
+        }
         Returns: {
           distance_m: number
           duration_s: number

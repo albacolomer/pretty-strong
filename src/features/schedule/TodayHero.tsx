@@ -6,8 +6,9 @@ import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { WeekRing } from './WeekRing';
 
-const RING = 270;
-const BUTTON = 200;
+// The ring and the button in it; "Tot fet" (DayDone) uses the same.
+export const RING = 270;
+export const BUTTON = 200;
 
 export type HeroAction = { label: string; aria: string; icon: SFSymbol; onPress: () => void };
 

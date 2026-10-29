@@ -159,7 +159,10 @@ export type LastTime = {
 // Last time in this routine for this row: the same routine row's sets.
 // Without a row to match (added that day, or since taken out of the
 // routine), the exercise's.
-function lastInRoutine(exercise: ActiveExercise, last: LastTime | undefined): SetNumbers[] {
+function lastInRoutine(
+  exercise: { routineExerciseId: string | null },
+  last: LastTime | undefined,
+): SetNumbers[] {
   const rows = last?.routine ?? [];
   const row =
     rows.find((item) => item.routineExerciseId === exercise.routineExerciseId) ??
@@ -171,20 +174,33 @@ function hasNumbers(numbers: SetNumbers): boolean {
   return Object.values(numbers).some((value) => value !== null);
 }
 
-// Pre-fills an exercise from last time (US-13), with Alba's rule: last time
-// in this routine; the first time, the routine's plan; without a plan, last
-// time anywhere. Row by row; extra rows take last time's last set. A run
-// block is only compared with itself: a 10 km pace says nothing about a
-// 400 m one.
-export function withLastTime(exercise: ActiveExercise, last: LastTime | undefined): ActiveExercise {
+// What an exercise is compared with (US-14): last time in this routine,
+// else last time anywhere. A run block is only compared with itself: a
+// 10 km pace says nothing about a 400 m one. Null the first time.
+export function previousSets(
+  exercise: { routineExerciseId: string | null; runBlock: boolean },
+  last: LastTime | undefined,
+): SetNumbers[] | null {
   const inRoutine = lastInRoutine(exercise, last);
   const anywhere = exercise.runBlock ? [] : (last?.any ?? []);
+  return inRoutine.length > 0 ? inRoutine : anywhere.length > 0 ? anywhere : null;
+}
+
+// Pre-fills an exercise from last time (US-13), with Alba's rule: last time
+// in this routine; the first time, the routine's plan; without a plan, last
+// time anywhere (see previousSets). Row by row; extra rows take last
+// time's last set.
+export function withLastTime(exercise: ActiveExercise, last: LastTime | undefined): ActiveExercise {
+  const inRoutine = lastInRoutine(exercise, last);
+  const previous = previousSets(
+    { routineExerciseId: exercise.routineExerciseId, runBlock: exercise.runBlock !== null },
+    last,
+  );
   const hasPlan = exercise.sets.some((set) => hasNumbers(set.planned));
-  const source =
-    inRoutine.length > 0 ? inRoutine : hasPlan ? null : anywhere.length > 0 ? anywhere : null;
+  const source = inRoutine.length > 0 ? inRoutine : hasPlan ? null : previous;
   return {
     ...exercise,
-    previous: inRoutine.length > 0 ? inRoutine : anywhere.length > 0 ? anywhere : null,
+    previous,
     sets: source
       ? exercise.sets.map((set, index) => ({
           ...set,
