@@ -377,7 +377,12 @@ describe('<Today />', () => {
     });
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByText('En marxa: Tren superior 1')).toBeOnTheScreen();
+    // The banner: what's going and for how long, one tap back in.
+    expect(await screen.findByText('En curs · Tren superior 1')).toBeOnTheScreen();
+    const banner = screen.getByRole('button', {
+      name: /^Reprèn «Tren superior 1», en curs des de fa 0:\d\d$/,
+    });
+    expect(banner).toHaveTextContent(/0:\d\d/);
     expect(screen.getByRole('button', { name: 'Comença «Tren superior 1»' })).toHaveTextContent(
       'Reprèn',
     );
@@ -386,6 +391,9 @@ describe('<Today />', () => {
     await user.press(screen.getByRole('button', { name: 'Registra una altra activitat' }));
     expect(screen.getByText('Ja tens un entrenament en marxa.')).toBeOnTheScreen();
     expect(router.push).not.toHaveBeenCalled();
+
+    await user.press(banner);
+    expect(router.push).toHaveBeenCalledWith('/workout');
   });
 
   test('+ starts any routine, unplanned, or a new one', async () => {
