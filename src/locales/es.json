@@ -19,11 +19,13 @@
   },
   "exercises": {
     "search": "Buscar",
-    "searchPlaceholder": "Nombre del ejercicio",
-    "muscleGroup": "Grupo muscular",
+    "searchCount_one": "Busca entre {{count}} ejercicio",
+    "searchCount_other": "Busca entre {{count}} ejercicios",
+    "filters": "Filtros",
+    "filtersActive_one": "Filtros: {{count}} elegido",
+    "filtersActive_other": "Filtros: {{count}} elegidos",
+    "musclesTitle": "Músculos",
     "equipment": "Material",
-    "allMuscles": "Todos los músculos",
-    "allEquipment": "Todo el material",
     "groups": {
       "upper": "Tren superior",
       "core": "Core",

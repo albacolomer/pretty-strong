@@ -19,11 +19,13 @@
   },
   "exercises": {
     "search": "Cerca",
-    "searchPlaceholder": "Nom de l'exercici",
-    "muscleGroup": "Grup muscular",
+    "searchCount_one": "Cerca entre {{count}} exercici",
+    "searchCount_other": "Cerca entre {{count}} exercicis",
+    "filters": "Filtres",
+    "filtersActive_one": "Filtres: {{count}} triat",
+    "filtersActive_other": "Filtres: {{count}} triats",
+    "musclesTitle": "Músculs",
     "equipment": "Material",
-    "allMuscles": "Tots els músculs",
-    "allEquipment": "Tot el material",
     "groups": {
       "upper": "Tren superior",
       "core": "Core",

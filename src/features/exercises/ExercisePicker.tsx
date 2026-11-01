@@ -104,11 +104,10 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
           <ActivityIndicator color={colors.accent} />
         ) : (
           <>
-            <ExerciseFilterBar exercises={exercises} search={search} />
-            <Button
-              label={t('exercises.create')}
-              variant="secondary"
-              onPress={() => setNewName('')}
+            <ExerciseFilterBar
+              exercises={exercises}
+              search={search}
+              onCreate={() => setNewName('')}
             />
             {search.results.length === 0 ? (
               <View style={styles.empty}>
@@ -123,13 +122,14 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
               </View>
             ) : (
               <Card style={styles.list}>
-                {search.results.map((exercise) => {
+                {search.results.map((exercise, index) => {
                   const order = selected.indexOf(exercise.id);
                   return (
                     <ExerciseRow
                       key={exercise.id}
                       exercise={exercise}
                       language={language}
+                      separator={index > 0}
                       selected={order !== -1}
                       onPress={() => toggle(exercise.id)}
                       accessory={<OrderBadge order={order} />}
@@ -223,8 +223,11 @@ const styles = StyleSheet.create({
     padding: spacing.lg,
     gap: spacing.lg,
   },
+  // The rows bring their own padding and hairlines.
   list: {
-    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    gap: 0,
   },
   empty: {
     gap: spacing.md,

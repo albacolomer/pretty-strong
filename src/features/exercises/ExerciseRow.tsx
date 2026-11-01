@@ -21,6 +21,8 @@ type ExerciseRowProps = {
   selected?: boolean;
   // Shown on the right, e.g. the ⋯ menu or a "Recupera" button.
   accessory?: ReactNode;
+  // A hairline above it, from the name on: every row of a list but the first.
+  separator?: boolean;
 };
 
 // Picture, name, then its main muscles and equipment, e.g. "Glutis · Barra".
@@ -32,8 +34,10 @@ export function ExerciseRow({
   onPress,
   selected,
   accessory,
+  separator = false,
 }: ExerciseRowProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const details = [
     ...exercise.primaryMuscles.map((muscle) => t(`muscles.${muscle}`)),
     t(`equipment.${exercise.equipment}`),
@@ -53,6 +57,9 @@ export function ExerciseRow({
 
   return (
     <View style={styles.row}>
+      {separator ? (
+        <View style={[styles.separator, { backgroundColor: colors.separator }]} />
+      ) : null}
       {onPress ? (
         <Pressable
           role={selected === undefined ? 'button' : 'checkbox'}
@@ -69,7 +76,7 @@ export function ExerciseRow({
   );
 }
 
-const THUMBNAIL_SIZE = 56;
+const THUMBNAIL_SIZE = 46;
 
 // The RepDB picture when there is one; otherwise (custom exercises, and the
 // few built-ins RepDB doesn't have) the body figure with the main muscle,
@@ -101,6 +108,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
+    paddingVertical: spacing.sm,
+  },
+  separator: {
+    position: 'absolute',
+    top: 0,
+    left: THUMBNAIL_SIZE + spacing.md,
+    right: 0,
+    height: 1,
   },
   main: {
     flex: 1,

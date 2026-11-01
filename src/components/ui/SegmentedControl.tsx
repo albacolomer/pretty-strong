@@ -14,6 +14,15 @@ export type SegmentedControlProps<T extends string> = {
   label: string;
 };
 
+// Drawn thin; each option still takes a touch.min tap, reaching above and
+// below the track.
+const OPTION_HEIGHT = 28;
+const TRACK_PADDING = 3;
+const HIT_SLOP = {
+  top: (touch.min - OPTION_HEIGHT) / 2,
+  bottom: (touch.min - OPTION_HEIGHT) / 2,
+};
+
 // A pill-shaped track with one option raised on it, iOS style (screen
 // readers announce it as a group of radio buttons).
 export function SegmentedControl<T extends string>({
@@ -43,13 +52,14 @@ export function SegmentedControl<T extends string>({
             onPress={() => {
               if (!selected) onChange(option.value);
             }}
+            hitSlop={HIT_SLOP}
             style={({ pressed }) => [
               styles.option,
               // Raised off the track.
               selected && { backgroundColor: raised, boxShadow: shadows.control },
               pressed && !selected && styles.pressed,
             ]}>
-            <Text variant="bodyStrong" color={selected ? 'text' : 'textMuted'} numberOfLines={1}>
+            <Text variant="control" color={selected ? 'text' : 'textMuted'} numberOfLines={1}>
               {option.label}
             </Text>
           </Pressable>
@@ -62,12 +72,12 @@ export function SegmentedControl<T extends string>({
 const styles = StyleSheet.create({
   group: {
     flexDirection: 'row',
-    padding: spacing.xs,
+    padding: TRACK_PADDING,
     borderRadius: radius.pill,
   },
   option: {
     flex: 1,
-    minHeight: touch.min,
+    height: OPTION_HEIGHT,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.pill,
     alignItems: 'center',

@@ -4,7 +4,7 @@ import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-nativ
 
 import { Button, Card, MenuButton, Text } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { gaps, spacing, useTheme } from '@/theme';
 
 import { exerciseName, isCustomExercise, type Exercise } from './exercise';
 import { ExerciseFilterBar, useExerciseSearch } from './ExerciseFilterBar';
@@ -52,17 +52,15 @@ export function ExerciseLibrary() {
 
   return (
     <View style={styles.library}>
-      <ExerciseFilterBar exercises={exercises} search={search} />
+      <ExerciseFilterBar exercises={exercises} search={search} onCreate={() => openNewExercise()} />
 
-      <Button
-        label={t('exercises.create')}
-        variant="secondary"
-        onPress={() => openNewExercise()}
-      />
-
-      <Text variant="caption" color="textMuted">
-        {t('exercises.count', { count: results.length })}
-      </Text>
+      {/* How many it finds, while searching or filtering (the field says
+          how many there are in all). */}
+      {hasFilters ? (
+        <Text variant="caption" color="textMuted">
+          {t('exercises.count', { count: results.length })}
+        </Text>
+      ) : null}
 
       {results.length === 0 ? (
         <View style={styles.empty}>
@@ -84,11 +82,12 @@ export function ExerciseLibrary() {
         </View>
       ) : (
         <Card style={styles.list}>
-          {results.map((exercise) => (
+          {results.map((exercise, index) => (
             <ExerciseRow
               key={exercise.id}
               exercise={exercise}
               language={language}
+              separator={index > 0}
               onPress={() =>
                 router.push({ pathname: '/plan/exercises/[id]', params: { id: exercise.id } })
               }
@@ -119,12 +118,15 @@ export function ExerciseLibrary() {
 
 const styles = StyleSheet.create({
   library: {
-    gap: spacing.lg,
+    gap: gaps.loose,
   },
   empty: {
     gap: spacing.md,
   },
+  // The rows bring their own padding and hairlines.
   list: {
-    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    gap: 0,
   },
 });

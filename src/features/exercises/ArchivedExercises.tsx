@@ -32,11 +32,12 @@ export function ArchivedExercises() {
 
   return (
     <Card style={styles.list}>
-      {archived.map((exercise) => (
+      {archived.map((exercise, index) => (
         <ExerciseRow
           key={exercise.id}
           exercise={exercise}
           language={language}
+          separator={index > 0}
           accessory={
             <Button
               label={t('exercises.restore')}
@@ -52,7 +53,10 @@ export function ArchivedExercises() {
 }
 
 const styles = StyleSheet.create({
+  // The rows bring their own padding and hairlines.
   list: {
-    gap: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    gap: 0,
   },
 });

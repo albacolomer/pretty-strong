@@ -88,7 +88,8 @@ describe('<ExerciseLibrary />', () => {
   test('lists every exercise with its muscles and equipment', async () => {
     await renderLibrary();
 
-    expect(screen.getByText('4 exercicis')).toBeOnTheScreen();
+    // How many there are, in the search field.
+    expect(screen.getByPlaceholderText('Cerca entre 4 exercicis')).toBeOnTheScreen();
     expect(screen.getByText('Tracció al pit')).toBeOnTheScreen();
     expect(screen.getByText('Dorsals · Politja')).toBeOnTheScreen();
   });
@@ -103,11 +104,11 @@ describe('<ExerciseLibrary />', () => {
     expect(screen.queryByText('Esquat amb barra')).not.toBeOnTheScreen();
   });
 
-  test('picks several muscles in the sheet and shows them on the button', async () => {
+  test('picks several muscles in the filters sheet, and the button says so', async () => {
     const user = userEvent.setup();
     await renderLibrary();
 
-    await user.press(screen.getByRole('button', { name: 'Tots els músculs' }));
+    await user.press(screen.getByRole('button', { name: 'Filtres' }));
     const glutes = screen.getByRole('checkbox', { name: 'Glutis' });
     await user.press(glutes);
     await user.press(screen.getByRole('checkbox', { name: 'Isquiotibials' }));
@@ -116,7 +117,8 @@ describe('<ExerciseLibrary />', () => {
     // Hip thrust, leg curl and squat (glutes as a secondary muscle).
     await user.press(screen.getByRole('button', { name: 'Mostra 3 resultats' }));
 
-    expect(screen.getByRole('button', { name: 'Glutis, Isquiotibials' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Filtres: 2 triats' })).toBeOnTheScreen();
+    expect(screen.getByText('3 exercicis')).toBeOnTheScreen();
     expect(screen.queryByText('Tracció al pit')).not.toBeOnTheScreen();
   });
 
@@ -124,8 +126,11 @@ describe('<ExerciseLibrary />', () => {
     const user = userEvent.setup();
     await renderLibrary();
 
-    await user.press(screen.getByRole('button', { name: 'Tot el material' }));
+    await user.press(screen.getByRole('button', { name: 'Filtres' }));
 
+    // Muscles and equipment, in one sheet.
+    expect(screen.getByRole('header', { name: 'Músculs' })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Material' })).toBeOnTheScreen();
     expect(screen.getByRole('checkbox', { name: 'Barra' })).toBeOnTheScreen();
     expect(screen.queryByRole('checkbox', { name: 'Trineu' })).not.toBeOnTheScreen();
   });
@@ -211,7 +216,7 @@ describe('<ExerciseLibrary />', () => {
     const user = userEvent.setup();
     await renderLibrary();
 
-    await user.press(screen.getByRole('button', { name: 'Tot el material' }));
+    await user.press(screen.getByRole('button', { name: 'Filtres' }));
     await user.press(screen.getByRole('checkbox', { name: 'Politja' }));
     await user.press(screen.getByRole('button', { name: 'Mostra 1 resultat' }));
     await user.type(screen.getByLabelText('Cerca'), 'esquat');
@@ -220,6 +225,7 @@ describe('<ExerciseLibrary />', () => {
 
     await user.press(screen.getByRole('button', { name: 'Esborra els filtres' }));
 
-    expect(screen.getByText('4 exercicis')).toBeOnTheScreen();
+    expect(screen.getByText('Tracció al pit')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Filtres' })).toBeOnTheScreen();
   });
 });

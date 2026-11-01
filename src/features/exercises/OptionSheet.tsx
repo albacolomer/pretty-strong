@@ -36,6 +36,34 @@ export function OptionSheet<T extends string>({
   doneLabel,
   clear,
 }: OptionSheetProps<T>) {
+  return (
+    <OptionSheetFrame
+      visible={visible}
+      title={title}
+      onClose={onClose}
+      doneLabel={doneLabel}
+      clear={clear}>
+      <OptionGrid groups={groups} selected={selected} onToggle={onToggle} multiple={multiple} />
+    </OptionSheetFrame>
+  );
+}
+
+type OptionSheetFrameProps = Pick<
+  OptionSheetProps<string>,
+  'visible' | 'title' | 'onClose' | 'doneLabel' | 'clear'
+> & { children: ReactNode };
+
+// The sheet around the options: its title, the scrolling content, and the
+// buttons at the bottom. For a sheet with several kinds of options, e.g.
+// the exercise filters (muscles and equipment).
+export function OptionSheetFrame({
+  visible,
+  title,
+  onClose,
+  doneLabel,
+  clear,
+  children,
+}: OptionSheetFrameProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
@@ -53,32 +81,7 @@ export function OptionSheet<T extends string>({
           </Text>
         </View>
 
-        <ScrollView contentContainerStyle={styles.content}>
-          {groups.map((group, index) => (
-            <View key={group.title ?? index} style={styles.group}>
-              {group.title ? (
-                <Text variant="caption" color="textMuted">
-                  {group.title}
-                </Text>
-              ) : null}
-              {pairs(group.options).map((pair) => (
-                <View key={pair[0].value} style={styles.row}>
-                  {pair.map((option) => (
-                    <OptionCard
-                      key={option.value}
-                      option={option}
-                      selected={selected.includes(option.value)}
-                      multiple={multiple}
-                      onPress={() => onToggle(option.value)}
-                    />
-                  ))}
-                  {/* Keeps a lone last option at half width. */}
-                  {pair.length === 1 ? <View style={styles.cell} /> : null}
-                </View>
-              ))}
-            </View>
-          ))}
-        </ScrollView>
+        <ScrollView contentContainerStyle={styles.content}>{children}</ScrollView>
 
         <View
           style={[
@@ -97,6 +100,48 @@ export function OptionSheet<T extends string>({
         </View>
       </View>
     </Modal>
+  );
+}
+
+type OptionGridProps<T extends string> = Pick<
+  OptionSheetProps<T>,
+  'groups' | 'selected' | 'onToggle' | 'multiple'
+>;
+
+// The options two by two, under each group's title.
+export function OptionGrid<T extends string>({
+  groups,
+  selected,
+  onToggle,
+  multiple = true,
+}: OptionGridProps<T>) {
+  return (
+    <View style={styles.groups}>
+      {groups.map((group, index) => (
+        <View key={group.title ?? index} style={styles.group}>
+          {group.title ? (
+            <Text variant="caption" color="textMuted">
+              {group.title}
+            </Text>
+          ) : null}
+          {pairs(group.options).map((pair) => (
+            <View key={pair[0].value} style={styles.row}>
+              {pair.map((option) => (
+                <OptionCard
+                  key={option.value}
+                  option={option}
+                  selected={selected.includes(option.value)}
+                  multiple={multiple}
+                  onPress={() => onToggle(option.value)}
+                />
+              ))}
+              {/* Keeps a lone last option at half width. */}
+              {pair.length === 1 ? <View style={styles.cell} /> : null}
+            </View>
+          ))}
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -163,6 +208,9 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: spacing.lg,
+    gap: spacing.xl,
+  },
+  groups: {
     gap: spacing.xl,
   },
   group: {

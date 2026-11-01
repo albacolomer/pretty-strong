@@ -48,6 +48,8 @@ export const typography = {
   // Buttons and emphasised body text.
   bodyStrong: { fontFamily: fonts.semiBold, fontSize: 17, lineHeight: 23 },
   input: { fontFamily: fonts.semiBold, fontSize: 22, lineHeight: 28, fontVariant: ['tabular-nums'] },
+  // Compact controls, e.g. the options of a segmented control.
+  control: { fontFamily: fonts.semiBold, fontSize: 15, lineHeight: 20 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
   // A caption that stands out a little, e.g. "3.760 per arribar".
   captionMedium: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
