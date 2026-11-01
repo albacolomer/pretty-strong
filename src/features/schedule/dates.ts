@@ -45,6 +45,12 @@ export function fromDateKey(key: string): Date {
   return new Date(year, month - 1, day);
 }
 
+// "dijous", "jueves", "Thursday": the weekday in the app's language, as
+// written mid-sentence ("Mou-la a dijous").
+export function formatWeekday(date: Date, language: Language): string {
+  return new Intl.DateTimeFormat(language, { weekday: 'long' }).format(date);
+}
+
 // "Dimarts, 20 d’octubre": weekday, day and month in the app's language,
 // as the phone writes dates in it.
 export function formatDayTitle(date: Date, language: Language): string {

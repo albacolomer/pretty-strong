@@ -18,6 +18,7 @@ import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
+import { fetchMoves, replaceMoves } from './movesApi';
 import type { WeeklySport } from './sports';
 import { fetchWeeklySports } from './sportsApi';
 import { Today } from './Today';
@@ -56,6 +57,7 @@ jest.mock('expo-router', () => ({
 // Today is Tuesday 20 October 2026.
 jest.mock('./useToday', () => ({ useToday: () => new Date(2026, 9, 20) }));
 jest.mock('./sportsApi', () => ({ fetchWeeklySports: jest.fn() }));
+jest.mock('./movesApi', () => ({ fetchMoves: jest.fn(), replaceMoves: jest.fn() }));
 
 const routine = (
   id: string,
@@ -139,6 +141,19 @@ function keepLogged() {
   });
 }
 
+// What the database holds once the week's moves are saved.
+function keepMoves() {
+  jest.mocked(replaceMoves).mockImplementation((_from, _to, moves) => {
+    jest.mocked(fetchMoves).mockResolvedValue([...moves]);
+    return Promise.resolve();
+  });
+}
+
+// The options of the last native action sheet shown.
+function lastSheet(): string[] {
+  return actionSheet.mock.lastCall?.[0].options ?? [];
+}
+
 // Each native action sheet picks the next of these labels.
 const sheetChoices: string[] = [];
 let actionSheet: jest.SpyInstance;
@@ -155,6 +170,8 @@ beforeEach(() => {
   jest.mocked(fetchHistoryEntries).mockReset().mockResolvedValue([]);
   jest.mocked(fetchBeats).mockReset().mockResolvedValue(0);
   jest.mocked(fetchWeeklySports).mockResolvedValue([]);
+  jest.mocked(fetchMoves).mockReset().mockResolvedValue([]);
+  jest.mocked(replaceMoves).mockReset().mockResolvedValue();
   jest.mocked(logQuickSession).mockReset().mockResolvedValue();
   jest.mocked(deleteSession).mockReset().mockResolvedValue();
   localStorage.clear();
@@ -263,13 +280,13 @@ describe('<Today />', () => {
     );
   });
 
-  test('Salta skips the main routine with a reason, and Desfés takes it back', async () => {
+  test('Salta → Només salta-la, with a reason, and Desfés takes it back', async () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
     const skipped = session({ routineId: null, status: 'skipped', changeReason: 'no_time' });
     jest.mocked(fetchSessions).mockResolvedValue([skipped]);
-    sheetChoices.push('Falta de temps');
+    sheetChoices.push('Només salta-la', 'Falta de temps');
     await user.press(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' }));
 
     expect(logQuickSession).toHaveBeenCalledWith(skipped);
@@ -279,6 +296,63 @@ describe('<Today />', () => {
     await user.press(screen.getByRole('button', { name: 'Desfés' }));
     expect(deleteSession).toHaveBeenCalledWith('session-1');
     expect(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' })).toBeOnTheScreen();
+  });
+
+  test('Salta → to the next free day this week, and Desfés puts it back', async () => {
+    const user = userEvent.setup();
+    keepMoves();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    // Wednesday has nothing planned.
+    sheetChoices.push('Mou-la a dimecres');
+    await user.press(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' }));
+    expect(lastSheet()).toEqual([
+      'Mou-la a dimecres',
+      'Desplaça la setmana un dia',
+      'Només salta-la',
+      'Cancel·la',
+    ]);
+
+    // From last Sunday to this one; nothing logged as skipped.
+    expect(replaceMoves).toHaveBeenCalledWith('2026-10-18', '2026-10-25', [
+      { routineId: 'upper', plannedDate: '2026-10-20', movedTo: '2026-10-21', position: 0 },
+    ]);
+    expect(logQuickSession).not.toHaveBeenCalled();
+    expect(await screen.findByText('«Tren superior 1» passa a dimecres')).toBeOnTheScreen();
+    // Today, the class is what's left.
+    expect(await screen.findByRole('header', { name: 'Spinning' })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(replaceMoves).toHaveBeenLastCalledWith('2026-10-18', '2026-10-25', []);
+    expect(await screen.findByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
+  });
+
+  test('Salta → shift the week: it and everything after it a day on', async () => {
+    const user = userEvent.setup();
+    keepMoves();
+    // Sunday: a long run, which drops off.
+    jest
+      .mocked(fetchRoutines)
+      .mockResolvedValue([upper, spinning, legs, routine('run', 'Tirada llarga', { 7: 0 })]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Desplaça la setmana un dia');
+    await user.press(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' }));
+
+    const [, , moves] = jest.mocked(replaceMoves).mock.lastCall ?? [];
+    expect(moves).toEqual(
+      expect.arrayContaining([
+        // Tuesday's to Wednesday; Friday's to Saturday; Sunday's off the week.
+        { routineId: 'upper', plannedDate: '2026-10-20', movedTo: '2026-10-21', position: 1 },
+        { routineId: 'upper', plannedDate: '2026-10-23', movedTo: '2026-10-24', position: 0 },
+        { routineId: 'run', plannedDate: '2026-10-25', movedTo: null, position: 0 },
+      ]),
+    );
+    // The class done earlier today stays.
+    expect(moves).toHaveLength(3);
+    expect(
+      await screen.findByText('Setmana desplaçada. «Tirada llarga» queda fora aquesta setmana.'),
+    ).toBeOnTheScreen();
   });
 
   test('Canvia swaps the routine for today, kept after closing, and back again', async () => {

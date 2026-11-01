@@ -36,9 +36,10 @@ import { ensureNotificationPermission } from '@/lib/notifications';
 import { spacing, useTheme } from '@/theme';
 
 import { AlsoToday, type AlsoTodayItem } from './AlsoToday';
-import { addDays, dateKey, formatDayTitle, startOfWeek, weekdayOf } from './dates';
+import { addDays, dateKey, formatDayTitle, formatWeekday, startOfWeek } from './dates';
 import { DayDone } from './DayDone';
 import { LogSportSheet, type LoggedSport } from './LogSportSheet';
+import { nextRestDate, plannedRoutineOf, shiftWeek, withMove, type Move } from './moves';
 import { RestDay } from './RestDay';
 import { RoutinePreviewSheet } from './RoutinePreviewSheet';
 import { countsAsWorkout, SPORT_ICONS, type Sport, type WeeklySport } from './sports';
@@ -46,14 +47,16 @@ import { TodayHero, type HeroAction } from './TodayHero';
 import { useActivityName } from './useActivityName';
 import { useSwaps } from './useSwaps';
 import { useToday } from './useToday';
+import { useSetWeekMoves, useWeekMoves } from './useWeekMoves';
 import { useWeeklySports } from './useWeeklySports';
-import { activitiesOnDay, nextPlannedDay, type DayActivity } from './week';
+import { activitiesOnDate, activitiesOnDay, nextPlannedDay, type DayActivity } from './week';
 
 type Action = { label: string; run: () => void };
 
 // The Avui tab (US-11, US-12, US-20): the date and your picture, today's
 // steps, then the day's main activity in a big button inside the week's ring (Comença, or
-// Fet for a class or a sport), with Previsualitza / Canvia / Salta; on a
+// Fet for a class or a sport), with Previsualitza / Canvia / Salta (which
+// can move a routine to a free day or shift the week, US-29); on a
 // rest day, a word on recovery, what's next and Caminar / Estiraments; once
 // it's all done, "Tot fet" with the day in numbers.
 // Under it, "També avui" with the day's other activities, what was logged
@@ -65,13 +68,17 @@ export function Today() {
   const showToast = useToast();
   const nameOf = useActivityName();
   const today = useToday();
-  const weekday = weekdayOf(today);
   const day = dateKey(today);
   const weekStart = startOfWeek(today);
   const from = dateKey(weekStart);
   const to = dateKey(addDays(weekStart, 6));
   const { data: routines, isPending, isError } = useRoutines();
   const { data: sports = [] } = useWeeklySports();
+  // This week's changes, from last Sunday on (a routine missed then can
+  // come into this week).
+  const movesFrom = dateKey(addDays(weekStart, -1));
+  const { data: moves = [] } = useWeekMoves(movesFrom, to);
+  const setMoves = useSetWeekMoves(movesFrom, to);
   const goal = useWeeklyGoal();
   const { data: savedSessions = [] } = useWeekSessions(from, to);
   const active = useWorkoutStore((state) => state.active);
@@ -186,7 +193,7 @@ export function Today() {
   // Loaded by now; named again because TypeScript forgets that inside the
   // functions below.
   const allRoutines = routines;
-  const planned = activitiesOnDay(routines, sports, weekday);
+  const planned = activitiesOnDate(routines, sports, moves, today);
   const weekIsEmpty = WEEKDAYS.every(
     (other) => activitiesOnDay(routines, sports, other).length === 0,
   );
@@ -332,6 +339,67 @@ export function Today() {
         t('today.skipped', { name: nameOf(activity) }),
       ),
     );
+  }
+
+  // A change to this week, with "Desfés" to put it back as it was.
+  function changeWeek(next: Move[], message: string) {
+    const previous = moves;
+    setMoves.mutate(next);
+    showToast({
+      message,
+      action: { label: t('common.undo'), onPress: () => setMoves.mutate(previous) },
+    });
+  }
+
+  // Salta on a routine (US-29): to the next free day this week, the whole
+  // week a day on (Sunday's drops off), or just skipped, with a reason. On
+  // the week's last day there's nowhere to go, so it's just skipped.
+  function skipRoutine(activity: Extract<DayActivity, { kind: 'routine' }>) {
+    const planned = plannedRoutineOf(activity, day);
+    const { name } = activity.routine;
+    const weekEnd = addDays(weekStart, 6);
+    const free = nextRestDate(allRoutines, sports, moves, today, weekEnd);
+    const options: Action[] = [
+      ...(free
+        ? [
+            {
+              label: t('today.moveTo', { day: formatWeekday(free, language) }),
+              run: () =>
+                changeWeek(
+                  withMove(moves, planned, dateKey(free)),
+                  t('today.moved', { name, day: formatWeekday(free, language) }),
+                ),
+            },
+          ]
+        : []),
+      ...(day < to
+        ? [
+            {
+              label: t('today.shiftWeek'),
+              run: () => {
+                const shifted = shiftWeek(allRoutines, sports, moves, planned, today, weekEnd);
+                changeWeek(
+                  shifted.moves,
+                  shifted.dropped.length > 0
+                    ? t('today.shiftedDropped', {
+                        count: shifted.dropped.length,
+                        name: shifted.dropped[0].name,
+                      })
+                    : t('today.shifted'),
+                );
+              },
+            },
+          ]
+        : []),
+    ];
+    if (options.length === 0) {
+      skip(activity);
+      return;
+    }
+    sheet(t('today.skipWhat', { name }), [
+      ...options,
+      { label: t('today.justSkip'), run: () => skip(activity) },
+    ]);
   }
 
   function markDone(activity: DayActivity) {
@@ -563,7 +631,7 @@ export function Today() {
             label: t('today.skip'),
             aria: t('today.skipFor', { name: shown.name }),
             icon: 'forward.end',
-            onPress: () => skip(activity),
+            onPress: () => skipRoutine(activity),
           },
         ];
     return (
@@ -641,7 +709,7 @@ export function Today() {
                   ]
                 : []),
               { label: t('today.swap'), run: () => swap(routine, shown) },
-              { label: t('today.skip'), run: () => skip(activity) },
+              { label: t('today.skip'), run: () => skipRoutine(activity) },
             ]),
     };
   });
@@ -675,7 +743,7 @@ export function Today() {
 
   // A rest day: what's next, "Demà" or its weekday, as
   // "Tren inferior 1 · Pàdel 19:00".
-  const next = nextPlannedDay(routines, sports, today);
+  const next = nextPlannedDay(routines, sports, today, moves);
   const nextPlan = next && {
     day: next.inDays === 1 ? t('today.tomorrow') : t(`weekdays.long.${next.weekday}`),
     plan: next.activities

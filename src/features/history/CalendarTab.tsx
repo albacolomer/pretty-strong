@@ -5,9 +5,17 @@ import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-nativ
 
 import { Button, Card, Text } from '@/components/ui';
 import { useRoutines } from '@/features/routines/useRoutines';
-import { dateKey, formatDayTitle, fromDateKey, weekdayOf } from '@/features/schedule/dates';
+import {
+  addDays,
+  dateKey,
+  formatDayTitle,
+  fromDateKey,
+  startOfWeek,
+} from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
+import { useWeekMoves } from '@/features/schedule/useWeekMoves';
 import { useWeeklySports } from '@/features/schedule/useWeeklySports';
+import { activitiesOnDate } from '@/features/schedule/week';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
@@ -33,6 +41,12 @@ export function CalendarTab() {
   const history = useHistoryEntries();
   const { data: routines = [] } = useRoutines();
   const { data: sports = [] } = useWeeklySports();
+  // The picked day's week changes (the same days Avui asks for).
+  const weekStart = startOfWeek(fromDateKey(selected));
+  const { data: moves = [] } = useWeekMoves(
+    dateKey(addDays(weekStart, -1)),
+    dateKey(addDays(weekStart, 6)),
+  );
 
   const workouts = new Map<string, number>();
   for (const entry of history.entries) {
@@ -40,12 +54,11 @@ export function CalendarTab() {
   }
   const dayEntries = history.entries.filter((entry) => entry.date === selected);
   const isToday = selected === todayKey;
-  // A rest day: nothing planned that weekday, when there is a plan.
-  const weekday = weekdayOf(fromDateKey(selected));
+  // A rest day: nothing planned that day (that week's moves counted), when
+  // there is a plan.
   const restDay =
     (routines.some((routine) => routine.weekdays.length > 0) || sports.length > 0) &&
-    !routines.some((routine) => routine.weekdays.includes(weekday)) &&
-    !sports.some((sport) => sport.weekday === weekday);
+    activitiesOnDate(routines, sports, moves, fromDateKey(selected)).length === 0;
 
   // Logging an activity done that day (US-24): which routine, then the
   // editor.

@@ -1,6 +1,7 @@
 import { WEEKDAYS, type Routine, type Weekday } from '@/features/routines/routine';
 
-import { addDays, weekdayOf } from './dates';
+import { addDays, dateKey, weekdayOf } from './dates';
+import type { Move } from './moves';
 import type { WeeklySport } from './sports';
 
 // The week as your routines' days (weekly_schedule) and your sports
@@ -44,9 +45,10 @@ export function withoutDay(routine: Routine, day: Weekday): Routine {
   };
 }
 
-// One thing planned on a day: a routine or a sport.
+// One thing planned on a day: a routine or a sport. A routine moved there
+// this week (see moves.ts) has `from`: the day it was planned on.
 export type DayActivity =
-  | { kind: 'routine'; key: string; routine: Routine }
+  | { kind: 'routine'; key: string; routine: Routine; from?: string }
   | { kind: 'sport'; key: string; sport: WeeklySport };
 
 // A day's routines and sports together, in their order on it (they share
@@ -75,17 +77,62 @@ export function activitiesOnDay(
     .map(({ activity }) => activity);
 }
 
+// What's on a date, this week's moves counted (US-29): the usual day minus
+// the routines moved away from it, plus the ones moved to it, in their
+// places. Sports never move.
+export function activitiesOnDate(
+  routines: readonly Routine[],
+  sports: readonly WeeklySport[],
+  moves: readonly Move[],
+  date: Date,
+): DayActivity[] {
+  const key = dateKey(date);
+  const day = weekdayOf(date);
+  const movedAway = (routineId: string) =>
+    moves.some((move) => move.routineId === routineId && move.plannedDate === key);
+  const usual = activitiesOnDay(routines, sports, day)
+    .filter((activity) => activity.kind === 'sport' || !movedAway(activity.routine.id))
+    .map((activity, order) => ({
+      activity,
+      position:
+        activity.kind === 'routine'
+          ? (activity.routine.dayPositions[day] ?? 0)
+          : activity.sport.position,
+      order,
+    }));
+  const movedIn = moves
+    .filter((move) => move.movedTo === key)
+    .flatMap((move, index) => {
+      const routine = routines.find((other) => other.id === move.routineId);
+      if (!routine) return [];
+      const activity: DayActivity = {
+        kind: 'routine',
+        key: `routine:${routine.id}@${move.plannedDate}`,
+        routine,
+        from: move.plannedDate,
+      };
+      // After the day's own ones at the same place.
+      return [{ activity, position: move.position, order: 1000 + index }];
+    });
+  return [...usual, ...movedIn]
+    .sort((a, b) => a.position - b.position || a.order - b.order)
+    .map(({ activity }) => activity);
+}
+
 // The next day after `today` with something planned, up to a week ahead
-// (the same weekday next week included): how many days away, its weekday
-// and what's on it. Null when nothing is planned all week.
+// (the same weekday next week included), this week's moves counted: how
+// many days away, its weekday and what's on it. Null when nothing is
+// planned all week.
 export function nextPlannedDay(
   routines: readonly Routine[],
   sports: readonly WeeklySport[],
   today: Date,
+  moves: readonly Move[] = [],
 ): { inDays: number; weekday: Weekday; activities: DayActivity[] } | null {
   for (let inDays = 1; inDays <= 7; inDays += 1) {
-    const weekday = weekdayOf(addDays(today, inDays));
-    const activities = activitiesOnDay(routines, sports, weekday);
+    const date = addDays(today, inDays);
+    const weekday = weekdayOf(date);
+    const activities = activitiesOnDate(routines, sports, moves, date);
     if (activities.length > 0) return { inDays, weekday, activities };
   }
   return null;

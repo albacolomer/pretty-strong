@@ -7,6 +7,7 @@ import { ActionSheetIOS } from 'react-native';
 import { NO_TARGETS } from '@/features/routines/routine';
 import { fetchRoutines } from '@/features/routines/api';
 import { testExercise, upperBody } from '@/features/routines/testData';
+import { fetchMoves } from '@/features/schedule/movesApi';
 import { deleteSession } from '@/features/workout/api';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
@@ -20,6 +21,7 @@ import { PastWorkoutView } from './PastWorkoutView';
 
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/features/schedule/sportsApi', () => ({ fetchWeeklySports: jest.fn(() => Promise.resolve([])) }));
+jest.mock('@/features/schedule/movesApi', () => ({ fetchMoves: jest.fn(() => Promise.resolve([])) }));
 jest.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ session: { user: { id: 'user-1' } }, isLoading: false }),
 }));
@@ -207,6 +209,21 @@ describe('History', () => {
 
     expect(await screen.findByText('Avui és el teu dia de descans.')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: '+ Registra una activitat' })).toBeOnTheScreen();
+  });
+
+  test("a day whose routine moved away this week is a rest day", async () => {
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    // Planned on Wednesdays, but this week it went to Friday.
+    jest
+      .mocked(fetchRoutines)
+      .mockResolvedValueOnce([{ ...upperBody, weekdays: [3], dayPositions: { 3: 0 } }]);
+    jest.mocked(fetchMoves).mockResolvedValueOnce([
+      { routineId: upperBody.id, plannedDate: '2026-10-21', movedTo: '2026-10-23', position: 0 },
+    ]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('Avui és el teu dia de descans.')).toBeOnTheScreen();
+    expect(fetchMoves).toHaveBeenCalledWith('2026-10-18', '2026-10-25');
   });
 
   test('a tap on another day shows it; an empty one can have an activity logged', async () => {

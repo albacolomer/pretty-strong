@@ -344,6 +344,44 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_overrides: {
+        Row: {
+          created_at: string
+          id: string
+          moved_to: string | null
+          planned_date: string
+          position: number
+          routine_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          moved_to?: string | null
+          planned_date: string
+          position?: number
+          routine_id: string
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          moved_to?: string | null
+          planned_date?: string
+          position?: number
+          routine_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_overrides_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_exercises: {
         Row: {
           change: string | null
@@ -693,6 +731,10 @@ export type Database = {
       }
       reorder_day: {
         Args: { p_items: Json; p_weekday: number }
+        Returns: undefined
+      }
+      replace_schedule_overrides: {
+        Args: { p_from: string; p_moves: Json; p_to: string }
         Returns: undefined
       }
       save_routine: {
