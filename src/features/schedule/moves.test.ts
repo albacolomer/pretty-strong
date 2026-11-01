@@ -178,6 +178,21 @@ describe('shiftWeek', () => {
     ]);
   });
 
+  test('from a missed day: a routine already logged stays put', () => {
+    // Monday's upper missed; Tuesday's legs already done.
+    const { moves } = shiftWeek(
+      routines,
+      sports,
+      [],
+      { routineId: 'upper', plannedDate: '2026-10-26' },
+      day(26),
+      sunday,
+      (activity, date) => activity.routine.id === 'legs' && date === '2026-10-27',
+    );
+    expect(on(moves, tuesday)).toEqual(['routine:legs', 'routine:upper@2026-10-26']);
+    expect(on(moves, day(30))).toEqual(['routine:upper@2026-10-29']);
+  });
+
   test('a routine already moved moves on from where it is, keeping one move', () => {
     const before = withMove([], { routineId: 'legs', plannedDate: '2026-10-27' }, '2026-10-30');
     const { moves } = shiftWeek(

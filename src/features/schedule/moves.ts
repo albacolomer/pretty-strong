@@ -23,7 +23,7 @@ export type Move = {
 // One routine on the day the usual week has it: what a move moves.
 export type PlannedRoutine = { routineId: string; plannedDate: string };
 
-type RoutineActivity = Extract<DayActivity, { kind: 'routine' }>;
+export type RoutineActivity = Extract<DayActivity, { kind: 'routine' }>;
 
 // A routine on a day, as planned: its own day, or the one it was moved from.
 export function plannedRoutineOf(activity: RoutineActivity, date: string): PlannedRoutine {
@@ -132,8 +132,9 @@ export function rearranged(
 
 // "Desplaça la setmana": `planned`, on `from`, goes to the next day, and so
 // does every routine on the days after it; what's on `weekEnd` drops off
-// the week. The other routines on `from` and all the sports stay put.
-// Returns the new moves and the routines dropped.
+// the week. The other routines on `from`, the ones `stays` keeps (already
+// logged) and all the sports stay put. Returns the new moves and the
+// routines dropped.
 export function shiftWeek(
   routines: readonly Routine[],
   sports: readonly WeeklySport[],
@@ -141,6 +142,7 @@ export function shiftWeek(
   planned: PlannedRoutine,
   from: Date,
   weekEnd: Date,
+  stays: (activity: RoutineActivity, date: string) => boolean = () => false,
 ): { moves: Move[]; dropped: Routine[] } {
   const start = dateKey(from);
   let next = [...moves];
@@ -154,7 +156,7 @@ export function shiftWeek(
     for (const activity of there) {
       const which = plannedRoutineOf(activity, key);
       const chosen = which.routineId === planned.routineId && which.plannedDate === planned.plannedDate;
-      if (key === start && !chosen) continue;
+      if ((key === start && !chosen) || (!chosen && stays(activity, key))) continue;
       const to = date.getTime() < weekEnd.getTime() ? dateKey(addDays(date, 1)) : null;
       if (to === null) dropped.push(activity.routine);
       const position = activity.from

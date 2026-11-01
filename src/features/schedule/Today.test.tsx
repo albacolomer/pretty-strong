@@ -207,8 +207,8 @@ describe('<Today />', () => {
     expect(screen.getByRole('header', { name: 'També avui' })).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Opcions de «Spinning»' })).toBeOnTheScreen();
     expect(screen.getByText('45 min')).toBeOnTheScreen();
-    // This week's sessions, Monday to Sunday.
-    expect(fetchSessions).toHaveBeenCalledWith('2026-10-19', '2026-10-25');
+    // This week's sessions, and last Sunday's (for a missed day).
+    expect(fetchSessions).toHaveBeenCalledWith('2026-10-18', '2026-10-25');
 
     await user.press(screen.getByRole('button', { name: 'Perfil' }));
     expect(router.navigate).toHaveBeenCalledWith('/profile');
@@ -376,6 +376,116 @@ describe('<Today />', () => {
 
     expect(replaceMoves).not.toHaveBeenCalled();
     expect(screen.queryByRole('header', { name: 'Reprograma la setmana' })).not.toBeOnTheScreen();
+  });
+
+  describe('missed yesterday', () => {
+    // Legs were on Monday; the account is older than that.
+    const mondayLegs = routine('legs', 'Cames', { 1: 0 });
+    beforeEach(() => {
+      jest.mocked(fetchRoutines).mockResolvedValue([upper, spinning, mondayLegs]);
+      jest.mocked(fetchProfile).mockResolvedValue({
+        username: 'alba',
+        weekly_goal: 4,
+        created_at: '2026-10-01T10:00:00Z',
+      } as Profile);
+    });
+
+    test('"Fes-la avui" brings it to today, after today\'s own, and the card goes', async () => {
+      const user = userEvent.setup();
+      keepMoves();
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      expect(await screen.findByRole('header', { name: 'Ahir no vas fer «Cames»' })).toBeOnTheScreen();
+      expect(screen.getByText('La fas avui?')).toBeOnTheScreen();
+      await user.press(screen.getByRole('button', { name: 'Fes-la avui' }));
+
+      // After the class (0) and upper body (1).
+      expect(replaceMoves).toHaveBeenCalledWith('2026-10-18', '2026-10-25', [
+        { routineId: 'legs', plannedDate: '2026-10-19', movedTo: '2026-10-20', position: 2 },
+      ]);
+      expect(await screen.findByText('«Cames» passa a avui')).toBeOnTheScreen();
+      expect(screen.queryByRole('header', { name: 'Ahir no vas fer «Cames»' })).not.toBeOnTheScreen();
+      expect(screen.getByText('Cames')).toBeOnTheScreen();
+    });
+
+    test('skipped on purpose ("Només salta-la") is an answer already: no card', async () => {
+      jest
+        .mocked(fetchSessions)
+        .mockResolvedValue([
+          session({ date: '2026-10-19', plannedRoutineId: 'legs', routineId: null, status: 'skipped' }),
+        ]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      await screen.findByRole('header', { name: 'Tren superior 1' });
+      expect(screen.queryByText(/Ahir no vas fer/)).not.toBeOnTheScreen();
+      // Last Sunday and this week's sessions, for yesterday's.
+      expect(fetchSessions).toHaveBeenCalledWith('2026-10-18', '2026-10-25');
+    });
+
+    test('not for a day before the account existed', async () => {
+      jest.mocked(fetchProfile).mockResolvedValue({
+        username: 'alba',
+        weekly_goal: 4,
+        created_at: '2026-10-20T08:00:00Z',
+      } as Profile);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      await screen.findByRole('header', { name: 'Tren superior 1' });
+      expect(screen.queryByText(/Ahir no vas fer/)).not.toBeOnTheScreen();
+    });
+
+    test('"Altres opcions" → "Deixa-ho" logs it skipped, yesterday', async () => {
+      const user = userEvent.setup();
+      keepLogged();
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      sheetChoices.push('Deixa-ho');
+      await user.press(await screen.findByRole('button', { name: 'Altres opcions' }));
+      expect(lastSheet()).toEqual([
+        'Mou-la a dimecres',
+        'Desplaça la setmana un dia',
+        'Reprograma la setmana…',
+        'Deixa-ho',
+        'Cancel·la',
+      ]);
+      expect(logQuickSession).toHaveBeenCalledWith(
+        session({ date: '2026-10-19', plannedRoutineId: 'legs', routineId: null, status: 'skipped' }),
+      );
+      await waitFor(() => expect(screen.queryByText(/Ahir no vas fer/)).not.toBeOnTheScreen());
+    });
+
+    test('"Altres opcions" → shift the week from yesterday; what\'s done today stays', async () => {
+      const user = userEvent.setup();
+      // The class is done already.
+      jest
+        .mocked(fetchSessions)
+        .mockResolvedValue([session({ plannedRoutineId: 'spinning', routineId: 'spinning' })]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      sheetChoices.push('Desplaça la setmana un dia');
+      await user.press(await screen.findByRole('button', { name: 'Altres opcions' }));
+
+      const [, , moves] = jest.mocked(replaceMoves).mock.lastCall ?? [];
+      expect(moves).toEqual([
+        { routineId: 'legs', plannedDate: '2026-10-19', movedTo: '2026-10-20', position: 0 },
+        { routineId: 'upper', plannedDate: '2026-10-20', movedTo: '2026-10-21', position: 1 },
+        { routineId: 'upper', plannedDate: '2026-10-23', movedTo: '2026-10-24', position: 0 },
+      ]);
+    });
+
+    test('"Altres opcions" → Reprograma: it starts under today', async () => {
+      const user = userEvent.setup();
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      sheetChoices.push('Reprograma la setmana…');
+      await user.press(await screen.findByRole('button', { name: 'Altres opcions' }));
+      expect(screen.getByRole('button', { name: 'Mou «Cames» a un altre dia' })).toBeOnTheScreen();
+      await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+      expect(replaceMoves).toHaveBeenCalledWith('2026-10-18', '2026-10-25', [
+        { routineId: 'legs', plannedDate: '2026-10-19', movedTo: '2026-10-20', position: 2 },
+      ]);
+    });
   });
 
   test('Salta → shift the week: it and everything after it a day on', async () => {

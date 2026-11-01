@@ -9,6 +9,7 @@ import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { useBeats, useHistoryEntries } from '@/features/history/useHistory';
 import { SmallAvatar } from '@/features/profile/SmallAvatar';
+import { useProfile } from '@/features/profile/useProfile';
 import { useWeeklyGoal } from '@/features/profile/useWeeklyGoal';
 import { StepsCard } from '@/features/steps/StepsCard';
 import {
@@ -39,6 +40,7 @@ import { AlsoToday, type AlsoTodayItem } from './AlsoToday';
 import { addDays, dateKey, formatDayTitle, formatWeekday, startOfWeek, weekdayOf } from './dates';
 import { DayDone } from './DayDone';
 import { LogSportSheet, type LoggedSport } from './LogSportSheet';
+import { MissedDay } from './MissedDay';
 import {
   nextRestDate,
   plannedRoutineOf,
@@ -47,6 +49,7 @@ import {
   withMove,
   type Move,
   type PlannedRoutine,
+  type RoutineActivity,
 } from './moves';
 import { ReprogramSheet, type ReprogramDay, type ReprogramRoutine } from './ReprogramSheet';
 import { RestDay } from './RestDay';
@@ -58,7 +61,13 @@ import { useSwaps } from './useSwaps';
 import { useToday } from './useToday';
 import { useSetWeekMoves, useWeekMoves } from './useWeekMoves';
 import { useWeeklySports } from './useWeeklySports';
-import { activitiesOnDate, activitiesOnDay, nextPlannedDay, type DayActivity } from './week';
+import {
+  activitiesOnDate,
+  activitiesOnDay,
+  nextDayPosition,
+  nextPlannedDay,
+  type DayActivity,
+} from './week';
 
 type Action = { label: string; run: () => void };
 
@@ -67,9 +76,10 @@ type Action = { label: string; run: () => void };
 // Fet for a class or a sport), with Previsualitza / Canvia / Salta (which
 // can move a routine to a free day or shift the week, US-29); on a
 // rest day, a word on recovery, what's next and Caminar / Estiraments; once
-// it's all done, "Tot fet" with the day in numbers.
-// Under it, "També avui" with the day's other activities, what was logged
-// without being planned, and a + to log more.
+// it's all done, "Tot fet" with the day in numbers. Above it, yesterday's
+// routine if it wasn't logged at all (US-29). Under it, "També avui" with
+// the day's other activities, what was logged without being planned, and
+// a + to log more.
 export function Today() {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
@@ -84,13 +94,14 @@ export function Today() {
   const to = dateKey(weekEnd);
   const { data: routines, isPending, isError } = useRoutines();
   const { data: sports = [] } = useWeeklySports();
-  // This week's changes, from last Sunday on (a routine missed then can
-  // come into this week).
+  // This week's changes and sessions, from last Sunday on: on a Monday,
+  // yesterday's routine can still be missed, and come into this week.
   const movesFrom = dateKey(addDays(weekStart, -1));
-  const { data: moves = [] } = useWeekMoves(movesFrom, to);
+  const { data: moves = [], isSuccess: movesLoaded } = useWeekMoves(movesFrom, to);
   const setMoves = useSetWeekMoves(movesFrom, to);
   const goal = useWeeklyGoal();
-  const { data: savedSessions = [] } = useWeekSessions(from, to);
+  const { data: profile } = useProfile();
+  const { data: savedSessions = [], isSuccess: sessionsLoaded } = useWeekSessions(movesFrom, to);
   const active = useWorkoutStore((state) => state.active);
   const pending = useWorkoutStore((state) => state.pending);
   const startWorkout = useWorkoutStore((state) => state.start);
@@ -118,8 +129,8 @@ export function Today() {
   const { entries: history } = useHistoryEntries();
   const doneToday = history.filter((entry) => entry.date === day);
   const beats = useBeats(doneToday);
-  const logSession = useLogSession(from, to);
-  const deleteSession = useDeleteSession(from, to);
+  const logSession = useLogSession(movesFrom, to);
+  const deleteSession = useDeleteSession(movesFrom, to);
   const { swaps, setSwap } = useSwaps(from);
   // Your own default rest per exercise, fixed into the workout when it starts.
   const { data: settings } = useExerciseSettings();
@@ -137,8 +148,11 @@ export function Today() {
   // The "Registra un esport" sheet, and a count that gives each opening a
   // fresh start.
   const [loggingSport, setLoggingSport] = useState({ visible: false, opened: 0 });
-  // "Reprograma la setmana…".
-  const [reprogramming, setReprogramming] = useState(false);
+  // "Reprograma la setmana…", open with yesterday's missed routine too (put
+  // under today) when it comes from the nudge.
+  const [reprogramming, setReprogramming] = useState<{ missed: RoutineActivity | null } | null>(
+    null,
+  );
 
   // Copies the routine into a new workout and opens it. Only one at a time:
   // with another one going, it offers to go back to that one instead.
@@ -209,9 +223,11 @@ export function Today() {
   const weekIsEmpty = WEEKDAYS.every(
     (other) => activitiesOnDay(routines, sports, other).length === 0,
   );
-  // Walks and stretching don't count toward the goal.
+  // This week's (not last Sunday's); walks and stretching don't count
+  // toward the goal.
   const doneThisWeek = sessions.filter(
-    (session) => session.status === 'completed' && countsAsWorkout(session),
+    (session) =>
+      session.date >= from && session.status === 'completed' && countsAsWorkout(session),
   ).length;
   // The week ring around the main button (or "Tot fet").
   const segments = Math.max(goal ?? 0, doneThisWeek, 1);
@@ -363,15 +379,25 @@ export function Today() {
     });
   }
 
-  // Salta on a routine (US-29): to the next free day this week, the whole
-  // week a day on (Sunday's drops off), the week rearranged by hand, or just
-  // skipped, with a reason. On the week's last day there's nowhere to go,
-  // so it's just skipped.
-  function skipRoutine(activity: Extract<DayActivity, { kind: 'routine' }>) {
-    const planned = plannedRoutineOf(activity, day);
+  // Already logged today, or going now: it stays where it is.
+  function isLogged(activity: RoutineActivity, date: string): boolean {
+    return (
+      date === day &&
+      (sessionOf(activity) !== undefined ||
+        (active?.date === day && active.plannedRoutineId === activity.routine.id))
+    );
+  }
+
+  // Where a routine on `date` (today, or yesterday's missed one) can go this
+  // week (US-29): the next free day, the week a day on from it (Sunday's
+  // drops off; what's logged stays), or the week rearranged by hand. None on
+  // the week's last day.
+  function moveOptions(activity: RoutineActivity, date: Date): Action[] {
+    const key = dateKey(date);
+    const planned = plannedRoutineOf(activity, key);
     const { name } = activity.routine;
     const free = nextRestDate(allRoutines, sports, moves, today, weekEnd);
-    const options: Action[] = [
+    return [
       ...(free
         ? [
             {
@@ -389,7 +415,15 @@ export function Today() {
             {
               label: t('today.shiftWeek'),
               run: () => {
-                const shifted = shiftWeek(allRoutines, sports, moves, planned, today, weekEnd);
+                const shifted = shiftWeek(
+                  allRoutines,
+                  sports,
+                  moves,
+                  planned,
+                  date,
+                  weekEnd,
+                  isLogged,
+                );
                 changeWeek(
                   shifted.moves,
                   shifted.dropped.length > 0
@@ -401,17 +435,85 @@ export function Today() {
                 );
               },
             },
-            { label: t('today.reprogram'), run: () => setReprogramming(true) },
+            {
+              label: t('today.reprogram'),
+              run: () => setReprogramming({ missed: key < day ? activity : null }),
+            },
           ]
         : []),
     ];
+  }
+
+  // Salta on a routine: one of those, or just skipped with a reason. On the
+  // week's last day there's nowhere to go, so it's just skipped.
+  function skipRoutine(activity: RoutineActivity) {
+    const options = moveOptions(activity, today);
     if (options.length === 0) {
       skip(activity);
       return;
     }
-    sheet(t('today.skipWhat', { name }), [
+    sheet(t('today.skipWhat', { name: activity.routine.name }), [
       ...options,
       { label: t('today.justSkip'), run: () => skip(activity) },
+    ]);
+  }
+
+  // The missed-day nudge: yesterday's routine, if it wasn't logged at all
+  // ("Només salta-la" is an answer already) and you had the app by then.
+  // Any answer moves it or logs it, so it shows once per missed day.
+  const yesterday = addDays(today, -1);
+  const yesterdayKey = dateKey(yesterday);
+  const since = profile ? dateKey(new Date(profile.created_at)) : null;
+  const missed =
+    sessionsLoaded && movesLoaded && since !== null && since <= yesterdayKey
+      ? activitiesOnDate(allRoutines, sports, moves, yesterday).find(
+          (activity): activity is RoutineActivity =>
+            activity.kind === 'routine' &&
+            !sessions.some(
+              (session) =>
+                session.date === yesterdayKey && session.plannedRoutineId === activity.routine.id,
+            ) &&
+            !(active?.date === yesterdayKey && active.plannedRoutineId === activity.routine.id),
+        )
+      : undefined;
+
+  // "Fes-la avui": after today's own.
+  function doMissedToday(activity: RoutineActivity) {
+    changeWeek(
+      withMove(
+        moves,
+        plannedRoutineOf(activity, yesterdayKey),
+        day,
+        nextDayPosition(allRoutines, sports, weekdayOf(today)),
+      ),
+      t('today.movedToday', { name: activity.routine.name }),
+    );
+  }
+
+  // "Altres opcions": move it, shift the week, rearrange it, or "Deixa-ho"
+  // (logged as skipped yesterday).
+  function missedOptions(activity: RoutineActivity) {
+    sheet(t('today.skipWhat', { name: activity.routine.name }), [
+      ...moveOptions(activity, yesterday),
+      {
+        label: t('today.leaveIt'),
+        run: () =>
+          log(
+            {
+              id: randomUUID(),
+              date: yesterdayKey,
+              plannedRoutineId: activity.routine.id,
+              routineId: null,
+              status: 'skipped',
+              logMode: 'quick',
+              durationS: null,
+              notes: null,
+              changeReason: null,
+              ...noSport,
+            },
+            t('today.skipped', { name: activity.routine.name }),
+          ),
+      },
     ]);
   }
 
@@ -770,10 +872,23 @@ export function Today() {
 
   // "Reprograma la setmana…": today to Sunday, each day's sports (they
   // stay) and the routines still to do, each known by the day it's planned
-  // on. Today's logged ones and the one going stay put.
+  // on. Today's logged ones and the one going stay put. From the nudge,
+  // yesterday's missed one starts under today.
   const reprogramDays: ReprogramDay[] = [];
   const reprogramRoutines: ReprogramRoutine[] = [];
   const reprogramPlanned = new Map<string, { planned: PlannedRoutine; was: string }>();
+  const reprogramMissed = reprogramming?.missed;
+  if (reprogramMissed) {
+    const planned = plannedRoutineOf(reprogramMissed, yesterdayKey);
+    const id = `${planned.plannedDate}:${planned.routineId}`;
+    reprogramPlanned.set(id, { planned, was: yesterdayKey });
+    reprogramRoutines.push({
+      key: id,
+      date: day,
+      name: reprogramMissed.routine.name,
+      icon: ROUTINE_ICONS[reprogramMissed.routine.label],
+    });
+  }
   for (let date = today, index = 0; date.getTime() <= weekEnd.getTime(); index += 1) {
     const key = dateKey(date);
     const activities = activitiesOnDate(allRoutines, sports, moves, date);
@@ -792,10 +907,7 @@ export function Today() {
       ),
     });
     for (const activity of activities) {
-      if (activity.kind !== 'routine') continue;
-      if (key === day && (sessionOf(activity) || active?.plannedRoutineId === activity.routine.id)) {
-        continue;
-      }
+      if (activity.kind !== 'routine' || isLogged(activity, key)) continue;
       const planned = plannedRoutineOf(activity, key);
       const id = `${planned.plannedDate}:${planned.routineId}`;
       reprogramPlanned.set(id, { planned, was: key });
@@ -810,7 +922,7 @@ export function Today() {
   }
 
   function saveReprogram(placed: { key: string; date: string }[]) {
-    setReprogramming(false);
+    setReprogramming(null);
     const changes = placed.flatMap(({ key, date }) => {
       const item = reprogramPlanned.get(key);
       return item && item.was !== date ? [{ ...item, now: date }] : [];
@@ -823,6 +935,13 @@ export function Today() {
     <View style={styles.today}>
       {header}
       {active ? <ResumeBanner workout={active} /> : null}
+      {missed ? (
+        <MissedDay
+          name={missed.routine.name}
+          onDoToday={() => doMissedToday(missed)}
+          onOtherOptions={() => missedOptions(missed)}
+        />
+      ) : null}
       <StepsCard today={today} />
 
       {allRoutines.length === 0 && sports.length === 0 ? (
@@ -888,10 +1007,10 @@ export function Today() {
         }
       />
       <ReprogramSheet
-        visible={reprogramming}
+        visible={reprogramming !== null}
         days={reprogramDays}
         routines={reprogramRoutines}
-        onClose={() => setReprogramming(false)}
+        onClose={() => setReprogramming(null)}
         onSave={saveReprogram}
       />
       <LogSportSheet
