@@ -3,8 +3,8 @@ import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
-import { radius, spacing, touch, useTheme } from '@/theme';
+import { GradientText, MetalFill, Text } from '@/components/ui';
+import { inset, metalTextShadows, radius, spacing, touch, useTheme } from '@/theme';
 
 import type { ActiveWorkout } from './activeWorkout';
 import { useElapsed } from './useElapsed';
@@ -13,11 +13,11 @@ const ICON = 44;
 
 // On Today while a workout is going (spec: ResumeBanner): one tap back in,
 // also after the app closed or the phone died. The whole card is the
-// button: a pink tint, ▶, "En curs · Tren superior 1", the time so far and
-// "Reprèn".
+// button: a metal ▶, "EN CURS · TREN SUPERIOR 1", the time so far and a
+// metal "Reprèn".
 export function ResumeBanner({ workout }: { workout: ActiveWorkout }) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const elapsed = useElapsed(workout.startedAt);
   const name = workout.routineName || t('history.noRoutine');
 
@@ -28,22 +28,24 @@ export function ResumeBanner({ workout }: { workout: ActiveWorkout }) {
       onPress={() => router.push('/workout')}
       style={({ pressed }) => [
         styles.banner,
-        { backgroundColor: colors.accentSoft, borderColor: colors.accent },
+        { backgroundColor: colors.surface, boxShadow: shadows.card },
         pressed && styles.pressed,
       ]}>
-      <View style={[styles.icon, { backgroundColor: colors.accent }]}>
-        <SymbolView name="play.fill" size={20} tintColor={colors.onAccent} />
+      <View style={[styles.icon, { boxShadow: shadows.control }]}>
+        <MetalFill borderRadius={ICON / 2} />
+        <SymbolView name="play.fill" size={18} tintColor={colors.onMetal} />
       </View>
       <View style={styles.text}>
-        <Text variant="caption" color="accent" numberOfLines={1}>
+        <Text variant="label" color="accent" numberOfLines={1}>
           {t('workout.resumeBanner', { name })}
         </Text>
-        <Text variant="title" style={styles.elapsed}>
+        <GradientText variant="stat" containerStyle={styles.elapsed}>
           {elapsed}
-        </Text>
+        </GradientText>
       </View>
-      <View style={[styles.resume, { backgroundColor: colors.accent }]}>
-        <Text variant="bodyStrong" color="onAccent">
+      <View style={[styles.resume, { boxShadow: shadows.control }]}>
+        <MetalFill borderRadius={radius.pill} />
+        <Text variant="bodyStrong" color="onMetal" style={metalTextShadows.small}>
           {t('workout.resume')}
         </Text>
       </View>
@@ -56,23 +58,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
-    padding: spacing.lg,
-    borderWidth: 1,
+    paddingHorizontal: inset.cardX,
+    paddingVertical: inset.cardY,
     borderRadius: radius.card,
     borderCurve: 'continuous',
   },
   icon: {
     width: ICON,
     height: ICON,
-    borderRadius: radius.pill,
+    borderRadius: ICON / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
   text: {
     flex: 1,
   },
+  // The gradient fits the time, not the whole line.
   elapsed: {
-    fontVariant: ['tabular-nums'],
+    alignSelf: 'flex-start',
   },
   resume: {
     minHeight: touch.min,

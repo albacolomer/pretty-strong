@@ -4,11 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Card, Text, useToast } from '@/components/ui';
+import { Card, ScreenTitle, Text, useToast } from '@/components/ui';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { useBeats, useHistoryEntries } from '@/features/history/useHistory';
-import { SmallAvatar } from '@/features/profile/SmallAvatar';
 import { useProfile } from '@/features/profile/useProfile';
 import { useWeeklyGoal } from '@/features/profile/useWeeklyGoal';
 import { StepsCard } from '@/features/steps/StepsCard';
@@ -71,9 +70,9 @@ import {
 
 type Action = { label: string; run: () => void };
 
-// The Avui tab (US-11, US-12, US-20): the date and your picture, today's
-// steps, then the day's main activity in a big button inside the week's ring (Comença, or
-// Fet for a class or a sport), with Previsualitza / Canvia / Salta (which
+// The Avui tab (US-11, US-12, US-20): the date and "AVUI", today's steps,
+// then the day's main activity in a big metal button inside the week's
+// ring (GO, or ✓ for a class or a sport), with Previsualitza / Canvia / Salta (which
 // can move a routine to a free day or shift the week, US-29); on a
 // rest day, a word on recovery, what's next and Caminar / Estiraments; once
 // it's all done, "Tot fet" with the day in numbers. Above it, yesterday's
@@ -192,19 +191,7 @@ export function Today() {
     start(created, null);
   });
 
-  const header = (
-    <View style={styles.header}>
-      <View style={styles.headerText}>
-        <Text variant="bodyStrong" color="textMuted">
-          {formatDayTitle(today, language)}
-        </Text>
-        <Text variant="title" accessibilityRole="header">
-          {t('tabs.today')}
-        </Text>
-      </View>
-      <SmallAvatar label={t('tabs.profile')} onPress={() => router.navigate('/profile')} />
-    </View>
-  );
+  const header = <ScreenTitle eyebrow={formatDayTitle(today, language)} title={t('tabs.today')} />;
 
   if (isPending) {
     return (
@@ -697,9 +684,9 @@ export function Today() {
             session
               ? null
               : {
-                  label: t('today.done'),
+                  kind: 'done',
+                  caption: t('today.done'),
                   aria: t('today.doneFor', { name }),
-                  icon: 'checkmark',
                   onPress: () => markDone(activity),
                 }
           }
@@ -708,7 +695,6 @@ export function Today() {
               ? []
               : [
                   {
-                    label: t('today.skip'),
                     aria: t('today.skipFor', { name }),
                     icon: 'forward.end',
                     onPress: () => skip(activity),
@@ -729,21 +715,18 @@ export function Today() {
           ...(startable && shown.exercises.length > 0
             ? [
                 {
-                  label: t('today.preview'),
                   aria: t('today.previewFor', { name: shown.name }),
-                  icon: 'list.bullet' as const,
+                  icon: 'eye' as const,
                   onPress: () => setPreviewing({ routine: shown, planned: routine }),
                 },
               ]
             : []),
           {
-            label: t('today.swap'),
             aria: t('today.swapFor', { name: shown.name }),
             icon: 'arrow.left.arrow.right',
             onPress: () => swap(routine, shown),
           },
           {
-            label: t('today.skip'),
             aria: t('today.skipFor', { name: shown.name }),
             icon: 'forward.end',
             onPress: () => skipRoutine(activity),
@@ -760,16 +743,16 @@ export function Today() {
             ? null
             : startable
               ? {
-                  label: going ? t('workout.resume') : t('workout.start'),
+                  kind: 'go',
+                  caption: going ? t('workout.resume') : t('today.goCaption'),
                   aria: t('workout.startFor', { name: shown.name }),
-                  icon: 'play.fill',
                   onPress: () => (going ? router.push('/workout') : start(shown, routine.id)),
                 }
               : {
                   // A class: marked done, not started.
-                  label: t('today.done'),
+                  kind: 'done',
+                  caption: t('today.done'),
                   aria: t('today.doneFor', { name: shown.name }),
-                  icon: 'checkmark',
                   onPress: () => markDone(activity),
                 }
         }
@@ -784,11 +767,13 @@ export function Today() {
     const check = () => (session ? undoMenu(nameOf(activity), session) : markDone(activity));
     if (activity.kind === 'sport') {
       const name = nameOf(activity);
+      const { startTime, durationS } = activity.sport;
       return {
         key: activity.key,
         icon: SPORT_ICONS[activity.sport.sport],
+        time: startTime,
         name,
-        details: session ? statusText(session) : detailsOf(activity),
+        details: session ? statusText(session) : durationS ? formatDuration(durationS) : '',
         state,
         onCheck: check,
         onPress: () =>
@@ -803,6 +788,7 @@ export function Today() {
     return {
       key: activity.key,
       icon: ROUTINE_ICONS[shown.label],
+      time: null,
       name: shown.name,
       details: session ? statusText(session) : detailsOf(activity, shown),
       state,
@@ -848,6 +834,7 @@ export function Today() {
       return {
         key: `session:${session.id}`,
         icon: session.sport ? SPORT_ICONS[session.sport] : ROUTINE_ICONS[routine?.label ?? 'strength'],
+        time: null,
         name,
         details: statusText(session),
         state: 'done',
@@ -1025,14 +1012,6 @@ export function Today() {
 
 const styles = StyleSheet.create({
   today: {
-    gap: spacing.xl,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  headerText: {
-    flex: 1,
+    gap: spacing.lg,
   },
 });

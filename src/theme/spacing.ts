@@ -8,6 +8,16 @@ export const spacing = {
   xxl: 32,
 } as const;
 
+// The design's own gaps, off the grid.
+export const gaps = {
+  // A heading and the line under it.
+  tight: 2,
+  // The parts of Avui's hero; the columns of a list row.
+  loose: 14,
+  // Round buttons side by side.
+  wide: 20,
+} as const;
+
 // The design's own insets, off the grid.
 export const inset = {
   // A screen's sides and bottom, and how far its content starts from the

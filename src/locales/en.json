@@ -524,10 +524,14 @@
     "weekProgress_one": "{{done}} of {{count}} workout this week",
     "weekProgress_other": "{{done}} of {{count}} workouts this week",
     "weekDone_one": "{{count}} workout this week",
-    "weekDone_other": "{{count}} workouts this week"
+    "weekDone_other": "{{count}} workouts this week",
+    "go": "GO",
+    "goCaption": "Start workout"
   },
   "steps": {
     "title": "Today's steps",
+    "label": "Steps",
+    "ofGoal": "/ {{goal}}",
     "count": "{{steps}} / {{goal}} steps",
     "remaining": "{{steps}} to go",
     "reached": "Goal reached",

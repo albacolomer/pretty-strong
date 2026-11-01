@@ -194,7 +194,6 @@ afterEach(() => actionSheet.mockRestore());
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<Today />', () => {
   test('the date, the routine to start in the big button, and the rest "també avui"', async () => {
-    const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('Dimarts, 20 d’octubre')).toBeOnTheScreen();
@@ -209,9 +208,6 @@ describe('<Today />', () => {
     expect(screen.getByText('45 min')).toBeOnTheScreen();
     // This week's sessions, and last Sunday's (for a missed day).
     expect(fetchSessions).toHaveBeenCalledWith('2026-10-18', '2026-10-25');
-
-    await user.press(screen.getByRole('button', { name: 'Perfil' }));
-    expect(router.navigate).toHaveBeenCalledWith('/profile');
   });
 
   test('a class "també avui": its circle marks it done, with its duration and a note', async () => {
@@ -243,7 +239,9 @@ describe('<Today />', () => {
     jest.mocked(fetchWeeklySports).mockResolvedValue([sport({})]);
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByText('19:00 · 1 h 30 min')).toBeOnTheScreen();
+    // Its start time in its own column, its length under its name.
+    expect(await screen.findByText('19:00')).toBeOnTheScreen();
+    expect(screen.getByText('1 h 30 min')).toBeOnTheScreen();
     await user.press(screen.getByRole('checkbox', { name: 'Marca «Pàdel» com a fet' }));
     expect(screen.getByLabelText('Durada (min)').props.value).toBe('90');
     await user.press(screen.getByRole('button', { name: 'Desa' }));
@@ -619,7 +617,7 @@ describe('<Today />', () => {
     });
     expect(banner).toHaveTextContent(/0:\d\d/);
     expect(screen.getByRole('button', { name: 'Comença «Tren superior 1»' })).toHaveTextContent(
-      'Reprèn',
+      /Reprèn/,
     );
 
     sheetChoices.push('Cames');

@@ -7,7 +7,7 @@ import {
   shadows,
   type ColorScheme,
 } from './colors';
-import { inset, radius, spacing, touch } from './spacing';
+import { gaps, inset, radius, spacing, touch } from './spacing';
 import { fonts, typography } from './typography';
 
 export type {
@@ -23,6 +23,7 @@ export { cssGradientPoints, type GradientPoint } from './gradient';
 export {
   colors,
   fonts,
+  gaps,
   gradients,
   inset,
   metalTextShadows,
@@ -41,6 +42,7 @@ function makeTheme(scheme: ColorScheme) {
     shadows: shadows[scheme],
     typography,
     spacing,
+    gaps,
     inset,
     radius,
     touch,

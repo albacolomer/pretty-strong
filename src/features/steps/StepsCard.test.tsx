@@ -50,7 +50,7 @@ describe('<StepsCard />', () => {
   test("today's steps against the goal, counting as you walk", async () => {
     await render(<StepsCard today={today} />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByText('6.240 / 10.000 passos')).toBeOnTheScreen();
+    expect(await screen.findByLabelText('6.240 / 10.000 passos')).toBeOnTheScreen();
     expect(screen.getByText('3.760 per arribar')).toBeOnTheScreen();
     expect(screen.getByText(/^62\s%$/)).toBeOnTheScreen();
     // Counted from midnight.
@@ -58,7 +58,7 @@ describe('<StepsCard />', () => {
 
     // Steps since the card started watching come on top.
     await act(() => newSteps(4000));
-    expect(screen.getByText('10.240 / 10.000 passos')).toBeOnTheScreen();
+    expect(screen.getByLabelText('10.240 / 10.000 passos')).toBeOnTheScreen();
     expect(screen.getByText('Objectiu assolit')).toBeOnTheScreen();
     expect(screen.getByText(/^102\s%$/)).toBeOnTheScreen();
   });
@@ -67,7 +67,7 @@ describe('<StepsCard />', () => {
     jest.mocked(fetchProfile).mockResolvedValue({ daily_step_goal: 8000 } as Profile);
     await render(<StepsCard today={today} />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByText('6.240 / 8.000 passos')).toBeOnTheScreen();
+    expect(await screen.findByLabelText('6.240 / 8.000 passos')).toBeOnTheScreen();
     expect(screen.getByText('1.760 per arribar')).toBeOnTheScreen();
   });
 
@@ -79,13 +79,13 @@ describe('<StepsCard />', () => {
       return { remove: jest.fn() };
     });
     await render(<StepsCard today={today} />, { wrapper: createAppWrapper() });
-    expect(await screen.findByText('6.240 / 10.000 passos')).toBeOnTheScreen();
+    expect(await screen.findByLabelText('6.240 / 10.000 passos')).toBeOnTheScreen();
 
     // Walked with the app closed.
     jest.mocked(Pedometer.getStepCountAsync).mockResolvedValue({ steps: 7100 });
     await act(() => listeners.forEach((listener) => listener('active')));
 
-    expect(await screen.findByText('7.100 / 10.000 passos')).toBeOnTheScreen();
+    expect(await screen.findByLabelText('7.100 / 10.000 passos')).toBeOnTheScreen();
     expect(stopWatching).toHaveBeenCalled();
   });
 
@@ -100,7 +100,7 @@ describe('<StepsCard />', () => {
     jest.mocked(Pedometer.getPermissionsAsync).mockResolvedValue(granted as never);
     await user.press(screen.getByRole('button', { name: 'Mostra els passos' }));
 
-    expect(await screen.findByText('6.240 / 10.000 passos')).toBeOnTheScreen();
+    expect(await screen.findByLabelText('6.240 / 10.000 passos')).toBeOnTheScreen();
     expect(Pedometer.requestPermissionsAsync).toHaveBeenCalled();
   });
 

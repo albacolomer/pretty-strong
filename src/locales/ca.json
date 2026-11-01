@@ -524,10 +524,14 @@
     "weekProgress_one": "{{done}} de {{count}} entrenament aquesta setmana",
     "weekProgress_other": "{{done}} de {{count}} entrenaments aquesta setmana",
     "weekDone_one": "{{count}} entrenament aquesta setmana",
-    "weekDone_other": "{{count}} entrenaments aquesta setmana"
+    "weekDone_other": "{{count}} entrenaments aquesta setmana",
+    "go": "GO",
+    "goCaption": "A entrenar"
   },
   "steps": {
     "title": "Passos d'avui",
+    "label": "Passos",
+    "ofGoal": "/ {{goal}}",
     "count": "{{steps}} / {{goal}} passos",
     "remaining": "{{steps}} per arribar",
     "reached": "Objectiu assolit",

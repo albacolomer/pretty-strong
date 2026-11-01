@@ -26,7 +26,7 @@ type RestDayProps = {
 // quick way to log a walk or some stretching.
 export function RestDay({ today, next, onLog }: RestDayProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const message = MESSAGES[dayNumber(today) % MESSAGES.length];
 
   return (
@@ -34,7 +34,7 @@ export function RestDay({ today, next, onLog }: RestDayProps) {
       <Card style={styles.card}>
         <View style={styles.title}>
           <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-            <SymbolView name="moon.zzz.fill" size={20} tintColor={colors.accent} />
+            <SymbolView name="moon.zzz" size={20} weight="light" tintColor={colors.accent} />
           </View>
           <Text variant="cardTitle" accessibilityRole="header">
             {t('today.rest')}
@@ -42,8 +42,8 @@ export function RestDay({ today, next, onLog }: RestDayProps) {
         </View>
         <Text color="textMuted">{t(message)}</Text>
         {next ? (
-          <View style={[styles.next, { borderTopColor: colors.surfaceRaised }]}>
-            <Text variant="caption" color="textMuted">
+          <View style={[styles.next, { borderTopColor: colors.separator }]}>
+            <Text variant="label" color="textMuted">
               {next.day}
             </Text>
             <Text variant="bodyStrong">{next.plan}</Text>
@@ -52,7 +52,7 @@ export function RestDay({ today, next, onLog }: RestDayProps) {
       </Card>
 
       <View style={styles.move}>
-        <Text variant="bodyStrong" color="textMuted">
+        <Text variant="label" color="textMuted">
           {t('today.restMove')}
         </Text>
         <View style={styles.buttons}>
@@ -66,10 +66,10 @@ export function RestDay({ today, next, onLog }: RestDayProps) {
                 onPress={() => onLog(sport)}
                 style={({ pressed }) => [
                   styles.button,
-                  { backgroundColor: colors.surface, borderColor: colors.surfaceRaised },
+                  { backgroundColor: colors.surface, boxShadow: shadows.control },
                   pressed && styles.pressed,
                 ]}>
-                <SymbolView name={SPORT_ICONS[sport]} size={24} tintColor={colors.accent} />
+                <SymbolView name={SPORT_ICONS[sport]} size={22} weight="light" tintColor={colors.accent} />
                 <Text variant="bodyStrong">{name}</Text>
               </Pressable>
             );
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   next: {
-    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: 1,
     paddingTop: spacing.md,
     gap: spacing.xs,
   },
@@ -118,7 +118,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    borderWidth: 1.5,
     borderRadius: radius.card,
     borderCurve: 'continuous',
     paddingVertical: spacing.md,

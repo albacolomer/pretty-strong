@@ -1,16 +1,20 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
-import { radius, spacing, touch, useTheme } from '@/theme';
+import { GradientText, IconButton, MetalFill, Text } from '@/components/ui';
+import { gaps, metalTextShadows, useTheme } from '@/theme';
 
 import { WeekRing } from './WeekRing';
 
 // The ring and the button in it; "Tot fet" (DayDone) uses the same.
-export const RING = 270;
-export const BUTTON = 200;
+export const RING = 228;
+export const BUTTON = 182;
 
-export type HeroAction = { label: string; aria: string; icon: SFSymbol; onPress: () => void };
+export type HeroAction = { aria: string; icon: SFSymbol; onPress: () => void };
+
+// The design's icons are a touch bigger for the eye than for the arrows.
+const ICON_SIZES: Partial<Record<SFSymbol, number>> = { eye: 18 };
 
 type TodayHeroProps = {
   // The week ring: the goal's segments, and how many are done.
@@ -22,16 +26,17 @@ type TodayHeroProps = {
   // "En lloc de «…»", after a swap.
   insteadOf: string | null;
   details: string;
-  // The big button: Comença, Reprèn or Fet. Null once it's logged.
-  main: { label: string; aria: string; icon: SFSymbol; onPress: () => void } | null;
+  // The big button: GO (to start or go back to it) or a ✓ (a class or a
+  // sport, marked done), with a caption under it. Null once it's logged.
+  main: { kind: 'go' | 'done'; caption: string; aria: string; onPress: () => void } | null;
   // Once logged: how it went ("✓ Fet · 1 h" or "Saltat"), and its ⋯.
   status: { label: string; text: string; skipped: boolean; onPress: () => void } | null;
   actions: HeroAction[];
 };
 
-// The middle of Avui: the day's main activity in a big pink button inside
+// The middle of Avui: the day's main activity as a big metal button inside
 // the week's ring, its name and what it is, then Previsualitza / Canvia /
-// Salta.
+// Salta as small round buttons.
 export function TodayHero({
   segments,
   done,
@@ -43,7 +48,8 @@ export function TodayHero({
   status,
   actions,
 }: TodayHeroProps) {
-  const { colors } = useTheme();
+  const { t } = useTranslation();
+  const { colors, shadows } = useTheme();
 
   return (
     <View style={styles.hero}>
@@ -55,12 +61,24 @@ export function TodayHero({
             onPress={main.onPress}
             style={({ pressed }) => [
               styles.button,
-              { backgroundColor: colors.accent, shadowColor: colors.accent },
+              { boxShadow: shadows.hero },
               pressed && styles.pressed,
             ]}>
-            <SymbolView name={main.icon} size={30} tintColor={colors.onAccent} />
-            <Text variant="title" color="onAccent">
-              {main.label}
+            <MetalFill borderRadius={BUTTON / 2} />
+            {main.kind === 'go' ? (
+              <Text variant="hero" color="onMetal" style={metalTextShadows.large}>
+                {t('today.go')}
+              </Text>
+            ) : (
+              <SymbolView name="checkmark" size={52} weight="semibold" tintColor={colors.onMetal} />
+            )}
+            <Text
+              variant="label"
+              color="onMetal"
+              numberOfLines={1}
+              adjustsFontSizeToFit
+              style={[styles.caption, metalTextShadows.small]}>
+              {main.caption}
             </Text>
           </Pressable>
         ) : status ? (
@@ -70,37 +88,38 @@ export function TodayHero({
             onPress={status.onPress}
             style={({ pressed }) => [
               styles.button,
-              { backgroundColor: colors.accentSoft },
+              { backgroundColor: colors.surface, boxShadow: shadows.hero },
               pressed && styles.pressed,
             ]}>
             <SymbolView
               name={status.skipped ? 'forward.end' : 'checkmark'}
-              size={34}
+              size={44}
+              weight="light"
               tintColor={status.skipped ? colors.textMuted : colors.accent}
             />
           </Pressable>
         ) : null}
       </WeekRing>
-      <Text variant="bodyStrong" color="textMuted">
+      <Text variant="caption" color="textMuted">
         {progress}
       </Text>
 
       <View style={styles.what}>
-        <Text variant="title" accessibilityRole="header" style={styles.centred}>
+        <GradientText variant="title" accessibilityRole="header" style={styles.centred}>
           {name}
-        </Text>
+        </GradientText>
         {insteadOf ? (
           <Text variant="caption" color="textMuted" style={styles.centred}>
             {insteadOf}
           </Text>
         ) : null}
         {details !== '' ? (
-          <Text color="textMuted" style={styles.centred}>
+          <Text variant="caption" color="textMuted" style={styles.centred}>
             {details}
           </Text>
         ) : null}
         {status ? (
-          <Text variant="bodyStrong" color={status.skipped ? 'textMuted' : 'accent'}>
+          <Text variant="captionMedium" color={status.skipped ? 'textMuted' : 'accent'}>
             {status.text}
           </Text>
         ) : null}
@@ -109,19 +128,13 @@ export function TodayHero({
       {actions.length > 0 ? (
         <View style={styles.actions}>
           {actions.map((action) => (
-            <Pressable
-              key={action.label}
-              role="button"
-              aria-label={action.aria}
+            <IconButton
+              key={action.icon}
+              icon={action.icon}
+              iconSize={ICON_SIZES[action.icon] ?? 16}
+              label={action.aria}
               onPress={action.onPress}
-              style={({ pressed }) => [
-                styles.chip,
-                { backgroundColor: colors.surfaceRaised },
-                pressed && styles.pressed,
-              ]}>
-              <SymbolView name={action.icon} size={16} tintColor={colors.text} />
-              <Text variant="bodyStrong">{action.label}</Text>
-            </Pressable>
+            />
           ))}
         </View>
       ) : null}
@@ -132,39 +145,30 @@ export function TodayHero({
 const styles = StyleSheet.create({
   hero: {
     alignItems: 'center',
-    gap: spacing.md,
+    gap: gaps.loose,
   },
   button: {
     width: BUTTON,
     height: BUTTON,
-    borderRadius: radius.pill,
+    borderRadius: BUTTON / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: spacing.xs,
-    shadowOpacity: 0.25,
-    shadowRadius: 16,
-    shadowOffset: { width: 0, height: 6 },
+    gap: gaps.tight,
+  },
+  // Kept inside the circle, however long the translation.
+  caption: {
+    maxWidth: BUTTON - 24,
   },
   what: {
     alignItems: 'center',
-    gap: spacing.xs,
+    gap: gaps.tight,
   },
   centred: {
     textAlign: 'center',
   },
   actions: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: spacing.sm,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    minHeight: touch.min,
-    paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
+    gap: gaps.wide,
   },
   pressed: {
     opacity: 0.75,

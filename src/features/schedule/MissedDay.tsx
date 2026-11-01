@@ -23,10 +23,10 @@ export function MissedDay({ name, onDoToday, onOtherOptions }: MissedDayProps) {
   const { colors } = useTheme();
 
   return (
-    <Card style={[styles.card, { borderColor: colors.accent }]}>
+    <Card style={styles.card}>
       <View style={styles.top}>
         <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-          <SymbolView name="arrow.uturn.forward" size={18} tintColor={colors.accent} />
+          <SymbolView name="arrow.uturn.forward" size={18} weight="light" tintColor={colors.accent} />
         </View>
         <View style={styles.text}>
           <Text variant="bodyStrong" accessibilityRole="header">
@@ -51,7 +51,6 @@ export function MissedDay({ name, onDoToday, onOtherOptions }: MissedDayProps) {
 const styles = StyleSheet.create({
   card: {
     gap: spacing.md,
-    borderWidth: 1,
   },
   top: {
     flexDirection: 'row',

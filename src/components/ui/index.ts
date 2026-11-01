@@ -5,8 +5,10 @@ export { GradientView, type GradientViewProps } from './GradientView';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { Logo, type LogoProps } from './Logo';
 export { MenuButton } from './MenuButton';
+export { MetalFill } from './MetalFill';
 export { KeyboardDoneBar, NumberInput, type NumberInputProps } from './NumberInput';
 export { Screen, type ScreenProps } from './Screen';
+export { ScreenTitle, type ScreenTitleProps } from './ScreenTitle';
 export { SelectField, type SelectFieldProps } from './SelectField';
 export { Sheet, type SheetProps } from './Sheet';
 export {

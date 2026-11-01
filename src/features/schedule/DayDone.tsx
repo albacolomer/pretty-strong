@@ -2,11 +2,11 @@ import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Card, Text } from '@/components/ui';
+import { Card, GradientText, Text } from '@/components/ui';
 import { formatVolume } from '@/features/profile/progress';
 import { formatDuration } from '@/features/routines/routine';
 import { useAppLanguage } from '@/lib/i18n';
-import { radius, spacing, useTheme } from '@/theme';
+import { gaps, spacing, useTheme } from '@/theme';
 
 import { BUTTON, RING } from './TodayHero';
 import { WeekRing } from './WeekRing';
@@ -30,7 +30,7 @@ type Tile = { key: string; value: string; label: string; aria: string; beat?: bo
 // number shows only when there's something to show.
 export function DayDone({ segments, done, progress, timeS, volumeKg, beats }: DayDoneProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const language = useAppLanguage();
 
   const stat = (key: string, value: string, label: string): Tile => ({
@@ -60,33 +60,38 @@ export function DayDone({ segments, done, progress, timeS, volumeKg, beats }: Da
   return (
     <View style={styles.done}>
       <WeekRing size={RING} segments={segments} done={done}>
-        <View style={[styles.check, { backgroundColor: colors.accentSoft }]}>
-          <SymbolView name="checkmark" size={56} tintColor={colors.accent} />
+        <View style={[styles.check, { backgroundColor: colors.surface, boxShadow: shadows.hero }]}>
+          <SymbolView name="checkmark" size={56} weight="light" tintColor={colors.accent} />
           <SymbolView
             name="sparkles"
             size={26}
+            weight="light"
             tintColor={colors.accent}
             style={styles.sparkle}
           />
         </View>
       </WeekRing>
-      <Text variant="bodyStrong" color="textMuted">
+      <Text variant="caption" color="textMuted">
         {progress}
       </Text>
-      <Text variant="title" accessibilityRole="header" style={styles.centred}>
+      <GradientText variant="title" accessibilityRole="header" style={styles.centred}>
         {t('today.allDone')}
-      </Text>
+      </GradientText>
 
       {tiles.length > 0 ? (
         <View style={styles.tiles}>
           {tiles.map((tile) => (
             <Card key={tile.key} accessible aria-label={tile.aria} style={styles.tile}>
-              <View style={styles.value}>
-                {tile.beat ? <SymbolView name="sparkles" size={16} tintColor={colors.up} /> : null}
-                <Text variant="cardTitle" color={tile.beat ? 'up' : 'text'}>
-                  {tile.value}
-                </Text>
-              </View>
+              {tile.beat ? (
+                <View style={styles.value}>
+                  <SymbolView name="sparkles" size={16} tintColor={colors.up} />
+                  <Text variant="cardTitle" color="up">
+                    {tile.value}
+                  </Text>
+                </View>
+              ) : (
+                <GradientText variant="cardTitle">{tile.value}</GradientText>
+              )}
               <Text variant="caption" color="textMuted" style={styles.centred}>
                 {tile.label}
               </Text>
@@ -101,12 +106,12 @@ export function DayDone({ segments, done, progress, timeS, volumeKg, beats }: Da
 const styles = StyleSheet.create({
   done: {
     alignItems: 'center',
-    gap: spacing.md,
+    gap: gaps.loose,
   },
   check: {
     width: BUTTON,
     height: BUTTON,
-    borderRadius: radius.pill,
+    borderRadius: BUTTON / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

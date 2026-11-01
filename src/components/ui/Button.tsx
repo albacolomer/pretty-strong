@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import {
   metalTextShadows,
@@ -9,7 +9,7 @@ import {
   type ColorToken,
 } from '@/theme';
 
-import { GradientView } from './GradientView';
+import { MetalFill } from './MetalFill';
 import { Text } from './Text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -58,13 +58,7 @@ export function Button({
         disabled && styles.disabled,
         style,
       ]}>
-      {metal ? (
-        <>
-          <GradientView gradient="metal" style={styles.fill} />
-          {/* Over the gradient: the light on its top edge. */}
-          <View style={[styles.fill, { boxShadow: shadows.highlight }]} />
-        </>
-      ) : null}
+      {metal ? <MetalFill borderRadius={radius.pill} /> : null}
       <Text
         variant="bodyStrong"
         color={textColors[variant]}
@@ -83,15 +77,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  fill: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    borderRadius: radius.pill,
-    pointerEvents: 'none',
   },
   pressed: {
     opacity: 0.75,

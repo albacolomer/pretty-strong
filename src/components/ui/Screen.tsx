@@ -4,7 +4,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { inset, spacing, useTheme } from '@/theme';
 
-import { GradientText } from './GradientText';
+import { ScreenTitle } from './ScreenTitle';
 
 export type ScreenProps = {
   title?: string;
@@ -17,8 +17,9 @@ export type ScreenProps = {
 
 // The ScrollView is the screen's root view on purpose: iOS then adds the
 // status bar and tab bar insets for us, and tapping the current tab
-// scrolls it back to the top. The content fills at least the screen, so a
-// child with flex: 1 can take up the space that's left.
+// scrolls it back to the top. (Those insets come on top of the content's
+// height, so content that grows to fill the screen would scroll by them:
+// only centred screens, which add the insets themselves, grow.)
 export function Screen({ title, action, centered = false, children }: ScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -48,13 +49,7 @@ export function Screen({ title, action, centered = false, children }: ScreenProp
       {title ? (
         <View style={styles.titleRow}>
           <View style={styles.title}>
-            <GradientText
-              variant="screenTitle"
-              accessibilityRole="header"
-              style={styles.titleText}
-              containerStyle={styles.titleBox}>
-              {title}
-            </GradientText>
+            <ScreenTitle title={title} />
           </View>
           {action}
         </View>
@@ -66,7 +61,6 @@ export function Screen({ title, action, centered = false, children }: ScreenProp
 
 const styles = StyleSheet.create({
   content: {
-    flexGrow: 1,
     paddingHorizontal: inset.screenX,
     paddingBottom: inset.screenBottom,
     gap: spacing.lg,
@@ -78,16 +72,8 @@ const styles = StyleSheet.create({
   title: {
     flex: 1,
   },
-  // The gradient fits the word, as in the design.
-  titleBox: {
-    alignSelf: 'flex-start',
-  },
-  // Italic capitals lean past their box; without this the last one's tip
-  // would fall outside the gradient.
-  titleText: {
-    paddingRight: 4,
-  },
   centered: {
+    flexGrow: 1,
     justifyContent: 'center',
   },
 });
