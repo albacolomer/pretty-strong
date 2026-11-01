@@ -47,6 +47,21 @@ export function isRunBlockComplete(kind: RunBlockKind, targets: ExerciseTargets)
   return targets.distanceM !== null || targets.durationS !== null;
 }
 
+// A run's whole distance in metres, every repetition of intervals
+// counted, e.g. 6 × 400 m and 2 km make 4400. Null unless every block has a
+// distance (a time block, or intervals timed only, can't be added up).
+export function runDistanceM(blocks: readonly { sets: BlockSets }[]): number | null {
+  if (blocks.length === 0) return null;
+  let total = 0;
+  for (const { sets } of blocks) {
+    for (const { distanceM } of sets) {
+      if (distanceM === null) return null;
+      total += distanceM;
+    }
+  }
+  return total;
+}
+
 // "45 min", or "1:30" when there are seconds.
 function formatTime(seconds: number): string {
   if (seconds % 60 === 0) return formatDuration(seconds);

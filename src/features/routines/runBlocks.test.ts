@@ -1,5 +1,5 @@
 import { NO_TARGETS } from './routine';
-import { isRunBlockComplete, runBlockKind, runBlockSummary } from './runBlocks';
+import { isRunBlockComplete, runBlockKind, runBlockSummary, runDistanceM } from './runBlocks';
 
 // A block of `repetitions` sets, all with the same distance and time.
 const block = (repetitions: number, distanceM: number | null, durationS: number | null) =>
@@ -32,5 +32,19 @@ describe('runBlockSummary', () => {
     expect(runBlockSummary('intervals', block(6, 400, null), 'ca')).toBe('6 × 400 m');
     expect(runBlockSummary('intervals', block(8, 400, 90), 'ca')).toBe('8 × 400 m · 1:30');
     expect(runBlockSummary('distance', block(1, null, null), 'ca')).toBe('');
+  });
+});
+
+describe('runDistanceM', () => {
+  test('adds up every block, every repetition of intervals included', () => {
+    expect(runDistanceM([{ sets: block(6, 400, null) }, { sets: block(1, 2000, null) }])).toBe(4400);
+  });
+
+  test("can't add up a block without a distance", () => {
+    expect(runDistanceM([{ sets: block(1, 5000, null) }, { sets: block(1, null, 2700) }])).toBeNull();
+  });
+
+  test('has nothing to add up without blocks', () => {
+    expect(runDistanceM([])).toBeNull();
   });
 });

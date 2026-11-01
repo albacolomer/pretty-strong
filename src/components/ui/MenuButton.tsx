@@ -1,21 +1,23 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { SymbolView } from 'expo-symbols';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { touch } from '@/theme';
+import { touch, useTheme } from '@/theme';
 
-import { Text } from './Text';
-
-// The ⋯ button that opens an item's actions menu. `label` is what screen
+// The ⋮ button that opens an item's actions menu. `label` is what screen
 // readers say, e.g. "Opcions de «Hip thrust»".
 export function MenuButton({ label, onPress }: { label: string; onPress: () => void }) {
+  const { colors } = useTheme();
+
   return (
     <Pressable
       role="button"
       aria-label={label}
       onPress={onPress}
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-      <Text variant="cardTitle" color="textMuted">
-        ⋯
-      </Text>
+      {/* iOS has no vertical ellipsis symbol: the horizontal one, turned. */}
+      <View style={styles.vertical}>
+        <SymbolView name="ellipsis" size={18} weight="semibold" tintColor={colors.textMuted} />
+      </View>
     </Pressable>
   );
 }
@@ -26,6 +28,9 @@ const styles = StyleSheet.create({
     height: touch.min,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  vertical: {
+    transform: [{ rotate: '90deg' }],
   },
   pressed: {
     opacity: 0.75,

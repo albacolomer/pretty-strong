@@ -45,7 +45,7 @@ describe('<RoutineList />', () => {
     expect(router.push).toHaveBeenCalledWith('/plan/routines/new');
   });
 
-  test('shows each routine with its label and first exercises, and opens it', async () => {
+  test('shows each routine with its type, what is in it and its days, and opens it', async () => {
     const user = userEvent.setup();
     const hyrox = { ...upperBody, id: 'routine-2', name: 'HYROX dimarts', label: 'hybrid' as const, plannedDurationS: 3600, exercises: [] };
     const spinning = { ...upperBody, id: 'routine-4', name: 'Spinning', label: 'class' as const, plannedDurationS: 2700 };
@@ -71,18 +71,21 @@ describe('<RoutineList />', () => {
     await render(<RoutineList />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('Tren superior 1')).toBeOnTheScreen();
-    expect(screen.getByText('Força')).toBeOnTheScreen();
+    // How many exercises, not which; its days as bubbles. The type is an
+    // icon, so screen readers hear it in the card's label.
+    expect(screen.getByText('4 exercicis')).toBeOnTheScreen();
+    expect(screen.getByText('Dl')).toBeOnTheScreen();
+    expect(screen.getByText('Dj')).toBeOnTheScreen();
     expect(
-      // Its days come first.
-      screen.getByText('Dl, Dj · 4 exercicis · Tracció al pit, Rem assegut amb politja, Face pull…'),
+      screen.getByRole('button', { name: 'Tren superior 1, Força, 4 exercicis, Dilluns, Dijous' }),
     ).toBeOnTheScreen();
-    expect(screen.getByText('Híbrid')).toBeOnTheScreen();
-    // A custom type shows its own name.
-    expect(screen.getByText('Natació')).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: /^HYROX dimarts, Híbrid, / })).toBeOnTheScreen();
+    // A custom type says its own name.
+    expect(screen.getByRole('button', { name: /^Piscina, Natació, / })).toBeOnTheScreen();
     // HYROX dimarts and Piscina: a duration, and no exercises yet.
     expect(screen.getAllByText('1 h · Encara sense exercicis')).toHaveLength(2);
-    // A run lists its blocks.
-    expect(screen.getByText('2 blocs · 6 × 400 m, 2 km')).toBeOnTheScreen();
+    // A run: its whole distance (6 × 400 m and 2 km).
+    expect(screen.getByText('4,4 km')).toBeOnTheScreen();
     // A class: just its duration, never its exercises.
     expect(screen.getByText('45 min')).toBeOnTheScreen();
 

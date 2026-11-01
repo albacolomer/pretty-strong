@@ -51,6 +51,8 @@ export const typography = {
   // Compact controls, e.g. the options of a segmented control.
   control: { fontFamily: fonts.semiBold, fontSize: 15, lineHeight: 20 },
   caption: { fontFamily: fonts.regular, fontSize: 13, lineHeight: 18 },
+  // Inside a small bubble, e.g. a weekday's "Dl".
+  badge: { fontFamily: fonts.semiBold, fontSize: 11, lineHeight: 13 },
   // A caption that stands out a little, e.g. "3.760 per arribar".
   captionMedium: { fontFamily: fonts.medium, fontSize: 13, lineHeight: 18 },
   // Small spaced capitals: a card's label ("PASSOS"), a button's caption.
