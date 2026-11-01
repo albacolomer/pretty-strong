@@ -8,9 +8,21 @@ export const spacing = {
   xxl: 32,
 } as const;
 
+// The design's own insets, off the grid.
+export const inset = {
+  // A screen's sides and bottom, and how far its content starts from the
+  // top of the phone (status bar included).
+  screenX: 20,
+  screenTop: 58,
+  screenBottom: 30,
+  // Inside a card.
+  cardX: 16,
+  cardY: 14,
+} as const;
+
 export const radius = {
   input: 12,
-  card: 16,
+  card: 18,
   pill: 999,
 } as const;
 

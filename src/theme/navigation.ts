@@ -14,7 +14,7 @@ function makeNavigationTheme(scheme: ColorScheme): NavigationTheme {
       background: c.background,
       card: c.surface,
       text: c.text,
-      border: c.surfaceRaised,
+      border: c.separator,
       notification: c.accent,
     },
   };

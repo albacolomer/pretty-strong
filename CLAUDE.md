@@ -20,6 +20,7 @@ Phase 1, release V1.0 (spec: "MVP scope"). Never build anything listed under "Ou
 - i18next + expo-localization; locales `ca` (default), `es`, `en`
 - expo-notifications (local notifications only), expo-haptics, expo-keep-awake
 - StyleSheet + typed theme tokens in `src/theme` (no UI kit, no Tailwind)
+- Inter Tight + Barlow Condensed via `@expo-google-fonts` (loaded in `src/lib/fonts.ts`); expo-linear-gradient; `@react-native-masked-view/masked-view` for gradient text; shadows as CSS `boxShadow` strings
 - Jest + React Native Testing Library
 - The app must keep running in Expo Go. Ask before adding any library that needs a development build.
 ## Commands
@@ -60,7 +61,7 @@ Phase 1, release V1.0 (spec: "MVP scope"). Never build anything listed under "Ou
 - Rest timer: store the timestamp when rest ends, derive the countdown from it, and schedule a local notification for that moment. Never count with `setInterval` alone.
 - The active workout lives in the persisted store and is saved on every change. It must survive an app kill and work with no signal.
 - Gym UX: touch targets at least 48 pt (the ✓ at least 56 pt), main actions in the bottom half, numeric keypad for numbers, an undo toast instead of "Are you sure?" for reversible actions, every swipe action also in a menu.
-- Colours, type and spacing come only from `src/theme`. Dark-first, light supported.
+- Colours, type and spacing come only from `src/theme`. Light by default; dark when the iPhone is set to dark.
 - Inside components, read outside state (e.g. the current language) through a hook, never a plain function call during render: the React Compiler may compute it only once. Tests run with the compiler too.
 - No secrets in the app. Only `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` go in `.env` (gitignored); keep `.env.example` up to date.
 ## How to work with me

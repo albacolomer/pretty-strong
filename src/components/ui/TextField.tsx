@@ -79,7 +79,9 @@ const styles = StyleSheet.create({
     borderRadius: radius.input,
     borderCurve: 'continuous',
     borderWidth: 1,
-    // Only the size: a lineHeight would push the text off-centre in iOS inputs.
+    // Only the font and size: a lineHeight would push the text off-centre
+    // in iOS inputs.
+    fontFamily: typography.body.fontFamily,
     fontSize: typography.body.fontSize,
   },
 });

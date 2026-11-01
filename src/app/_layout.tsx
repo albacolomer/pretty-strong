@@ -6,6 +6,7 @@ import { Stack, ThemeProvider } from 'expo-router';
 import { ToastProvider } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { SplashScreenController } from '@/features/auth/SplashScreenController';
+import { useAppFonts } from '@/lib/fonts';
 import { configureNotifications } from '@/lib/notifications';
 import { queryClient } from '@/lib/queryClient';
 import { useTheme } from '@/theme';
@@ -16,16 +17,22 @@ configureNotifications();
 
 export default function RootLayout() {
   const { scheme } = useTheme();
+  // Text measured before its font is loaded keeps the wrong size, so the
+  // screens wait for the fonts (behind the splash screen). The session is
+  // checked meanwhile.
+  const fontsReady = useAppFonts();
 
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <SplashScreenController />
-        <ThemeProvider value={navigationThemes[scheme]}>
-          <ToastProvider>
-            <RootNavigator />
-          </ToastProvider>
-        </ThemeProvider>
+        <SplashScreenController ready={fontsReady} />
+        {fontsReady ? (
+          <ThemeProvider value={navigationThemes[scheme]}>
+            <ToastProvider>
+              <RootNavigator />
+            </ToastProvider>
+          </ThemeProvider>
+        ) : null}
       </AuthProvider>
     </QueryClientProvider>
   );

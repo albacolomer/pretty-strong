@@ -22,8 +22,8 @@ export function SegmentedControl<T extends string>({
   onChange,
   label,
 }: SegmentedControlProps<T>) {
-  const { colors, scheme } = useTheme();
-  // The selected option is the lighter one: white on pink in light mode,
+  const { colors, shadows, scheme } = useTheme();
+  // The selected option is the lighter one: white on grey in light mode,
   // the raised surface on the plain one in dark mode.
   const track = scheme === 'dark' ? colors.surface : colors.surfaceRaised;
   const raised = scheme === 'dark' ? colors.surfaceRaised : colors.surface;
@@ -45,7 +45,8 @@ export function SegmentedControl<T extends string>({
             }}
             style={({ pressed }) => [
               styles.option,
-              selected && [styles.selected, { backgroundColor: raised, shadowColor: colors.text }],
+              // Raised off the track.
+              selected && { backgroundColor: raised, boxShadow: shadows.control },
               pressed && !selected && styles.pressed,
             ]}>
             <Text variant="bodyStrong" color={selected ? 'text' : 'textMuted'} numberOfLines={1}>
@@ -71,12 +72,6 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  // Raised off the track.
-  selected: {
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 1 },
   },
   pressed: {
     opacity: 0.75,

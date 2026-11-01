@@ -1,5 +1,8 @@
 export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
+export { GradientText, type GradientTextProps } from './GradientText';
+export { GradientView, type GradientViewProps } from './GradientView';
+export { IconButton, type IconButtonProps } from './IconButton';
 export { Logo, type LogoProps } from './Logo';
 export { MenuButton } from './MenuButton';
 export { KeyboardDoneBar, NumberInput, type NumberInputProps } from './NumberInput';

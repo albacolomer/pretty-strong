@@ -34,7 +34,7 @@ const TAB_BAR_CLEARANCE = 56;
 // Shows one short message at a time at the bottom of the screen, from any
 // screen: const showToast = useToast(); showToast({ message, action }).
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const insets = useSafeAreaInsets();
   const [toast, setToast] = useState<ShownToast | null>(null);
   const nextId = useRef(0);
@@ -62,7 +62,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             style={[styles.host, { bottom: insets.bottom + TAB_BAR_CLEARANCE }]}>
             {/* Not one grouped element: the action button must stay reachable on its
                 own. VoiceOver reads the message via announceForAccessibility. */}
-            <View style={[styles.toast, { backgroundColor: colors.surfaceRaised }]}>
+            <View
+              style={[
+                styles.toast,
+                { backgroundColor: colors.surface, boxShadow: shadows.card },
+              ]}>
               <Text style={styles.message}>{toast.message}</Text>
               {toast.action ? (
                 <Button

@@ -50,7 +50,7 @@ export function Sheet({
         {visible ? (
           <>
             <View style={styles.header}>
-              <View style={[styles.grabber, { backgroundColor: colors.surfaceRaised }]} />
+              <View style={[styles.grabber, { backgroundColor: colors.control }]} />
               <Text variant="cardTitle" accessibilityRole="header">
                 {title}
               </Text>
@@ -64,7 +64,7 @@ export function Sheet({
             <View
               style={[
                 styles.footer,
-                { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
+                { borderTopColor: colors.separator, paddingBottom: insets.bottom + spacing.sm },
               ]}>
               <Button
                 label={cancelLabel ?? t('common.cancel')}

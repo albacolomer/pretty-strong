@@ -91,10 +91,10 @@ const styles = StyleSheet.create({
     borderRadius: radius.input,
     borderCurve: 'continuous',
     textAlign: 'center',
-    // Only the size, weight and tabular digits: a lineHeight would push the
+    // Only the font, size and tabular digits: a lineHeight would push the
     // text off-centre in iOS inputs.
+    fontFamily: typography.input.fontFamily,
     fontSize: typography.input.fontSize,
-    fontWeight: typography.input.fontWeight,
     fontVariant: typography.input.fontVariant,
   },
   accessory: {

@@ -95,8 +95,8 @@ const styles = StyleSheet.create({
     borderRadius: radius.input,
     borderCurve: 'continuous',
     textAlign: 'center',
+    fontFamily: typography.bodyStrong.fontFamily,
     fontSize: typography.bodyStrong.fontSize,
-    fontWeight: typography.bodyStrong.fontWeight,
     fontVariant: ['tabular-nums'],
   },
 });

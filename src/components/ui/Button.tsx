@@ -1,7 +1,15 @@
-import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { radius, spacing, touch, useTheme, type ColorToken } from '@/theme';
+import {
+  metalTextShadows,
+  radius,
+  spacing,
+  touch,
+  useTheme,
+  type ColorToken,
+} from '@/theme';
 
+import { GradientView } from './GradientView';
 import { Text } from './Text';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
@@ -16,12 +24,14 @@ export type ButtonProps = {
   'aria-label'?: string;
 };
 
-const variantColors: Record<ButtonVariant, { background: ColorToken | null; text: ColorToken }> = {
-  primary: { background: 'accent', text: 'onAccent' },
-  secondary: { background: 'surfaceRaised', text: 'text' },
-  ghost: { background: null, text: 'accent' },
+const textColors: Record<ButtonVariant, ColorToken> = {
+  primary: 'onMetal',
+  secondary: 'text',
+  ghost: 'accent',
 };
 
+// Primary: brushed metal, like Avui's GO. Secondary: a white pill raised
+// off the page. Ghost: just the accent-coloured label.
 export function Button({
   label,
   onPress,
@@ -30,8 +40,8 @@ export function Button({
   style,
   'aria-label': ariaLabel,
 }: ButtonProps) {
-  const { colors } = useTheme();
-  const { background, text } = variantColors[variant];
+  const { colors, shadows } = useTheme();
+  const metal = variant === 'primary';
 
   return (
     <Pressable
@@ -42,12 +52,24 @@ export function Button({
       aria-label={ariaLabel}
       style={({ pressed }) => [
         styles.button,
-        { backgroundColor: background ? colors[background] : 'transparent' },
+        variant === 'secondary' && { backgroundColor: colors.surface },
+        variant !== 'ghost' && { boxShadow: shadows.control },
         pressed && styles.pressed,
         disabled && styles.disabled,
         style,
       ]}>
-      <Text variant="bodyStrong" color={text} numberOfLines={1}>
+      {metal ? (
+        <>
+          <GradientView gradient="metal" style={styles.fill} />
+          {/* Over the gradient: the light on its top edge. */}
+          <View style={[styles.fill, { boxShadow: shadows.highlight }]} />
+        </>
+      ) : null}
+      <Text
+        variant="bodyStrong"
+        color={textColors[variant]}
+        numberOfLines={1}
+        style={metal && metalTextShadows.small}>
         {label}
       </Text>
     </Pressable>
@@ -61,6 +83,15 @@ const styles = StyleSheet.create({
     borderRadius: radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  fill: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: radius.pill,
+    pointerEvents: 'none',
   },
   pressed: {
     opacity: 0.75,
