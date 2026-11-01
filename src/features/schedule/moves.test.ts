@@ -1,7 +1,16 @@
 import type { Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 
-import { nextRestDate, shiftWeek, withMove, type Move } from './moves';
+import {
+  dropInWeek,
+  moveInWeek,
+  nextRestDate,
+  rearranged,
+  shiftWeek,
+  withMove,
+  type Move,
+  type WeekListItem,
+} from './moves';
 import type { WeeklySport } from './sports';
 import { activitiesOnDate } from './week';
 
@@ -72,6 +81,57 @@ describe('nextRestDate', () => {
     const moves = withMove([], { routineId: 'legs', plannedDate: '2026-10-27' }, '2026-10-30');
     expect(nextRestDate(routines, sports, moves, tuesday, sunday)).toEqual(day(31));
     expect(nextRestDate(routines, sports, [], day(31), sunday)).toBeNull();
+  });
+});
+
+describe('Reprograma la setmana', () => {
+  // Thursday to Sunday: upper on Thursday, the run on Sunday.
+  const dayItem = (date: string): WeekListItem => ({ kind: 'day', key: `day:${date}`, date });
+  const routineItem = (key: string, date: string): WeekListItem => ({ kind: 'routine', key, date });
+  const list = [
+    dayItem('2026-10-29'),
+    routineItem('upper', '2026-10-29'),
+    dayItem('2026-10-30'),
+    dayItem('2026-10-31'),
+    dayItem('2026-11-01'),
+    routineItem('run', '2026-11-01'),
+  ];
+  const where = (items: WeekListItem[]) =>
+    items.map((item) => (item.kind === 'day' ? item.date.slice(8) : `${item.key}@${item.date.slice(8)}`));
+
+  test('a routine dragged under another day’s heading goes to that day', () => {
+    // Upper dropped after Saturday's heading.
+    expect(where(dropInWeek(list, 1, 3))).toEqual(['29', '30', '31', 'upper@31', '01', 'run@01']);
+    // The run dragged up under Thursday's heading, before upper.
+    expect(where(dropInWeek(list, 5, 1))).toEqual(['29', 'run@29', 'upper@29', '30', '31', '01']);
+  });
+
+  test('above the first heading counts as the first day', () => {
+    expect(where(dropInWeek(list, 5, 0))).toEqual(['29', 'run@29', 'upper@29', '30', '31', '01']);
+  });
+
+  test('the ⋯ menu puts it at the end of the day picked', () => {
+    expect(where(moveInWeek(list, 'upper', '2026-11-01'))).toEqual([
+      '29',
+      '30',
+      '31',
+      '01',
+      'run@01',
+      'upper@01',
+    ]);
+  });
+
+  test('saving: a move only for what changed day, after the new day’s own', () => {
+    const placed = [
+      { planned: { routineId: 'upper', plannedDate: '2026-10-29' }, was: '2026-10-29', now: '2026-10-31' },
+      { planned: { routineId: 'run', plannedDate: '2026-11-01' }, was: '2026-11-01', now: '2026-11-01' },
+      { planned: { routineId: 'legs', plannedDate: '2026-10-27' }, was: '2026-10-27', now: '2026-10-28' },
+    ];
+    expect(rearranged(routines, sports, [], placed)).toEqual([
+      { routineId: 'upper', plannedDate: '2026-10-29', movedTo: '2026-10-31', position: 0 },
+      // Wednesday has the padel at 0: after it.
+      { routineId: 'legs', plannedDate: '2026-10-27', movedTo: '2026-10-28', position: 1 },
+    ]);
   });
 });
 

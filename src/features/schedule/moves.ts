@@ -1,8 +1,8 @@
 import type { Routine } from '@/features/routines/routine';
 
-import { addDays, dateKey, weekdayOf } from './dates';
+import { addDays, dateKey, fromDateKey, weekdayOf } from './dates';
 import type { WeeklySport } from './sports';
-import { activitiesOnDate, type DayActivity } from './week';
+import { activitiesOnDate, nextDayPosition, type DayActivity } from './week';
 
 // Changing this week without touching the usual plan (US-29): each move
 // takes one routine from the day it's planned on to another day, or off
@@ -57,6 +57,77 @@ export function nextRestDate(
     if (activitiesOnDate(routines, sports, moves, date).length === 0) return date;
   }
   return null;
+}
+
+// "Reprograma la setmana" is one list: each day's heading, then the
+// routines under it. A routine is on the day whose heading comes before it.
+export type WeekListItem =
+  | { kind: 'day'; key: string; date: string }
+  | { kind: 'routine'; key: string; date: string };
+
+// The list again from the days and where each routine is: every routine
+// under its day's heading, in the order given.
+function rebuild(
+  days: readonly WeekListItem[],
+  routines: readonly WeekListItem[],
+): WeekListItem[] {
+  return days.flatMap((day) => [day, ...routines.filter((item) => item.date === day.date)]);
+}
+
+// After a drag: each routine on the day whose heading it now sits under
+// (above the first heading counts as the first day).
+export function dropInWeek(
+  list: readonly WeekListItem[],
+  fromIndex: number,
+  toIndex: number,
+): WeekListItem[] {
+  const order = [...list];
+  const [moved] = order.splice(fromIndex, 1);
+  order.splice(toIndex, 0, moved);
+  const days = order.filter((item) => item.kind === 'day');
+  let date = days[0]?.date ?? '';
+  const routines: WeekListItem[] = [];
+  for (const item of order) {
+    if (item.kind === 'day') date = item.date;
+    else routines.push({ ...item, date });
+  }
+  return rebuild(days, routines);
+}
+
+// The ⋯ menu's "Mou a…": the routine to the end of that day.
+export function moveInWeek(
+  list: readonly WeekListItem[],
+  routineKey: string,
+  date: string,
+): WeekListItem[] {
+  const moved = list.find((item) => item.key === routineKey);
+  if (!moved || moved.kind !== 'routine') return [...list];
+  const others = list.filter((item) => item.kind === 'routine' && item.key !== routineKey);
+  return rebuild(
+    list.filter((item) => item.kind === 'day'),
+    [...others, { ...moved, date }],
+  );
+}
+
+// "Desa" on "Reprograma la setmana": a move for each routine put on
+// another day than it was (`was` → `now`), after what's already on its new
+// day, in the order they were put there. The others keep theirs.
+export function rearranged(
+  routines: readonly Routine[],
+  sports: readonly WeeklySport[],
+  moves: readonly Move[],
+  placed: readonly { planned: PlannedRoutine; was: string; now: string }[],
+): Move[] {
+  let next = [...moves];
+  const added: Record<string, number> = {};
+  for (const { planned, was, now } of placed) {
+    if (now === was) continue;
+    const position =
+      nextDayPosition(routines, sports, weekdayOf(fromDateKey(now))) + (added[now] ?? 0);
+    added[now] = (added[now] ?? 0) + 1;
+    next = withMove(next, planned, now, position);
+  }
+  return next;
 }
 
 // "Desplaça la setmana": `planned`, on `from`, goes to the next day, and so

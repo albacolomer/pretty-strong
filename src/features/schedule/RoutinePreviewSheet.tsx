@@ -27,6 +27,10 @@ export function RoutinePreviewSheet({
 }) {
   const { t } = useTranslation();
   const language = useAppLanguage();
+  const labels: PlanLabels = {
+    sets: (count) => t('history.sets', { count }),
+    reps: (count) => t('workout.vs.reps', { count }),
+  };
 
   return (
     <Sheet
@@ -47,7 +51,7 @@ export function RoutinePreviewSheet({
                   {exerciseName(item.exercise, language)}
                 </Text>
                 <Text variant="caption" color="textMuted">
-                  {planSummary(item, routine.label === 'run', language, t)}
+                  {planSummary(item, routine.label === 'run', language, labels)}
                 </Text>
               </View>
             </View>
@@ -58,18 +62,21 @@ export function RoutinePreviewSheet({
   );
 }
 
+// The words a plan's line needs, already translated.
+type PlanLabels = { sets: (count: number) => string; reps: (count: number) => string };
+
 // "3 sèries · 10 reps · 40 kg", or a run block's "6 × 400 m".
 function planSummary(
   item: RoutineExercise,
   run: boolean,
   language: Language,
-  t: ReturnType<typeof useTranslation>['t'],
+  labels: PlanLabels,
 ): string {
   if (run) return runBlockSummary(runBlockKind(item.sets), item.sets, language);
   const [first] = item.sets;
   return [
-    t('history.sets', { count: item.sets.length }),
-    first?.reps ? t('workout.vs.reps', { count: first.reps }) : null,
+    labels.sets(item.sets.length),
+    first?.reps ? labels.reps(first.reps) : null,
     first?.weightKg ? `${formatInput(first.weightKg, language)} kg` : null,
     first?.durationS ? formatElapsed(first.durationS * 1000) : null,
   ]

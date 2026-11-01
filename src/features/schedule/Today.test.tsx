@@ -17,6 +17,7 @@ import type { WorkoutSession } from '@/features/workout/session';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
 import { ensureNotificationPermission } from '@/lib/notifications';
 import { createAppWrapper } from '@/test-utils/appWrapper';
+import { drop } from '@/test-utils/sortablesMock';
 
 import { fetchMoves, replaceMoves } from './movesApi';
 import type { WeeklySport } from './sports';
@@ -58,6 +59,7 @@ jest.mock('expo-router', () => ({
 jest.mock('./useToday', () => ({ useToday: () => new Date(2026, 9, 20) }));
 jest.mock('./sportsApi', () => ({ fetchWeeklySports: jest.fn() }));
 jest.mock('./movesApi', () => ({ fetchMoves: jest.fn(), replaceMoves: jest.fn() }));
+jest.mock('react-native-sortables', () => jest.requireActual('@/test-utils/sortablesMock'));
 
 const routine = (
   id: string,
@@ -309,6 +311,7 @@ describe('<Today />', () => {
     expect(lastSheet()).toEqual([
       'Mou-la a dimecres',
       'Desplaça la setmana un dia',
+      'Reprograma la setmana…',
       'Només salta-la',
       'Cancel·la',
     ]);
@@ -325,6 +328,54 @@ describe('<Today />', () => {
     await user.press(screen.getByRole('button', { name: 'Desfés' }));
     expect(replaceMoves).toHaveBeenLastCalledWith('2026-10-18', '2026-10-25', []);
     expect(await screen.findByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
+  });
+
+  test('Salta → Reprograma la setmana: drag or "Mou a…", then Desa', async () => {
+    const user = userEvent.setup();
+    keepMoves();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Reprograma la setmana…');
+    await user.press(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' }));
+    expect(await screen.findByRole('header', { name: 'Reprograma la setmana' })).toBeOnTheScreen();
+    // Today to Sunday ("Avui" is the screen's title too), with today's two
+    // and Friday's upper body.
+    expect(screen.getAllByRole('header', { name: 'Avui' })).toHaveLength(2);
+    for (const title of ['Demà', 'Dijous', 'Divendres', 'Dissabte', 'Diumenge']) {
+      expect(screen.getByRole('header', { name: title })).toBeOnTheScreen();
+    }
+    const moveButtons = screen.getAllByRole('button', {
+      name: 'Mou «Tren superior 1» a un altre dia',
+    });
+    expect(moveButtons).toHaveLength(2);
+
+    // Today's upper body to Thursday, by the menu…
+    sheetChoices.push('Dijous');
+    await user.press(moveButtons[0]);
+    // …and the class, dragged under Saturday's heading: [Avui, Spinning,
+    // Demà, Dijous, upper, Divendres, upper, Dissabte, Diumenge].
+    await drop(1, 7);
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(replaceMoves).toHaveBeenCalledWith('2026-10-18', '2026-10-25', [
+      { routineId: 'upper', plannedDate: '2026-10-20', movedTo: '2026-10-22', position: 0 },
+      { routineId: 'spinning', plannedDate: '2026-10-20', movedTo: '2026-10-24', position: 0 },
+    ]);
+    expect(await screen.findByText('Setmana reprogramada')).toBeOnTheScreen();
+    // Nothing left today.
+    expect(await screen.findByRole('header', { name: 'Dia de descans' })).toBeOnTheScreen();
+  });
+
+  test('Reprograma la setmana without changes saves nothing', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Reprograma la setmana…');
+    await user.press(await screen.findByRole('button', { name: 'Salta «Tren superior 1»' }));
+    await user.press(await screen.findByRole('button', { name: 'Desa' }));
+
+    expect(replaceMoves).not.toHaveBeenCalled();
+    expect(screen.queryByRole('header', { name: 'Reprograma la setmana' })).not.toBeOnTheScreen();
   });
 
   test('Salta → shift the week: it and everything after it a day on', async () => {
