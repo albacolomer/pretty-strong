@@ -20,7 +20,9 @@ export function EnergyPicker({
 
   return (
     <View style={styles.section}>
-      <Text variant="bodyStrong">{t('workout.summary.energy')}</Text>
+      <Text variant="label" color="textMuted">
+        {t('workout.summary.energy')}
+      </Text>
       <View role="radiogroup" aria-label={t('workout.summary.energy')} style={styles.row}>
         {ENERGY_LEVELS.map((level) => {
           const selected = level === value;

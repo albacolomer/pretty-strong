@@ -1,7 +1,9 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { SymbolView } from 'expo-symbols';
+
+import { MetalFill, Text } from '@/components/ui';
 import { TargetInputField, type TargetsUpdate } from '@/features/routines/TargetFields';
 import { formatInput, inputValue, type TargetInput } from '@/features/routines/targets';
 import { useAppLanguage } from '@/lib/i18n';
@@ -47,7 +49,7 @@ export function SetRow({
   pace = null,
 }: SetRowProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const language = useAppLanguage();
   const done = set.completedAt !== null;
   const wraps = inputs.length > ROW_MAX_INPUTS;
@@ -112,13 +114,18 @@ export function SetRow({
         onPress={onToggle}
         style={({ pressed }) => [
           styles.check,
-          { borderColor: colors.accent },
-          done && { backgroundColor: colors.accent },
+          done
+            ? { boxShadow: shadows.control }
+            : [styles.open, { borderColor: colors.accent }],
           pressed && styles.pressed,
         ]}>
-        <Text variant="cardTitle" color={done ? 'onAccent' : 'accent'}>
-          ✓
-        </Text>
+        {done ? <MetalFill borderRadius={touch.check / 2} /> : null}
+        <SymbolView
+          name="checkmark"
+          size={22}
+          weight="semibold"
+          tintColor={done ? colors.onMetal : colors.accent}
+        />
       </Pressable>
     </View>
   );
@@ -155,9 +162,11 @@ const styles = StyleSheet.create({
     width: touch.check,
     height: touch.check,
     borderRadius: radius.pill,
-    borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  open: {
+    borderWidth: 2,
   },
   pressed: {
     opacity: 0.75,

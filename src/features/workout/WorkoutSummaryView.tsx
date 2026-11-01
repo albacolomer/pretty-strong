@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, Text, TextField } from '@/components/ui';
+import { Button, Card, GradientText, Text, TextField } from '@/components/ui';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';
 import { useAppLanguage } from '@/lib/i18n';
@@ -66,9 +66,12 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
         keyboardDismissMode="interactive"
         automaticallyAdjustKeyboardInsets>
         <View>
-          <Text variant="title" accessibilityRole="header">
+          <GradientText
+            variant="title"
+            accessibilityRole="header"
+            containerStyle={styles.fit}>
             {t('workout.summary.title')}
-          </Text>
+          </GradientText>
           <Text color="textMuted">{workout.routineName}</Text>
         </View>
 
@@ -79,7 +82,9 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
               accessible
               aria-label={t('workout.summary.stat', stat)}
               style={styles.stat}>
-              <Text variant="cardTitle">{stat.value}</Text>
+              <GradientText variant="cardTitle" containerStyle={styles.fit}>
+                {stat.value}
+              </GradientText>
               <Text variant="caption" color="textMuted">
                 {stat.label}
               </Text>
@@ -89,7 +94,7 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
 
         {summary.highlights.length > 0 ? (
           <View style={styles.section}>
-            <Text variant="bodyStrong" accessibilityRole="header">
+            <Text variant="label" color="textMuted" accessibilityRole="header">
               {t('workout.summary.highlights')}
             </Text>
             <Card style={styles.highlights}>
@@ -122,7 +127,7 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
       <View
         style={[
           styles.footer,
-          { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
+          { borderTopColor: colors.separator, paddingBottom: insets.bottom + spacing.sm },
         ]}>
         <Button
           label={t('workout.summary.back')}
@@ -142,6 +147,10 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
 }
 
 const styles = StyleSheet.create({
+  // A gradient fits its text, not the whole width.
+  fit: {
+    alignSelf: 'flex-start',
+  },
   screen: {
     flex: 1,
   },

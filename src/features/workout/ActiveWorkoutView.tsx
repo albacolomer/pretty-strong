@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
+import { SymbolView } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, Pressable, ScrollView, StyleSheet, View } from 'react-native';
@@ -9,7 +10,7 @@ import { Button, Text } from '@/components/ui';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { ReorderExercisesSheet } from '@/features/routines/ReorderExercisesSheet';
 import { cancelScheduled, setWorkoutScreenOpen } from '@/lib/notifications';
-import { spacing, touch, useTheme } from '@/theme';
+import { inset, spacing, touch, useTheme } from '@/theme';
 
 import {
   afterSet,
@@ -198,19 +199,17 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
       <View
         style={[
           styles.topBar,
-          { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.surfaceRaised },
+          { paddingTop: insets.top + spacing.sm, borderBottomColor: colors.separator },
         ]}>
         <Pressable
           role="button"
           aria-label={t('workout.hide')}
           onPress={onClose}
           style={({ pressed }) => [styles.hide, pressed && styles.pressed]}>
-          <Text variant="cardTitle" color="textMuted">
-            ⌄
-          </Text>
+          <SymbolView name="chevron.down" size={20} weight="light" tintColor={colors.textMuted} />
         </Pressable>
         <View style={styles.title}>
-          <Text variant="bodyStrong" numberOfLines={1} accessibilityRole="header">
+          <Text variant="name" numberOfLines={1} accessibilityRole="header">
             {workout.routineName}
           </Text>
           <Text variant="caption" color="textMuted" style={styles.elapsed}>
@@ -284,7 +283,7 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
   );
 }
 
-// A superset or circuit (spec: GroupBracket): a pink bracket joining its
+// A superset or circuit (spec: GroupBracket): an accent bracket joining its
 // exercises, with the round you're on.
 function GroupBlock({ exercises, children }: { exercises: ActiveExercise[]; children: ReactNode }) {
   const { t } = useTranslation();
@@ -298,7 +297,7 @@ function GroupBlock({ exercises, children }: { exercises: ActiveExercise[]; chil
   return (
     <View style={[styles.group, { borderLeftColor: colors.accent }]}>
       <View style={styles.groupHeader}>
-        <Text variant="bodyStrong" color="accent" accessibilityRole="header">
+        <Text variant="label" color="accent" accessibilityRole="header">
           {t(`routines.group.${kind}`)}
         </Text>
         <Text variant="caption" color="textMuted">
@@ -342,7 +341,8 @@ const styles = StyleSheet.create({
     fontVariant: ['tabular-nums'],
   },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: inset.screenX,
+    paddingTop: spacing.lg,
     gap: spacing.lg,
   },
   group: {

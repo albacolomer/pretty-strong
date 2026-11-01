@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Text } from '@/components/ui';
+import { Button, GradientView, Text } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
 import { formatCountdown, isPaused, remainingMs, REST_ADJUST_S, type RestTimer } from './restTimer';
@@ -38,7 +38,7 @@ export function RestTimerBar({
   onEnd,
 }: RestTimerBarProps) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const insets = useSafeAreaInsets();
   const now = useNow(250);
   const left = remainingMs(rest, now);
@@ -61,14 +61,13 @@ export function RestTimerBar({
       style={[
         styles.bar,
         {
-          backgroundColor: colors.surfaceRaised,
+          backgroundColor: colors.surface,
+          boxShadow: shadows.card,
           paddingBottom: insets.bottom + spacing.sm,
         },
       ]}>
-      <View style={[styles.track, { backgroundColor: colors.surface }]}>
-        <View
-          style={[styles.progress, { backgroundColor: colors.accent, width: `${progress * 100}%` }]}
-        />
+      <View style={[styles.track, { backgroundColor: colors.track }]}>
+        <GradientView gradient="bar" style={[styles.progress, { width: `${progress * 100}%` }]} />
       </View>
       <Text variant="caption" color="textMuted" numberOfLines={1} style={styles.center}>
         {[t('workout.rest'), nextLabel].filter(Boolean).join(' · ')}
