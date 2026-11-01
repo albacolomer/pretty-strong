@@ -82,7 +82,7 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
   return (
     <>
       <View style={styles.header}>
-        <View style={[styles.grabber, { backgroundColor: colors.surfaceRaised }]} />
+        <View style={[styles.grabber, { backgroundColor: colors.control }]} />
         <Text variant="cardTitle" accessibilityRole="header">
           {creating
             ? t('exercises.form.title')
@@ -145,7 +145,7 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
       <View
         style={[
           styles.footer,
-          { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
+          { borderTopColor: colors.separator, paddingBottom: insets.bottom + spacing.sm },
         ]}>
         {creating ? (
           // The form has its own save button; this one drops the new exercise.

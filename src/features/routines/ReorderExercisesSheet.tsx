@@ -72,7 +72,7 @@ function SheetContent<T extends { groupKey: string | null }>({
   return (
     <>
       <View style={styles.header}>
-        <View style={[styles.grabber, { backgroundColor: colors.surfaceRaised }]} />
+        <View style={[styles.grabber, { backgroundColor: colors.control }]} />
         <Text variant="cardTitle" accessibilityRole="header">
           {t('routines.reorder.title')}
         </Text>
@@ -106,7 +106,7 @@ function SheetContent<T extends { groupKey: string | null }>({
       <View
         style={[
           styles.footer,
-          { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
+          { borderTopColor: colors.separator, paddingBottom: insets.bottom + spacing.sm },
         ]}>
         <Button
           label={t('common.cancel')}

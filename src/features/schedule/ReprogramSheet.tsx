@@ -84,7 +84,7 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
   return (
     <>
       <View style={styles.header}>
-        <View style={[styles.grabber, { backgroundColor: colors.surfaceRaised }]} />
+        <View style={[styles.grabber, { backgroundColor: colors.control }]} />
         <Text variant="cardTitle" accessibilityRole="header">
           {t('today.reprogramTitle')}
         </Text>
@@ -105,7 +105,7 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
                 !list.some((other) => other.kind === 'routine' && other.date === item.date);
               return (
                 <View style={styles.day}>
-                  <Text variant="bodyStrong" accessibilityRole="header">
+                  <Text variant="label" color="textMuted" accessibilityRole="header">
                     {day?.title}
                   </Text>
                   {day && day.sports.length > 0 ? (
@@ -126,10 +126,10 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
               <View style={[styles.row, { backgroundColor: colors.surface }]}>
                 <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
                   {routine ? (
-                    <SymbolView name={routine.icon} size={18} tintColor={colors.accent} />
+                    <SymbolView name={routine.icon} size={18} weight="light" tintColor={colors.accent} />
                   ) : null}
                 </View>
-                <Text variant="bodyStrong" numberOfLines={1} style={styles.name}>
+                <Text variant="name" numberOfLines={1} style={styles.name}>
                   {name}
                 </Text>
                 <Pressable
@@ -137,11 +137,16 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
                   aria-label={t('today.moveRoutine', { name })}
                   onPress={() => moveMenu(item, name)}
                   style={({ pressed }) => [styles.handle, pressed && styles.pressed]}>
-                  <SymbolView name="ellipsis" size={18} tintColor={colors.textMuted} />
+                  <SymbolView name="ellipsis" size={18} weight="light" tintColor={colors.textMuted} />
                 </Pressable>
                 <Sortable.Handle>
                   <View style={styles.handle} aria-label={t('today.reprogramHandle', { name })}>
-                    <SymbolView name="line.3.horizontal" size={18} tintColor={colors.textMuted} />
+                    <SymbolView
+                      name="line.3.horizontal"
+                      size={18}
+                      weight="light"
+                      tintColor={colors.textMuted}
+                    />
                   </View>
                 </Sortable.Handle>
               </View>
@@ -160,7 +165,7 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
       <View
         style={[
           styles.footer,
-          { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
+          { borderTopColor: colors.separator, paddingBottom: insets.bottom + spacing.sm },
         ]}>
         <Button
           label={t('common.cancel')}

@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Logo, Text } from '@/components/ui';
+import { GradientText, Logo, Text } from '@/components/ui';
 import { spacing } from '@/theme';
 
 // Logo, app name and a one-line subtitle, shared by sign-in and sign-up.
@@ -11,9 +11,9 @@ export function AuthHeader({ subtitle }: { subtitle: string }) {
   return (
     <View style={styles.header}>
       <Logo width={120} />
-      <Text variant="title" accessibilityRole="header" style={styles.text}>
+      <GradientText variant="screenTitle" accessibilityRole="header" style={styles.name}>
         {t('app.name')}
-      </Text>
+      </GradientText>
       <Text color="textMuted" style={styles.text}>
         {subtitle}
       </Text>
@@ -29,5 +29,11 @@ const styles = StyleSheet.create({
   },
   text: {
     textAlign: 'center',
+  },
+  // Italic capitals lean past their box; this keeps the last one's tip
+  // inside the gradient.
+  name: {
+    textAlign: 'center',
+    paddingRight: 4,
   },
 });

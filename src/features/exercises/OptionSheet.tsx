@@ -47,7 +47,7 @@ export function OptionSheet<T extends string>({
       onRequestClose={onClose}>
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
-          <View style={[styles.grabber, { backgroundColor: colors.surfaceRaised }]} />
+          <View style={[styles.grabber, { backgroundColor: colors.control }]} />
           <Text variant="cardTitle" accessibilityRole="header">
             {title}
           </Text>
@@ -83,7 +83,7 @@ export function OptionSheet<T extends string>({
         <View
           style={[
             styles.footer,
-            { borderTopColor: colors.surfaceRaised, paddingBottom: insets.bottom + spacing.sm },
+            { borderTopColor: colors.separator, paddingBottom: insets.bottom + spacing.sm },
           ]}>
           {clear ? (
             <Button
