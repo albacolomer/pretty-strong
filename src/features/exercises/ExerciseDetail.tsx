@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text } from '@/components/ui';
+import { Button, Card, GradientText, Text } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
@@ -39,9 +39,9 @@ export function ExerciseDetail({ exerciseId, onEdit, onArchived }: ExerciseDetai
     <View style={styles.detail}>
       <View style={styles.header}>
         <ExercisePicture exercise={exercise} size={PICTURE_SIZE} />
-        <Text variant="title" accessibilityRole="header" style={styles.centered}>
+        <GradientText variant="title" accessibilityRole="header" style={styles.centered}>
           {exerciseName(exercise, language)}
-        </Text>
+        </GradientText>
       </View>
 
       <Card>

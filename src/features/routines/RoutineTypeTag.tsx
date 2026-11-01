@@ -6,7 +6,7 @@ import { radius, spacing, useTheme } from '@/theme';
 
 import type { Routine } from './routine';
 
-// The routine's type as a small pink tag: "Força", or a custom type's own
+// The routine's type as a small tinted tag: "Força", or a custom type's own
 // name, e.g. "Natació".
 export function RoutineTypeTag({ routine }: { routine: Pick<Routine, 'label' | 'customLabel'> }) {
   const { t } = useTranslation();

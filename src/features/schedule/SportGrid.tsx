@@ -60,18 +60,23 @@ export function IconChoice({
       style={({ pressed }) => [
         wide ? styles.wide : styles.tile,
         {
-          borderColor: selected ? colors.accent : colors.surfaceRaised,
+          borderColor: selected ? colors.accent : colors.border,
           backgroundColor: selected ? colors.accentSoft : colors.surface,
         },
         pressed && styles.pressed,
       ]}>
-      <SymbolView name={icon} size={22} tintColor={selected ? colors.accent : colors.text} />
+      <SymbolView
+        name={icon}
+        size={22}
+        weight="light"
+        tintColor={selected ? colors.accent : colors.textSecondary}
+      />
       <Text variant="bodyStrong" numberOfLines={1} style={wide ? styles.wideLabel : undefined}>
         {label}
       </Text>
       {selected ? (
         <View style={[styles.check, { backgroundColor: colors.accent }]}>
-          <SymbolView name="checkmark" size={10} tintColor={colors.onAccent} />
+          <SymbolView name="checkmark" size={10} weight="bold" tintColor={colors.onAccent} />
         </View>
       ) : null}
     </Pressable>

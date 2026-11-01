@@ -86,7 +86,7 @@ function RoutineCard({ routine, onPress, onMenu }: RoutineCardProps) {
     <Pressable role="button" onPress={onPress} style={({ pressed }) => pressed && styles.pressed}>
       <Card>
         <View style={styles.titleRow}>
-          <Text variant="cardTitle" style={styles.name}>
+          <Text variant="name" numberOfLines={2} style={styles.name}>
             {routine.name}
           </Text>
           <RoutineTypeTag routine={routine} />

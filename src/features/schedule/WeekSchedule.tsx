@@ -121,7 +121,7 @@ export function WeekSchedule() {
   return (
     <GestureHandlerRootView style={styles.week}>
       <View>
-        <Text variant="cardTitle" accessibilityRole="header">
+        <Text variant="label" color="textMuted" accessibilityRole="header">
           {t('schedule.usualWeek')}
         </Text>
         <Text variant="caption" color="textMuted">
@@ -144,18 +144,15 @@ export function WeekSchedule() {
             key={day}
             style={[
               styles.day,
-              rest && [
-                styles.restDay,
-                { borderColor: colors.accent, backgroundColor: colors.accentSoft },
-              ],
+              rest && [styles.restDay, { borderColor: colors.control }],
             ]}>
             <View style={styles.dayHeader}>
-              <Text variant="cardTitle" accessibilityRole="header">
+              <Text variant="label" color="textMuted" accessibilityRole="header">
                 {dayName}
               </Text>
               {rest ? (
                 <View style={styles.restTag}>
-                  <SymbolView name="moon" size={14} tintColor={colors.textMuted} />
+                  <SymbolView name="moon" size={14} weight="light" tintColor={colors.textMuted} />
                   <Text variant="caption" color="textMuted">
                     {t('schedule.restDay')}
                   </Text>
@@ -167,7 +164,7 @@ export function WeekSchedule() {
               ) : null}
               {day === today ? (
                 <View style={[styles.todayTag, { backgroundColor: colors.accent }]}>
-                  <Text variant="caption" color="onAccent">
+                  <Text variant="label" color="onAccent">
                     {t('schedule.today')}
                   </Text>
                 </View>
@@ -242,7 +239,7 @@ export function WeekSchedule() {
   );
 }
 
-// One planned activity: its icon (a routine's in pink, a sport's outlined),
+// One planned activity: its icon (a routine's tinted, a sport's outlined),
 // its name, and what it is: "Rutina · Esquena i bíceps · ~1 h 30 min" or
 // "Esport · 19:00 · 1 h 30 min". The handle drags it within the day.
 function ActivityRow({
@@ -301,7 +298,7 @@ function ActivityRow({
             styles.icon,
             activity.kind === 'routine'
               ? { backgroundColor: colors.accentSoft }
-              : { borderWidth: 1.5, borderColor: colors.textMuted },
+              : { borderWidth: 1.5, borderColor: colors.control },
           ]}>
           <SymbolView
             name={
@@ -310,11 +307,12 @@ function ActivityRow({
                 : SPORT_ICONS[activity.sport.sport]
             }
             size={20}
-            tintColor={activity.kind === 'routine' ? colors.accent : colors.text}
+            weight="light"
+            tintColor={activity.kind === 'routine' ? colors.accent : colors.textSecondary}
           />
         </View>
         <View style={styles.text}>
-          <Text variant="bodyStrong" numberOfLines={1}>
+          <Text variant="name" numberOfLines={1}>
             {name}
           </Text>
           <Text variant="caption" color="textMuted" numberOfLines={2}>
@@ -328,7 +326,12 @@ function ActivityRow({
             style={styles.handle}
             aria-label={t('schedule.dragHandle', { name })}
             accessibilityHint={t('schedule.dragHint')}>
-            <SymbolView name="line.3.horizontal" size={18} tintColor={colors.textMuted} />
+            <SymbolView
+              name="line.3.horizontal"
+              size={18}
+              weight="light"
+              tintColor={colors.textMuted}
+            />
           </View>
         </Sortable.Handle>
       ) : null}
@@ -343,9 +346,12 @@ const styles = StyleSheet.create({
   day: {
     gap: spacing.xs,
   },
+  // A gap in the week: an outline on the page, not a raised card.
   restDay: {
     borderWidth: 1.5,
     borderStyle: 'dashed',
+    backgroundColor: 'transparent',
+    boxShadow: [],
   },
   dayHeader: {
     flexDirection: 'row',

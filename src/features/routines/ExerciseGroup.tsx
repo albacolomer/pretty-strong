@@ -38,7 +38,7 @@ export function ExerciseGroup({
     <View style={[styles.bracket, { borderLeftColor: colors.accent }]}>
       <Card>
         <View style={styles.row}>
-          <Text variant="bodyStrong" color="accent" accessibilityRole="header">
+          <Text variant="label" color="accent" accessibilityRole="header">
             {t(`routines.group.${kind}`)}
           </Text>
           <Text variant="caption" color="textMuted">
