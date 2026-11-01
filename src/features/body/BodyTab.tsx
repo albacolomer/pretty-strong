@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, SegmentedControl, Text } from '@/components/ui';
+import { Button, Card, GradientText, SegmentedControl, Text } from '@/components/ui';
 import { formatShortDate } from '@/features/history/entries';
 import { dateKey, fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
@@ -72,7 +72,7 @@ function WeightCard() {
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
-        <Text variant="cardTitle" accessibilityRole="header" style={styles.grow}>
+        <Text variant="label" color="textMuted" accessibilityRole="header" style={styles.grow}>
           {t('body.weight')}
         </Text>
         {weights.length > 0 ? (
@@ -88,7 +88,7 @@ function WeightCard() {
         <>
           <View>
             <View style={styles.big} accessible aria-label={`${kg.format(latest.weightKg)} kg`}>
-              <Text variant="display">{kg.format(latest.weightKg)}</Text>
+              <GradientText variant="display">{kg.format(latest.weightKg)}</GradientText>
               <Text variant="cardTitle" color="textMuted">
                 kg
               </Text>
@@ -155,7 +155,7 @@ function MeasurementsCard() {
     <Card style={styles.card}>
       <View style={styles.header}>
         <View style={styles.grow}>
-          <Text variant="cardTitle" accessibilityRole="header">
+          <Text variant="label" color="textMuted" accessibilityRole="header">
             {t('body.measurements')}
           </Text>
           {latest ? (
@@ -185,7 +185,7 @@ function MeasurementsCard() {
             style={({ pressed }) => [
               styles.tile,
               styles.addTile,
-              { borderColor: colors.textMuted },
+              { borderColor: colors.control },
               pressed && styles.pressed,
             ]}>
             <Text variant="bodyStrong">{t('body.add')}</Text>

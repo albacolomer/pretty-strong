@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MenuButton, Text } from '@/components/ui';
+import { Button, Card, GradientText, MenuButton, Text } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';import { formatDayTitle, fromDateKey } from '@/features/schedule/dates';
@@ -91,9 +91,9 @@ function Details({
     <View style={styles.page}>
       <View style={styles.titleRow}>
         <View style={styles.title}>
-          <Text variant="title" accessibilityRole="header">
+          <GradientText variant="title" accessibilityRole="header" containerStyle={styles.fit}>
             {name}
-          </Text>
+          </GradientText>
           <Text color="textMuted">{formatDayTitle(fromDateKey(workout.date), language)}</Text>
         </View>
         <MenuButton label={t('history.menu')} onPress={openMenu} />
@@ -183,6 +183,10 @@ function ExerciseCard({ exercise }: { exercise: PastExercise }) {
 }
 
 const styles = StyleSheet.create({
+  // The gradient fits the name, not the whole width.
+  fit: {
+    alignSelf: 'flex-start',
+  },
   page: {
     gap: spacing.lg,
   },

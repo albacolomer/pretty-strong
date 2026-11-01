@@ -49,7 +49,7 @@ export function ProgressPhotos() {
   return (
     <Card style={styles.card}>
       <View style={styles.header}>
-        <Text variant="cardTitle" accessibilityRole="header" style={styles.grow}>
+        <Text variant="label" color="textMuted" accessibilityRole="header" style={styles.grow}>
           {t('photos.title')}
         </Text>
         {hidden && photos.length > 0 ? (
@@ -85,14 +85,14 @@ export function ProgressPhotos() {
           style={({ pressed }) => [
             styles.thumb,
             styles.addTile,
-            { borderColor: colors.textMuted },
+            { borderColor: colors.control },
             pressed && styles.pressed,
           ]}>
           {add.isPending ? (
             <ActivityIndicator color={colors.accent} />
           ) : (
             <>
-              <SymbolView name="camera" size={22} tintColor={colors.text} />
+              <SymbolView name="camera" size={22} weight="light" tintColor={colors.textSecondary} />
               <Text variant="caption">{t('photos.addShort')}</Text>
             </>
           )}

@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  Line,
+  LinearGradient,
+  Path,
+  Stop,
+  Text as SvgText,
+} from 'react-native-svg';
 
 import { dateKey, fromDateKey } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
@@ -52,7 +60,11 @@ export function WeightChart({
     .join(' ');
   const area = `${line} L${x(weights.at(-1)!.date)},${baseline} L${x(weights[0].date)},${baseline} Z`;
   const latest = weights.at(-1)!;
-  const font = { fontSize: typography.caption.fontSize };
+  // SVG text doesn't take the app's text styles: the font is named here.
+  const font = {
+    fontSize: typography.caption.fontSize,
+    fontFamily: typography.caption.fontFamily,
+  };
   const number = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
   const dateLabel = new Intl.DateTimeFormat(
     language,
@@ -71,6 +83,13 @@ export function WeightChart({
       style={{ height: HEIGHT }}>
       {width > 0 ? (
         <Svg width={width} height={HEIGHT}>
+          <Defs>
+            {/* The area under the line fades out downwards. */}
+            <LinearGradient id="weightArea" x1={0} y1={0} x2={0} y2={1}>
+              <Stop offset={0} stopColor={colors.accent} stopOpacity={0.22} />
+              <Stop offset={1} stopColor={colors.accent} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
           {ticks.map((kg) => (
             <Line
               key={`grid-${kg}`}
@@ -78,7 +97,7 @@ export function WeightChart({
               x2={LEFT + plotWidth}
               y1={y(kg)}
               y2={y(kg)}
-              stroke={colors.surfaceRaised}
+              stroke={colors.border}
             />
           ))}
           {ticks.map((kg) => (
@@ -92,7 +111,7 @@ export function WeightChart({
               {number.format(kg)}
             </SvgText>
           ))}
-          <Path d={area} fill={colors.accentSoft} />
+          <Path d={area} fill="url(#weightArea)" />
           <Path d={line} stroke={colors.accent} strokeWidth={2.5} fill="none" />
           <Circle
             cx={x(latest.date)}

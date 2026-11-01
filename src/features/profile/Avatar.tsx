@@ -2,7 +2,7 @@ import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { GradientText, MetalFill } from '@/components/ui';
 import { PrivatePhoto } from '@/features/body/PrivatePhoto';
 import { usePhotoUrls, useSetAvatar } from '@/features/body/usePhotos';
 import { usePickPhoto } from '@/features/body/usePickPhoto';
@@ -43,9 +43,7 @@ export function Avatar({ profile }: { profile: Profile | undefined }) {
         {path ? (
           <PrivatePhoto path={path} url={urls[path]} label="" style={styles.photo} />
         ) : (
-          <Text variant="display" color="accent">
-            {initial}
-          </Text>
+          <GradientText variant="display">{initial}</GradientText>
         )}
       </View>
       <Pressable
@@ -56,13 +54,14 @@ export function Avatar({ profile }: { profile: Profile | undefined }) {
         hitSlop={(touch.min - BADGE) / 2}
         style={({ pressed }) => [
           styles.badge,
-          { backgroundColor: colors.accent, borderColor: colors.background },
+          { borderColor: colors.background },
           pressed && styles.pressed,
         ]}>
+        <MetalFill borderRadius={BADGE / 2} />
         {setAvatar.isPending ? (
-          <ActivityIndicator size="small" color={colors.onAccent} />
+          <ActivityIndicator size="small" color={colors.onMetal} />
         ) : (
-          <SymbolView name="camera.fill" size={16} tintColor={colors.onAccent} />
+          <SymbolView name="camera.fill" size={16} tintColor={colors.onMetal} />
         )}
       </Pressable>
     </View>

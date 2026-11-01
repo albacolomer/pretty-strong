@@ -48,7 +48,7 @@ export function MonthCalendar({
     <Card style={styles.calendar}>
       <View style={styles.header}>
         <View style={styles.title}>
-          <Text variant="cardTitle" accessibilityRole="header">
+          <Text variant="name" accessibilityRole="header">
             {formatMonth(month, language)}
           </Text>
           <Text variant="caption" color="textMuted">

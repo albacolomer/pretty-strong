@@ -2,13 +2,13 @@ import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { GradientText, Text } from '@/components/ui';
 import { streakWeeks, weeklyCounts } from '@/features/history/entries';
 import { useHistoryEntries } from '@/features/history/useHistory';
 import { dateKey, startOfWeek } from '@/features/schedule/dates';
 import { countsAsWorkout } from '@/features/schedule/sports';
 import { useToday } from '@/features/schedule/useToday';
-import { radius, spacing, touch, useTheme } from '@/theme';
+import { gaps, radius, spacing, touch, useTheme } from '@/theme';
 
 import { Avatar } from './Avatar';
 import { useProfile } from './useProfile';
@@ -20,7 +20,7 @@ import { useWeeklyGoal } from './useWeeklyGoal';
 // under them.
 export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
+  const { colors, shadows } = useTheme();
   const today = useToday();
   const { data: profile } = useProfile();
   const { entries } = useHistoryEntries();
@@ -45,9 +45,9 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
     <View style={styles.header}>
       <Avatar profile={profile} />
       <View style={styles.identity}>
-        <Text variant="cardTitle" accessibilityRole="header">
+        <GradientText variant="title" accessibilityRole="header" style={styles.centred}>
           {name}
-        </Text>
+        </GradientText>
         {line ? (
           <Text variant="caption" color="textMuted">
             {line}
@@ -63,9 +63,9 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
             aria-label={`${stat.label}: ${stat.value}`}
             style={[
               styles.stat,
-              index > 0 && { borderLeftWidth: StyleSheet.hairlineWidth, borderLeftColor: colors.textMuted },
+              index > 0 && { borderLeftWidth: 1, borderLeftColor: colors.border },
             ]}>
-            <Text variant="cardTitle">{stat.value}</Text>
+            <GradientText variant="cardTitle">{stat.value}</GradientText>
             <Text variant="caption" color="textMuted">
               {stat.label}
             </Text>
@@ -78,10 +78,10 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
         onPress={onEdit}
         style={({ pressed }) => [
           styles.edit,
-          { backgroundColor: colors.surfaceRaised },
+          { backgroundColor: colors.surface, boxShadow: shadows.control },
           pressed && styles.pressed,
         ]}>
-        <SymbolView name="pencil" size={16} tintColor={colors.text} />
+        <SymbolView name="pencil" size={16} weight="light" tintColor={colors.textSecondary} />
         <Text variant="bodyStrong">{t('profile.edit')}</Text>
       </Pressable>
     </View>
@@ -95,7 +95,10 @@ const styles = StyleSheet.create({
   },
   identity: {
     alignItems: 'center',
-    gap: 2,
+    gap: gaps.tight,
+  },
+  centred: {
+    textAlign: 'center',
   },
   stats: {
     flexDirection: 'row',

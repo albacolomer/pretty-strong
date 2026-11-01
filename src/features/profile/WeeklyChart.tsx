@@ -1,11 +1,19 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
-import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
+import Svg, {
+  Circle,
+  Defs,
+  Line,
+  LinearGradient,
+  Path,
+  Stop,
+  Text as SvgText,
+} from 'react-native-svg';
 
 import { fromDateKey } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
-import { typography, useTheme } from '@/theme';
+import { fonts, typography, useTheme } from '@/theme';
 
 import type { WeekPoint } from './progress';
 
@@ -40,7 +48,11 @@ export function WeeklyChart({ points, goal }: { points: WeekPoint[]; goal: numbe
       ? `${line} L${x(finished.length - 1)},${baseline} L${x(0)},${baseline} Z`
       : '';
   const short = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'numeric' });
-  const font = { fontSize: typography.caption.fontSize };
+  // SVG text doesn't take the app's text styles: the font is named here.
+  const font = {
+    fontSize: typography.caption.fontSize,
+    fontFamily: typography.caption.fontFamily,
+  };
 
   const described = t('progress.chartLabel', {
     counts: finished.map((point) => point.count).join(', '),
@@ -55,7 +67,14 @@ export function WeeklyChart({ points, goal }: { points: WeekPoint[]; goal: numbe
       style={{ height: HEIGHT }}>
       {width > 0 ? (
         <Svg width={width} height={HEIGHT}>
-          {area ? <Path d={area} fill={colors.accentSoft} /> : null}
+          <Defs>
+            {/* The area under the line fades out downwards. */}
+            <LinearGradient id="weeklyArea" x1={0} y1={0} x2={0} y2={1}>
+              <Stop offset={0} stopColor={colors.accent} stopOpacity={0.22} />
+              <Stop offset={1} stopColor={colors.accent} stopOpacity={0} />
+            </LinearGradient>
+          </Defs>
+          {area ? <Path d={area} fill="url(#weeklyArea)" /> : null}
           {goal !== null ? (
             <>
               <Line
@@ -109,8 +128,8 @@ export function WeeklyChart({ points, goal }: { points: WeekPoint[]; goal: numbe
               y={y(point.count) - 10}
               textAnchor="middle"
               fill={point.current ? colors.text : colors.textMuted}
-              fontWeight={point.current ? '700' : '400'}
-              {...font}>
+              {...font}
+              fontFamily={point.current ? fonts.bold : fonts.regular}>
               {point.count}
             </SvgText>
           ))}
@@ -121,8 +140,8 @@ export function WeeklyChart({ points, goal }: { points: WeekPoint[]; goal: numbe
               y={HEIGHT - 8}
               textAnchor="middle"
               fill={point.current ? colors.text : colors.textMuted}
-              fontWeight={point.current ? '700' : '400'}
-              {...font}>
+              {...font}
+              fontFamily={point.current ? fonts.bold : fonts.regular}>
               {point.current ? t('progress.now') : short.format(fromDateKey(point.weekStart))}
             </SvgText>
           ))}

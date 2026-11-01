@@ -2,7 +2,7 @@ import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Card, Text } from '@/components/ui';
+import { Card, GradientText, GradientView, Text } from '@/components/ui';
 import { useHistoryEntries } from '@/features/history/useHistory';
 import { formatDuration } from '@/features/routines/routine';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
@@ -53,7 +53,7 @@ export function ProgressTab() {
     <View style={styles.page}>
       <Card>
         <View style={styles.cardHeader}>
-          <Text variant="cardTitle" accessibilityRole="header" style={styles.grow}>
+          <Text variant="label" color="textMuted" accessibilityRole="header" style={styles.grow}>
             {t('progress.perWeek')}
           </Text>
           <Text variant="caption" color="textMuted">
@@ -64,7 +64,7 @@ export function ProgressTab() {
       </Card>
 
       <View style={styles.cardHeader}>
-        <Text variant="cardTitle" accessibilityRole="header" style={styles.grow}>
+        <Text variant="label" color="textMuted" accessibilityRole="header" style={styles.grow}>
           {t('progress.soFar', { month: monthName })}
         </Text>
         <Text variant="caption" color="textMuted">
@@ -110,7 +110,7 @@ export function ProgressTab() {
 
       <Card style={styles.mix}>
         <View style={styles.cardHeader}>
-          <Text variant="cardTitle" accessibilityRole="header" style={styles.grow}>
+          <Text variant="label" color="textMuted" accessibilityRole="header" style={styles.grow}>
             {t('progress.mix')}
           </Text>
           <Text variant="caption" color="textMuted">
@@ -167,7 +167,9 @@ function Tile({
       <Text variant="caption" color="textMuted">
         {label}
       </Text>
-      <Text variant="cardTitle">{value}</Text>
+      <GradientText variant="cardTitle" containerStyle={styles.fit}>
+        {value}
+      </GradientText>
       {change ? (
         <Text variant="caption" color={change.color}>
           {change.text}
@@ -196,21 +198,24 @@ function MixRow({ item, total, language }: { item: MixItem; total: number; langu
         <SymbolView
           name={item.sport ? SPORT_ICONS[item.sport] : ROUTINE_ICONS[item.label ?? 'none']}
           size={16}
+          weight="light"
           tintColor={colors.accent}
         />
         <Text style={styles.grow}>{name}</Text>
         <Text variant="bodyStrong">{new Intl.NumberFormat(language).format(item.count)}</Text>
       </View>
-      <View style={[styles.track, { backgroundColor: colors.accentSoft }]}>
-        <View
-          style={[styles.bar, { backgroundColor: colors.accent, width: `${share * 100}%` }]}
-        />
+      <View style={[styles.track, { backgroundColor: colors.track }]}>
+        <GradientView gradient="bar" style={[styles.bar, { width: `${share * 100}%` }]} />
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // A gradient fits its text, not the whole width.
+  fit: {
+    alignSelf: 'flex-start',
+  },
   page: {
     gap: spacing.lg,
   },

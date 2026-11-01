@@ -46,6 +46,7 @@ export function WorkoutRow({ entry }: { entry: HistoryEntry }) {
         <SymbolView
           name={entry.sport ? SPORT_ICONS[entry.sport] : ROUTINE_ICONS[entry.routineLabel ?? 'none']}
           size={20}
+          weight="light"
           tintColor={colors.accent}
         />
       </View>
