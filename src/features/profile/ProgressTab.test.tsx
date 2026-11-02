@@ -27,6 +27,7 @@ function entry(date: string, values: Partial<HistoryEntry> = {}): HistoryEntry {
     id: date,
     date,
     routineName: 'Tren superior 1',
+    routineId: 'upper',
     routineLabel: 'strength',
     customLabel: null,
     sport: null,

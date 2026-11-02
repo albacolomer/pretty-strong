@@ -27,6 +27,7 @@ export async function fetchSessions(from: string, to: string): Promise<WorkoutSe
     status: row.status as SessionStatus,
     logMode: row.log_mode as WorkoutSession['logMode'],
     durationS: row.duration_s ?? liveDuration(row.started_at, row.ended_at),
+    startedAt: row.started_at,
     notes: row.notes,
     changeReason: row.change_reason as ChangeReason | null,
     plannedSportId: row.planned_sport_id,

@@ -29,6 +29,9 @@ export type WorkoutSession = {
   logMode: 'live' | 'quick';
   // A quick log's length, when given.
   durationS: number | null;
+  // When a live workout began (ISO); unknown for a quick log, and left out
+  // where it isn't needed.
+  startedAt?: string | null;
   notes: string | null;
   changeReason: ChangeReason | null;
   // A sport's session: the planned sport it was for, and which sport (with

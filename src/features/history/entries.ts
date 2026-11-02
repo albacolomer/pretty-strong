@@ -14,6 +14,8 @@ export type HistoryEntry = {
   id: string;
   date: string;
   routineName: string | null;
+  // The routine that was done, to compare with the last time it was.
+  routineId: string | null;
   // The routine's type, for its icon and what its row shows; null without
   // a routine.
   routineLabel: RoutineLabel | null;
@@ -50,6 +52,7 @@ export function pendingEntry(
     id: workout.id,
     date: workout.date,
     routineName: workout.routineName === '' ? null : workout.routineName,
+    routineId: workout.routineId,
     routineLabel: routine?.label ?? null,
     customLabel: routine?.customLabel ?? null,
     sport: null,
@@ -64,6 +67,24 @@ export function pendingEntry(
     pace: pace(runSets),
     pending: true,
   };
+}
+
+// A workout's volume against the last time its routine was done, on an
+// earlier day: 0.04 for 4 % more, -0.1 for 10 % less. Null without weights,
+// without a routine, or the first time.
+export function volumeChange(
+  entry: Pick<HistoryEntry, 'id' | 'date' | 'routineId' | 'volumeKg'>,
+  entries: readonly Pick<HistoryEntry, 'id' | 'date' | 'routineId' | 'volumeKg'>[],
+): number | null {
+  if (entry.routineId === null || entry.volumeKg <= 0) return null;
+  let last: (typeof entries)[number] | null = null;
+  for (const other of entries) {
+    if (other.routineId !== entry.routineId || other.date >= entry.date || other.volumeKg <= 0) {
+      continue;
+    }
+    if (last === null || other.date > last.date) last = other;
+  }
+  return last === null ? null : entry.volumeKg / last.volumeKg - 1;
 }
 
 // Workouts per week, by the week's Monday ("2026-10-19"). A walk or

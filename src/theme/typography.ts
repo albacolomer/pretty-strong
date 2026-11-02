@@ -32,6 +32,16 @@ export const typography = {
     letterSpacing: em(0.01, 44),
     textTransform: 'uppercase',
   },
+  // A state in big italic capitals next to its icon, e.g. "TOT FET".
+  heroTitle: {
+    fontFamily: fonts.condensedItalic,
+    fontSize: 38,
+    lineHeight: 40,
+    letterSpacing: em(0.01, 38),
+    textTransform: 'uppercase',
+  },
+  // A number in a grid of numbers, e.g. the day's "2 h 24 min".
+  figure: { fontFamily: fonts.condensed, fontSize: 30, lineHeight: 34 },
   // "GO" on the big button.
   hero: { fontFamily: fonts.condensedItalic, fontSize: 64, lineHeight: 64 },
   timer: { fontFamily: fonts.bold, fontSize: 48, lineHeight: 56, fontVariant: ['tabular-nums'] },

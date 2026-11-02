@@ -2,10 +2,11 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { Pedometer } from 'expo-sensors';
 import { ActionSheetIOS } from 'react-native';
 
 import { useAuth } from '@/features/auth/AuthProvider';
-import { fetchBeats, fetchHistoryEntries } from '@/features/history/api';
+import { fetchHistoryEntries } from '@/features/history/api';
 import type { HistoryEntry } from '@/features/history/entries';
 import { fetchProfile, type Profile } from '@/features/profile/api';
 import { fetchRoutines } from '@/features/routines/api';
@@ -27,10 +28,17 @@ import { Today } from './Today';
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('@/features/routines/api', () => ({ fetchRoutines: jest.fn() }));
 jest.mock('@/features/profile/api', () => ({ fetchProfile: jest.fn() }));
-// Today's finished workouts with their totals, and how many beat last time.
-jest.mock('@/features/history/api', () => ({
-  fetchHistoryEntries: jest.fn(),
-  fetchBeats: jest.fn(),
+// Your finished workouts with their totals.
+jest.mock('@/features/history/api', () => ({ fetchHistoryEntries: jest.fn() }));
+// No step counter, unless a test counts steps (see stepsCounted).
+jest.mock('expo-sensors', () => ({
+  Pedometer: {
+    isAvailableAsync: jest.fn(),
+    getPermissionsAsync: jest.fn(),
+    requestPermissionsAsync: jest.fn(),
+    getStepCountAsync: jest.fn(),
+    watchStepCount: jest.fn(() => ({ remove: jest.fn() })),
+  },
 }));
 jest.mock('@/features/body/photosApi', () => ({
   SIGNED_URL_SECONDS: 3600,
@@ -119,6 +127,7 @@ const entry = (fields: Partial<HistoryEntry>): HistoryEntry => ({
   id: 'session-1',
   date: '2026-10-20',
   routineName: 'Tren superior 1',
+  routineId: 'upper',
   routineLabel: 'strength',
   customLabel: null,
   sport: null,
@@ -134,6 +143,15 @@ const entry = (fields: Partial<HistoryEntry>): HistoryEntry => ({
   pending: false,
   ...fields,
 });
+
+// The phone counted this many steps today.
+function stepsCounted(steps: number) {
+  jest.mocked(Pedometer.isAvailableAsync).mockResolvedValue(true);
+  jest
+    .mocked(Pedometer.getPermissionsAsync)
+    .mockResolvedValue({ granted: true, canAskAgain: true, status: 'granted', expires: 'never' } as never);
+  jest.mocked(Pedometer.getStepCountAsync).mockResolvedValue({ steps });
+}
 
 // What the database holds once a session is logged, for the refetch after.
 function keepLogged() {
@@ -170,7 +188,7 @@ beforeEach(() => {
   jest.mocked(fetchRoutines).mockResolvedValue([upper, spinning, legs]);
   jest.mocked(fetchSessions).mockReset().mockResolvedValue([]);
   jest.mocked(fetchHistoryEntries).mockReset().mockResolvedValue([]);
-  jest.mocked(fetchBeats).mockReset().mockResolvedValue(0);
+  jest.mocked(Pedometer.isAvailableAsync).mockResolvedValue(false);
   jest.mocked(fetchWeeklySports).mockResolvedValue([]);
   jest.mocked(fetchMoves).mockReset().mockResolvedValue([]);
   jest.mocked(replaceMoves).mockReset().mockResolvedValue();
@@ -550,18 +568,36 @@ describe('<Today />', () => {
     expect(screen.getByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
   });
 
-  test('once everything is logged, the big button shows how it went; ⋯ → Desfés', async () => {
+  test('once everything is logged, its row says how it went and opens it', async () => {
     const user = userEvent.setup();
     jest.mocked(fetchRoutines).mockResolvedValue([routine('upper', 'Tren superior 1', { 2: 0 })]);
     jest.mocked(fetchSessions).mockResolvedValue([session({ durationS: 3600 })]);
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByText('✓ Fet · 1 h')).toBeOnTheScreen();
+    expect(await screen.findByText('1 h')).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: /^Comença/ })).not.toBeOnTheScreen();
-    sheetChoices.push('Desfés');
-    await user.press(screen.getByRole('button', { name: 'Opcions de «Tren superior 1»' }));
+    // Saved, so it has its page (where it can be deleted, with Desfés).
+    await user.press(screen.getByRole('button', { name: /^Tren superior 1/ }));
 
-    expect(deleteSession).toHaveBeenCalledWith('session-1');
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/profile/history/[sessionId]', params: { sessionId: 'session-1' } },
+      { withAnchor: true },
+    );
+  });
+
+  test('a done day lists a skipped activity greyed, with its Desfés', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchSessions).mockResolvedValue([
+      session({ id: 'session-2', plannedRoutineId: 'spinning', routineId: null, status: 'skipped', changeReason: 'no_time' }),
+      session({ durationS: 3600 }),
+    ]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('Saltat · Falta de temps')).toBeOnTheScreen();
+    sheetChoices.push('Desfés');
+    await user.press(screen.getByRole('button', { name: /^Spinning/ }));
+
+    expect(deleteSession).toHaveBeenCalledWith('session-2');
   });
 
   test('Comença copies the routine into a workout and opens it', async () => {
@@ -728,50 +764,80 @@ describe('<Today />', () => {
     expect(screen.getByText('1 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
   });
 
-  test('all done: "Tot fet" with the day in numbers, and everything under "També avui"', async () => {
+  test('all done: "Tot fet", the day in numbers, each activity under "Completat", and what is next', async () => {
+    const user = userEvent.setup();
     // The class ("Fet", 45 min) and the upper-body workout, both done.
     jest.mocked(fetchSessions).mockResolvedValue([
       session({ id: 'session-2', plannedRoutineId: 'spinning', routineId: 'spinning', durationS: 2700 }),
-      session({ logMode: 'live', durationS: 3900 }),
+      session({ logMode: 'live', durationS: 3900, startedAt: new Date(2026, 9, 20, 18, 10).toISOString() }),
     ]);
     jest.mocked(fetchHistoryEntries).mockResolvedValue([
-      entry({ id: 'session-2', routineName: 'Spinning', routineLabel: 'class', logMode: 'quick', durationS: 2700, exercises: 0, sets: 0, volumeKg: 0 }),
+      entry({ id: 'session-2', routineName: 'Spinning', routineId: 'spinning', routineLabel: 'class', logMode: 'quick', durationS: 2700, exercises: 0, sets: 0, volumeKg: 0 }),
       entry({}),
-      // Another day: not today's.
-      entry({ id: 'session-0', date: '2026-10-19' }),
+      // Last time, a week ago: 5.000 kg, so today's 5.200 is 4 % more.
+      entry({ id: 'session-0', date: '2026-10-13', volumeKg: 5000 }),
     ]);
-    jest.mocked(fetchBeats).mockResolvedValue(2);
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    expect(await screen.findByRole('header', { name: 'Tot fet per avui' })).toBeOnTheScreen();
-    expect(screen.getByText('2 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
-    // 45 min + 1 h 05 min, and the weight lifted.
+    // No step counter here: steps can't hold it back.
+    expect(await screen.findByRole('header', { name: 'Tot fet' })).toBeOnTheScreen();
+    expect(screen.getByText('2 de 2 planificades · 2 de 4 aquesta setmana')).toBeOnTheScreen();
+    // 45 min + 1 h 5 min, the weight lifted and the sets.
     expect(await screen.findByLabelText('Temps: 1 h 50 min')).toBeOnTheScreen();
-    expect(screen.getByLabelText(/^Volum: 5,2/)).toBeOnTheScreen();
-    expect(await screen.findByLabelText("2 exercicis per sobre de l'última vegada")).toBeOnTheScreen();
-    // Only a workout with exercises is compared.
-    expect(fetchBeats).toHaveBeenCalledWith([expect.objectContaining({ id: 'session-1' })]);
-    // Both are under "També avui", done, each with its "Desfés".
-    expect(screen.getByText('Spinning')).toBeOnTheScreen();
-    expect(screen.getByText('Tren superior 1')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Volum: 5.200 kg')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Sèries: 12')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Passos: —')).toBeOnTheScreen();
+    // Under "Completat": when it started, how long it took, and against
+    // last time.
+    expect(screen.getByRole('header', { name: 'Completat' })).toBeOnTheScreen();
+    expect(screen.getByText('45 min')).toBeOnTheScreen();
+    expect(screen.getByText(/^18:10 · 1 h 5 min · \+4\s%\svs l'última vegada$/)).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: 'Comença «Tren superior 1»' })).not.toBeOnTheScreen();
+
+    // A workout opens its page, on top of Perfil's.
+    await user.press(screen.getByRole('button', { name: /^Tren superior 1/ }));
+    expect(router.push).toHaveBeenCalledWith(
+      { pathname: '/profile/history/[sessionId]', params: { sessionId: 'session-1' } },
+      { withAnchor: true },
+    );
+
+    // What's next: Friday's upper body, to look at, not to start today.
+    await user.press(screen.getByRole('button', { name: /^Divendres/ }));
+    expect(screen.getByText('Tracció al pit')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Comença' })).not.toBeOnTheScreen();
   });
 
-  test('nothing beat last time, nothing lifted: only the time', async () => {
+  test('activities done, steps to go: "Gairebé fet", with the steps in the numbers', async () => {
+    stepsCounted(7860);
+    jest
+      .mocked(fetchProfile)
+      .mockResolvedValue({ username: 'alba', weekly_goal: 4, daily_step_goal: 10000 } as Profile);
+    jest.mocked(fetchSessions).mockResolvedValue([
+      session({ id: 'session-2', plannedRoutineId: 'spinning', routineId: 'spinning', durationS: 2700 }),
+      session({ durationS: 3600 }),
+    ]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByRole('header', { name: 'Gairebé fet' })).toBeOnTheScreen();
+    expect(screen.getByText('2.140 passos per arribar')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Passos: 7.860 / 10.000')).toBeOnTheScreen();
+  });
+
+  test('a day without weights: its numbers say so, and nothing to compare', async () => {
     jest.mocked(fetchSessions).mockResolvedValue([
       session({ id: 'session-2', plannedRoutineId: 'spinning', routineId: 'spinning', durationS: 2700 }),
       session({ durationS: 3600 }),
     ]);
     jest.mocked(fetchHistoryEntries).mockResolvedValue([
-      entry({ id: 'session-2', logMode: 'quick', durationS: 2700, exercises: 0, volumeKg: 0 }),
-      entry({ logMode: 'quick', durationS: 3600, exercises: 0, volumeKg: 0 }),
+      entry({ id: 'session-2', logMode: 'quick', durationS: 2700, exercises: 0, sets: 0, volumeKg: 0 }),
+      entry({ logMode: 'quick', durationS: 3600, exercises: 0, sets: 0, volumeKg: 0 }),
     ]);
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByLabelText('Temps: 1 h 45 min')).toBeOnTheScreen();
-    expect(screen.queryByLabelText(/^Volum/)).not.toBeOnTheScreen();
-    expect(screen.queryByLabelText(/per sobre de l'última vegada/)).not.toBeOnTheScreen();
-    expect(fetchBeats).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Volum: —')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Sèries: —')).toBeOnTheScreen();
+    expect(screen.queryByText(/vs l'última vegada/)).not.toBeOnTheScreen();
   });
 
   test('all skipped is not "Tot fet"', async () => {
@@ -782,7 +848,7 @@ describe('<Today />', () => {
     await render(<Today />, { wrapper: createAppWrapper() });
 
     expect(await screen.findAllByText('Saltat')).not.toHaveLength(0);
-    expect(screen.queryByRole('header', { name: 'Tot fet per avui' })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('header', { name: 'Tot fet' })).not.toBeOnTheScreen();
   });
 
   test('a rest day: a word on recovery, what comes next, and a quick walk', async () => {

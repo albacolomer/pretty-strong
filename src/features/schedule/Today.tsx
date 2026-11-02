@@ -7,7 +7,8 @@ import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-nativ
 import { Card, ScreenTitle, Text, useToast } from '@/components/ui';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
-import { useBeats, useHistoryEntries } from '@/features/history/useHistory';
+import { volumeChange } from '@/features/history/entries';
+import { useHistoryEntries } from '@/features/history/useHistory';
 import { useProfile } from '@/features/profile/useProfile';
 import { useWeeklyGoal } from '@/features/profile/useWeeklyGoal';
 import { StepsCard } from '@/features/steps/StepsCard';
@@ -36,6 +37,7 @@ import { ensureNotificationPermission } from '@/lib/notifications';
 import { spacing, useTheme } from '@/theme';
 
 import { AlsoToday, type AlsoTodayItem } from './AlsoToday';
+import { CompletedList, type CompletedItem } from './CompletedList';
 import { addDays, dateKey, formatDayTitle, formatWeekday, startOfWeek, weekdayOf } from './dates';
 import { DayDone } from './DayDone';
 import { LogSportSheet, type LoggedSport } from './LogSportSheet';
@@ -56,6 +58,7 @@ import { RoutinePreviewSheet } from './RoutinePreviewSheet';
 import { countsAsWorkout, SPORT_ICONS, type Sport, type WeeklySport } from './sports';
 import { TodayHero, type HeroAction } from './TodayHero';
 import { useActivityName } from './useActivityName';
+import { TomorrowCard } from './TomorrowCard';
 import { useSwaps } from './useSwaps';
 import { useToday } from './useToday';
 import { useSetWeekMoves, useWeekMoves } from './useWeekMoves';
@@ -74,11 +77,12 @@ type Action = { label: string; run: () => void };
 // then the day's main activity in a big metal button inside the week's
 // ring (GO, or ✓ for a class or a sport), with Previsualitza / Canvia / Salta (which
 // can move a routine to a free day or shift the week, US-29); on a
-// rest day, a word on recovery, what's next and Caminar / Estiraments; once
-// it's all done, "Tot fet" with the day in numbers. Above it, yesterday's
-// routine if it wasn't logged at all (US-29). Under it, "També avui" with
-// the day's other activities, what was logged without being planned, and
-// a + to log more.
+// rest day, a word on recovery, what's next and Caminar / Estiraments. Above
+// it, yesterday's routine if it wasn't logged at all (US-29). Under it,
+// "També avui" with the day's other activities, what was logged without
+// being planned, and a + to log more. Once it's all done: "Gairebé fet" (the
+// steps still to go) or "Tot fet", the day in numbers, "Completat" with
+// each activity, and what's next.
 export function Today() {
   const { t } = useTranslation();
   const { colors, scheme } = useTheme();
@@ -117,6 +121,7 @@ export function Today() {
         status: 'completed' as const,
         logMode: 'live' as const,
         durationS: liveDuration(workout.startedAt, workout.endedAt),
+        startedAt: workout.startedAt,
         notes: null,
         changeReason: workout.changeReason,
         plannedSportId: null,
@@ -124,10 +129,10 @@ export function Today() {
         sportName: null,
       })),
   ];
-  // Today's finished workouts with their totals, for "Tot fet".
+  // Your finished workouts with their totals: today's for "Tot fet", and the
+  // ones before, for "vs l'última vegada".
   const { entries: history } = useHistoryEntries();
   const doneToday = history.filter((entry) => entry.date === day);
-  const beats = useBeats(doneToday);
   const logSession = useLogSession(movesFrom, to);
   const deleteSession = useDeleteSession(movesFrom, to);
   const { swaps, setSwap } = useSwaps(from);
@@ -141,9 +146,12 @@ export function Today() {
     | { kind: 'recovery'; sport: Sport }
     | null
   >(null);
-  const [previewing, setPreviewing] = useState<{ routine: Routine; planned: Routine } | null>(
-    null,
-  );
+  // The preview sheet: a routine, and the plan it would start for today
+  // (none for tomorrow's, which is only looked at).
+  const [previewing, setPreviewing] = useState<{
+    routine: Routine;
+    planned: Routine | null;
+  } | null>(null);
   // The "Registra un esport" sheet, and a count that gives each opening a
   // fresh start.
   const [loggingSport, setLoggingSport] = useState({ visible: false, opened: 0 });
@@ -816,32 +824,37 @@ export function Today() {
   });
 
   // Done today without being planned: from +, or a rest day's walk.
-  const unplanned: AlsoTodayItem[] = sessions
-    .filter(
-      (session) =>
-        session.date === day &&
-        session.status === 'completed' &&
-        session.plannedRoutineId === null &&
-        session.plannedSportId === null,
-    )
-    .map((session) => {
-      const routine = allRoutines.find((other) => other.id === session.routineId);
-      const name = session.sport
-        ? nameOf({ kind: 'sport', sport: { sport: session.sport, customName: session.sportName } })
-        : (routine?.name ??
+  const unplannedSessions = sessions.filter(
+    (session) =>
+      session.date === day &&
+      session.status === 'completed' &&
+      session.plannedRoutineId === null &&
+      session.plannedSportId === null,
+  );
+
+  function unplannedName(session: WorkoutSession): string {
+    const routine = allRoutines.find((other) => other.id === session.routineId);
+    return session.sport
+      ? nameOf({ kind: 'sport', sport: { sport: session.sport, customName: session.sportName } })
+      : (routine?.name ??
           pending.find((workout) => workout.id === session.id)?.routineName ??
           t('history.noRoutine'));
-      return {
-        key: `session:${session.id}`,
-        icon: session.sport ? SPORT_ICONS[session.sport] : ROUTINE_ICONS[routine?.label ?? 'strength'],
-        time: null,
-        name,
-        details: statusText(session),
-        state: 'done',
-        onCheck: () => undoMenu(name, session),
-        onPress: () => undoMenu(name, session),
-      };
-    });
+  }
+
+  const unplanned: AlsoTodayItem[] = unplannedSessions.map((session) => {
+    const routine = allRoutines.find((other) => other.id === session.routineId);
+    const name = unplannedName(session);
+    return {
+      key: `session:${session.id}`,
+      icon: session.sport ? SPORT_ICONS[session.sport] : ROUTINE_ICONS[routine?.label ?? 'strength'],
+      time: null,
+      name,
+      details: statusText(session),
+      state: 'done',
+      onCheck: () => undoMenu(name, session),
+      onPress: () => undoMenu(name, session),
+    };
+  });
 
   // A rest day: what's next, "Demà" or its weekday, as
   // "Tren inferior 1 · Pàdel 19:00".
@@ -856,6 +869,108 @@ export function Today() {
       )
       .join(' · '),
   };
+
+  // A done day's last card, the same next day: one routine with how long it
+  // takes ("Tren inferior 2 · ~1 h 30 min"), a sport with its time, or
+  // several by name. A routine with exercises opens its preview.
+  const nextRoutine = next?.activities.find(
+    (activity): activity is RoutineActivity =>
+      activity.kind === 'routine' &&
+      usesExercises(activity.routine.label) &&
+      activity.routine.exercises.length > 0,
+  );
+  const onlyNext = next?.activities.length === 1 ? next.activities[0] : null;
+  const onlyNextDuration =
+    onlyNext?.kind === 'routine' ? routineDuration(onlyNext.routine, APP_DEFAULT_REST_S) : null;
+  const tomorrow = nextPlan && {
+    day: nextPlan.day,
+    name: onlyNext ? nameOf(onlyNext) : nextPlan.plan,
+    details:
+      onlyNext?.kind === 'sport'
+        ? onlyNext.sport.startTime
+        : onlyNextDuration
+          ? `${onlyNextDuration.estimated ? '~' : ''}${formatDuration(onlyNextDuration.seconds)}`
+          : null,
+    onPress: nextRoutine
+      ? () => setPreviewing({ routine: nextRoutine.routine, planned: null })
+      : null,
+  };
+
+  // A done day's "Completat": each planned activity as it went, then what
+  // was done without a plan.
+  const clock = new Intl.DateTimeFormat(language, { hour: '2-digit', minute: '2-digit' });
+  const percent = new Intl.NumberFormat(language, { style: 'percent', maximumFractionDigits: 0 });
+
+  // One row. A skip says so, and offers "Desfés". A workout says when it
+  // started (a sport: when it was planned), how long it took and its volume
+  // against last time, and opens its page once it's saved.
+  function completedItem(
+    key: string,
+    name: string,
+    session: WorkoutSession,
+    plannedTime: string | null,
+  ): CompletedItem {
+    if (session.status === 'skipped') {
+      return {
+        key,
+        name,
+        details: statusText(session),
+        change: null,
+        skipped: true,
+        onPress: () => undoMenu(name, session),
+      };
+    }
+    const time =
+      plannedTime ?? (session.startedAt ? clock.format(new Date(session.startedAt)) : null);
+    const entry = history.find((other) => other.id === session.id);
+    const change = entry ? volumeChange(entry, history) : null;
+    const waiting = pending.some((workout) => workout.id === session.id);
+    const rounded = change === null ? 0 : Math.round(change * 100);
+    const sign = rounded > 0 ? '+' : rounded < 0 ? '−' : '';
+    return {
+      key,
+      name,
+      details: [time, session.durationS ? formatDuration(session.durationS) : null]
+        .filter(Boolean)
+        .join(' · '),
+      change:
+        change === null
+          ? null
+          : {
+              text: t('today.vsLastTime', {
+                change: `${sign}${percent.format(Math.abs(change))}`,
+              }),
+              up: rounded > 0,
+            },
+      skipped: false,
+      onPress: waiting
+        ? null
+        : () =>
+            // On top of Perfil's own page, so its back button leads somewhere.
+            router.push(
+              { pathname: '/profile/history/[sessionId]', params: { sessionId: session.id } },
+              { withAnchor: true },
+            ),
+    };
+  }
+
+  const completed: CompletedItem[] = [
+    ...planned.flatMap((activity) => {
+      const session = sessionOf(activity);
+      if (!session) return [];
+      return [
+        completedItem(
+          activity.key,
+          activity.kind === 'routine' ? shownFor(activity.routine, session).name : nameOf(activity),
+          session,
+          activity.kind === 'sport' ? activity.sport.startTime : null,
+        ),
+      ];
+    }),
+    ...unplannedSessions.map((session) =>
+      completedItem(`session:${session.id}`, unplannedName(session), session, null),
+    ),
+  ];
 
   // "Reprograma la setmana…": today to Sunday, each day's sports (they
   // stay) and the routines still to do, each known by the day it's planned
@@ -929,7 +1044,8 @@ export function Today() {
           onOtherOptions={() => missedOptions(missed)}
         />
       ) : null}
-      <StepsCard today={today} />
+      {/* A done day has today's steps among its numbers. */}
+      {allDone ? null : <StepsCard today={today} />}
 
       {allRoutines.length === 0 && sports.length === 0 ? (
         <Card>
@@ -941,12 +1057,17 @@ export function Today() {
         </Card>
       ) : allDone ? (
         <DayDone
-          segments={segments}
-          done={doneThisWeek}
-          progress={progress}
-          timeS={doneToday.reduce((total, entry) => total + (entry.durationS ?? 0), 0)}
-          volumeKg={doneToday.reduce((total, entry) => total + entry.volumeKg, 0)}
-          beats={beats}
+          today={today}
+          planned={{
+            done: planned.filter((activity) => sessionOf(activity)?.status === 'completed').length,
+            count: planned.length,
+          }}
+          week={{ done: doneThisWeek, goal }}
+          totals={{
+            durationS: doneToday.reduce((total, entry) => total + (entry.durationS ?? 0), 0),
+            volumeKg: doneToday.reduce((total, entry) => total + entry.volumeKg, 0),
+            sets: doneToday.reduce((total, entry) => total + entry.sets, 0),
+          }}
         />
       ) : main ? (
         renderHero(main)
@@ -958,7 +1079,14 @@ export function Today() {
         />
       )}
 
-      <AlsoToday items={[...alsoToday, ...unplanned]} onAdd={addActivity} />
+      {allDone ? (
+        <>
+          <CompletedList items={completed} onAdd={addActivity} />
+          {tomorrow ? <TomorrowCard {...tomorrow} /> : null}
+        </>
+      ) : (
+        <AlsoToday items={[...alsoToday, ...unplanned]} onAdd={addActivity} />
+      )}
 
       <QuickLogSheet
         visible={logging !== null}
@@ -984,11 +1112,11 @@ export function Today() {
         visible={previewing !== null}
         onClose={() => setPreviewing(null)}
         onStart={
-          previewing
+          previewing?.planned
             ? () => {
                 const { routine, planned: plannedRoutine } = previewing;
                 setPreviewing(null);
-                start(routine, plannedRoutine.id);
+                start(routine, plannedRoutine?.id ?? null);
               }
             : undefined
         }

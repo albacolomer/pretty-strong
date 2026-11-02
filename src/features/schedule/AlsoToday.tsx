@@ -35,7 +35,6 @@ const CHECK_EDGE = 6;
 // row to log another one.
 export function AlsoToday({ items, onAdd }: { items: AlsoTodayItem[]; onAdd: () => void }) {
   const { t } = useTranslation();
-  const { colors } = useTheme();
   // A column for start times when any has one, so the names line up.
   const timed = items.some((item) => item.time !== null);
 
@@ -51,21 +50,32 @@ export function AlsoToday({ items, onAdd }: { items: AlsoTodayItem[]; onAdd: () 
       ) : (
         items.map((item) => <Row key={item.key} item={item} timed={timed} />)
       )}
-      <Pressable
-        role="button"
-        onPress={onAdd}
-        hitSlop={(touch.min - ADD_ROW) / 2}
-        style={({ pressed }) => [
-          styles.add,
-          { borderTopColor: colors.separator },
-          pressed && styles.pressed,
-        ]}>
-        <SymbolView name="plus" size={14} weight="medium" tintColor={colors.textMuted} />
-        <Text variant="label" color="textMuted" numberOfLines={1} style={styles.addLabel}>
-          {t('today.addActivity')}
-        </Text>
-      </Pressable>
+      <AddActivityRow onPress={onAdd} />
     </Card>
+  );
+}
+
+// The last row of a card of the day's activities: "+ Registra una altra
+// activitat", under a hairline.
+export function AddActivityRow({ onPress }: { onPress: () => void }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+
+  return (
+    <Pressable
+      role="button"
+      onPress={onPress}
+      hitSlop={(touch.min - ADD_ROW) / 2}
+      style={({ pressed }) => [
+        styles.add,
+        { borderTopColor: colors.separator },
+        pressed && styles.pressed,
+      ]}>
+      <SymbolView name="plus" size={14} weight="medium" tintColor={colors.textMuted} />
+      <Text variant="label" color="textMuted" numberOfLines={1} style={styles.addLabel}>
+        {t('today.addActivity')}
+      </Text>
+    </Pressable>
   );
 }
 

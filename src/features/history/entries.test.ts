@@ -3,6 +3,7 @@ import {
   formatShortDate,
   streakTarget,
   streakWeeks,
+  volumeChange,
   weeklyCounts,
   weeklyGoal,
   type HistoryEntry,
@@ -19,6 +20,7 @@ function entry(values: Partial<HistoryEntry>): HistoryEntry {
     id: 'session-1',
     date: '2026-10-21',
     routineName: 'Tren inferior 1',
+    routineId: 'lower-1',
     routineLabel: 'strength',
     customLabel: null,
     sport: null,
@@ -119,5 +121,35 @@ describe('a row', () => {
   test('its date, short', () => {
     expect(formatShortDate('2026-10-21', 'ca')).toBe('dc., 21 d’oct.');
     expect(formatShortDate('2026-10-21', 'en')).toBe('Wed, Oct 21');
+  });
+});
+
+describe('volumeChange', () => {
+  const today = entry({ id: 'today', date: '2026-10-22', volumeKg: 5200 });
+
+  test('against the last time the same routine was done', () => {
+    const entries = [
+      today,
+      entry({ id: 'last', date: '2026-10-15', volumeKg: 5000 }),
+      entry({ id: 'older', date: '2026-10-08', volumeKg: 4000 }),
+      // Another routine doesn't count.
+      entry({ id: 'other', date: '2026-10-20', routineId: 'upper-1', volumeKg: 9000 }),
+    ];
+
+    expect(volumeChange(today, entries)).toBeCloseTo(0.04);
+  });
+
+  test('less than last time is negative', () => {
+    const last = entry({ id: 'last', date: '2026-10-15', volumeKg: 6500 });
+
+    expect(volumeChange(today, [today, last])).toBeCloseTo(-0.2);
+  });
+
+  test('nothing to compare: the first time, no weights, or no routine', () => {
+    expect(volumeChange(today, [today])).toBeNull();
+    // A later workout isn't "last time".
+    expect(volumeChange(today, [today, entry({ id: 'later', date: '2026-10-29' })])).toBeNull();
+    expect(volumeChange(entry({ volumeKg: 0 }), [today])).toBeNull();
+    expect(volumeChange({ ...today, routineId: null }, [today])).toBeNull();
   });
 });
