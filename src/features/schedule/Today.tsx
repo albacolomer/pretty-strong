@@ -202,9 +202,31 @@ export function Today() {
     router.push('/workout');
   }
 
+  // The list of reasons. With `optional` (a skip), "Sense motiu" goes
+  // without one; a swap always has one, or is cancelled.
+  function askReason(
+    title: string,
+    onPick: (reason: ChangeReason | null) => void,
+    { optional }: { optional: boolean },
+  ) {
+    const options = [
+      ...CHANGE_REASONS.map((reason) => t(`workout.reasons.${reason}`)),
+      ...(optional ? [t('workout.noReason')] : []),
+      t('common.cancel'),
+    ];
+    showActionSheet({ title, options, cancelButtonIndex: options.length - 1 }, (index) => {
+      if (index < CHANGE_REASONS.length) onPick(CHANGE_REASONS[index]);
+      else if (optional && index === CHANGE_REASONS.length) onPick(null);
+    });
+  }
+
   // A routine just created from "+" → "Crea una rutina nova" (routines/new
   // sends its id back): start it as soon as it's in the list.
-  const { start: createdRoutineId } = useLocalSearchParams<{ start?: string }>();
+  const {
+    start: createdRoutineId,
+    swap: swapInId,
+    swapFor,
+  } = useLocalSearchParams<{ start?: string; swap?: string; swapFor?: string }>();
   // Started once, even if the screen redraws before the link is cleared.
   const startedCreated = useRef<string | null>(null);
   useEffect(() => {
@@ -213,6 +235,21 @@ export function Today() {
     startedCreated.current = created.id;
     router.setParams({ start: undefined });
     start(created, null);
+  });
+
+  // One created from Canvia → "Una altra rutina" → "Crea una rutina nova",
+  // with the planned routine it's for: swapped in, once there's a reason.
+  const swappedCreated = useRef<string | null>(null);
+  useEffect(() => {
+    const created = routines?.find((routine) => routine.id === swapInId);
+    if (!created || !swapFor || swappedCreated.current === created.id) return;
+    swappedCreated.current = created.id;
+    router.setParams({ swap: undefined, swapFor: undefined });
+    askReason(
+      t('today.swapReasonTitle'),
+      (reason) => setSwap(day, swapFor, { routineId: created.id, reason }),
+      { optional: false },
+    );
   });
 
   const header = <ScreenTitle eyebrow={formatDayTitle(today, language)} title={t('tabs.today')} />;
@@ -330,24 +367,6 @@ export function Today() {
   }
 
   // The native list of reasons, optional: "Sense motiu" logs without one.
-  function askReason(title: string, onPick: (reason: ChangeReason | null) => void) {
-    showActionSheet(
-      {
-        title,
-        options: [
-          ...CHANGE_REASONS.map((reason) => t(`workout.reasons.${reason}`)),
-          t('workout.noReason'),
-          t('common.cancel'),
-        ],
-        cancelButtonIndex: CHANGE_REASONS.length + 1,
-      },
-      (index) => {
-        if (index < CHANGE_REASONS.length) onPick(CHANGE_REASONS[index]);
-        else if (index === CHANGE_REASONS.length) onPick(null);
-      },
-    );
-  }
-
   function sheet(title: string, actions: Action[]) {
     showActionSheet(
       {
@@ -370,28 +389,31 @@ export function Today() {
   const noSport = { plannedSportId: null, sport: null, sportName: null };
 
   function skip(activity: DayActivity) {
-    askReason(t('today.skipReasonTitle'), (reason) =>
-      log(
-        {
-          id: randomUUID(),
-          date: day,
-          plannedRoutineId: activity.kind === 'routine' ? activity.routine.id : null,
-          routineId: null,
-          status: 'skipped',
-          logMode: 'quick',
-          durationS: null,
-          notes: null,
-          changeReason: reason,
-          ...(activity.kind === 'sport'
-            ? {
-                plannedSportId: activity.sport.id,
-                sport: activity.sport.sport,
-                sportName: activity.sport.customName,
-              }
-            : noSport),
-        },
-        t('today.skipped', { name: nameOf(activity) }),
-      ),
+    askReason(
+      t('today.skipReasonTitle'),
+      (reason) =>
+        log(
+          {
+            id: randomUUID(),
+            date: day,
+            plannedRoutineId: activity.kind === 'routine' ? activity.routine.id : null,
+            routineId: null,
+            status: 'skipped',
+            logMode: 'quick',
+            durationS: null,
+            notes: null,
+            changeReason: reason,
+            ...(activity.kind === 'sport'
+              ? {
+                  plannedSportId: activity.sport.id,
+                  sport: activity.sport.sport,
+                  sportName: activity.sport.customName,
+                }
+              : noSport),
+          },
+          t('today.skipped', { name: nameOf(activity) }),
+        ),
+      { optional: true },
     );
   }
 
@@ -693,10 +715,14 @@ export function Today() {
     swapTo: (reason: ChangeReason | null) => Swap,
     close: () => void,
   ) {
-    askReason(t('today.swapReasonTitle'), (reason) => {
-      close();
-      setSwap(day, routine.id, swapTo(reason));
-    });
+    askReason(
+      t('today.swapReasonTitle'),
+      (reason) => {
+        close();
+        setSwap(day, routine.id, swapTo(reason));
+      },
+      { optional: false },
+    );
   }
 
   // "+": a routine, unplanned (or a new one, started once it's saved), or a
@@ -1288,14 +1314,15 @@ export function Today() {
           start(chosen, null);
         }}
         onClose={() => setPicking(null)}
-        onCreate={
-          picking?.kind === 'start'
-            ? () => {
-                setPicking(null);
-                router.push({ pathname: '/plan/routines/new', params: { start: '1' } });
-              }
-            : undefined
-        }
+        // A new routine: started once it's saved (+), or swapped in (Canvia).
+        onCreate={() => {
+          setPicking(null);
+          router.push({
+            pathname: '/plan/routines/new',
+            params:
+              picking?.kind === 'swap' ? { swapFor: picking.routine.id } : { start: '1' },
+          });
+        }}
       />
       <LogSportSheet
         key={`swap-${sportSwap.opened}`}

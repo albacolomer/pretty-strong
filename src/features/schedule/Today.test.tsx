@@ -58,7 +58,7 @@ jest.mock('@/features/workout/api', () => ({
 }));
 jest.mock('expo-crypto', () => ({ randomUUID: () => 'session-1' }));
 // The screen's link parameters, e.g. { start } from the routine editor.
-let mockParams: { start?: string } = {};
+let mockParams: { start?: string; swap?: string; swapFor?: string } = {};
 jest.mock('expo-router', () => ({
   router: { push: jest.fn(), navigate: jest.fn(), setParams: jest.fn() },
   useLocalSearchParams: () => mockParams,
@@ -549,6 +549,8 @@ describe('<Today />', () => {
     expect(screen.queryByRole('button', { name: /^Tren superior 1/ })).not.toBeOnTheScreen();
     sheetChoices.push('Cansament');
     await user.press(screen.getByRole('button', { name: /^Cames/ }));
+    // A swap always has a reason (or is cancelled).
+    expect(actionSheet.mock.lastCall?.[0].options).not.toContain('Sense motiu');
 
     expect(screen.queryByRole('header', { name: 'Tria una rutina' })).not.toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Cames' })).toBeOnTheScreen();
@@ -574,7 +576,7 @@ describe('<Today />', () => {
 
     sheetChoices.push('Una altra rutina');
     await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
-    sheetChoices.push('Sense motiu');
+    sheetChoices.push('Falta de temps');
     await user.press(screen.getByRole('button', { name: /^Cames/ }));
     // Once swapped, Canvia also offers the plan back.
     sheetChoices.push('Torna a «Tren superior 1»');
@@ -582,6 +584,29 @@ describe('<Today />', () => {
 
     expect(screen.queryByText('En lloc de «Tren superior 1»')).not.toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
+  });
+
+  test('Canvia → Una altra rutina → a new one, swapped in once it is saved', async () => {
+    const user = userEvent.setup();
+    const { unmount } = await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Una altra rutina');
+    await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
+    await user.press(screen.getByRole('button', { name: 'Crea una rutina nova' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/plan/routines/new',
+      params: { swapFor: 'upper' },
+    });
+    await unmount();
+
+    // The editor comes back with the new routine's id, and the planned one.
+    mockParams = { swap: 'legs', swapFor: 'upper' };
+    sheetChoices.push('Cansament');
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByRole('header', { name: 'Cames' })).toBeOnTheScreen();
+    expect(screen.getByText('En lloc de «Tren superior 1»')).toBeOnTheScreen();
+    expect(router.setParams).toHaveBeenCalledWith({ swap: undefined, swapFor: undefined });
   });
 
   test('Canvia → a sport takes the routine’s place, and is logged in its place', async () => {
