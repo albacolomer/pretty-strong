@@ -6,6 +6,8 @@ import { Pedometer } from 'expo-sensors';
 
 import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { fetchEvents } from '@/features/events/api';
+import type { CalendarEvent } from '@/features/events/events';
 import { fetchHistoryEntries } from '@/features/history/api';
 import type { HistoryEntry } from '@/features/history/entries';
 import { fetchProfile, type Profile } from '@/features/profile/api';
@@ -50,6 +52,8 @@ jest.mock('@/features/exercises/api', () => ({
     Promise.resolve({ 'exercise-1': { notes: null, defaultRestS: 150 } }),
   ),
 }));
+// No competitions or special dates, unless a test adds some.
+jest.mock('@/features/events/api', () => ({ fetchEvents: jest.fn() }));
 jest.mock('@/lib/notifications', () => ({ ensureNotificationPermission: jest.fn() }));
 jest.mock('@/features/workout/api', () => ({
   fetchSessions: jest.fn(),
@@ -190,6 +194,7 @@ beforeEach(() => {
   jest.mocked(fetchHistoryEntries).mockReset().mockResolvedValue([]);
   jest.mocked(Pedometer.isAvailableAsync).mockResolvedValue(false);
   jest.mocked(fetchWeeklySports).mockResolvedValue([]);
+  jest.mocked(fetchEvents).mockResolvedValue([]);
   jest.mocked(fetchMoves).mockReset().mockResolvedValue([]);
   jest.mocked(replaceMoves).mockReset().mockResolvedValue();
   jest.mocked(logQuickSession).mockReset().mockResolvedValue();
@@ -211,6 +216,57 @@ afterEach(() => actionSheet.mockRestore());
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<Today />', () => {
+  describe('the countdown to the next event', () => {
+    const event = (values: Partial<CalendarEvent>): CalendarEvent => ({
+      id: 'event-1',
+      date: '2026-11-14',
+      kind: 'hyrox',
+      name: 'HYROX Barcelona',
+      place: 'Fira de Barcelona',
+      notes: null,
+      ...values,
+    });
+
+    test('shows only the nearest one, with the days left', async () => {
+      jest.mocked(fetchEvents).mockResolvedValue([
+        event({ id: 'event-0', date: '2026-10-04', name: 'Cursa de la Mercè' }),
+        event({ id: 'event-2', date: '2026-12-06', kind: 'marathon', name: null }),
+        event({}),
+      ]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      expect(
+        await screen.findByLabelText(
+          "Proper esdeveniment: HYROX Barcelona, Dissabte, 14 de novembre, d'aquí a 25 dies",
+        ),
+      ).toBeOnTheScreen();
+      expect(screen.getByText('25')).toBeOnTheScreen();
+      expect(screen.getByText('dies')).toBeOnTheScreen();
+      expect(screen.getByText('Dissabte, 14 de novembre · Fira de Barcelona')).toBeOnTheScreen();
+      expect(screen.queryByText('Marató')).not.toBeOnTheScreen();
+      expect(screen.queryByText('Cursa de la Mercè')).not.toBeOnTheScreen();
+    });
+
+    test('says "Demà" the day before, and uses the kind’s name when it has none', async () => {
+      jest.mocked(fetchEvents).mockResolvedValue([
+        event({ date: '2026-10-21', kind: 'marathon', name: null, place: null }),
+      ]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      expect(
+        await screen.findByLabelText('Proper esdeveniment: Marató, Dimecres, 21 d’octubre, Demà'),
+      ).toBeOnTheScreen();
+    });
+
+    test('is not there with none ahead', async () => {
+      jest.mocked(fetchEvents).mockResolvedValue([event({ date: '2026-10-04' })]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      await screen.findByRole('header', { name: 'També avui' });
+      expect(screen.queryByText('Proper esdeveniment')).not.toBeOnTheScreen();
+    });
+  });
+
   test('the date, the routine to start in the big button, and the rest "també avui"', async () => {
     await render(<Today />, { wrapper: createAppWrapper() });
 

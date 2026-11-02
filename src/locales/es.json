@@ -757,7 +757,15 @@
     "onDay_other": "{{count}} eventos",
     "monthCount_zero": "Ningún evento este mes",
     "monthCount_one": "1 evento este mes",
-    "monthCount_other": "{{count}} eventos este mes"
+    "monthCount_other": "{{count}} eventos este mes",
+    "countdownLabel": "Próximo evento",
+    "countdownAria": "Próximo evento: {{name}}, {{date}}, {{when}}",
+    "isToday": "Hoy",
+    "isTomorrow": "Mañana",
+    "inDays_one": "dentro de {{count}} día",
+    "inDays_other": "dentro de {{count}} días",
+    "daysUnit_one": "día",
+    "daysUnit_other": "días"
   },
   "settings": {
     "title": "Ajustes"

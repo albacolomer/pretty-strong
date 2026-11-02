@@ -757,7 +757,15 @@
     "onDay_other": "{{count}} esdeveniments",
     "monthCount_zero": "Cap esdeveniment aquest mes",
     "monthCount_one": "1 esdeveniment aquest mes",
-    "monthCount_other": "{{count}} esdeveniments aquest mes"
+    "monthCount_other": "{{count}} esdeveniments aquest mes",
+    "countdownLabel": "Proper esdeveniment",
+    "countdownAria": "Proper esdeveniment: {{name}}, {{date}}, {{when}}",
+    "isToday": "Avui",
+    "isTomorrow": "Demà",
+    "inDays_one": "d'aquí a {{count}} dia",
+    "inDays_other": "d'aquí a {{count}} dies",
+    "daysUnit_one": "dia",
+    "daysUnit_other": "dies"
   },
   "settings": {
     "title": "Configuració"

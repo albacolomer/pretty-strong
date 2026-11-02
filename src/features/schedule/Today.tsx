@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Card, ScreenTitle, Text, useActionSheet, useToast } from '@/components/ui';
+import { EventCountdown } from '@/features/events/EventCountdown';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { volumeChange } from '@/features/history/entries';
@@ -1240,6 +1241,7 @@ export function Today() {
       ) : (
         <AlsoToday items={[...alsoToday, ...unplanned]} onAdd={addActivity} />
       )}
+      <EventCountdown today={today} />
 
       <QuickLogSheet
         visible={logging !== null}

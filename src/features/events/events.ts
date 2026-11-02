@@ -1,5 +1,7 @@
 import type { SFSymbol } from 'expo-symbols';
 
+import { dayNumber, fromDateKey } from '@/features/schedule/dates';
+
 // Competitions and special dates (US-30): a marathon, a HYROX… on a day of
 // the calendar. No React here.
 
@@ -95,4 +97,21 @@ export function eventsOn(events: readonly CalendarEvent[], date: string): Calend
 // The days with at least one event.
 export function eventDays(events: readonly CalendarEvent[]): Set<string> {
   return new Set(events.map((event) => event.date));
+}
+
+// Avui's countdown: the nearest event from today on (today's too). Of two
+// on that day, the one added first. Null when none is ahead.
+export function nextEvent(events: readonly CalendarEvent[], today: string): CalendarEvent | null {
+  let next: CalendarEvent | null = null;
+  for (const event of events) {
+    if (event.date >= today && (next === null || event.date < next.date)) next = event;
+  }
+  return next;
+}
+
+// Whole calendar days from `today` to `date` ("2026-11-14"): 0 on the day,
+// 1 the day before. Counted by calendar day, so a clock change doesn't
+// shift it.
+export function daysUntil(today: string, date: string): number {
+  return dayNumber(fromDateKey(date)) - dayNumber(fromDateKey(today));
 }

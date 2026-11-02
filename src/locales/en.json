@@ -757,7 +757,15 @@
     "onDay_other": "{{count}} events",
     "monthCount_zero": "No events this month",
     "monthCount_one": "1 event this month",
-    "monthCount_other": "{{count}} events this month"
+    "monthCount_other": "{{count}} events this month",
+    "countdownLabel": "Next event",
+    "countdownAria": "Next event: {{name}}, {{date}}, {{when}}",
+    "isToday": "Today",
+    "isTomorrow": "Tomorrow",
+    "inDays_one": "in {{count}} day",
+    "inDays_other": "in {{count}} days",
+    "daysUnit_one": "day",
+    "daysUnit_other": "days"
   },
   "settings": {
     "title": "Settings"
