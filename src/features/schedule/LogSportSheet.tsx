@@ -5,22 +5,26 @@ import { StyleSheet } from 'react-native';
 import { NumberInput, Sheet, TextField } from '@/components/ui';
 import { readMinutes } from '@/features/workout/session';
 
-import { SPORT_NAME_MAX_LENGTH, SPORTS, type Sport } from './sports';
+import { PLANNABLE_SPORTS, SPORT_NAME_MAX_LENGTH, SPORTS, type Sport } from './sports';
 import { SportGrid } from './SportGrid';
 
 export type LoggedSport = { sport: Sport; customName: string | null; durationS: number | null };
 
 // Avui → + → "Registra un esport": a sport done today that wasn't planned,
-// with how long it took. Give it a new key for each opening, so it starts
-// afresh.
+// with how long it took. With `pick`, Canvia → "Un esport": just which
+// sport (no walk or stretching, which aren't workouts), and the sheet stays
+// open for the reason, so the caller closes it. Give it a new key for each
+// opening, so it starts afresh.
 export function LogSportSheet({
   visible,
   onClose,
   onSave,
+  pick = false,
 }: {
   visible: boolean;
   onClose: () => void;
   onSave: (logged: LoggedSport) => void;
+  pick?: boolean;
 }) {
   const { t } = useTranslation();
   const [sport, setSport] = useState<Sport | null>(null);
@@ -32,20 +36,20 @@ export function LogSportSheet({
   return (
     <Sheet
       visible={visible}
-      title={t('today.logSportTitle')}
+      title={pick ? t('today.pickSport') : t('today.logSportTitle')}
       onCancel={onClose}
-      saveLabel={t('schedule.save')}
+      saveLabel={pick ? t('today.choose') : t('schedule.save')}
       saveDisabled={!ready}
       onSave={() => {
         if (!sport || !ready) return;
         onSave({
           sport,
           customName: sport === 'other' ? name : null,
-          durationS: readMinutes(minutes),
+          durationS: pick ? null : readMinutes(minutes),
         });
-        onClose();
+        if (!pick) onClose();
       }}>
-      <SportGrid value={sport} onChange={setSport} sports={SPORTS} />
+      <SportGrid value={sport} onChange={setSport} sports={pick ? PLANNABLE_SPORTS : SPORTS} />
       {sport === 'other' ? (
         <TextField
           label={t('schedule.sportName')}
@@ -56,14 +60,16 @@ export function LogSportSheet({
           autoFocus
         />
       ) : null}
-      <NumberInput
-        label={t('workout.quickLog.duration')}
-        value={minutes}
-        onChangeText={setMinutes}
-        placeholder="60"
-        maxLength={4}
-        style={styles.minutes}
-      />
+      {pick ? null : (
+        <NumberInput
+          label={t('workout.quickLog.duration')}
+          value={minutes}
+          onChangeText={setMinutes}
+          placeholder="60"
+          maxLength={4}
+          style={styles.minutes}
+        />
+      )}
     </Sheet>
   );
 }

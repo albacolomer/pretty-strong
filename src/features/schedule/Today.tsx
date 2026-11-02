@@ -54,11 +54,13 @@ import {
 } from './moves';
 import { ReprogramSheet, type ReprogramDay, type ReprogramRoutine } from './ReprogramSheet';
 import { RestDay } from './RestDay';
+import { RoutinePickerSheet } from './RoutinePickerSheet';
 import { RoutinePreviewSheet } from './RoutinePreviewSheet';
 import { countsAsWorkout, SPORT_ICONS, type Sport, type WeeklySport } from './sports';
 import { TodayHero, type HeroAction } from './TodayHero';
 import { useActivityName } from './useActivityName';
 import { TomorrowCard } from './TomorrowCard';
+import type { Swap } from './swaps';
 import { useSwaps } from './useSwaps';
 import { useToday } from './useToday';
 import { useSetWeekMoves, useWeekMoves } from './useWeekMoves';
@@ -72,6 +74,8 @@ import {
 } from './week';
 
 type Action = { label: string; run: () => void };
+// A sport by itself (its own name for "Altres"), e.g. one swapped in.
+type SportChoice = { sport: Sport; customName: string | null };
 
 // The Avui tab (US-11, US-12, US-20): the date and "AVUI", today's steps,
 // then the day's main activity in a big metal button inside the week's
@@ -139,11 +143,12 @@ export function Today() {
   const { swaps, setSwap } = useSwaps(from);
   // Your own default rest per exercise, fixed into the workout when it starts.
   const { data: settings } = useExerciseSettings();
-  // What the "Fet" sheet is open for: a routine (as shown), a sport, or a
-  // rest day's walk or stretching.
+  // What the "Fet" sheet is open for: a routine (as shown), a sport, a
+  // sport swapped in for a routine, or a rest day's walk or stretching.
   const [logging, setLogging] = useState<
     | { kind: 'routine'; planned: Routine; shown: Routine }
     | { kind: 'sport'; sport: WeeklySport }
+    | { kind: 'swappedSport'; planned: Routine; sport: SportChoice }
     | { kind: 'recovery'; sport: Sport }
     | null
   >(null);
@@ -156,6 +161,16 @@ export function Today() {
   // The "Registra un esport" sheet, and a count that gives each opening a
   // fresh start.
   const [loggingSport, setLoggingSport] = useState({ visible: false, opened: 0 });
+  // "Tria una rutina": for Canvia (instead of a planned routine) or for +.
+  const [picking, setPicking] = useState<
+    { kind: 'swap'; routine: Routine } | { kind: 'start' } | null
+  >(null);
+  // "Tria un esport" for Canvia: the routine it would replace, and a count
+  // for a fresh start each time.
+  const [sportSwap, setSportSwap] = useState<{ routine: Routine | null; opened: number }>({
+    routine: null,
+    opened: 0,
+  });
   // "Reprograma la setmana…", open with yesterday's missed routine too (put
   // under today) when it comes from the nudge.
   const [reprogramming, setReprogramming] = useState<{ missed: RoutineActivity | null } | null>(
@@ -247,8 +262,25 @@ export function Today() {
 
   // What a routine shows: what was done, else the swap, else the plan.
   function shownFor(routine: Routine, session: WorkoutSession | undefined): Routine {
-    const id = session?.routineId ?? swaps[day]?.[routine.id]?.routineId;
+    const swap = swaps[day]?.[routine.id];
+    const id = session?.routineId ?? (swap && 'routineId' in swap ? swap.routineId : undefined);
     return allRoutines.find((other) => other.id === id) ?? routine;
+  }
+
+  // A sport in a routine's place: the one logged for it, else today's swap.
+  function sportFor(routine: Routine, session: WorkoutSession | undefined): SportChoice | null {
+    if (session) {
+      return session.sport ? { sport: session.sport, customName: session.sportName } : null;
+    }
+    const swap = swaps[day]?.[routine.id];
+    return swap && 'sport' in swap ? { sport: swap.sport, customName: swap.sportName } : null;
+  }
+
+  // The name a planned routine goes by today: its own, a swapped routine's,
+  // or a sport's.
+  function shownName(routine: Routine, session: WorkoutSession | undefined): string {
+    const sport = sportFor(routine, session);
+    return sport ? nameOf({ kind: 'sport', sport }) : shownFor(routine, session).name;
   }
 
   // The main one: the first routine to start still to do, else any routine
@@ -516,6 +548,11 @@ export function Today() {
       setLogging({ kind: 'sport', sport: activity.sport });
       return;
     }
+    const sport = sportFor(activity.routine, undefined);
+    if (sport) {
+      setLogging({ kind: 'swappedSport', planned: activity.routine, sport });
+      return;
+    }
     const shown = shownFor(activity.routine, undefined);
     setLogging({ kind: 'routine', planned: activity.routine, shown });
   }
@@ -565,6 +602,28 @@ export function Today() {
       );
       return;
     }
+    if (logging.kind === 'swappedSport') {
+      // Logged in the planned routine's place, with the swap's reason.
+      const { planned: routine, sport } = logging;
+      log(
+        {
+          id: randomUUID(),
+          date: day,
+          plannedRoutineId: routine.id,
+          routineId: null,
+          status: 'completed',
+          logMode: 'quick',
+          durationS,
+          notes,
+          changeReason: swaps[day]?.[routine.id]?.reason ?? null,
+          plannedSportId: null,
+          sport: sport.sport,
+          sportName: sport.customName,
+        },
+        t('today.logged', { name: nameOf({ kind: 'sport', sport }) }),
+      );
+      return;
+    }
     const { planned: routine, shown } = logging;
     log(
       {
@@ -604,39 +663,49 @@ export function Today() {
     );
   }
 
-  // Another routine instead of the planned one, for today only.
-  function swap(routine: Routine, shown: Routine) {
-    const choices = allRoutines.filter((other) => other.id !== shown.id);
-    sheet(
-      t('today.swapTitle', { name: routine.name }),
-      choices.map((chosen) => ({
-        label: chosen.name,
-        run: () => {
-          // Back to the plan: nothing to explain.
-          if (chosen.id === routine.id) {
-            setSwap(day, routine.id, null);
-            return;
-          }
-          askReason(t('today.swapReasonTitle'), (reason) =>
-            setSwap(day, routine.id, { routineId: chosen.id, reason }),
-          );
-        },
-      })),
-    );
+  // Canvia: another routine or a sport instead of the planned one, for
+  // today only, each chosen in its own sheet; once swapped, back to the plan.
+  function swap(routine: Routine) {
+    const swapped = swaps[day]?.[routine.id] !== undefined;
+    sheet(t('today.swapTitle', { name: routine.name }), [
+      { label: t('today.anotherRoutine'), run: () => setPicking({ kind: 'swap', routine }) },
+      {
+        label: t('today.aSport'),
+        run: () => setSportSwap((current) => ({ routine, opened: current.opened + 1 })),
+      },
+      ...(swapped
+        ? [
+            {
+              // Back to the plan: nothing to explain.
+              label: t('today.backToPlanned', { name: routine.name }),
+              run: () => setSwap(day, routine.id, null),
+            },
+          ]
+        : []),
+    ]);
   }
 
-  // "+": any routine, unplanned (or a new one, started once it's saved),
-  // or a sport done today.
+  // A swap, once its reason is answered. The reason is asked over the open
+  // sheet (iOS can't show a menu while a sheet is closing), which closes
+  // then; cancelling it leaves the sheet open to choose again.
+  function swapWithReason(
+    routine: Routine,
+    swapTo: (reason: ChangeReason | null) => Swap,
+    close: () => void,
+  ) {
+    askReason(t('today.swapReasonTitle'), (reason) => {
+      close();
+      setSwap(day, routine.id, swapTo(reason));
+    });
+  }
+
+  // "+": a routine, unplanned (or a new one, started once it's saved), or a
+  // sport done today, each chosen in its own sheet.
   function addActivity() {
-    const startable = allRoutines.filter((routine) => usesExercises(routine.label));
     sheet(t('today.addActivity'), [
-      ...startable.map((routine) => ({ label: routine.name, run: () => start(routine, null) })),
+      { label: t('today.aRoutine'), run: () => setPicking({ kind: 'start' }) },
       {
-        label: t('workout.newRoutine'),
-        run: () => router.push({ pathname: '/plan/routines/new', params: { start: '1' } }),
-      },
-      {
-        label: t('today.logSport'),
+        label: t('today.aSport'),
         run: () => setLoggingSport((current) => ({ visible: true, opened: current.opened + 1 })),
       },
     ]);
@@ -713,6 +782,45 @@ export function Today() {
     }
 
     const { routine } = activity;
+    // A sport in the routine's place: marked done, like a planned sport.
+    const sport = sportFor(routine, session);
+    if (sport) {
+      const name = nameOf({ kind: 'sport', sport });
+      return (
+        <TodayHero
+          {...ring}
+          name={name}
+          insteadOf={t('today.insteadOf', { name: routine.name })}
+          details=""
+          main={
+            session
+              ? null
+              : {
+                  kind: 'done',
+                  caption: t('today.done'),
+                  aria: t('today.doneFor', { name }),
+                  onPress: () => markDone(activity),
+                }
+          }
+          actions={
+            session
+              ? []
+              : [
+                  {
+                    aria: t('today.swapFor', { name }),
+                    icon: 'arrow.left.arrow.right',
+                    onPress: () => swap(routine),
+                  },
+                  {
+                    aria: t('today.skipFor', { name }),
+                    icon: 'forward.end',
+                    onPress: () => skipRoutine(activity),
+                  },
+                ]
+          }
+        />
+      );
+    }
     const shown = shownFor(routine, session);
     const startable = usesExercises(shown.label);
     const going = isActive(routine, shown);
@@ -731,7 +839,7 @@ export function Today() {
           {
             aria: t('today.swapFor', { name: shown.name }),
             icon: 'arrow.left.arrow.right',
-            onPress: () => swap(routine, shown),
+            onPress: () => swap(routine),
           },
           {
             aria: t('today.skipFor', { name: shown.name }),
@@ -790,6 +898,26 @@ export function Today() {
       };
     }
     const { routine } = activity;
+    const sport = sportFor(routine, session);
+    if (sport) {
+      const name = nameOf({ kind: 'sport', sport });
+      return {
+        key: activity.key,
+        icon: SPORT_ICONS[sport.sport],
+        time: null,
+        name,
+        details: session ? statusText(session) : t('today.insteadOf', { name: routine.name }),
+        state,
+        onCheck: check,
+        onPress: () =>
+          session
+            ? undoMenu(name, session)
+            : sheet(name, [
+                { label: t('today.swap'), run: () => swap(routine) },
+                { label: t('today.skip'), run: () => skipRoutine(activity) },
+              ]),
+      };
+    }
     const shown = shownFor(routine, session);
     const going = isActive(routine, shown);
     return {
@@ -816,7 +944,7 @@ export function Today() {
                     },
                   ]
                 : []),
-              { label: t('today.swap'), run: () => swap(routine, shown) },
+              { label: t('today.swap'), run: () => swap(routine) },
               { label: t('today.skip'), run: () => skipRoutine(activity) },
             ]),
     };
@@ -960,7 +1088,7 @@ export function Today() {
       return [
         completedItem(
           activity.key,
-          activity.kind === 'routine' ? shownFor(activity.routine, session).name : nameOf(activity),
+          activity.kind === 'routine' ? shownName(activity.routine, session) : nameOf(activity),
           session,
           activity.kind === 'sport' ? activity.sport.startTime : null,
         ),
@@ -1090,7 +1218,7 @@ export function Today() {
       <QuickLogSheet
         visible={logging !== null}
         routineName={
-          logging?.kind === 'sport'
+          logging?.kind === 'sport' || logging?.kind === 'swappedSport'
             ? nameOf({ kind: 'sport', sport: logging.sport })
             : logging?.kind === 'recovery'
               ? t(`sports.${logging.sport}`)
@@ -1099,7 +1227,7 @@ export function Today() {
         plannedDurationS={
           logging?.kind === 'sport'
             ? logging.sport.durationS
-            : logging?.kind === 'recovery'
+            : logging?.kind === 'recovery' || logging?.kind === 'swappedSport'
               ? null
               : (logging?.shown.plannedDurationS ?? null)
         }
@@ -1132,6 +1260,57 @@ export function Today() {
         visible={loggingSport.visible}
         onClose={() => setLoggingSport((current) => ({ ...current, visible: false }))}
         onSave={saveSport}
+      />
+      <RoutinePickerSheet
+        visible={picking !== null}
+        title={t('today.pickRoutine')}
+        routines={
+          picking?.kind === 'swap'
+            ? // Not the planned one ("Torna a…" is in Canvia) nor the one shown.
+              allRoutines.filter(
+                (other) =>
+                  other.id !== picking.routine.id &&
+                  other.id !== shownFor(picking.routine, undefined).id,
+              )
+            : // Only what can be logged set by set; a class isn't started.
+              allRoutines.filter((routine) => usesExercises(routine.label))
+        }
+        onPick={(chosen) => {
+          if (picking?.kind === 'swap') {
+            swapWithReason(
+              picking.routine,
+              (reason) => ({ routineId: chosen.id, reason }),
+              () => setPicking(null),
+            );
+            return;
+          }
+          setPicking(null);
+          start(chosen, null);
+        }}
+        onClose={() => setPicking(null)}
+        onCreate={
+          picking?.kind === 'start'
+            ? () => {
+                setPicking(null);
+                router.push({ pathname: '/plan/routines/new', params: { start: '1' } });
+              }
+            : undefined
+        }
+      />
+      <LogSportSheet
+        key={`swap-${sportSwap.opened}`}
+        pick
+        visible={sportSwap.routine !== null}
+        onClose={() => setSportSwap((current) => ({ ...current, routine: null }))}
+        onSave={({ sport, customName }) => {
+          const { routine } = sportSwap;
+          if (!routine) return;
+          swapWithReason(
+            routine,
+            (reason) => ({ sport, sportName: customName, reason }),
+            () => setSportSwap((current) => ({ ...current, routine: null })),
+          );
+        }}
       />
     </View>
   );

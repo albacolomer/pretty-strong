@@ -1,14 +1,17 @@
 import type { ChangeReason } from '@/features/workout/session';
 
-// "Canvia" on Today: a routine done instead of the planned one, for one day
-// (US-12). Kept on the phone until it's marked done (the session then
-// records both), so a swap made in the morning is still there in the
-// evening. No React here.
+import type { Sport } from './sports';
 
-export type Swap = {
-  routineId: string;
-  reason: ChangeReason | null;
-};
+// "Canvia" on Today: another routine, or a sport, done instead of the
+// planned routine, for one day (US-12). Kept on the phone until it's marked
+// done (the session then records both), so a swap made in the morning is
+// still there in the evening. No React here.
+
+// A sport (with its own name for "Altres") takes the routine's place; the
+// swaps saved before sports could swap in are routines, and still read.
+export type Swap =
+  | { routineId: string; reason: ChangeReason | null }
+  | { sport: Sport; sportName: string | null; reason: ChangeReason | null };
 
 // By day ("2026-10-20"), then by the planned routine's id.
 export type Swaps = Record<string, Record<string, Swap>>;

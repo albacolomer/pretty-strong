@@ -536,8 +536,21 @@ describe('<Today />', () => {
     const user = userEvent.setup();
     const { unmount } = await render(<Today />, { wrapper: createAppWrapper() });
 
-    sheetChoices.push('Cames', 'Cansament');
+    // Another routine, chosen in its own sheet; the reason is asked there.
+    sheetChoices.push('Una altra rutina');
     await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual([
+      'Una altra rutina',
+      'Un esport',
+      'Cancel·la',
+    ]);
+    expect(screen.getByRole('header', { name: 'Tria una rutina' })).toBeOnTheScreen();
+    // Not the planned routine itself.
+    expect(screen.queryByRole('button', { name: /^Tren superior 1/ })).not.toBeOnTheScreen();
+    sheetChoices.push('Cansament');
+    await user.press(screen.getByRole('button', { name: /^Cames/ }));
+
+    expect(screen.queryByRole('header', { name: 'Tria una rutina' })).not.toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Cames' })).toBeOnTheScreen();
     expect(screen.getByText('En lloc de «Tren superior 1»')).toBeOnTheScreen();
 
@@ -559,13 +572,47 @@ describe('<Today />', () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    sheetChoices.push('Cames', 'Sense motiu');
+    sheetChoices.push('Una altra rutina');
     await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
-    sheetChoices.push('Tren superior 1');
+    sheetChoices.push('Sense motiu');
+    await user.press(screen.getByRole('button', { name: /^Cames/ }));
+    // Once swapped, Canvia also offers the plan back.
+    sheetChoices.push('Torna a «Tren superior 1»');
     await user.press(screen.getByRole('button', { name: 'Canvia «Cames»' }));
 
     expect(screen.queryByText('En lloc de «Tren superior 1»')).not.toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
+  });
+
+  test('Canvia → a sport takes the routine’s place, and is logged in its place', async () => {
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Un esport');
+    await user.press(await screen.findByRole('button', { name: 'Canvia «Tren superior 1»' }));
+    expect(screen.getByRole('header', { name: 'Tria un esport' })).toBeOnTheScreen();
+    // Only which sport: how long comes when it's done.
+    expect(screen.queryByLabelText('Durada (min)')).not.toBeOnTheScreen();
+    await user.press(screen.getByRole('radio', { name: 'Pàdel' }));
+    sheetChoices.push('Cansament');
+    await user.press(screen.getByRole('button', { name: 'Tria' }));
+
+    expect(screen.getByRole('header', { name: 'Pàdel' })).toBeOnTheScreen();
+    expect(screen.getByText('En lloc de «Tren superior 1»')).toBeOnTheScreen();
+    // Marked done like a planned sport: in the routine's place, with the reason.
+    await user.press(screen.getByRole('button', { name: 'Marca «Pàdel» com a fet' }));
+    await user.type(screen.getByLabelText('Durada (min)'), '60');
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(
+      session({
+        plannedRoutineId: 'upper',
+        routineId: null,
+        durationS: 3600,
+        changeReason: 'tired',
+        sport: 'padel',
+      }),
+    );
   });
 
   test('once everything is logged, its row says how it went and opens it', async () => {
@@ -656,8 +703,9 @@ describe('<Today />', () => {
       /Reprèn/,
     );
 
-    sheetChoices.push('Cames');
+    sheetChoices.push('Una rutina');
     await user.press(screen.getByRole('button', { name: 'Registra una altra activitat' }));
+    await user.press(screen.getByRole('button', { name: /^Cames/ }));
     expect(screen.getByText('Ja tens un entrenament en marxa.')).toBeOnTheScreen();
     expect(router.push).not.toHaveBeenCalled();
 
@@ -669,17 +717,16 @@ describe('<Today />', () => {
     const user = userEvent.setup();
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    sheetChoices.push('Cames');
+    sheetChoices.push('Una rutina');
     await user.press(await screen.findByRole('button', { name: 'Registra una altra activitat' }));
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual(['Una rutina', 'Un esport', 'Cancel·la']);
 
     // A class isn't offered: there's nothing to log set by set.
-    expect(actionSheet.mock.lastCall?.[0].options).toEqual([
-      'Tren superior 1',
-      'Cames',
-      'Crea una rutina nova',
-      'Registra un esport fet avui',
-      'Cancel·la',
-    ]);
+    expect(screen.getByRole('button', { name: /^Tren superior 1/ })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /^Spinning/ })).not.toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Crea una rutina nova' })).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: /^Cames/ }));
+
     expect(useWorkoutStore.getState().active).toMatchObject({
       plannedRoutineId: null,
       routineId: 'legs',
@@ -690,8 +737,9 @@ describe('<Today />', () => {
     const user = userEvent.setup();
     const { unmount } = await render(<Today />, { wrapper: createAppWrapper() });
 
-    sheetChoices.push('Crea una rutina nova');
+    sheetChoices.push('Una rutina');
     await user.press(await screen.findByRole('button', { name: 'Registra una altra activitat' }));
+    await user.press(screen.getByRole('button', { name: 'Crea una rutina nova' }));
     expect(router.push).toHaveBeenCalledWith({
       pathname: '/plan/routines/new',
       params: { start: '1' },
@@ -717,7 +765,7 @@ describe('<Today />', () => {
     keepLogged();
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    sheetChoices.push('Registra un esport fet avui');
+    sheetChoices.push('Un esport');
     await user.press(await screen.findByRole('button', { name: 'Registra una altra activitat' }));
     await user.press(screen.getByRole('radio', { name: 'Ioga' }));
     await user.type(screen.getByLabelText('Durada (min)'), '30');

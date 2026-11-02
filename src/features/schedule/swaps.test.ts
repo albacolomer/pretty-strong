@@ -8,6 +8,14 @@ describe('withSwap', () => {
     expect(withSwap(swapped, '2026-10-20', 'upper', null, '2026-10-19')).toEqual({});
   });
 
+  test('a sport can take the routine’s place', () => {
+    const swap = { sport: 'padel' as const, sportName: null, reason: null };
+
+    expect(withSwap({}, '2026-10-20', 'upper', swap, '2026-10-19')).toEqual({
+      '2026-10-20': { upper: swap },
+    });
+  });
+
   test('drops the days before this week', () => {
     const old: Swaps = { '2026-10-12': { upper: { routineId: 'legs', reason: null } } };
 
