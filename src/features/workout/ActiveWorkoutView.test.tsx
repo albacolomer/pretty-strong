@@ -2,8 +2,8 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { NO_TARGETS, type Routine } from '@/features/routines/routine';
 import { cardioExercise, sundayRun, upperBody } from '@/features/routines/testData';
 import { cancelScheduled, scheduleAt } from '@/lib/notifications';
@@ -89,7 +89,7 @@ beforeEach(() => {
   jest.mocked(cancelScheduled).mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
-    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .spyOn(menus, 'show')
     .mockImplementation((options, callback) =>
       callback(options.options.indexOf(sheetChoices.shift() ?? '')),
     );

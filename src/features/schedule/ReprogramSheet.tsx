@@ -7,7 +7,7 @@ import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sortable from 'react-native-sortables';
 
-import { Button, Text, useActionSheet } from '@/components/ui';
+import { Button, MenuHost, Text, useActionSheet } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { dropInWeek, moveInWeek, type WeekListItem } from './moves';
@@ -44,6 +44,8 @@ export function ReprogramSheet({ visible, ...props }: ReprogramSheetProps) {
       <GestureHandlerRootView style={[styles.sheet, { backgroundColor: colors.background }]}>
         {/* Only mounted while open, so it starts from the week as it is each time. */}
         {visible ? <SheetContent {...props} /> : null}
+        {/* Menus opened while this sheet is up appear on it. */}
+        <MenuHost />
       </GestureHandlerRootView>
     </Modal>
   );

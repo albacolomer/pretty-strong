@@ -2,8 +2,8 @@ import '@/lib/i18n';
 
 import { act, render, screen, userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
@@ -161,7 +161,7 @@ describe('<ExerciseLibrary />', () => {
     mockSetArchived.mockResolvedValue(custom);
     // Pretend the user taps "Arxiva" (option 0) in the native action sheet.
     const actionSheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .spyOn(menus, 'show')
       .mockImplementation((_options, callback) => callback(0));
     await renderLibrary();
 

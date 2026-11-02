@@ -4,6 +4,7 @@ export { GradientText, type GradientTextProps } from './GradientText';
 export { GradientView, type GradientViewProps } from './GradientView';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { Logo, type LogoProps } from './Logo';
+export { MenuHost, menus, type MenuOptions } from './Menu';
 export { MenuButton } from './MenuButton';
 export { MetalFill } from './MetalFill';
 export { KeyboardDoneBar, NumberInput, type NumberInputProps } from './NumberInput';

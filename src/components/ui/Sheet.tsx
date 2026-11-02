@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { radius, spacing, useTheme } from '@/theme';
 
 import { Button } from './Button';
+import { MenuHost } from './Menu';
 import { Text } from './Text';
 
 export type SheetProps = {
@@ -83,6 +84,8 @@ export function Sheet({
             </View>
           </>
         ) : null}
+        {/* Menus opened while this sheet is up appear on it. */}
+        <MenuHost />
       </View>
     </Modal>
   );

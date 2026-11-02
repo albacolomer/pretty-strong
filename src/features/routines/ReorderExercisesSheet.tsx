@@ -6,7 +6,7 @@ import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sortable from 'react-native-sortables';
 
-import { Button, Text } from '@/components/ui';
+import { Button, MenuHost, Text } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage, type Language } from '@/lib/i18n';
@@ -47,6 +47,8 @@ export function ReorderExercisesSheet<T extends { groupKey: string | null }>({
       <GestureHandlerRootView style={[styles.sheet, { backgroundColor: colors.background }]}>
         {/* Only mounted while open, so it starts from the routine's order each time. */}
         {visible ? <SheetContent {...props} /> : null}
+        {/* Menus opened while this sheet is up appear on it. */}
+        <MenuHost />
       </GestureHandlerRootView>
     </Modal>
   );

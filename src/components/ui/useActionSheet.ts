@@ -1,22 +1,8 @@
-import { ActionSheetIOS, type ActionSheetIOSOptions } from 'react-native';
+import { menus, type MenuOptions } from './Menu';
 
-import { useTheme } from '@/theme';
-
-// The native iOS menu (action sheet) in the app's colours: its options in
-// the accent, "Cancel·la" in grey (a step back, not an action), light or
-// dark like the iPhone. A destructive option (destructiveButtonIndex)
-// stays red.
+// Opens a menu (the app's own, see Menu.tsx) on the top-most layer; `onPick`
+// gets the option's index, or Cancel·la's when it's dismissed. A hook so
+// screens ask for menus the same way wherever they are.
 export function useActionSheet() {
-  const { colors, scheme } = useTheme();
-
-  return (options: ActionSheetIOSOptions, onPick: (index: number) => void) =>
-    ActionSheetIOS.showActionSheetWithOptions(
-      {
-        tintColor: colors.accent,
-        cancelButtonTintColor: colors.textMuted,
-        userInterfaceStyle: scheme,
-        ...options,
-      },
-      onPick,
-    );
+  return (options: MenuOptions, onPick: (index: number) => void) => menus.show(options, onPick);
 }

@@ -2,8 +2,8 @@ import '@/lib/i18n';
 
 import { act, render, screen, userEvent } from '@testing-library/react-native';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { fetchExercises, fetchExerciseSettings } from '@/features/exercises/api';
 import { createAppWrapper } from '@/test-utils/appWrapper';
@@ -69,7 +69,7 @@ beforeEach(() => {
   mockPreventRemove.mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
-    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .spyOn(menus, 'show')
     .mockImplementation((options, callback) =>
       callback(options.options.indexOf(sheetChoices.shift() ?? '')),
     );

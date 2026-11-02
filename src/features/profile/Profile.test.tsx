@@ -2,8 +2,8 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { launchImageLibraryAsync } from 'expo-image-picker';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import type { HistoryEntry } from '@/features/history/entries';
 import { fetchHistoryEntries } from '@/features/history/api';
 import { fetchRoutines } from '@/features/routines/api';
@@ -114,7 +114,7 @@ describe('Profile', () => {
   test('the camera badge sets a profile picture, cropped square', async () => {
     const user = userEvent.setup();
     const actionSheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .spyOn(menus, 'show')
       .mockImplementation((options, callback) =>
         callback(options.options.indexOf("Tria'n una de la galeria")),
       );

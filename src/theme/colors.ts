@@ -28,6 +28,8 @@ const light = {
   control: '#C7C7C5',
   // A progress bar's empty part.
   track: '#E9F0F5',
+  // Dims the screen behind a menu.
+  scrim: 'rgba(20, 30, 40, 0.32)',
   up: '#2E9E64',
   down: '#C9771F',
   danger: '#D64545',
@@ -53,6 +55,7 @@ const dark: Colors = {
   separator: '#26292D',
   control: '#5A5E64',
   track: '#26343F',
+  scrim: 'rgba(0, 0, 0, 0.55)',
   up: '#7ED9A6',
   down: '#FFB86B',
   danger: '#FF6B6B',

@@ -3,7 +3,7 @@ import '@/lib/i18n';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { Stack, ThemeProvider } from 'expo-router';
 
-import { ToastProvider } from '@/components/ui';
+import { MenuHost, ToastProvider } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { SplashScreenController } from '@/features/auth/SplashScreenController';
 import { useAppFonts } from '@/lib/fonts';
@@ -30,6 +30,8 @@ export default function RootLayout() {
           <ThemeProvider value={navigationThemes[scheme]}>
             <ToastProvider>
               <RootNavigator />
+              {/* Menus on the app's own layer (sheets and the workout have theirs). */}
+              <MenuHost />
             </ToastProvider>
           </ThemeProvider>
         ) : null}

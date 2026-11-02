@@ -2,8 +2,8 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { fetchRoutines } from '@/features/routines/api';
 import type { Routine } from '@/features/routines/routine';
@@ -93,7 +93,7 @@ beforeEach(() => {
   jest.mocked(reorderDay).mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
-    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .spyOn(menus, 'show')
     .mockImplementation((options, callback) =>
       callback(options.options.indexOf(sheetChoices.shift() ?? '')),
     );

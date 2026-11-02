@@ -3,8 +3,8 @@ import '@/lib/i18n';
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { launchImageLibraryAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { authenticateAsync } from 'expo-local-authentication';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { fetchProfile, type Profile } from '@/features/profile/api';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
@@ -137,7 +137,7 @@ describe('Body (US-28)', () => {
   test('the weight history: deleting one goes at once, with Desfés', async () => {
     const user = userEvent.setup();
     const actionSheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .spyOn(menus, 'show')
       .mockImplementation((_options, callback) => callback(0));
     await render(<WeightHistory />, { wrapper: createAppWrapper() });
 
@@ -160,7 +160,7 @@ describe('Body (US-28)', () => {
     beforeEach(() => {
       sheetChoices.length = 0;
       actionSheet = jest
-        .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+        .spyOn(menus, 'show')
         .mockImplementation((options, callback) =>
           callback(options.options.indexOf(sheetChoices.shift() ?? '')),
         );

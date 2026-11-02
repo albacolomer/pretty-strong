@@ -2,8 +2,8 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
@@ -100,7 +100,7 @@ describe('<RoutineList />', () => {
   test('archives a routine from its menu, with Desfés; archived ones have their own list', async () => {
     const user = userEvent.setup();
     const actionSheet = jest
-      .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+      .spyOn(menus, 'show')
       .mockImplementation((options, callback) => callback(options.options.indexOf('Arxiva')));
     const legs = { ...upperBody, id: 'routine-2', name: 'Cames' };
     mockFetchRoutines.mockResolvedValue([upperBody]);

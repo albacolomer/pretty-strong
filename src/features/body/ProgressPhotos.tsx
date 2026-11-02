@@ -5,7 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, Text, useActionSheet } from '@/components/ui';
+import { Button, Card, MenuHost, Text, useActionSheet } from '@/components/ui';
 import { dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { useAppLanguage } from '@/lib/i18n';
@@ -197,6 +197,8 @@ function PhotoViewer({
             </View>
           </>
         ) : null}
+        {/* Menus opened while this sheet is up appear on it. */}
+        <MenuHost />
       </View>
     </Modal>
   );

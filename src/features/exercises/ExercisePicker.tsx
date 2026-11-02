@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, Text } from '@/components/ui';
+import { Button, Card, MenuHost, Text } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
@@ -48,6 +48,8 @@ export function ExercisePicker({
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
         {/* Only mounted while open, so search and ticks start fresh each time. */}
         {visible ? <PickerContent onClose={onClose} onAdd={onAdd} single={single} /> : null}
+        {/* Menus opened while this sheet is up appear on it. */}
+        <MenuHost />
       </View>
     </Modal>
   );

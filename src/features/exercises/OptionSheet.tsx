@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Text } from '@/components/ui';
+import { Button, MenuHost, Text } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
 export type SheetOption<T extends string> = { value: T; label: string; icon: ReactNode };
@@ -98,6 +98,8 @@ export function OptionSheetFrame({
           ) : null}
           <Button label={doneLabel} onPress={onClose} style={styles.cell} />
         </View>
+        {/* Menus opened while this sheet is up appear on it. */}
+        <MenuHost />
       </View>
     </Modal>
   );

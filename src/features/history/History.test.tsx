@@ -2,8 +2,8 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
-import { ActionSheetIOS } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { NO_TARGETS } from '@/features/routines/routine';
 import { fetchRoutines } from '@/features/routines/api';
 import { testExercise, upperBody } from '@/features/routines/testData';
@@ -131,7 +131,7 @@ beforeEach(() => {
   sheetChoices.length = 0;
   // Each action sheet picks the next of sheetChoices.
   actionSheet = jest
-    .spyOn(ActionSheetIOS, 'showActionSheetWithOptions')
+    .spyOn(menus, 'show')
     .mockImplementation((options, callback) =>
       callback(options.options.indexOf(sheetChoices.shift() ?? '')),
     );

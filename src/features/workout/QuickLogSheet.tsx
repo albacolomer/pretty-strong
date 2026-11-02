@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, NumberInput, Text, TextField } from '@/components/ui';
+import { Button, MenuHost, NumberInput, Text, TextField } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
 import { readMinutes } from './session';
@@ -36,6 +36,8 @@ export function QuickLogSheet({ visible, ...props }: QuickLogSheetProps) {
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
         {/* Only mounted while open, so it starts from the plan each time. */}
         {visible ? <SheetContent {...props} /> : null}
+        {/* Menus opened while this sheet is up appear on it. */}
+        <MenuHost />
       </View>
     </Modal>
   );
