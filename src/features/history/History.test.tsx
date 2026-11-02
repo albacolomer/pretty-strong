@@ -2,12 +2,14 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
+import { Pedometer } from 'expo-sensors';
 
 import { menus } from '@/components/ui';
 import { NO_TARGETS } from '@/features/routines/routine';
 import { fetchRoutines } from '@/features/routines/api';
 import { testExercise, upperBody } from '@/features/routines/testData';
 import { fetchMoves } from '@/features/schedule/movesApi';
+import { fetchDailySteps } from '@/features/steps/api';
 import { deleteSession } from '@/features/workout/api';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
 import { useWorkoutStore } from '@/features/workout/workoutStore';
@@ -31,6 +33,18 @@ jest.mock('./api', () => ({
   saveWorkout: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('@/features/workout/api', () => ({ deleteSession: jest.fn(() => Promise.resolve()) }));
+jest.mock('@/features/steps/api', () => ({
+  fetchDailySteps: jest.fn(() => Promise.resolve(new Map())),
+}));
+// The phone has counted nothing today unless a test says otherwise.
+jest.mock('expo-sensors', () => ({
+  Pedometer: {
+    isAvailableAsync: jest.fn(() => Promise.resolve(true)),
+    getPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true, canAskAgain: true })),
+    getStepCountAsync: jest.fn(() => Promise.resolve({ steps: 0 })),
+    watchStepCount: jest.fn(() => ({ remove: jest.fn() })),
+  },
+}));
 jest.mock('@/features/routines/api', () => ({
   fetchRoutines: jest.fn(() =>
     Promise.resolve([jest.requireActual('@/features/routines/testData').upperBody]),
@@ -247,6 +261,27 @@ describe('History', () => {
       pathname: '/profile/history/new',
       params: { date: '2026-10-15' },
     });
+  });
+
+  test("a day shows its steps: today's live from the phone, others' as saved", async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    jest.mocked(Pedometer.getStepCountAsync).mockResolvedValueOnce({ steps: 6240 });
+    jest.mocked(fetchDailySteps).mockResolvedValueOnce(new Map([['2026-10-20', 8432]]));
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('6.240 passos')).toBeOnTheScreen();
+    expect(Pedometer.getStepCountAsync).toHaveBeenCalledWith(new Date(2026, 9, 21), expect.any(Date));
+
+    await user.press(screen.getByRole('button', { name: 'Dimarts, 20 d’octubre: cap entrenament' }));
+    expect(await screen.findByText('8.432 passos')).toBeOnTheScreen();
+    // The whole month at once.
+    expect(fetchDailySteps).toHaveBeenCalledWith('2026-10-01', '2026-10-31');
+
+    // None saved that day: nothing about steps.
+    await user.press(screen.getByRole('button', { name: 'Dijous, 15 d’octubre: cap entrenament' }));
+    expect(screen.getByText('Aquest dia no hi ha cap activitat.')).toBeOnTheScreen();
+    expect(screen.queryByText(/passos$/)).not.toBeOnTheScreen();
   });
 
   test('‹ shows last month at its latest activity; there is nothing after this one', async () => {

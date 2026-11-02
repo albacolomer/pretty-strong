@@ -16,6 +16,7 @@ import { useToday } from '@/features/schedule/useToday';
 import { useWeekMoves } from '@/features/schedule/useWeekMoves';
 import { useWeeklySports } from '@/features/schedule/useWeeklySports';
 import { activitiesOnDate } from '@/features/schedule/week';
+import { DaySteps } from '@/features/steps/DaySteps';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
@@ -25,9 +26,9 @@ import { useHistoryEntries } from './useHistory';
 import { WorkoutRow } from './WorkoutRow';
 
 // Profile → Calendar (US-23, US-24): the month with a ✓ on each day you
-// trained, and under it the picked day's activities, today to begin with.
-// A day without any says so (or that it was a rest day), and every past
-// day can have one logged afterwards.
+// trained, and under it the picked day's activities, today to begin with,
+// and its steps (US-31). A day without any says so (or that it was a rest
+// day), and every past day can have one logged afterwards.
 export function CalendarTab() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -116,6 +117,7 @@ export function CalendarTab() {
               : t(isToday ? 'history.nothingToday' : 'history.nothingThatDay')}
           </Text>
         )}
+        <DaySteps day={selected} today={today} />
         <Button
           label={dayEntries.length > 0 ? t('history.logAnother') : t('history.logActivity')}
           variant="secondary"

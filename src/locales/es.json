@@ -546,6 +546,8 @@
     "count": "{{steps}} / {{goal}} pasos",
     "remaining": "Faltan {{steps}}",
     "reached": "Objetivo cumplido",
+    "onDay_one": "{{steps}} paso",
+    "onDay_other": "{{steps}} pasos",
     "askText": "Muestra los pasos que cuenta tu iPhone.",
     "allow": "Mostrar los pasos",
     "deniedText": "Para verlos, permite Movimiento y forma física en Ajustes.",

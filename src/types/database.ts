@@ -93,6 +93,27 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_steps: {
+        Row: {
+          date: string
+          steps: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          date: string
+          steps: number
+          updated_at?: string
+          user_id?: string
+        }
+        Update: {
+          date?: string
+          steps?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           archived_at: string | null
@@ -737,6 +758,7 @@ export type Database = {
         Args: { p_from: string; p_moves: Json; p_to: string }
         Returns: undefined
       }
+      save_daily_steps: { Args: { p_days: Json }; Returns: undefined }
       save_routine: {
         Args: {
           p_custom_label: string

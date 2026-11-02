@@ -546,6 +546,8 @@
     "count": "{{steps}} / {{goal}} steps",
     "remaining": "{{steps}} to go",
     "reached": "Goal reached",
+    "onDay_one": "{{steps}} step",
+    "onDay_other": "{{steps}} steps",
     "askText": "See the steps your iPhone counts.",
     "allow": "Show my steps",
     "deniedText": "To see them, allow Motion & Fitness in Settings.",
