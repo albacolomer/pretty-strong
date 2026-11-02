@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, GradientText, MenuButton, Text } from '@/components/ui';
+import { Button, Card, GradientText, MenuButton, Text, useActionSheet } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';import { formatDayTitle, fromDateKey } from '@/features/schedule/dates';
@@ -50,7 +50,7 @@ function Details({
   onDeleted: () => void;
 }) {
   const { t } = useTranslation();
-  const { scheme } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const remove = useDeleteWorkout();
   const totals = pastTotals(workout);
@@ -70,13 +70,12 @@ function Details({
   ].filter((part) => part !== null);
 
   function openMenu() {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: name,
         options: [t('history.edit'), t('history.delete'), t('common.cancel')],
         destructiveButtonIndex: 1,
         cancelButtonIndex: 2,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) onEdit();

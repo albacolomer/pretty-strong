@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text } from '@/components/ui';
+import { Button, Card, Text, useActionSheet } from '@/components/ui';
 import { useRoutines } from '@/features/routines/useRoutines';
 import {
   addDays,
@@ -30,7 +30,8 @@ import { WorkoutRow } from './WorkoutRow';
 // day can have one logged afterwards.
 export function CalendarTab() {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const today = useToday();
   const todayKey = dateKey(today);
@@ -69,13 +70,12 @@ export function CalendarTab() {
         pathname: '/profile/history/new',
         params: routineId ? { date, routineId } : { date },
       });
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('history.logOn', { date: formatDayTitle(fromDateKey(date), language) }),
         message: t('history.whichRoutine'),
         options: [...routines.map((routine) => routine.name), t('history.noRoutine'), t('common.cancel')],
         cancelButtonIndex: routines.length + 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index < routines.length) open(routines[index].id);

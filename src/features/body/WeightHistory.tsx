@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, Text } from '@/components/ui';
+import { Card, Text, useActionSheet } from '@/components/ui';
 import { formatShortDate } from '@/features/history/entries';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, touch, useTheme } from '@/theme';
@@ -13,20 +13,20 @@ import { useDeleteWeight, useWeights } from './useBody';
 // Tap one to delete it, with "Desfés"; to change one, log that day again.
 export function WeightHistory() {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const { data: weights = [], isPending, isError } = useWeights();
   const remove = useDeleteWeight();
   const kg = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
   function openMenu(weight: BodyWeight) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: `${kg.format(weight.weightKg)} kg · ${formatShortDate(weight.date, language)}`,
         options: [t('body.deleteWeight'), t('common.cancel')],
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) remove.mutate(weight);

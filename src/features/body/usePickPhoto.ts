@@ -5,10 +5,8 @@ import {
   type ImagePickerOptions,
 } from 'expo-image-picker';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS } from 'react-native';
 
-import { useToast } from '@/components/ui';
-import { useTheme } from '@/theme';
+import { useActionSheet, useToast } from '@/components/ui';
 
 import { exifDate } from './photos';
 
@@ -32,7 +30,7 @@ type PickOptions = {
 // Camera access is asked the first time; the library needs no permission.
 export function usePickPhoto(): (options: PickOptions) => Promise<PickedPhoto | null> {
   const { t } = useTranslation();
-  const { scheme } = useTheme();
+  const showActionSheet = useActionSheet();
   const showToast = useToast();
 
   return ({ title, square = false, remove }) =>
@@ -43,13 +41,12 @@ export function usePickPhoto(): (options: PickOptions) => Promise<PickedPhoto | 
         ...(remove ? [remove.label] : []),
         t('common.cancel'),
       ];
-      ActionSheetIOS.showActionSheetWithOptions(
+      showActionSheet(
         {
           title,
           options,
           destructiveButtonIndex: remove ? 2 : undefined,
           cancelButtonIndex: options.length - 1,
-          userInterfaceStyle: scheme,
         },
         (index) => {
           if (index === 0 || index === 1) {

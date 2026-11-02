@@ -1,9 +1,9 @@
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MenuButton, Text } from '@/components/ui';
+import { Button, Card, MenuButton, Text, useActionSheet } from '@/components/ui';
 import { inset, radius, spacing, touch, useTheme } from '@/theme';
 
 import type { Routine } from './routine';
@@ -15,7 +15,8 @@ import { useRoutines } from './useRoutines';
 // Plan → Rutines (US-07).
 export function RoutineList() {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const { data: routines, isPending, isError } = useRoutines();
   const { data: archived = [] } = useArchivedRoutines();
   const archiveRoutine = useArchiveRoutineWithUndo();
@@ -26,12 +27,11 @@ export function RoutineList() {
   // The native iOS action sheet. Archiving isn't shown as destructive: it
   // can always be undone.
   function openMenu(routine: Routine) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: routine.name,
         options: [t('routines.archive'), t('common.cancel')],
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) archiveRoutine(routine);

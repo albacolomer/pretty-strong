@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Card, MenuButton, Stepper, Text } from '@/components/ui';
+import { Card, MenuButton, Stepper, Text, useActionSheet } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { spacing } from '@/theme';
 
 import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
 import { RestField } from './RestField';
@@ -50,7 +50,7 @@ export function RunBlockCard({
   onRemove,
 }: RunBlockCardProps) {
   const { t } = useTranslation();
-  const { scheme } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const kindName = t(`routines.blocks.kinds.${kind}`);
   const name = t('routines.blocks.name', { number, kind: kindName });
@@ -69,13 +69,12 @@ export function RunBlockCard({
       ...(onReorder ? [{ label: t('routines.reorder.open'), run: onReorder }] : []),
       { label: t('routines.blocks.remove'), run: onRemove },
     ];
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: name,
         options: [...actions.map((action) => action.label), t('common.cancel')],
         destructiveButtonIndex: actions.length - 1,
         cancelButtonIndex: actions.length,
-        userInterfaceStyle: scheme,
       },
       (index) => actions[index]?.run(),
     );

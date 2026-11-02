@@ -20,3 +20,4 @@ export { StepButton, Stepper, type StepperProps } from './Stepper';
 export { Text, type TextProps } from './Text';
 export { TextField, type TextFieldProps } from './TextField';
 export { ToastProvider, useToast, type ToastOptions } from './Toast';
+export { useActionSheet } from './useActionSheet';

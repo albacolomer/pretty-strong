@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text, useActionSheet } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { ROUTINE_LABELS, type RoutineLabel } from './routine';
@@ -14,16 +14,16 @@ type RoutineTypeButtonProps = {
 // "Força ▾" next to the routine's name: opens the native list of types.
 export function RoutineTypeButton({ value, onChange }: RoutineTypeButtonProps) {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const name = t(`routines.labels.${value}`);
 
   function choose() {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('routines.editor.label'),
         options: [...ROUTINE_LABELS.map((label) => t(`routines.labels.${label}`)), t('common.cancel')],
         cancelButtonIndex: ROUTINE_LABELS.length,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         const label = ROUTINE_LABELS[index];

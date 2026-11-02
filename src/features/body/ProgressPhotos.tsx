@@ -2,10 +2,10 @@ import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, Text } from '@/components/ui';
+import { Button, Card, Text, useActionSheet } from '@/components/ui';
 import { dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { useAppLanguage } from '@/lib/i18n';
@@ -148,19 +148,19 @@ function PhotoViewer({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const insets = useSafeAreaInsets();
   const remove = useDeleteProgressPhoto();
 
   function confirmDelete(shown: ProgressPhoto) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('photos.deleteTitle'),
         options: [t('photos.delete'), t('common.cancel')],
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index !== 0) return;

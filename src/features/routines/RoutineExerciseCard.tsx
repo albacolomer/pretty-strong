@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
-import { Card, MenuButton, Text } from '@/components/ui';
+import { Card, MenuButton, Text, useActionSheet } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { spacing } from '@/theme';
 
 import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
 import { RestField } from './RestField';
@@ -58,7 +58,7 @@ export function RoutineExerciseCard({
   onRemove,
 }: RoutineExerciseCardProps) {
   const { t } = useTranslation();
-  const { scheme } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const name = exercise ? exerciseName(exercise, language) : '…';
   // The note shows once asked for with "+ Nota", or straight away if set.
@@ -69,13 +69,12 @@ export function RoutineExerciseCard({
     actions: { label: string; run: () => void }[],
     destructive?: number,
   ) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title,
         options: [...actions.map((action) => action.label), t('common.cancel')],
         destructiveButtonIndex: destructive,
         cancelButtonIndex: actions.length,
-        userInterfaceStyle: scheme,
       },
       (index) => actions[index]?.run(),
     );

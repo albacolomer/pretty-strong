@@ -2,9 +2,9 @@ import { useNavigation } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Text, TextField, useToast } from '@/components/ui';
+import { Button, Text, TextField, useActionSheet, useToast } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
@@ -88,7 +88,7 @@ type RoutineFormProps = Omit<RoutineEditorProps, 'routineId'> & { routine: Routi
 
 function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const { t } = useTranslation();
-  const { scheme } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const navigation = useNavigation();
   const showToast = useToast();
@@ -168,13 +168,12 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
       navigation.dispatch(data.action);
       return;
     }
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('routines.editor.discardTitle'),
         options: [t('routines.editor.discard'), t('routines.editor.keepEditing')],
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) navigation.dispatch(data.action);
@@ -229,12 +228,11 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   function chooseRunBlock() {
     if (!runExerciseId) return;
     const kinds: readonly RunBlockKind[] = RUN_BLOCK_KINDS;
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('routines.blocks.add'),
         options: [...kinds.map((kind) => t(`routines.blocks.kinds.${kind}`)), t('common.cancel')],
         cancelButtonIndex: kinds.length,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         const kind = kinds[index];

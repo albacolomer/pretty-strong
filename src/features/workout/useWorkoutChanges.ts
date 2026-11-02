@@ -2,16 +2,14 @@ import { useQueryClient } from '@tanstack/react-query';
 import { randomUUID } from 'expo-crypto';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS } from 'react-native';
 
-import { useToast } from '@/components/ui';
+import { useActionSheet, useToast } from '@/components/ui';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { useExercises } from '@/features/exercises/useExercises';
 import { TARGET_INPUTS, formatInput } from '@/features/routines/targets';
 import { isNetworkError } from '@/lib/errors';
 import { useAppLanguage } from '@/lib/i18n';
-import { useTheme } from '@/theme';
 
 import {
   addExercises,
@@ -56,7 +54,7 @@ export type WorkoutSource = {
 export function useWorkoutChanges(workout: ActiveWorkout, source: WorkoutSource) {
   const { update } = source;
   const { t } = useTranslation();
-  const { scheme } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const titleOf = useExerciseTitle();
   const showToast = useToast();
@@ -70,13 +68,12 @@ export function useWorkoutChanges(workout: ActiveWorkout, source: WorkoutSource)
   const swappedId = useRef<string | null>(null);
 
   function sheet(title: string, actions: Action[], destructive?: number) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title,
         options: [...actions.map((action) => action.label), t('common.cancel')],
         cancelButtonIndex: actions.length,
         destructiveButtonIndex: destructive,
-        userInterfaceStyle: scheme,
       },
       (index) => actions[index]?.run(),
     );

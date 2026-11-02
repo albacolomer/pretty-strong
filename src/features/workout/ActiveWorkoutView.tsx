@@ -3,10 +3,10 @@ import { useKeepAwake } from 'expo-keep-awake';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Text } from '@/components/ui';
+import { Button, Text, useActionSheet } from '@/components/ui';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { ReorderExercisesSheet } from '@/features/routines/ReorderExercisesSheet';
 import { cancelScheduled, setWorkoutScreenOpen } from '@/lib/notifications';
@@ -52,7 +52,8 @@ export function ActiveWorkoutView({ onClose }: { onClose: () => void }) {
 
 function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => void }) {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const insets = useSafeAreaInsets();
   const update = useWorkoutStore((state) => state.update);
   const finish = useWorkoutStore((state) => state.finish);
@@ -126,13 +127,12 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
 
   function confirmDiscard() {
     // Throwing a workout away can't be undone, so this one asks.
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('workout.discardTitle'),
         options: [t('workout.discard'), t('workout.keepGoing')],
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) leave(discard);
@@ -143,13 +143,12 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
   function confirmFinish() {
     const { done, total } = countSets(workout);
     if (done === 0) {
-      ActionSheetIOS.showActionSheetWithOptions(
+      showActionSheet(
         {
           title: t('workout.noSetsTitle'),
           options: [t('workout.discard'), t('workout.keepGoing')],
           destructiveButtonIndex: 0,
           cancelButtonIndex: 1,
-          userInterfaceStyle: scheme,
         },
         (index) => {
           if (index === 0) leave(discard);
@@ -166,13 +165,12 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
       summary();
       return;
     }
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('workout.finishTitle'),
         message: t('workout.unfinishedSets', { count: total - done }),
         options: [t('workout.finish'), t('workout.keepGoing')],
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) summary();

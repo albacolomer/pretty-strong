@@ -1,13 +1,13 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sortable from 'react-native-sortables';
 
-import { Button, Text } from '@/components/ui';
+import { Button, Text, useActionSheet } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { dropInWeek, moveInWeek, type WeekListItem } from './moves';
@@ -51,7 +51,8 @@ export function ReprogramSheet({ visible, ...props }: ReprogramSheetProps) {
 
 function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetProps, 'visible'>) {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const insets = useSafeAreaInsets();
   const [list, setList] = useState<WeekListItem[]>(() =>
     days.flatMap((day) => [
@@ -67,12 +68,11 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
   // ⋯ → the other days, to put it at the end of one.
   function moveMenu(item: WeekListItem, name: string) {
     const others = days.filter((day) => day.date !== item.date);
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('today.moveRoutineTo', { name }),
         options: [...others.map((day) => day.title), t('common.cancel')],
         cancelButtonIndex: others.length,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         const day = others[index];

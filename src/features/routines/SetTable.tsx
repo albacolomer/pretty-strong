@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Text } from '@/components/ui';
-import { spacing, touch, useTheme } from '@/theme';
+import { Button, Text, useActionSheet } from '@/components/ui';
+import { spacing, touch } from '@/theme';
 
 import { PLANNED_SETS_MAX } from './routine';
 import type { DraftSet } from './routineDraft';
@@ -95,7 +95,7 @@ type SetNumberProps = {
 // The set's number; tap it for "Treu la sèrie".
 function SetNumber({ number, exerciseName, onRemove }: SetNumberProps) {
   const { t } = useTranslation();
-  const { scheme } = useTheme();
+  const showActionSheet = useActionSheet();
 
   if (!onRemove) {
     return (
@@ -106,13 +106,12 @@ function SetNumber({ number, exerciseName, onRemove }: SetNumberProps) {
   }
 
   function openMenu() {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: t('routines.sets.menuTitle', { number }),
         options: [t('routines.sets.remove'), t('common.cancel')],
         destructiveButtonIndex: 0,
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) onRemove?.();

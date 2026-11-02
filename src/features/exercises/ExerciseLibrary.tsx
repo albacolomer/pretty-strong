@@ -1,8 +1,8 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MenuButton, Text } from '@/components/ui';
+import { Button, Card, MenuButton, Text, useActionSheet } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { gaps, spacing, useTheme } from '@/theme';
 
@@ -22,7 +22,8 @@ function openNewExercise(name?: string) {
 // equipment (US-03).
 export function ExerciseLibrary() {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const { data: exercises = [], isPending, isError } = useExercises();
   const { data: archived = [] } = useArchivedExercises();
@@ -37,12 +38,11 @@ export function ExerciseLibrary() {
   // The native iOS action sheet. Archiving isn't shown as destructive: it
   // can always be undone.
   function openMenu(exercise: Exercise) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: exerciseName(exercise, language),
         options: [t('exercises.menu.archive'), t('common.cancel')],
         cancelButtonIndex: 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) archiveExercise(exercise);

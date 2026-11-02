@@ -2,9 +2,9 @@ import { randomUUID } from 'expo-crypto';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Card, ScreenTitle, Text, useToast } from '@/components/ui';
+import { Card, ScreenTitle, Text, useActionSheet, useToast } from '@/components/ui';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { volumeChange } from '@/features/history/entries';
@@ -85,7 +85,8 @@ type Action = { label: string; run: () => void };
 // each activity, and what's next.
 export function Today() {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const showToast = useToast();
   const nameOf = useActivityName();
@@ -298,7 +299,7 @@ export function Today() {
 
   // The native list of reasons, optional: "Sense motiu" logs without one.
   function askReason(title: string, onPick: (reason: ChangeReason | null) => void) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title,
         options: [
@@ -307,7 +308,6 @@ export function Today() {
           t('common.cancel'),
         ],
         cancelButtonIndex: CHANGE_REASONS.length + 1,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index < CHANGE_REASONS.length) onPick(CHANGE_REASONS[index]);
@@ -317,12 +317,11 @@ export function Today() {
   }
 
   function sheet(title: string, actions: Action[]) {
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title,
         options: [...actions.map((action) => action.label), t('common.cancel')],
         cancelButtonIndex: actions.length,
-        userInterfaceStyle: scheme,
       },
       (index) => actions[index]?.run(),
     );

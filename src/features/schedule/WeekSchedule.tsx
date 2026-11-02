@@ -2,11 +2,11 @@ import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActionSheetIOS, ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Sortable from 'react-native-sortables';
 
-import { Card, Text, useToast } from '@/components/ui';
+import { Card, Text, useActionSheet, useToast } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import {
@@ -45,7 +45,8 @@ function openRoutine(routine: Routine) {
 // adds either. A day with neither is a rest day.
 export function WeekSchedule() {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
+  const showActionSheet = useActionSheet();
   const showToast = useToast();
   const nameOf = useActivityName();
   const today = weekdayOf(useToday());
@@ -104,12 +105,11 @@ export function WeekSchedule() {
       activity.kind === 'routine'
         ? { label: t('schedule.open'), run: () => openRoutine(activity.routine) }
         : { label: t('schedule.changeTime'), run: () => open({ kind: 'edit', sport: activity.sport }) };
-    ActionSheetIOS.showActionSheetWithOptions(
+    showActionSheet(
       {
         title: nameOf(activity),
         options: [first.label, t('schedule.remove'), t('common.cancel')],
         cancelButtonIndex: 2,
-        userInterfaceStyle: scheme,
       },
       (index) => {
         if (index === 0) first.run();
