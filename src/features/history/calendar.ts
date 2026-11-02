@@ -36,11 +36,20 @@ export function formatMonth(month: Date, language: Language): string {
   return text.charAt(0).toLocaleUpperCase(language) + text.slice(1);
 }
 
-// The day picked after moving to `month`: today in today's month; in
-// another one, its latest day with a workout, else its last day.
-export function dayToShow(month: Date, today: Date, workoutDays: ReadonlySet<string>): string {
+// The day picked after moving to `month`: today in today's month; in an
+// earlier one, its latest day with a workout, else its last day; in a later
+// one, its first day with an event (US-30), else the 1st.
+export function dayToShow(
+  month: Date,
+  today: Date,
+  workoutDays: ReadonlySet<string>,
+  eventDays: ReadonlySet<string>,
+): string {
   const prefix = dateKey(month).slice(0, 7);
-  if (dateKey(today).startsWith(prefix)) return dateKey(today);
-  const latest = [...workoutDays].filter((day) => day.startsWith(prefix)).sort().at(-1);
-  return latest ?? dateKey(addDays(addMonths(month, 1), -1));
+  const todayKey = dateKey(today);
+  if (todayKey.startsWith(prefix)) return todayKey;
+  const inMonth = (days: ReadonlySet<string>) =>
+    [...days].filter((day) => day.startsWith(prefix)).sort();
+  if (prefix > todayKey) return inMonth(eventDays).at(0) ?? dateKey(startOfMonth(month));
+  return inMonth(workoutDays).at(-1) ?? dateKey(addDays(addMonths(month, 1), -1));
 }

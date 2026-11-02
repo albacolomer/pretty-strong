@@ -9,6 +9,8 @@ import { NO_TARGETS } from '@/features/routines/routine';
 import { fetchRoutines } from '@/features/routines/api';
 import { testExercise, upperBody } from '@/features/routines/testData';
 import { fetchMoves } from '@/features/schedule/movesApi';
+import { deleteEvent, fetchEvents, saveEvent } from '@/features/events/api';
+import type { CalendarEvent } from '@/features/events/events';
 import { fetchDailySteps } from '@/features/steps/api';
 import { deleteSession } from '@/features/workout/api';
 import { workoutFromRoutine } from '@/features/workout/activeWorkout';
@@ -33,6 +35,30 @@ jest.mock('./api', () => ({
   saveWorkout: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('@/features/workout/api', () => ({ deleteSession: jest.fn(() => Promise.resolve()) }));
+jest.mock('@/features/events/api', () => ({
+  fetchEvents: jest.fn(() => Promise.resolve([])),
+  saveEvent: jest.fn(() => Promise.resolve()),
+  deleteEvent: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('expo-crypto', () => ({ randomUUID: () => 'new-event' }));
+// iOS's own date picker (SwiftUI) needs the phone: a button that picks
+// 6 December 2026 stands in for it.
+jest.mock('@expo/ui/swift-ui', () => {
+  const { Pressable, Text } = jest.requireActual('react-native');
+  return {
+    Host: ({ children }: { children: unknown }) => children,
+    DatePicker: ({ onDateChange }: { onDateChange: (date: Date) => void }) => (
+      <Pressable role="button" onPress={() => onDateChange(new Date(2026, 11, 6, 9))}>
+        <Text>Tria el 6 de desembre</Text>
+      </Pressable>
+    ),
+  };
+});
+jest.mock('@expo/ui/swift-ui/modifiers', () => ({
+  datePickerStyle: () => ({}),
+  environment: () => ({}),
+  labelsHidden: () => ({}),
+}));
 jest.mock('@/features/steps/api', () => ({
   fetchDailySteps: jest.fn(() => Promise.resolve(new Map())),
 }));
@@ -115,6 +141,15 @@ const workout: PastWorkout = {
   ],
 };
 
+const hyrox: CalendarEvent = {
+  id: 'event-1',
+  date: '2026-11-14',
+  kind: 'hyrox',
+  name: 'HYROX Barcelona',
+  place: 'Fira de Barcelona',
+  notes: null,
+};
+
 const sheetChoices: string[] = [];
 let actionSheet: jest.SpyInstance;
 beforeEach(() => {
@@ -142,6 +177,9 @@ beforeEach(() => {
   jest.mocked(router.push).mockReset();
   jest.mocked(deleteSession).mockClear();
   jest.mocked(saveWorkout).mockClear();
+  jest.mocked(saveEvent).mockClear();
+  jest.mocked(deleteEvent).mockClear();
+  jest.mocked(fetchEvents).mockResolvedValue([]);
   sheetChoices.length = 0;
   // Each action sheet picks the next of sheetChoices.
   actionSheet = jest
@@ -284,7 +322,7 @@ describe('History', () => {
     expect(screen.queryByText(/passos$/)).not.toBeOnTheScreen();
   });
 
-  test('‹ shows last month at its latest activity; there is nothing after this one', async () => {
+  test('‹ shows last month at its latest activity; › comes back to today', async () => {
     const user = userEvent.setup();
     jest.mocked(fetchHistoryEntries).mockResolvedValue([
       entry({ id: 'session-3', date: '2026-09-28', routineName: 'Diumenge' }),
@@ -292,7 +330,6 @@ describe('History', () => {
     await render(<CalendarTab />, { wrapper: createAppWrapper() });
     await screen.findByText('Avui encara no hi ha cap activitat.');
 
-    expect(screen.getByRole('button', { name: 'Mes següent' })).toBeDisabled();
     await user.press(screen.getByRole('button', { name: 'Mes anterior' }));
 
     expect(screen.getByRole('header', { name: 'Setembre del 2026' })).toBeOnTheScreen();
@@ -302,6 +339,97 @@ describe('History', () => {
 
     await user.press(screen.getByRole('button', { name: 'Mes següent' }));
     expect(screen.getByRole('header', { name: 'Avui' })).toBeOnTheScreen();
+  });
+
+  test('› goes into months to come, at their first event; their days only have events', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    jest.mocked(fetchEvents).mockResolvedValueOnce([hyrox]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+    await screen.findByText('Avui encara no hi ha cap activitat.');
+
+    await user.press(screen.getByRole('button', { name: 'Mes següent' }));
+
+    expect(screen.getByRole('header', { name: 'Novembre del 2026' })).toBeOnTheScreen();
+    expect(screen.getByText('1 esdeveniment aquest mes')).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Dissabte, 14 de novembre' })).toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: 'Dissabte, 14 de novembre: cap entrenament, 1 esdeveniment' }),
+    ).toBeOnTheScreen();
+    expect(screen.getByText('HYROX Barcelona')).toBeOnTheScreen();
+    expect(screen.getByText('HYROX · Fira de Barcelona')).toBeOnTheScreen();
+    // Nothing to log in the future.
+    expect(screen.queryByRole('button', { name: '+ Registra una activitat' })).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Diumenge, 15 de novembre: cap entrenament' }));
+    expect(screen.getByText('Aquest dia no hi ha cap esdeveniment.')).toBeOnTheScreen();
+  });
+
+  test('an event is added on the picked day, or on another one', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+    await screen.findByText('Avui encara no hi ha cap activitat.');
+
+    await user.press(screen.getByRole('button', { name: 'Divendres, 30 d’octubre: cap entrenament' }));
+    await user.press(screen.getByRole('button', { name: '+ Afegeix un esdeveniment' }));
+    expect(screen.getByRole('header', { name: 'Nou esdeveniment' })).toBeOnTheScreen();
+    // A kind first.
+    expect(screen.getByRole('button', { name: 'Desa' })).toBeDisabled();
+    await user.press(screen.getByRole('radio', { name: 'Marató' }));
+    await user.type(screen.getByLabelText('Nom (opcional)'), 'Marató de València');
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    await waitFor(() =>
+      expect(saveEvent).toHaveBeenCalledWith({
+        id: 'new-event',
+        date: '2026-10-30',
+        kind: 'marathon',
+        name: 'Marató de València',
+        place: null,
+        notes: null,
+      }),
+    );
+    expect(await screen.findByText('Esdeveniment desat')).toBeOnTheScreen();
+
+    // Another day, from the date picker; "Altres" needs a name.
+    await user.press(screen.getByRole('button', { name: '+ Afegeix un esdeveniment' }));
+    await user.press(screen.getByRole('radio', { name: 'Altres' }));
+    expect(screen.getByRole('button', { name: 'Desa' })).toBeDisabled();
+    await user.type(screen.getByLabelText('Nom'), 'Aniversari');
+    await user.press(screen.getByRole('button', { name: 'Tria el 6 de desembre' }));
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+    await waitFor(() =>
+      expect(saveEvent).toHaveBeenLastCalledWith(
+        expect.objectContaining({ date: '2026-12-06', kind: 'other', name: 'Aniversari' }),
+      ),
+    );
+  });
+
+  test("an event's menu edits it, or deletes it with Desfés", async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    jest.mocked(fetchEvents).mockResolvedValue([{ ...hyrox, date: '2026-10-21' }]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Edita');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de HYROX Barcelona' }));
+    expect(screen.getByRole('header', { name: "Edita l'esdeveniment" })).toBeOnTheScreen();
+    expect(screen.getByLabelText('Nom (opcional)')).toHaveDisplayValue('HYROX Barcelona');
+    await user.clear(screen.getByLabelText('Lloc (opcional)'));
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+    await waitFor(() =>
+      expect(saveEvent).toHaveBeenLastCalledWith({ ...hyrox, date: '2026-10-21', place: null }),
+    );
+
+    sheetChoices.push("Esborra l'esdeveniment");
+    await user.press(screen.getByRole('button', { name: 'Opcions de HYROX Barcelona' }));
+    await waitFor(() => expect(deleteEvent).toHaveBeenCalledWith('event-1'));
+    expect(await screen.findByText('Esdeveniment esborrat')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    await waitFor(() =>
+      expect(saveEvent).toHaveBeenLastCalledWith({ ...hyrox, date: '2026-10-21' }),
+    );
   });
 
   test('a workout waiting for signal shows too', async () => {

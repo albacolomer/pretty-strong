@@ -4,6 +4,11 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Text, useActionSheet } from '@/components/ui';
+import { EventRow } from '@/features/events/EventRow';
+import { eventsOn, type CalendarEvent } from '@/features/events/events';
+import { EventSheet } from '@/features/events/EventSheet';
+import { useDeleteEvent, useEvents } from '@/features/events/useEvents';
+import { useEventName } from '@/features/events/useEventName';
 import { useRoutines } from '@/features/routines/useRoutines';
 import {
   addDays,
@@ -26,14 +31,17 @@ import { useHistoryEntries } from './useHistory';
 import { WorkoutRow } from './WorkoutRow';
 
 // Profile → Calendar (US-23, US-24): the month with a ✓ on each day you
-// trained, and under it the picked day's activities, today to begin with,
-// and its steps (US-31). A day without any says so (or that it was a rest
-// day), and every past day can have one logged afterwards.
+// trained and a ★ on each competition or special date (US-30), and under
+// it the picked day, today to begin with: its events, its activities and
+// its steps (US-31). A day without activities says so (or that it was a
+// rest day), and every past day can have one logged afterwards. Days still
+// to come only have events.
 export function CalendarTab() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showActionSheet = useActionSheet();
   const language = useAppLanguage();
+  const nameOf = useEventName();
   const today = useToday();
   const todayKey = dateKey(today);
   const [month, setMonth] = useState(() => startOfMonth(today));
@@ -41,6 +49,15 @@ export function CalendarTab() {
   const [picked, setPicked] = useState<string | null>(null);
   const selected = picked ?? todayKey;
   const history = useHistoryEntries();
+  const { data: events = [] } = useEvents();
+  const deleteEvent = useDeleteEvent();
+  // The event sheet: which event (null: a new one), and a new key for each
+  // opening, so it starts afresh.
+  const [eventSheet, setEventSheet] = useState<{
+    open: boolean;
+    event: CalendarEvent | null;
+    opened: number;
+  }>({ open: false, event: null, opened: 0 });
   const { data: routines = [] } = useRoutines();
   const { data: sports = [] } = useWeeklySports();
   // The picked day's week changes (the same days Avui asks for).
@@ -54,8 +71,14 @@ export function CalendarTab() {
   for (const entry of history.entries) {
     workouts.set(entry.date, (workouts.get(entry.date) ?? 0) + 1);
   }
+  const eventCounts = new Map<string, number>();
+  for (const event of events) {
+    eventCounts.set(event.date, (eventCounts.get(event.date) ?? 0) + 1);
+  }
   const dayEntries = history.entries.filter((entry) => entry.date === selected);
+  const dayEvents = eventsOn(events, selected);
   const isToday = selected === todayKey;
+  const future = selected > todayKey;
   // A rest day: nothing planned that day (that week's moves counted), when
   // there is a plan.
   const restDay =
@@ -85,14 +108,34 @@ export function CalendarTab() {
     );
   }
 
+  function openEventSheet(event: CalendarEvent | null) {
+    setEventSheet((current) => ({ open: true, event, opened: current.opened + 1 }));
+  }
+
+  // An event's menu: change it, or delete it (with "Desfés").
+  function eventMenu(event: CalendarEvent) {
+    showActionSheet(
+      {
+        title: nameOf(event),
+        options: [t('events.edit'), t('events.delete'), t('common.cancel')],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 2,
+      },
+      (index) => {
+        if (index === 0) openEventSheet(event);
+        else if (index === 1) deleteEvent.mutate(event);
+      },
+    );
+  }
+
   function changeMonth(months: -1 | 1) {
     const next = addMonths(month, months);
     setMonth(next);
-    const day = dayToShow(next, today, new Set(workouts.keys()));
+    const day = dayToShow(next, today, new Set(workouts.keys()), new Set(eventCounts.keys()));
     setPicked(day === todayKey ? null : day);
   }
 
-  function renderDay() {
+  function renderActivities() {
     if (history.isPending) return <ActivityIndicator color={colors.accent} />;
     if (history.isError) {
       return (
@@ -134,6 +177,7 @@ export function CalendarTab() {
         today={today}
         selected={selected}
         workouts={workouts}
+        events={eventCounts}
         onDayPress={(day) => setPicked(day === todayKey ? null : day)}
         onMonthChange={changeMonth}
       />
@@ -141,8 +185,29 @@ export function CalendarTab() {
         <Text variant="cardTitle" accessibilityRole="header">
           {isToday ? t('history.today') : formatDayTitle(fromDateKey(selected), language)}
         </Text>
-        {renderDay()}
+        {dayEvents.map((event) => (
+          <EventRow key={event.id} event={event} onPress={() => eventMenu(event)} />
+        ))}
+        {future ? (
+          dayEvents.length === 0 ? (
+            <Text color="textMuted">{t('events.noneThatDay')}</Text>
+          ) : null
+        ) : (
+          renderActivities()
+        )}
+        <Button
+          label={t('events.add')}
+          variant={future ? 'secondary' : 'ghost'}
+          onPress={() => openEventSheet(null)}
+        />
       </Card>
+      <EventSheet
+        key={eventSheet.opened}
+        visible={eventSheet.open}
+        event={eventSheet.event}
+        date={selected}
+        onClose={() => setEventSheet((current) => ({ ...current, open: false }))}
+      />
     </View>
   );
 }

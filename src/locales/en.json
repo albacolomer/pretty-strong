@@ -722,6 +722,43 @@
     "logActivity": "+ Log an activity",
     "logAnother": "+ Log another activity"
   },
+  "events": {
+    "kinds": {
+      "marathon": "Marathon",
+      "half_marathon": "Half marathon",
+      "race": "Race",
+      "trail": "Trail",
+      "hyrox": "HYROX",
+      "spartan": "Spartan",
+      "triathlon": "Triathlon",
+      "other": "Other"
+    },
+    "add": "+ Add an event",
+    "newTitle": "New event",
+    "editTitle": "Edit event",
+    "save": "Save",
+    "kind": "Event type",
+    "name": "Name",
+    "nameOptional": "Name (optional)",
+    "namePlaceholder": "E.g. Barcelona Marathon",
+    "date": "Day",
+    "place": "Place (optional)",
+    "placePlaceholder": "E.g. Barcelona",
+    "notes": "Notes (optional)",
+    "notesPlaceholder": "Bib number, start time…",
+    "saved": "Event saved",
+    "deleted": "Event deleted",
+    "saveError": "Couldn't save it. Try again.",
+    "edit": "Edit",
+    "delete": "Delete event",
+    "optionsFor": "Options for {{name}}",
+    "noneThatDay": "No events on this day.",
+    "onDay_one": "1 event",
+    "onDay_other": "{{count}} events",
+    "monthCount_zero": "No events this month",
+    "monthCount_one": "1 event this month",
+    "monthCount_other": "{{count}} events this month"
+  },
   "settings": {
     "title": "Settings"
   },
@@ -794,7 +831,7 @@
       "arm": "Arm",
       "thigh": "Thigh"
     },
-    "saveError": "Couldn't save. Try again.",
+    "saveError": "Couldn't save it. Try again.",
     "loadError": "Couldn't load it."
   },
   "photos": {

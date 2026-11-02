@@ -722,6 +722,43 @@
     "logActivity": "+ Registra una activitat",
     "logAnother": "+ Registra una altra activitat"
   },
+  "events": {
+    "kinds": {
+      "marathon": "Marató",
+      "half_marathon": "Mitja marató",
+      "race": "Cursa",
+      "trail": "Trail",
+      "hyrox": "HYROX",
+      "spartan": "Spartan",
+      "triathlon": "Triatló",
+      "other": "Altres"
+    },
+    "add": "+ Afegeix un esdeveniment",
+    "newTitle": "Nou esdeveniment",
+    "editTitle": "Edita l'esdeveniment",
+    "save": "Desa",
+    "kind": "Tipus d'esdeveniment",
+    "name": "Nom",
+    "nameOptional": "Nom (opcional)",
+    "namePlaceholder": "Ex.: Marató de Barcelona",
+    "date": "Dia",
+    "place": "Lloc (opcional)",
+    "placePlaceholder": "Ex.: Barcelona",
+    "notes": "Notes (opcional)",
+    "notesPlaceholder": "Dorsal, hora de sortida…",
+    "saved": "Esdeveniment desat",
+    "deleted": "Esdeveniment esborrat",
+    "saveError": "No s'ha pogut desar. Torna-ho a provar.",
+    "edit": "Edita",
+    "delete": "Esborra l'esdeveniment",
+    "optionsFor": "Opcions de {{name}}",
+    "noneThatDay": "Aquest dia no hi ha cap esdeveniment.",
+    "onDay_one": "1 esdeveniment",
+    "onDay_other": "{{count}} esdeveniments",
+    "monthCount_zero": "Cap esdeveniment aquest mes",
+    "monthCount_one": "1 esdeveniment aquest mes",
+    "monthCount_other": "{{count}} esdeveniments aquest mes"
+  },
   "settings": {
     "title": "Configuració"
   },

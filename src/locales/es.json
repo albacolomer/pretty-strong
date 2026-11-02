@@ -722,6 +722,43 @@
     "logActivity": "+ Registrar una actividad",
     "logAnother": "+ Registrar otra actividad"
   },
+  "events": {
+    "kinds": {
+      "marathon": "Maratón",
+      "half_marathon": "Media maratón",
+      "race": "Carrera",
+      "trail": "Trail",
+      "hyrox": "HYROX",
+      "spartan": "Spartan",
+      "triathlon": "Triatlón",
+      "other": "Otros"
+    },
+    "add": "+ Añadir un evento",
+    "newTitle": "Nuevo evento",
+    "editTitle": "Editar el evento",
+    "save": "Guardar",
+    "kind": "Tipo de evento",
+    "name": "Nombre",
+    "nameOptional": "Nombre (opcional)",
+    "namePlaceholder": "Ej.: Maratón de Barcelona",
+    "date": "Día",
+    "place": "Lugar (opcional)",
+    "placePlaceholder": "Ej.: Barcelona",
+    "notes": "Notas (opcional)",
+    "notesPlaceholder": "Dorsal, hora de salida…",
+    "saved": "Evento guardado",
+    "deleted": "Evento borrado",
+    "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
+    "edit": "Editar",
+    "delete": "Borrar el evento",
+    "optionsFor": "Opciones de {{name}}",
+    "noneThatDay": "Este día no hay ningún evento.",
+    "onDay_one": "1 evento",
+    "onDay_other": "{{count}} eventos",
+    "monthCount_zero": "Ningún evento este mes",
+    "monthCount_one": "1 evento este mes",
+    "monthCount_other": "{{count}} eventos este mes"
+  },
   "settings": {
     "title": "Ajustes"
   },

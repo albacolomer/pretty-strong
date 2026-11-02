@@ -33,6 +33,11 @@ const light = {
   up: '#2E9E64',
   down: '#C9771F',
   danger: '#D64545',
+  // Competitions and special dates: the ★ on their day, their icons.
+  // 3.2:1 on white, enough for an icon.
+  gold: '#B8860B',
+  // #B8860B at 12%
+  goldSoft: 'rgba(184, 134, 11, 0.12)',
 };
 
 export type ColorToken = keyof typeof light;
@@ -59,6 +64,9 @@ const dark: Colors = {
   up: '#7ED9A6',
   down: '#FFB86B',
   danger: '#FF6B6B',
+  gold: '#E6C25A',
+  // #E6C25A at 16%
+  goldSoft: 'rgba(230, 194, 90, 0.16)',
 };
 
 export const colors: Record<ColorScheme, Colors> = { light, dark };

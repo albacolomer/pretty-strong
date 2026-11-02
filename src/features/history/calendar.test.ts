@@ -35,10 +35,16 @@ describe('month calendar', () => {
 describe('the day shown after changing month', () => {
   const today = new Date(2026, 9, 21);
   const workoutDays = new Set(['2026-09-14', '2026-09-28', '2026-10-20']);
+  const eventDays = new Set(['2026-09-20', '2026-11-14', '2026-11-29']);
 
-  test('today in this month; elsewhere the latest day trained, else the last day', () => {
-    expect(dayToShow(new Date(2026, 9, 1), today, workoutDays)).toBe('2026-10-21');
-    expect(dayToShow(new Date(2026, 8, 1), today, workoutDays)).toBe('2026-09-28');
-    expect(dayToShow(new Date(2026, 7, 1), today, workoutDays)).toBe('2026-08-31');
+  test('today in this month; before it the latest day trained, else the last day', () => {
+    expect(dayToShow(new Date(2026, 9, 1), today, workoutDays, eventDays)).toBe('2026-10-21');
+    expect(dayToShow(new Date(2026, 8, 1), today, workoutDays, eventDays)).toBe('2026-09-28');
+    expect(dayToShow(new Date(2026, 7, 1), today, workoutDays, eventDays)).toBe('2026-08-31');
+  });
+
+  test('after it, the first event, else the 1st', () => {
+    expect(dayToShow(new Date(2026, 10, 1), today, workoutDays, eventDays)).toBe('2026-11-14');
+    expect(dayToShow(new Date(2026, 11, 1), today, workoutDays, eventDays)).toBe('2026-12-01');
   });
 });

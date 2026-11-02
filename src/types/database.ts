@@ -114,6 +114,39 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          kind: string
+          name: string | null
+          notes: string | null
+          place: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          kind: string
+          name?: string | null
+          notes?: string | null
+          place?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          kind?: string
+          name?: string | null
+          notes?: string | null
+          place?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       exercises: {
         Row: {
           archived_at: string | null
