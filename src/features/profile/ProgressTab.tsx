@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Card, GradientText, GradientView, Text } from '@/components/ui';
+import { EVENT_ICONS } from '@/features/events/events';
 import { useHistoryEntries } from '@/features/history/useHistory';
 import { formatDuration } from '@/features/routines/routine';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
@@ -122,7 +123,14 @@ export function ProgressTab() {
         ) : (
           mix.map((item) => (
             <MixRow
-              key={item.sportName ?? item.sport ?? item.customLabel ?? item.label ?? 'none'}
+              key={
+                item.eventKind ??
+                item.sportName ??
+                item.sport ??
+                item.customLabel ??
+                item.label ??
+                'none'
+              }
               item={item}
               total={month.entries.length}
               language={language}
@@ -183,6 +191,7 @@ function MixRow({ item, total, language }: { item: MixItem; total: number; langu
   const { t } = useTranslation();
   const { colors } = useTheme();
   const name =
+    (item.eventKind ? t(`events.kinds.${item.eventKind}`) : null) ??
     item.sportName ??
     (item.sport ? t(`sports.${item.sport}`) : null) ??
     item.customLabel ??
@@ -196,10 +205,16 @@ function MixRow({ item, total, language }: { item: MixItem; total: number; langu
       aria-label={t('progress.mixItem', { name, count: item.count })}>
       <View style={styles.mixLabel}>
         <SymbolView
-          name={item.sport ? SPORT_ICONS[item.sport] : ROUTINE_ICONS[item.label ?? 'none']}
+          name={
+            item.eventKind
+              ? EVENT_ICONS[item.eventKind]
+              : item.sport
+                ? SPORT_ICONS[item.sport]
+                : ROUTINE_ICONS[item.label ?? 'none']
+          }
           size={16}
           weight="light"
-          tintColor={colors.accent}
+          tintColor={item.eventKind ? colors.gold : colors.accent}
         />
         <Text style={styles.grow}>{name}</Text>
         <Text variant="bodyStrong">{new Intl.NumberFormat(language).format(item.count)}</Text>

@@ -123,6 +123,9 @@ const session = (fields: Partial<WorkoutSession>): WorkoutSession => ({
   plannedSportId: null,
   sport: null,
   sportName: null,
+  plannedEventId: null,
+  eventKind: null,
+  eventName: null,
   ...fields,
 });
 
@@ -136,6 +139,8 @@ const entry = (fields: Partial<HistoryEntry>): HistoryEntry => ({
   customLabel: null,
   sport: null,
   sportName: null,
+  eventKind: null,
+  eventName: null,
   logMode: 'live',
   durationS: 3900,
   exercises: 4,
@@ -264,6 +269,76 @@ describe('<Today />', () => {
 
       await screen.findByRole('header', { name: 'També avui' });
       expect(screen.queryByText('Proper esdeveniment')).not.toBeOnTheScreen();
+    });
+
+    test("on its day it's the big button, marked done as a workout; the countdown goes on to the next", async () => {
+      const user = userEvent.setup();
+      jest.mocked(fetchEvents).mockResolvedValue([
+        event({ date: '2026-10-20' }),
+        event({ id: 'event-2', date: '2026-11-14', kind: 'marathon', name: null, place: null }),
+      ]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      expect(await screen.findByRole('header', { name: 'HYROX Barcelona' })).toBeOnTheScreen();
+      expect(screen.getByText('HYROX · Fira de Barcelona')).toBeOnTheScreen();
+      // The day's routine waits under "També avui".
+      expect(screen.getByRole('button', { name: 'Opcions de «Tren superior 1»' })).toBeOnTheScreen();
+      expect(
+        screen.getByLabelText("Proper esdeveniment: Marató, Dissabte, 14 de novembre, d'aquí a 25 dies"),
+      ).toBeOnTheScreen();
+
+      await user.press(screen.getByRole('button', { name: 'Marca «HYROX Barcelona» com a fet' }));
+      expect(screen.getByRole('header', { name: 'Fet: HYROX Barcelona' })).toBeOnTheScreen();
+      await user.type(screen.getByLabelText('Durada (min)'), '75');
+      const done = session({
+        plannedRoutineId: null,
+        routineId: null,
+        durationS: 4500,
+        plannedEventId: 'event-1',
+        eventKind: 'hyrox',
+        eventName: 'HYROX Barcelona',
+      });
+      jest.mocked(fetchSessions).mockResolvedValue([done]);
+      await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+      expect(logQuickSession).toHaveBeenCalledWith(done);
+      // A workout like any other; the routine is next.
+      expect(await screen.findByText('1 de 4 entrenaments aquesta setmana')).toBeOnTheScreen();
+      expect(await screen.findByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
+      expect(screen.getByRole('checkbox', { name: 'Marca «HYROX Barcelona» com a fet' })).toBeChecked();
+    });
+
+    test('on its day it can be skipped, with a reason', async () => {
+      const user = userEvent.setup();
+      jest
+        .mocked(fetchEvents)
+        .mockResolvedValue([event({ date: '2026-10-20', kind: 'marathon', name: null })]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      sheetChoices.push('Malaltia o lesió');
+      await user.press(await screen.findByRole('button', { name: 'Salta «Marató»' }));
+
+      expect(logQuickSession).toHaveBeenCalledWith(
+        session({
+          plannedRoutineId: null,
+          routineId: null,
+          status: 'skipped',
+          changeReason: 'unwell',
+          plannedEventId: 'event-1',
+          eventKind: 'marathon',
+          eventName: null,
+        }),
+      );
+      expect(await screen.findByText("S'ha saltat «Marató»")).toBeOnTheScreen();
+    });
+
+    test('shows on its day even with nothing planned in the week', async () => {
+      jest.mocked(fetchRoutines).mockResolvedValue([]);
+      jest.mocked(fetchEvents).mockResolvedValue([event({ date: '2026-10-20' })]);
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      expect(await screen.findByRole('header', { name: 'HYROX Barcelona' })).toBeOnTheScreen();
+      expect(screen.queryByText(/^Encara no tens rutines/)).not.toBeOnTheScreen();
     });
   });
 

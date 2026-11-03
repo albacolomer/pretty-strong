@@ -6,6 +6,9 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Card, ScreenTitle, Text, useActionSheet, useToast } from '@/components/ui';
 import { EventCountdown } from '@/features/events/EventCountdown';
+import { EVENT_ICONS, eventsOn, type CalendarEvent } from '@/features/events/events';
+import { useEvents } from '@/features/events/useEvents';
+import { useEventName } from '@/features/events/useEventName';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { volumeChange } from '@/features/history/entries';
@@ -28,6 +31,7 @@ import { ResumeBanner } from '@/features/workout/ResumeBanner';
 import {
   CHANGE_REASONS,
   liveDuration,
+  NO_EVENT,
   type ChangeReason,
   type WorkoutSession,
 } from '@/features/workout/session';
@@ -77,17 +81,27 @@ import {
 type Action = { label: string; run: () => void };
 // A sport by itself (its own name for "Altres"), e.g. one swapped in.
 type SportChoice = { sport: Sport; customName: string | null };
+// A competition or special date on its day (US-30): on Avui like a planned
+// sport, though it isn't part of the week's plan.
+type EventActivity = { kind: 'event'; key: string; event: CalendarEvent };
+type TodayActivity = DayActivity | EventActivity;
+
+// An event's session keeps the event and a copy of what it was.
+function eventFields(event: CalendarEvent) {
+  return { plannedEventId: event.id, eventKind: event.kind, eventName: event.name };
+}
 
 // The Avui tab (US-11, US-12, US-20): the date and "AVUI", today's steps,
 // then the day's main activity in a big metal button inside the week's
-// ring (GO, or ✓ for a class or a sport), with Previsualitza / Canvia / Salta (which
+// ring (GO, or ✓ for a class or a sport; a gold ✓ for a competition or
+// special date, which comes first, US-30), with Previsualitza / Canvia / Salta (which
 // can move a routine to a free day or shift the week, US-29); on a
 // rest day, a word on recovery, what's next and Caminar / Estiraments. Above
 // it, yesterday's routine if it wasn't logged at all (US-29). Under it,
 // "També avui" with the day's other activities, what was logged without
 // being planned, and a + to log more. Once it's all done: "Gairebé fet" (the
 // steps still to go) or "Tot fet", the day in numbers, "Completat" with
-// each activity, and what's next.
+// each activity, and what's next. Last, the countdown to the next event.
 export function Today() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -95,6 +109,7 @@ export function Today() {
   const language = useAppLanguage();
   const showToast = useToast();
   const nameOf = useActivityName();
+  const eventName = useEventName();
   const today = useToday();
   const day = dateKey(today);
   const weekStart = startOfWeek(today);
@@ -103,6 +118,7 @@ export function Today() {
   const to = dateKey(weekEnd);
   const { data: routines, isPending, isError } = useRoutines();
   const { data: sports = [] } = useWeeklySports();
+  const { data: events = [] } = useEvents();
   // This week's changes and sessions, from last Sunday on: on a Monday,
   // yesterday's routine can still be missed, and come into this week.
   const movesFrom = dateKey(addDays(weekStart, -1));
@@ -133,6 +149,7 @@ export function Today() {
         plannedSportId: null,
         sport: null,
         sportName: null,
+        ...NO_EVENT,
       })),
   ];
   // Your finished workouts with their totals: today's for "Tot fet", and the
@@ -145,10 +162,12 @@ export function Today() {
   // Your own default rest per exercise, fixed into the workout when it starts.
   const { data: settings } = useExerciseSettings();
   // What the "Fet" sheet is open for: a routine (as shown), a sport, a
-  // sport swapped in for a routine, or a rest day's walk or stretching.
+  // sport swapped in for a routine, a rest day's walk or stretching, or an
+  // event.
   const [logging, setLogging] = useState<
     | { kind: 'routine'; planned: Routine; shown: Routine }
     | { kind: 'sport'; sport: WeeklySport }
+    | { kind: 'event'; event: CalendarEvent }
     | { kind: 'swappedSport'; planned: Routine; sport: SportChoice }
     | { kind: 'recovery'; sport: Sport }
     | null
@@ -268,7 +287,16 @@ export function Today() {
   // Loaded by now; named again because TypeScript forgets that inside the
   // functions below.
   const allRoutines = routines;
-  const planned = activitiesOnDate(routines, sports, moves, today);
+  // Today's events first: on their day they're the main thing.
+  const todayEvents: EventActivity[] = eventsOn(events, day).map((event) => ({
+    kind: 'event',
+    key: `event:${event.id}`,
+    event,
+  }));
+  const planned: TodayActivity[] = [
+    ...todayEvents,
+    ...activitiesOnDate(routines, sports, moves, today),
+  ];
   const weekIsEmpty = WEEKDAYS.every(
     (other) => activitiesOnDay(routines, sports, other).length === 0,
   );
@@ -285,15 +313,23 @@ export function Today() {
       ? t('today.weekDone', { count: doneThisWeek })
       : t('today.weekProgress', { done: doneThisWeek, count: goal });
 
-  // A planned activity's session today, the latest if there are several.
-  function sessionOf(activity: DayActivity): WorkoutSession | undefined {
+  // What an activity is called today, an event's too.
+  function named(activity: TodayActivity): string {
+    return activity.kind === 'event' ? eventName(activity.event) : nameOf(activity);
+  }
+
+  // A planned activity's (or today's event's) session today, the latest if
+  // there are several.
+  function sessionOf(activity: TodayActivity): WorkoutSession | undefined {
     return sessions
       .filter(
         (session) =>
           session.date === day &&
           (activity.kind === 'routine'
             ? session.plannedRoutineId === activity.routine.id
-            : session.plannedSportId === activity.sport.id),
+            : activity.kind === 'sport'
+              ? session.plannedSportId === activity.sport.id
+              : session.plannedEventId === activity.event.id),
       )
       .at(-1);
   }
@@ -321,10 +357,12 @@ export function Today() {
     return sport ? nameOf({ kind: 'sport', sport }) : shownFor(routine, session).name;
   }
 
-  // The main one: the first routine to start still to do, else any routine
-  // or sport still to do, else (all logged) the first of the day.
+  // The main one: today's event still to do, else the first routine to
+  // start still to do, else any routine or sport still to do, else (all
+  // logged) the first of the day.
   const open = planned.filter((activity) => !sessionOf(activity));
   const main =
+    open.find((activity) => activity.kind === 'event') ??
     open.find(
       (activity) => activity.kind === 'routine' && usesExercises(activity.routine.label),
     ) ??
@@ -341,8 +379,15 @@ export function Today() {
     planned.some((activity) => sessionOf(activity)?.status === 'completed');
   const others = allDone ? planned : planned.filter((activity) => activity !== main);
 
-  // "Esquena i bíceps · 7 exercicis · ~1 h 30 min", or "19:00 · 1 h".
-  function detailsOf(activity: DayActivity, shown?: Routine): string {
+  // "Esquena i bíceps · 7 exercicis · ~1 h 30 min", "19:00 · 1 h", or an
+  // event's "HYROX · Fira de Barcelona" (its kind when it has a name).
+  function detailsOf(activity: TodayActivity, shown?: Routine): string {
+    if (activity.kind === 'event') {
+      const { event } = activity;
+      return [event.name ? t(`events.kinds.${event.kind}`) : null, event.place]
+        .filter(Boolean)
+        .join(' · ');
+    }
     if (activity.kind === 'sport') {
       return [
         activity.sport.startTime,
@@ -389,7 +434,7 @@ export function Today() {
 
   const noSport = { plannedSportId: null, sport: null, sportName: null };
 
-  function skip(activity: DayActivity) {
+  function skip(activity: TodayActivity) {
     askReason(
       t('today.skipReasonTitle'),
       (reason) =>
@@ -409,10 +454,13 @@ export function Today() {
                   plannedSportId: activity.sport.id,
                   sport: activity.sport.sport,
                   sportName: activity.sport.customName,
+                  ...NO_EVENT,
                 }
-              : noSport),
+              : activity.kind === 'event'
+                ? { ...noSport, ...eventFields(activity.event) }
+                : { ...noSport, ...NO_EVENT }),
           },
-          t('today.skipped', { name: nameOf(activity) }),
+          t('today.skipped', { name: named(activity) }),
         ),
       { optional: true },
     );
@@ -559,6 +607,7 @@ export function Today() {
               notes: null,
               changeReason: null,
               ...noSport,
+              ...NO_EVENT,
             },
             t('today.skipped', { name: activity.routine.name }),
           ),
@@ -566,7 +615,11 @@ export function Today() {
     ]);
   }
 
-  function markDone(activity: DayActivity) {
+  function markDone(activity: TodayActivity) {
+    if (activity.kind === 'event') {
+      setLogging({ kind: 'event', event: activity.event });
+      return;
+    }
     if (activity.kind === 'sport') {
       setLogging({ kind: 'sport', sport: activity.sport });
       return;
@@ -583,6 +636,26 @@ export function Today() {
   function saveDone({ durationS, notes }: QuickLog) {
     if (!logging) return;
     setLogging(null);
+    if (logging.kind === 'event') {
+      const { event } = logging;
+      log(
+        {
+          id: randomUUID(),
+          date: day,
+          plannedRoutineId: null,
+          routineId: null,
+          status: 'completed',
+          logMode: 'quick',
+          durationS,
+          notes,
+          changeReason: null,
+          ...noSport,
+          ...eventFields(event),
+        },
+        t('today.logged', { name: eventName(event) }),
+      );
+      return;
+    }
     if (logging.kind === 'recovery') {
       const { sport } = logging;
       log(
@@ -599,6 +672,7 @@ export function Today() {
           plannedSportId: null,
           sport,
           sportName: null,
+          ...NO_EVENT,
         },
         t('today.logged', { name: t(`sports.${sport}`) }),
       );
@@ -620,6 +694,7 @@ export function Today() {
           plannedSportId: sport.id,
           sport: sport.sport,
           sportName: sport.customName,
+          ...NO_EVENT,
         },
         t('today.logged', { name: nameOf({ kind: 'sport', sport }) }),
       );
@@ -642,6 +717,7 @@ export function Today() {
           plannedSportId: null,
           sport: sport.sport,
           sportName: sport.customName,
+          ...NO_EVENT,
         },
         t('today.logged', { name: nameOf({ kind: 'sport', sport }) }),
       );
@@ -660,6 +736,7 @@ export function Today() {
         notes,
         changeReason: swaps[day]?.[routine.id]?.reason ?? null,
         ...noSport,
+        ...NO_EVENT,
       },
       t('today.logged', { name: shown.name }),
     );
@@ -681,6 +758,7 @@ export function Today() {
         plannedSportId: null,
         sport,
         sportName: customName,
+        ...NO_EVENT,
       },
       t('today.logged', { name: nameOf({ kind: 'sport', sport: { sport, customName } }) }),
     );
@@ -763,17 +841,53 @@ export function Today() {
     return parts.filter(Boolean).join(' · ');
   }
 
-  function renderHero(activity: DayActivity) {
+  function renderHero(activity: TodayActivity) {
     const session = sessionOf(activity);
     const status = session
       ? {
-          label: t('today.optionsFor', { name: nameOf(activity) }),
+          label: t('today.optionsFor', { name: named(activity) }),
           text: statusText(session),
           skipped: session.status === 'skipped',
-          onPress: () => undoMenu(nameOf(activity), session),
+          onPress: () => undoMenu(named(activity), session),
         }
       : null;
     const ring = { segments, done: doneThisWeek, progress, status };
+
+    // A competition or special date: marked done in a gold circle, or
+    // skipped.
+    if (activity.kind === 'event') {
+      const name = named(activity);
+      return (
+        <TodayHero
+          {...ring}
+          name={name}
+          insteadOf={null}
+          details={detailsOf(activity)}
+          main={
+            session
+              ? null
+              : {
+                  kind: 'done',
+                  gold: true,
+                  caption: t('today.done'),
+                  aria: t('today.doneFor', { name }),
+                  onPress: () => markDone(activity),
+                }
+          }
+          actions={
+            session
+              ? []
+              : [
+                  {
+                    aria: t('today.skipFor', { name }),
+                    icon: 'forward.end',
+                    onPress: () => skip(activity),
+                  },
+                ]
+          }
+        />
+      );
+    }
 
     if (activity.kind === 'sport') {
       const name = nameOf(activity);
@@ -906,7 +1020,23 @@ export function Today() {
   const alsoToday: AlsoTodayItem[] = others.map((activity) => {
     const session = sessionOf(activity);
     const state = !session ? 'open' : session.status === 'skipped' ? 'skipped' : 'done';
-    const check = () => (session ? undoMenu(nameOf(activity), session) : markDone(activity));
+    const check = () => (session ? undoMenu(named(activity), session) : markDone(activity));
+    if (activity.kind === 'event') {
+      const name = named(activity);
+      return {
+        key: activity.key,
+        icon: EVENT_ICONS[activity.event.kind],
+        time: null,
+        name,
+        details: session ? statusText(session) : detailsOf(activity),
+        state,
+        onCheck: check,
+        onPress: () =>
+          session
+            ? undoMenu(name, session)
+            : sheet(name, [{ label: t('today.skip'), run: () => skip(activity) }]),
+      };
+    }
     if (activity.kind === 'sport') {
       const name = nameOf(activity);
       const { startTime, durationS } = activity.sport;
@@ -977,17 +1107,20 @@ export function Today() {
     };
   });
 
-  // Done today without being planned: from +, or a rest day's walk.
+  // Done today without being planned: from +, or a rest day's walk (or an
+  // event's, once the event is deleted).
   const unplannedSessions = sessions.filter(
     (session) =>
       session.date === day &&
       session.status === 'completed' &&
       session.plannedRoutineId === null &&
-      session.plannedSportId === null,
+      session.plannedSportId === null &&
+      session.plannedEventId === null,
   );
 
   function unplannedName(session: WorkoutSession): string {
     const routine = allRoutines.find((other) => other.id === session.routineId);
+    if (session.eventKind) return eventName({ kind: session.eventKind, name: session.eventName });
     return session.sport
       ? nameOf({ kind: 'sport', sport: { sport: session.sport, customName: session.sportName } })
       : (routine?.name ??
@@ -1000,7 +1133,11 @@ export function Today() {
     const name = unplannedName(session);
     return {
       key: `session:${session.id}`,
-      icon: session.sport ? SPORT_ICONS[session.sport] : ROUTINE_ICONS[routine?.label ?? 'strength'],
+      icon: session.eventKind
+        ? EVENT_ICONS[session.eventKind]
+        : session.sport
+          ? SPORT_ICONS[session.sport]
+          : ROUTINE_ICONS[routine?.label ?? 'strength'],
       time: null,
       name,
       details: statusText(session),
@@ -1115,7 +1252,7 @@ export function Today() {
       return [
         completedItem(
           activity.key,
-          activity.kind === 'routine' ? shownName(activity.routine, session) : nameOf(activity),
+          activity.kind === 'routine' ? shownName(activity.routine, session) : named(activity),
           session,
           activity.kind === 'sport' ? activity.sport.startTime : null,
         ),
@@ -1201,11 +1338,12 @@ export function Today() {
       {/* A done day has today's steps among its numbers. */}
       {allDone ? null : <StepsCard today={today} />}
 
-      {allRoutines.length === 0 && sports.length === 0 ? (
+      {/* With an event today there's always something to show. */}
+      {todayEvents.length === 0 && allRoutines.length === 0 && sports.length === 0 ? (
         <Card>
           <Text color="textMuted">{t('schedule.noRoutines')}</Text>
         </Card>
-      ) : weekIsEmpty ? (
+      ) : todayEvents.length === 0 && weekIsEmpty ? (
         <Card>
           <Text color="textMuted">{t('today.noWeek')}</Text>
         </Card>
@@ -1246,16 +1384,20 @@ export function Today() {
       <QuickLogSheet
         visible={logging !== null}
         routineName={
-          logging?.kind === 'sport' || logging?.kind === 'swappedSport'
-            ? nameOf({ kind: 'sport', sport: logging.sport })
-            : logging?.kind === 'recovery'
-              ? t(`sports.${logging.sport}`)
-              : (logging?.shown.name ?? '')
+          logging?.kind === 'event'
+            ? eventName(logging.event)
+            : logging?.kind === 'sport' || logging?.kind === 'swappedSport'
+              ? nameOf({ kind: 'sport', sport: logging.sport })
+              : logging?.kind === 'recovery'
+                ? t(`sports.${logging.sport}`)
+                : (logging?.shown.name ?? '')
         }
         plannedDurationS={
           logging?.kind === 'sport'
             ? logging.sport.durationS
-            : logging?.kind === 'recovery' || logging?.kind === 'swappedSport'
+            : logging?.kind === 'recovery' ||
+                logging?.kind === 'swappedSport' ||
+                logging?.kind === 'event'
               ? null
               : (logging?.shown.plannedDurationS ?? null)
         }

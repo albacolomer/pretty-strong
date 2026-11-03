@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui';
+import { EVENT_ICONS } from '@/features/events/events';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { SPORT_ICONS } from '@/features/schedule/sports';
 import { useAppLanguage } from '@/lib/i18n';
@@ -19,6 +20,8 @@ export function WorkoutRow({ entry }: { entry: HistoryEntry }) {
   const { colors } = useTheme();
   const language = useAppLanguage();
   const name =
+    entry.eventName ??
+    (entry.eventKind ? t(`events.kinds.${entry.eventKind}`) : null) ??
     entry.sportName ??
     (entry.sport ? t(`sports.${entry.sport}`) : null) ??
     entry.routineName ??
@@ -42,12 +45,23 @@ export function WorkoutRow({ entry }: { entry: HistoryEntry }) {
         router.push({ pathname: '/profile/history/[sessionId]', params: { sessionId: entry.id } })
       }
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
-      <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
+      {/* A competition or special date's, in gold as in the calendar. */}
+      <View
+        style={[
+          styles.icon,
+          { backgroundColor: entry.eventKind ? colors.goldSoft : colors.accentSoft },
+        ]}>
         <SymbolView
-          name={entry.sport ? SPORT_ICONS[entry.sport] : ROUTINE_ICONS[entry.routineLabel ?? 'none']}
+          name={
+            entry.eventKind
+              ? EVENT_ICONS[entry.eventKind]
+              : entry.sport
+                ? SPORT_ICONS[entry.sport]
+                : ROUTINE_ICONS[entry.routineLabel ?? 'none']
+          }
           size={20}
           weight="light"
-          tintColor={colors.accent}
+          tintColor={entry.eventKind ? colors.gold : colors.accent}
         />
       </View>
       <View style={styles.text}>

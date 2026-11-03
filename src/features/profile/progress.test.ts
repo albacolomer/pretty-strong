@@ -19,6 +19,8 @@ function entry(date: string, values: Partial<HistoryEntry> = {}): HistoryEntry {
     customLabel: null,
     sport: null,
     sportName: null,
+    eventKind: null,
+    eventName: null,
     logMode: 'live',
     durationS: 3600,
     exercises: 4,
@@ -122,6 +124,20 @@ describe('training mix', () => {
       ['hybrid', 1],
       ['Natació', 1],
       [null, 1],
+    ]);
+  });
+
+  test("events by their kind, whatever they're called", () => {
+    const race = { routineLabel: null, routineName: null, eventKind: 'hyrox' as const };
+    const mix = trainingMix([
+      entry('2026-10-01'),
+      entry('2026-10-04', { ...race, eventName: 'HYROX Barcelona' }),
+      entry('2026-10-18', { ...race, eventName: 'HYROX València' }),
+    ]);
+
+    expect(mix.map((item) => [item.eventKind ?? item.label, item.count])).toEqual([
+      ['hyrox', 2],
+      ['strength', 1],
     ]);
   });
 });

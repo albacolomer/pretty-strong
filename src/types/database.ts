@@ -674,10 +674,13 @@ export type Database = {
           duration_s: number | null
           ended_at: string | null
           energy: number | null
+          event_kind: string | null
+          event_name: string | null
           external_id: string | null
           id: string
           log_mode: string
           notes: string | null
+          planned_event_id: string | null
           planned_routine_id: string | null
           planned_sport_id: string | null
           routine_id: string | null
@@ -695,10 +698,13 @@ export type Database = {
           duration_s?: number | null
           ended_at?: string | null
           energy?: number | null
+          event_kind?: string | null
+          event_name?: string | null
           external_id?: string | null
           id: string
           log_mode?: string
           notes?: string | null
+          planned_event_id?: string | null
           planned_routine_id?: string | null
           planned_sport_id?: string | null
           routine_id?: string | null
@@ -716,10 +722,13 @@ export type Database = {
           duration_s?: number | null
           ended_at?: string | null
           energy?: number | null
+          event_kind?: string | null
+          event_name?: string | null
           external_id?: string | null
           id?: string
           log_mode?: string
           notes?: string | null
+          planned_event_id?: string | null
           planned_routine_id?: string | null
           planned_sport_id?: string | null
           routine_id?: string | null
@@ -731,6 +740,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workout_sessions_planned_event_id_fkey"
+            columns: ["planned_event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_sessions_planned_routine_id_fkey"
             columns: ["planned_routine_id"]
@@ -812,6 +828,8 @@ export type Database = {
           date: string
           distance_m: number
           duration_s: number
+          event_kind: string
+          event_name: string
           exercises: number
           id: string
           log_mode: string

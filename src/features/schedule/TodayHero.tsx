@@ -26,9 +26,16 @@ type TodayHeroProps = {
   // "En lloc de «…»", after a swap.
   insteadOf: string | null;
   details: string;
-  // The big button: GO (to start or go back to it) or a ✓ (a class or a
-  // sport, marked done), with a caption under it. Null once it's logged.
-  main: { kind: 'go' | 'done'; caption: string; aria: string; onPress: () => void } | null;
+  // The big button: GO (to start or go back to it) or a ✓ (a class, a sport
+  // or an event, marked done), with a caption under it; gold for a
+  // competition or special date. Null once it's logged.
+  main: {
+    kind: 'go' | 'done';
+    caption: string;
+    aria: string;
+    onPress: () => void;
+    gold?: boolean;
+  } | null;
   // Once logged: how it went ("✓ Fet · 1 h" or "Saltat"), and its ⋯.
   status: { label: string; text: string; skipped: boolean; onPress: () => void } | null;
   actions: HeroAction[];
@@ -64,7 +71,7 @@ export function TodayHero({
               { boxShadow: shadows.hero },
               pressed && styles.pressed,
             ]}>
-            <MetalFill borderRadius={BUTTON / 2} />
+            <MetalFill borderRadius={BUTTON / 2} gradient={main.gold ? 'gold' : 'metal'} />
             {main.kind === 'go' ? (
               <Text variant="hero" color="onMetal" style={metalTextShadows.large}>
                 {t('today.go')}

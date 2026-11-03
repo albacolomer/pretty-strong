@@ -181,10 +181,13 @@ export function toPastWorkout(
     durationS: live ? null : details.durationS,
     energy: details.energy,
     notes: details.notes.trim() === '' ? null : details.notes.trim(),
-    // A sport's session stays one.
+    // A sport's or an event's session stays one.
     plannedSportId: original?.plannedSportId ?? null,
     sport: original?.sport ?? null,
     sportName: original?.sportName ?? null,
+    plannedEventId: original?.plannedEventId ?? null,
+    eventKind: original?.eventKind ?? null,
+    eventName: original?.eventName ?? null,
     exercises,
   };
 }

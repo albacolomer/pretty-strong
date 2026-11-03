@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
 import { Card, GradientText, Text } from '@/components/ui';
-import { dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
+import { addDays, dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
@@ -11,29 +11,23 @@ import { daysUntil, EVENT_ICONS, nextEvent } from './events';
 import { useEvents } from './useEvents';
 import { useEventName } from './useEventName';
 
-// At the end of Avui (US-30): the nearest competition or special date, its
-// day and place, and the days left in big numbers ("12 dies"); "Demà" the
-// day before and "Avui" on the day. Only the nearest one, however far it
-// is; nothing when none is ahead.
+// At the end of Avui (US-30): the nearest competition or special date from
+// tomorrow on (on its day it's Avui's big button instead), its day and
+// place, and the days left in big numbers ("12 dies"), or "Demà". Only the
+// nearest one, however far it is; nothing when none is ahead.
 export function EventCountdown({ today }: { today: Date }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const language = useAppLanguage();
   const nameOf = useEventName();
   const { data: events = [] } = useEvents();
-  const todayKey = dateKey(today);
-  const event = nextEvent(events, todayKey);
+  const event = nextEvent(events, dateKey(addDays(today, 1)));
   if (!event) return null;
 
-  const days = daysUntil(todayKey, event.date);
+  const days = daysUntil(dateKey(today), event.date);
   const name = nameOf(event);
   const date = formatDayTitle(fromDateKey(event.date), language);
-  const when =
-    days === 0
-      ? t('events.isToday')
-      : days === 1
-        ? t('events.isTomorrow')
-        : t('events.inDays', { count: days });
+  const when = days === 1 ? t('events.isTomorrow') : t('events.inDays', { count: days });
 
   return (
     // Read as one: "Proper esdeveniment: HYROX Barcelona, …, d'aquí a 12 dies".

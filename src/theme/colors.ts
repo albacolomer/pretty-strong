@@ -93,6 +93,13 @@ const lightGradients = {
     colors: ['#A9C6DC', '#7FA6C4', '#4A7192', '#96B8D2'],
     locations: [0, 0.4, 0.62, 1],
   },
+  // The big button on a competition or special date's day (US-30): the
+  // metal's shape in gold, dark enough at its middle for its white text.
+  gold: {
+    angle: 145,
+    colors: ['#E8CB6E', '#C9A227', '#9C7A12', '#D8B652'],
+    locations: [0, 0.4, 0.62, 1],
+  },
   // A progress bar's filled part.
   bar: {
     angle: 90,
@@ -118,6 +125,7 @@ const darkGradients: Record<GradientName, Gradient> = {
     locations: [0, 0.55, 1],
   },
   metal: lightGradients.metal,
+  gold: lightGradients.gold,
   bar: {
     angle: 90,
     colors: ['#4A7192', '#A9C6DC', '#DCE8F1'],

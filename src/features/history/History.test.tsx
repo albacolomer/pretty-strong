@@ -87,6 +87,8 @@ function entry(values: Partial<HistoryEntry>): HistoryEntry {
     customLabel: null,
     sport: null,
     sportName: null,
+    eventKind: null,
+    eventName: null,
     logMode: 'live',
     durationS: 3600,
     exercises: 4,
@@ -116,6 +118,9 @@ const workout: PastWorkout = {
   plannedSportId: null,
   sport: null,
   sportName: null,
+  plannedEventId: null,
+  eventKind: null,
+  eventName: null,
   exercises: [
     {
       id: 'se-1',
@@ -236,6 +241,42 @@ describe('History', () => {
 
     expect(await screen.findByText('Pàdel')).toBeOnTheScreen();
     expect(screen.getByText('dc., 21 d’oct. · 1 h 30 min')).toBeOnTheScreen();
+  });
+
+  test("an event's session shows with the event's name, as it was logged", async () => {
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([
+      entry({
+        id: 'session-8',
+        date: '2026-10-21',
+        routineName: null,
+        routineLabel: null,
+        eventKind: 'hyrox',
+        eventName: 'HYROX Barcelona',
+        logMode: 'quick',
+        durationS: 4500,
+        exercises: 0,
+        sets: 0,
+        volumeKg: 0,
+      }),
+      entry({
+        id: 'session-9',
+        date: '2026-10-21',
+        routineName: null,
+        routineLabel: null,
+        eventKind: 'marathon',
+        logMode: 'quick',
+        durationS: 13500,
+        exercises: 0,
+        sets: 0,
+        volumeKg: 0,
+      }),
+    ]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('HYROX Barcelona')).toBeOnTheScreen();
+    expect(screen.getByText('dc., 21 d’oct. · 1 h 15 min')).toBeOnTheScreen();
+    // Without a name of its own: its kind's.
+    expect(screen.getByText('Marató')).toBeOnTheScreen();
   });
 
   test('today without activity says so, or that it is a rest day', async () => {

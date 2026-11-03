@@ -25,6 +25,8 @@ function entry(values: Partial<HistoryEntry>): HistoryEntry {
     customLabel: null,
     sport: null,
     sportName: null,
+    eventKind: null,
+    eventName: null,
     logMode: 'live',
     durationS: 5520,
     exercises: 5,

@@ -32,6 +32,8 @@ function entry(date: string, values: Partial<HistoryEntry> = {}): HistoryEntry {
     customLabel: null,
     sport: null,
     sportName: null,
+    eventKind: null,
+    eventName: null,
     logMode: 'live',
     durationS: 3600,
     exercises: 4,

@@ -760,7 +760,6 @@
     "monthCount_other": "{{count}} esdeveniments aquest mes",
     "countdownLabel": "Proper esdeveniment",
     "countdownAria": "Proper esdeveniment: {{name}}, {{date}}, {{when}}",
-    "isToday": "Avui",
     "isTomorrow": "Demà",
     "inDays_one": "d'aquí a {{count}} dia",
     "inDays_other": "d'aquí a {{count}} dies",

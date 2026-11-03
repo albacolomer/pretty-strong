@@ -55,6 +55,8 @@ function Details({
   const remove = useDeleteWorkout();
   const totals = pastTotals(workout);
   const name =
+    workout.eventName ??
+    (workout.eventKind ? t(`events.kinds.${workout.eventKind}`) : null) ??
     workout.sportName ??
     (workout.sport ? t(`sports.${workout.sport}`) : null) ??
     workout.routineName ??

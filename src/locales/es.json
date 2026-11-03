@@ -760,7 +760,6 @@
     "monthCount_other": "{{count}} eventos este mes",
     "countdownLabel": "Próximo evento",
     "countdownAria": "Próximo evento: {{name}}, {{date}}, {{when}}",
-    "isToday": "Hoy",
     "isTomorrow": "Mañana",
     "inDays_one": "dentro de {{count}} día",
     "inDays_other": "dentro de {{count}} días",

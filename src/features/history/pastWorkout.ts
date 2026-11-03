@@ -1,3 +1,4 @@
+import type { EventKind } from '@/features/events/events';
 import type { Exercise } from '@/features/exercises/exercise';
 import type { TrackingType } from '@/features/exercises/vocabulary';
 import { formatInput } from '@/features/routines/targets';
@@ -56,6 +57,10 @@ export type PastWorkout = {
   plannedSportId: string | null;
   sport: Sport | null;
   sportName: string | null;
+  // An event's session (see HistoryEntry), and the event it was for.
+  plannedEventId: string | null;
+  eventKind: EventKind | null;
+  eventName: string | null;
   exercises: PastExercise[];
 };
 
@@ -161,6 +166,9 @@ export function toSavePayload(workout: PastWorkout) {
     planned_sport_id: workout.plannedSportId,
     sport: workout.sport,
     sport_name: workout.sportName,
+    planned_event_id: workout.plannedEventId,
+    event_kind: workout.eventKind,
+    event_name: workout.eventName,
     exercises: workout.exercises.map((exercise) => ({
       id: exercise.id,
       exercise_id: exercise.exerciseId,

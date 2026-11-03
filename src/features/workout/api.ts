@@ -1,3 +1,4 @@
+import type { EventKind } from '@/features/events/events';
 import type { Sport } from '@/features/schedule/sports';
 import { supabase } from '@/lib/supabase';
 
@@ -5,7 +6,7 @@ import { toFinishPayload, type FinishedWorkout, type LastTime } from './activeWo
 import { liveDuration, type ChangeReason, type SessionStatus, type WorkoutSession } from './session';
 
 const SESSION_COLUMNS =
-  'id, date, planned_routine_id, routine_id, status, log_mode, started_at, ended_at, duration_s, notes, change_reason, planned_sport_id, sport, sport_name';
+  'id, date, planned_routine_id, routine_id, status, log_mode, started_at, ended_at, duration_s, notes, change_reason, planned_sport_id, sport, sport_name, planned_event_id, event_kind, event_name';
 
 // Your sessions from `from` to `to` (both "2026-10-20" dates, included),
 // oldest first. RLS only returns your own.
@@ -33,11 +34,14 @@ export async function fetchSessions(from: string, to: string): Promise<WorkoutSe
     plannedSportId: row.planned_sport_id,
     sport: row.sport as Sport | null,
     sportName: row.sport_name,
+    plannedEventId: row.planned_event_id,
+    eventKind: row.event_kind as EventKind | null,
+    eventName: row.event_name,
   }));
 }
 
-// A quick log from Today: a planned routine or sport marked done, or
-// skipped.
+// A quick log from Today: a planned routine, sport or event marked done,
+// or skipped.
 // The id is made on the phone, so saving it twice (a retry) keeps one.
 export async function logQuickSession(session: WorkoutSession): Promise<void> {
   const { error } = await supabase.from('workout_sessions').upsert(
@@ -54,6 +58,9 @@ export async function logQuickSession(session: WorkoutSession): Promise<void> {
       planned_sport_id: session.plannedSportId,
       sport: session.sport,
       sport_name: session.sportName,
+      planned_event_id: session.plannedEventId,
+      event_kind: session.eventKind,
+      event_name: session.eventName,
     },
     { onConflict: 'id', ignoreDuplicates: true },
   );

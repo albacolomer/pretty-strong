@@ -1,3 +1,4 @@
+import type { EventKind } from '@/features/events/events';
 import { formatDuration, type RoutineLabel } from '@/features/routines/routine';
 import { countsAsWorkout, type Sport } from '@/features/schedule/sports';
 import { addDays, dateKey, fromDateKey, startOfWeek } from '@/features/schedule/dates';
@@ -23,6 +24,10 @@ export type HistoryEntry = {
   // A sport's session: which sport, and its own name for "Altres".
   sport: Sport | null;
   sportName: string | null;
+  // A competition or special date's session (US-30): its kind, and its own
+  // name (null: the kind's).
+  eventKind: EventKind | null;
+  eventName: string | null;
   logMode: 'live' | 'quick';
   durationS: number | null;
   exercises: number;
@@ -57,6 +62,8 @@ export function pendingEntry(
     customLabel: routine?.customLabel ?? null,
     sport: null,
     sportName: null,
+    eventKind: null,
+    eventName: null,
     logMode: 'live',
     durationS: summary.durationS,
     exercises: summary.exercises,
@@ -143,8 +150,9 @@ export type EntryLabels = {
 };
 
 // What a row says after its date, by the routine's type: a run its
-// distance and pace, a hybrid session its time and stations, a sport its
-// time, the rest their time and kg lifted (or sets). "1 h 32 min · 7.240 kg".
+// distance and pace, a hybrid session its time and stations, a sport or an
+// event its time, the rest their time and kg lifted (or sets).
+// "1 h 32 min · 7.240 kg".
 export function entryDetails(
   entry: HistoryEntry,
   language: Language,
@@ -153,7 +161,9 @@ export function entryDetails(
   const time = entry.durationS === null ? null : formatDuration(entry.durationS);
   const km = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
   const kg = new Intl.NumberFormat(language, { maximumFractionDigits: 0 });
-  const parts: (string | null)[] = entry.sport
+  // A sport or an event is marked done: just how long it took.
+  const markedDone = entry.sport !== null || entry.eventKind !== null;
+  const parts: (string | null)[] = markedDone
     ? [time]
     : entry.routineLabel === 'run' && entry.distanceM > 0
       ? [
@@ -170,7 +180,7 @@ export function entryDetails(
                 ? labels.sets(entry.sets)
                 : null,
           ];
-  if (entry.sets === 0 && entry.logMode === 'quick' && !entry.sport) parts.push(labels.quick);
+  if (entry.sets === 0 && entry.logMode === 'quick' && !markedDone) parts.push(labels.quick);
   return parts.filter((part) => part !== null);
 }
 

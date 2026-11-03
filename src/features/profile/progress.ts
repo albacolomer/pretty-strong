@@ -1,3 +1,4 @@
+import type { EventKind } from '@/features/events/events';
 import type { HistoryEntry } from '@/features/history/entries';
 import { weeklyCounts } from '@/features/history/entries';
 import type { RoutineLabel } from '@/features/routines/routine';
@@ -96,25 +97,30 @@ export type MixItem = {
   // A sport, with its own name for "Altres".
   sport: Sport | null;
   sportName: string | null;
+  // A competition or special date's kind (US-30).
+  eventKind: EventKind | null;
   count: number;
 };
 
-// Workouts by routine type, and by sport, most first; each custom type and
-// each sport of your own on its own.
+// Workouts by routine type, by sport and by kind of event, most first; each
+// custom type and each sport of your own on its own.
 export function trainingMix(entries: readonly HistoryEntry[]): MixItem[] {
   const items = new Map<string, MixItem>();
   for (const entry of entries) {
     const customLabel = !entry.sport && entry.routineLabel === 'custom' ? entry.customLabel : null;
-    const key = entry.sport
-      ? `sport:${entry.sportName ?? entry.sport}`
-      : customLabel
-        ? `custom:${customLabel}`
-        : (entry.routineLabel ?? 'none');
+    const key = entry.eventKind
+      ? `event:${entry.eventKind}`
+      : entry.sport
+        ? `sport:${entry.sportName ?? entry.sport}`
+        : customLabel
+          ? `custom:${customLabel}`
+          : (entry.routineLabel ?? 'none');
     const item = items.get(key) ?? {
       label: entry.sport ? null : entry.routineLabel,
       customLabel,
       sport: entry.sport,
       sportName: entry.sportName,
+      eventKind: entry.eventKind,
       count: 0,
     };
     items.set(key, { ...item, count: item.count + 1 });

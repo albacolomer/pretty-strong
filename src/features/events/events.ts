@@ -99,12 +99,13 @@ export function eventDays(events: readonly CalendarEvent[]): Set<string> {
   return new Set(events.map((event) => event.date));
 }
 
-// Avui's countdown: the nearest event from today on (today's too). Of two
-// on that day, the one added first. Null when none is ahead.
-export function nextEvent(events: readonly CalendarEvent[], today: string): CalendarEvent | null {
+// Avui's countdown: the nearest event from `from` on ("2026-11-03", that
+// day's too). Of two on that day, the one added first. Null when none is
+// ahead.
+export function nextEvent(events: readonly CalendarEvent[], from: string): CalendarEvent | null {
   let next: CalendarEvent | null = null;
   for (const event of events) {
-    if (event.date >= today && (next === null || event.date < next.date)) next = event;
+    if (event.date >= from && (next === null || event.date < next.date)) next = event;
   }
   return next;
 }

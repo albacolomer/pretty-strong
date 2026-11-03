@@ -84,7 +84,7 @@ describe('nextEvent', () => {
     expect(nextEvent([marathon, past, hyrox], '2026-11-02')?.id).toBe('event-1');
   });
 
-  it("counts today's", () => {
+  it('counts the day it looks from', () => {
     expect(nextEvent([marathon, hyrox], '2026-11-14')?.id).toBe('event-1');
     expect(nextEvent([marathon, hyrox], '2026-11-15')?.id).toBe('event-2');
   });

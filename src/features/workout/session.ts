@@ -1,3 +1,4 @@
+import type { EventKind } from '@/features/events/events';
 import type { Sport } from '@/features/schedule/sports';
 
 // A workout session as the app uses it (workout_sessions). No React here.
@@ -39,7 +40,16 @@ export type WorkoutSession = {
   plannedSportId: string | null;
   sport: Sport | null;
   sportName: string | null;
+  // A competition or special date's session (US-30): the event it was for,
+  // and its kind and name (null: the kind's), kept even if the event
+  // changes or goes.
+  plannedEventId: string | null;
+  eventKind: EventKind | null;
+  eventName: string | null;
 };
+
+// For a session that isn't an event's.
+export const NO_EVENT = { plannedEventId: null, eventKind: null, eventName: null } as const;
 
 // A quick log's length: from 1 minute to 24 hours, as the database allows.
 export const QUICK_DURATION_MAX_MIN = 24 * 60;
