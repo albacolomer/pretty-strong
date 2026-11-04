@@ -1,10 +1,18 @@
-import { useNavigation } from 'expo-router';
+import { router, Stack } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text, TextField, useActionSheet, useToast } from '@/components/ui';
+import {
+  Button,
+  Card,
+  HeaderBackButton,
+  Text,
+  TextField,
+  useActionSheet,
+  useToast,
+} from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
@@ -95,7 +103,6 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const { colors } = useTheme();
   const showActionSheet = useActionSheet();
   const language = useAppLanguage();
-  const navigation = useNavigation();
   const showToast = useToast();
   const save = useSaveRoutine();
   const archiveRoutine = useArchiveRoutineWithUndo();
@@ -103,9 +110,9 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const [saved] = useState(() => (routine ? draftFromRoutine(routine) : emptyRoutineDraft()));
   const [draft, setDraft] = useState(saved);
   const [errors, setErrors] = useState<RoutineDraftErrors>({});
-  // Set just before leaving after a save or archive, so leaving isn't
-  // questioned.
-  const leavingAfterSave = useRef(false);
+  // Set once leaving is decided (saved, archived or discarded), so the
+  // guard below stays off.
+  const [leaving, setLeaving] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [reorderOpen, setReorderOpen] = useState(false);
   const [noteOpen, setNoteOpen] = useState(false);
@@ -169,11 +176,10 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   }
 
   // Losing unsaved work can't be undone, so this is the one place that asks.
-  usePreventRemove(hasChanges(draft, saved), ({ data }) => {
-    if (leavingAfterSave.current) {
-      navigation.dispatch(data.action);
-      return;
-    }
+  // Leaving goes on with `repeat`, which turns the guard off first: sending
+  // the same action again would be stopped again, over and over.
+  const guarding = hasChanges(draft, saved) && !leaving;
+  const stopGuarding = usePreventRemove(guarding, ({ repeat }) => {
     showActionSheet(
       {
         title: t('routines.editor.discardTitle'),
@@ -182,10 +188,19 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         cancelButtonIndex: 1,
       },
       (index) => {
-        if (index === 0) navigation.dispatch(data.action);
+        if (index !== 0) return;
+        setLeaving(true);
+        repeat();
       },
     );
   });
+
+  // Before going away on purpose: the guard is off at once, not only after
+  // the next render.
+  function leave() {
+    setLeaving(true);
+    stopGuarding();
+  }
 
   function handleSave() {
     const found = validateRoutineDraft(draft);
@@ -194,7 +209,7 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
 
     save.mutate(toSaveInput(draft, routine?.id ?? null), {
       onSuccess: (routineId) => {
-        leavingAfterSave.current = true;
+        leave();
         onSaved(routineId);
       },
     });
@@ -205,7 +220,7 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   function handleArchive() {
     if (!routine || !onArchived) return;
     archiveRoutine(routine);
-    leavingAfterSave.current = true;
+    leave();
     onArchived();
   }
 
@@ -249,6 +264,17 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
 
   return (
     <View style={styles.form}>
+      <Stack.Screen
+        options={{
+          // Our own ‹, so asking before leaving never goes through iOS
+          // closing the screen first (see HeaderBackButton).
+          headerBackVisible: false,
+          headerLeft: () => <HeaderBackButton onPress={() => router.back()} />,
+          // Swiping back closes it natively too: off while there's
+          // something to lose.
+          gestureEnabled: !guarding,
+        }}
+      />
       <Card style={styles.nameCard}>
         <TextField
           label={t('routines.editor.name')}

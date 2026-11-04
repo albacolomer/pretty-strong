@@ -2,6 +2,7 @@ export { Button, type ButtonProps, type ButtonVariant } from './Button';
 export { Card, type CardProps } from './Card';
 export { GradientText, type GradientTextProps } from './GradientText';
 export { GradientView, type GradientViewProps } from './GradientView';
+export { HeaderBackButton } from './HeaderBackButton';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { Logo, type LogoProps } from './Logo';
 export { MenuHost, menus, type MenuOptions } from './Menu';

@@ -1,6 +1,7 @@
 import '@/lib/i18n';
 
 import { act, render, screen, userEvent } from '@testing-library/react-native';
+import { router } from 'expo-router';
 import { usePreventRemove } from 'expo-router/react-navigation';
 
 import { menus } from '@/components/ui';
@@ -25,14 +26,31 @@ jest.mock('@/features/exercises/api', () => ({
   fetchExercises: jest.fn(),
   fetchExerciseSettings: jest.fn(),
 }));
-jest.mock('expo-router', () => ({ useNavigation: () => ({ dispatch: jest.fn() }) }));
+// The header's options; its left button is shown so tests can press it.
+const mockScreenOptions = jest.fn();
+jest.mock('expo-router', () => ({
+  router: { back: jest.fn() },
+  Stack: {
+    Screen: ({ options }: { options: { headerLeft?: () => React.ReactNode } }) => {
+      mockScreenOptions(options);
+      return options.headerLeft?.() ?? null;
+    },
+  },
+}));
 jest.mock('expo-router/react-navigation', () => ({ usePreventRemove: jest.fn() }));
 jest.mock('react-native-sortables', () => jest.requireActual('@/test-utils/sortablesMock'));
 const mockSaveRoutine = jest.mocked(saveRoutine);
 const mockPreventRemove = jest.mocked(usePreventRemove);
+// What usePreventRemove gives back: turns the guard off at once.
+const mockStopGuarding = jest.fn();
 
 // Whether the screen currently refuses to close without asking.
 const guardsUnsavedChanges = () => mockPreventRemove.mock.lastCall?.[0];
+
+// What happens when the screen is about to close but the guard stops it
+// (back button, swipe back): `repeat` goes on leaving.
+const tryToLeave = (repeat: () => void) =>
+  act(() => mockPreventRemove.mock.lastCall?.[1]?.({ data: { action: { type: 'POP' } }, repeat }));
 
 // Each native action sheet (⋯ menus, the type list…) picks the next of these
 // labels, or is cancelled when there's none.
@@ -66,7 +84,10 @@ beforeEach(() => {
   // Your own default rest for the squat; the app default (1:30) for others.
   jest.mocked(fetchExerciseSettings).mockResolvedValue({ squat: { notes: null, defaultRestS: 150 } });
   mockSaveRoutine.mockReset().mockResolvedValue('routine-1');
-  mockPreventRemove.mockClear();
+  mockPreventRemove.mockReset().mockReturnValue(mockStopGuarding);
+  mockStopGuarding.mockClear();
+  mockScreenOptions.mockClear();
+  jest.mocked(router.back).mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
     .spyOn(menus, 'show')
@@ -111,6 +132,12 @@ describe('<RoutineEditor />', () => {
 
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
 
+    // Once saved, the guard is off before leaving, so leaving isn't stopped.
+    expect(mockStopGuarding).toHaveBeenCalled();
+    expect(mockStopGuarding.mock.invocationCallOrder[0]).toBeLessThan(
+      onSaved.mock.invocationCallOrder[0],
+    );
+    expect(guardsUnsavedChanges()).toBe(false);
     expect(mockSaveRoutine).toHaveBeenCalledWith({
       id: null,
       name: 'HYROX dimarts',
@@ -124,6 +151,33 @@ describe('<RoutineEditor />', () => {
       exercises: [],
     });
     expect(onSaved).toHaveBeenCalled();
+  });
+
+  test('leaving with unsaved changes asks once; Descarta leaves with the guard off', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    await user.type(screen.getByLabelText('Nom'), 'Cames');
+    const repeat = jest.fn();
+
+    // Our own ‹ goes back through the guard; swiping back is off meanwhile.
+    await user.press(screen.getByRole('button', { name: 'Enrere' }));
+    expect(router.back).toHaveBeenCalled();
+    expect(mockScreenOptions.mock.lastCall?.[0]).toMatchObject({
+      headerBackVisible: false,
+      gestureEnabled: false,
+    });
+
+    sheetChoices.push('Continua editant');
+    await tryToLeave(repeat);
+    expect(repeat).not.toHaveBeenCalled();
+    expect(guardsUnsavedChanges()).toBe(true);
+
+    sheetChoices.push('Descarta els canvis');
+    await tryToLeave(repeat);
+    expect(repeat).toHaveBeenCalledTimes(1);
+    expect(guardsUnsavedChanges()).toBe(false);
   });
 
   test('cancelling the note sheet keeps the note as it was', async () => {

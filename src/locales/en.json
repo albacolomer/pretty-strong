@@ -3,6 +3,7 @@
     "name": "Pretty Strong"
   },
   "common": {
+    "back": "Back",
     "done": "Done",
     "cancel": "Cancel",
     "undo": "Undo"
