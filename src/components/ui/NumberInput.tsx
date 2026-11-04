@@ -72,7 +72,11 @@ export function KeyboardDoneBar({ nativeID }: { nativeID: string }) {
   const { colors } = useTheme();
 
   return (
-    <InputAccessoryView nativeID={nativeID} backgroundColor={colors.surfaceRaised}>
+    <InputAccessoryView
+      nativeID={nativeID}
+      backgroundColor={colors.surfaceRaised}
+      style={styles.accessoryHost}
+    >
       <View style={styles.accessory}>
         <Button label={t('common.done')} variant="ghost" onPress={() => Keyboard.dismiss()} />
       </View>
@@ -96,6 +100,14 @@ const styles = StyleSheet.create({
     fontFamily: typography.input.fontFamily,
     fontSize: typography.input.fontSize,
     fontVariant: typography.input.fontVariant,
+  },
+  // React Native 0.88 bug: when iOS reuses the native view of an
+  // InputAccessoryView it forgets to keep it hidden, so it shows in the page
+  // as a grey, screen-wide strip over the field. The bar above the keyboard
+  // is a separate view, so this one can safely be invisible and untappable.
+  accessoryHost: {
+    opacity: 0,
+    pointerEvents: 'none',
   },
   accessory: {
     alignItems: 'flex-end',
