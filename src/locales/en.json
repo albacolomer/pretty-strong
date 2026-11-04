@@ -310,7 +310,6 @@
       "durationPlus": "5 minutes more",
       "addDuration": "Add a duration",
       "noDuration": "No duration",
-      "weekdays": "Days (optional)",
       "exercisesOptional": {
         "hybrid": "If the session changes every week, leave it without exercises and add them on the day.",
         "custom": "Optional: add exercises, or leave it without and mark it as done."
@@ -327,7 +326,6 @@
         "unknown": "Couldn't save it. Try again.",
         "blocksIncomplete": "Add the distance or time of each block."
       },
-      "noExercises": "No exercises yet. Add the ones you'll do in this routine.",
       "addExercises": "Add exercises",
       "rest": "Rest",
       "restValue": "Rest: {{time}}",
@@ -361,7 +359,17 @@
       "addNote": "Add a note",
       "typeButton": "Type: {{type}}",
       "description": "Description",
-      "descriptionPlaceholder": "Description (optional): back & biceps"
+      "descriptionPlaceholder": "Description (optional): back & biceps",
+      "optional": "Optional",
+      "days": "Days",
+      "note": "Note",
+      "editNote": "Note: {{note}}",
+      "notesPlaceholder": "E.g. warm up your shoulders well",
+      "exercisesHeading": "Exercises",
+      "added_one": "{{count}} added",
+      "added_other": "{{count}} added",
+      "noExercisesTitle": "No exercises yet",
+      "noExercisesHint": "Add the ones you'll do in this routine"
     },
     "sets": {
       "header": "Set",
@@ -424,7 +432,9 @@
         "distance": "Add the distance.",
         "time": "Add the time.",
         "intervals": "Add the distance or time of each repetition."
-      }
+      },
+      "heading": "Blocks",
+      "empty": "No blocks yet"
     }
   },
   "schedule": {

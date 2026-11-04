@@ -102,9 +102,11 @@ describe('<RoutineEditor />', () => {
     await user.type(screen.getByLabelText('Nom'), 'HYROX dimarts');
     await chooseType(user, 'Força', 'Híbrid');
     expect(screen.getByRole('button', { name: 'Tipus: Híbrid' })).toBeOnTheScreen();
-    // The routine's note is a button until it's needed.
+    // The Nota row opens a sheet; Fet keeps the note, and the row shows it.
     await user.press(screen.getByRole('button', { name: 'Afegeix una nota' }));
     await user.type(screen.getByLabelText('Nota de la rutina'), 'Simulació curta');
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(screen.getByRole('button', { name: 'Nota: Simulació curta' })).toBeOnTheScreen();
     expect(guardsUnsavedChanges()).toBe(true);
 
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
@@ -122,6 +124,20 @@ describe('<RoutineEditor />', () => {
       exercises: [],
     });
     expect(onSaved).toHaveBeenCalled();
+  });
+
+  test('cancelling the note sheet keeps the note as it was', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    await user.press(screen.getByRole('button', { name: 'Afegeix una nota' }));
+    await user.type(screen.getByLabelText('Nota de la rutina'), 'Escalfa bé');
+    await user.press(screen.getByRole('button', { name: 'Cancel·la' }));
+
+    expect(screen.getByRole('button', { name: 'Afegeix una nota' })).toBeOnTheScreen();
+    expect(guardsUnsavedChanges()).toBe(false);
   });
 
   test('edits a saved routine, keeping its exercises and their ids', async () => {
@@ -154,10 +170,15 @@ describe('<RoutineEditor />', () => {
     });
     await user.type(screen.getByLabelText('Nom'), 'Cames');
 
+    // Empty, the section says so, with the button to add the first ones.
+    expect(screen.getByText('Encara no hi ha exercicis')).toBeOnTheScreen();
+    expect(screen.getByText('0 afegits')).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: 'Afegeix exercicis' }));
     await user.press(await screen.findByRole('checkbox', { name: /Pes mort romanès/ }));
     await user.press(screen.getByRole('checkbox', { name: /Esquat amb barra/ }));
     await user.press(screen.getByRole('button', { name: 'Afegeix (2)' }));
+    expect(screen.getByText('2 afegits')).toBeOnTheScreen();
+    expect(screen.queryByText('Encara no hi ha exercicis')).not.toBeOnTheScreen();
 
     // Rest shows each exercise's own default, greyed out.
     expect(screen.getAllByLabelText('Descans: 1:30')).toHaveLength(1);

@@ -310,7 +310,6 @@
       "durationPlus": "5 minutos más",
       "addDuration": "Añadir una duración",
       "noDuration": "Sin duración",
-      "weekdays": "Días (opcional)",
       "exercisesOptional": {
         "hybrid": "Si el entrenamiento cambia cada semana, déjala sin ejercicios y añádelos el día que entrenes.",
         "custom": "Opcional: añade ejercicios, o déjala sin ellos y márcala como hecha."
@@ -327,7 +326,6 @@
         "unknown": "No se ha podido guardar. Vuelve a intentarlo.",
         "blocksIncomplete": "Pon la distancia o el tiempo de cada bloque."
       },
-      "noExercises": "Todavía no hay ejercicios. Añade los que harás en esta rutina.",
       "addExercises": "Añadir ejercicios",
       "rest": "Descanso",
       "restValue": "Descanso: {{time}}",
@@ -361,7 +359,17 @@
       "addNote": "Añadir una nota",
       "typeButton": "Tipo: {{type}}",
       "description": "Descripción",
-      "descriptionPlaceholder": "Descripción (opcional): espalda y bíceps"
+      "descriptionPlaceholder": "Descripción (opcional): espalda y bíceps",
+      "optional": "Opcional",
+      "days": "Días",
+      "note": "Nota",
+      "editNote": "Nota: {{note}}",
+      "notesPlaceholder": "P. ej. calienta bien los hombros",
+      "exercisesHeading": "Ejercicios",
+      "added_one": "{{count}} añadido",
+      "added_other": "{{count}} añadidos",
+      "noExercisesTitle": "Aún no hay ejercicios",
+      "noExercisesHint": "Añade los que harás en esta rutina"
     },
     "sets": {
       "header": "Serie",
@@ -424,7 +432,9 @@
         "distance": "Pon la distancia.",
         "time": "Pon el tiempo.",
         "intervals": "Pon la distancia o el tiempo de cada repetición."
-      }
+      },
+      "heading": "Bloques",
+      "empty": "Aún no hay bloques"
     }
   },
   "schedule": {

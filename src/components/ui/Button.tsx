@@ -1,3 +1,4 @@
+import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import {
@@ -22,6 +23,10 @@ export type ButtonProps = {
   style?: StyleProp<ViewStyle>;
   // What screen readers say, when the visible label is shorter, e.g. "+ Nota".
   'aria-label'?: string;
+  // An SF Symbol before the label, e.g. "plus".
+  icon?: SFSymbol;
+  // Small spaced capitals, like "+ AFEGEIX EXERCICIS".
+  caps?: boolean;
 };
 
 const textColors: Record<ButtonVariant, ColorToken> = {
@@ -39,6 +44,8 @@ export function Button({
   disabled = false,
   style,
   'aria-label': ariaLabel,
+  icon,
+  caps = false,
 }: ButtonProps) {
   const { colors, shadows } = useTheme();
   const metal = variant === 'primary';
@@ -59,8 +66,16 @@ export function Button({
         style,
       ]}>
       {metal ? <MetalFill borderRadius={radius.pill} /> : null}
+      {icon ? (
+        <SymbolView
+          name={icon}
+          size={15}
+          weight="semibold"
+          tintColor={colors[textColors[variant]]}
+        />
+      ) : null}
       <Text
-        variant="bodyStrong"
+        variant={caps ? 'label' : 'bodyStrong'}
         color={textColors[variant]}
         numberOfLines={1}
         style={metal && metalTextShadows.small}>
@@ -75,8 +90,10 @@ const styles = StyleSheet.create({
     minHeight: touch.min,
     paddingHorizontal: spacing.xl,
     borderRadius: radius.pill,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: spacing.sm,
   },
   pressed: {
     opacity: 0.75,

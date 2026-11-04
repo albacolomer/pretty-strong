@@ -4,7 +4,7 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Text, TextField, useActionSheet, useToast } from '@/components/ui';
+import { Button, Card, Text, TextField, useActionSheet, useToast } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
@@ -12,7 +12,7 @@ import { useExerciseSettings } from '@/features/exercises/useExerciseSettings';
 import { useExercises } from '@/features/exercises/useExercises';
 import { isNetworkError } from '@/lib/errors';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { spacing, typography, useTheme } from '@/theme';
 
 import {
   CUSTOM_LABEL_MAX_LENGTH,
@@ -27,7 +27,10 @@ import { ExerciseGroup } from './ExerciseGroup';
 import { PlannedDurationField } from './PlannedDurationField';
 import { ReorderExercisesSheet } from './ReorderExercisesSheet';
 import { RoutineExerciseCard, type GroupKind } from './RoutineExerciseCard';
-import { RoutineTypeButton } from './RoutineTypeButton';
+import { ROUTINE_ICONS } from './routineIcons';
+import { RoutineNoteSheet } from './RoutineNoteSheet';
+import { EmptySectionCard, SectionHeader } from './RoutineSection';
+import { RoutineTypeRow } from './RoutineTypeRow';
 import { RunBlockCard } from './RunBlockCard';
 import { RUN_BLOCK_KINDS, RUN_EXERCISE_SLUG, runBlockSummary, type RunBlockKind } from './runBlocks';
 import {
@@ -59,6 +62,7 @@ import {
 } from './routineDraft';
 import { useArchiveRoutineWithUndo } from './useArchiveRoutine';
 import { useRoutines, useSaveRoutine } from './useRoutines';
+import { SettingsCard, SettingsRow } from './SettingsRows';
 import { WeekdayPicker } from './WeekdayPicker';
 
 type RoutineEditorProps = {
@@ -88,6 +92,7 @@ type RoutineFormProps = Omit<RoutineEditorProps, 'routineId'> & { routine: Routi
 
 function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const navigation = useNavigation();
@@ -103,8 +108,7 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const leavingAfterSave = useRef(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [reorderOpen, setReorderOpen] = useState(false);
-  // The routine's note shows once asked for, or straight away if it has one.
-  const [notesOpen, setNotesOpen] = useState(draft.notes !== '');
+  const [noteOpen, setNoteOpen] = useState(false);
   const { data: library = [] } = useExercises();
   const { data: settings } = useExerciseSettings();
 
@@ -122,6 +126,8 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
     exercisesById.get(exerciseId)?.trackingType === 'run';
   // Run blocks are made of the built-in run exercise.
   const runExerciseId = library.find((exercise) => exercise.slug === RUN_EXERCISE_SLUG)?.id;
+  // The Nota row shows the note's first line.
+  const notePreview = draft.notes.trim().split('\n')[0];
   // In each card's ⋯ menu; reordering only makes sense with two or more.
   const openReorder = draft.exercises.length > 1 ? () => setReorderOpen(true) : undefined;
 
@@ -243,165 +249,192 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
 
   return (
     <View style={styles.form}>
-      <View style={styles.titleRow}>
-        <View style={styles.name}>
-          <TextField
-            label={t('routines.editor.name')}
-            labelHidden
-            placeholder={t('routines.editor.namePlaceholder')}
-            value={draft.name}
-            onChangeText={(name) => setDraft((current) => ({ ...current, name }))}
-            error={
-              errors.name
-                ? t(`routines.editor.errors.${errors.name}`, { max: ROUTINE_NAME_MAX_LENGTH })
-                : undefined
-            }
-            maxLength={ROUTINE_NAME_MAX_LENGTH}
-            autoCapitalize="sentences"
-            returnKeyType="done"
-          />
-        </View>
-        <RoutineTypeButton value={draft.label} onChange={changeLabel} />
-      </View>
-      <TextField
-        label={t('routines.editor.description')}
-        labelHidden
-        placeholder={t('routines.editor.descriptionPlaceholder')}
-        value={draft.description}
-        onChangeText={(description) => setDraft((current) => ({ ...current, description }))}
-        maxLength={ROUTINE_DESCRIPTION_MAX_LENGTH}
-        autoCapitalize="sentences"
-        returnKeyType="done"
-      />
-
-      {draft.label === 'custom' ? (
+      <Card style={styles.nameCard}>
         <TextField
-          label={t('routines.editor.customLabel')}
-          placeholder={t('routines.editor.customLabelPlaceholder')}
-          value={draft.customLabel}
-          onChangeText={(customLabel) => setDraft((current) => ({ ...current, customLabel }))}
-          maxLength={CUSTOM_LABEL_MAX_LENGTH}
+          label={t('routines.editor.name')}
+          labelHidden
+          variant="plain"
+          placeholder={t('routines.editor.namePlaceholder')}
+          value={draft.name}
+          onChangeText={(name) => setDraft((current) => ({ ...current, name }))}
+          error={
+            errors.name
+              ? t(`routines.editor.errors.${errors.name}`, { max: ROUTINE_NAME_MAX_LENGTH })
+              : undefined
+          }
+          maxLength={ROUTINE_NAME_MAX_LENGTH}
+          autoCapitalize="sentences"
+          returnKeyType="done"
+          style={styles.nameInput}
+        />
+        <View style={[styles.separator, { backgroundColor: colors.separator }]} />
+        <TextField
+          label={t('routines.editor.description')}
+          labelHidden
+          variant="plain"
+          placeholder={t('routines.editor.descriptionPlaceholder')}
+          value={draft.description}
+          onChangeText={(description) => setDraft((current) => ({ ...current, description }))}
+          maxLength={ROUTINE_DESCRIPTION_MAX_LENGTH}
           autoCapitalize="sentences"
           returnKeyType="done"
         />
-      ) : null}
+      </Card>
 
-      {usesPlannedDuration(draft.label) ? (
-        <PlannedDurationField
-          value={draft.plannedDurationS}
-          onChange={(seconds) => setDraft((current) => setPlannedDuration(current, seconds))}
+      <SettingsCard>
+        <RoutineTypeRow value={draft.label} onChange={changeLabel} />
+        {draft.label === 'custom' ? (
+          <SettingsRow icon="tag" label={t('routines.editor.customLabel')}>
+            <TextField
+              label={t('routines.editor.customLabel')}
+              labelHidden
+              placeholder={t('routines.editor.customLabelPlaceholder')}
+              value={draft.customLabel}
+              onChangeText={(customLabel) => setDraft((current) => ({ ...current, customLabel }))}
+              maxLength={CUSTOM_LABEL_MAX_LENGTH}
+              autoCapitalize="sentences"
+              returnKeyType="done"
+            />
+          </SettingsRow>
+        ) : null}
+        {usesPlannedDuration(draft.label) ? (
+          <PlannedDurationField
+            value={draft.plannedDurationS}
+            onChange={(seconds) => setDraft((current) => setPlannedDuration(current, seconds))}
+          />
+        ) : null}
+        <SettingsRow
+          icon="calendar"
+          label={t('routines.editor.days')}
+          optional={draft.weekdays.length === 0}>
+          <WeekdayPicker
+            selected={draft.weekdays}
+            onToggle={(day) => setDraft((current) => toggleWeekday(current, day))}
+          />
+        </SettingsRow>
+        <SettingsRow
+          icon="pencil"
+          label={t('routines.editor.note')}
+          value={notePreview}
+          optional
+          onPress={() => setNoteOpen(true)}
+          aria-label={
+            notePreview
+              ? t('routines.editor.editNote', { note: notePreview })
+              : t('routines.editor.addNote')
+          }
         />
-      ) : null}
+      </SettingsCard>
 
       {draft.label === 'run' ? (
         <View style={styles.section}>
-          <Text variant="caption" color="textMuted">
-            {t('routines.blocks.hint')}
-          </Text>
-          {draft.exercises.map((block, index) => (
-            <RunBlockCard
-              key={block.key}
-              block={block}
-              kind={blockKindOf(block)}
-              number={index + 1}
-              showIncomplete={errors.blocks !== undefined}
-              onReorder={openReorder}
-              onRepetitionsChange={(count) =>
-                setDraft((current) => setRepetitions(current, block.key, count))
-              }
-              onRecoveryChange={(restS) => setDraft((current) => setRest(current, block.key, restS))}
-              onTargetsChange={(update) =>
-                setDraft((current) => updateBlockTargets(current, block.key, update))
-              }
-              onNotesChange={(notes) =>
-                setDraft((current) => setExerciseNotes(current, block.key, notes))
-              }
-              onRemove={() => setDraft((current) => removeExercise(current, block.key))}
-            />
-          ))}
-          <Button
-            label={t('routines.blocks.add')}
-            variant="secondary"
-            onPress={chooseRunBlock}
-            disabled={!runExerciseId}
-            style={styles.addButton}
+          <SectionHeader
+            title={t('routines.blocks.heading')}
+            count={t('routines.editor.added', { count: draft.exercises.length })}
           />
+          {draft.exercises.length === 0 ? (
+            <EmptySectionCard
+              icon={ROUTINE_ICONS.run}
+              title={t('routines.blocks.empty')}
+              hint={t('routines.blocks.hint')}
+              actionLabel={t('routines.blocks.add')}
+              onAction={chooseRunBlock}
+              actionDisabled={!runExerciseId}
+            />
+          ) : (
+            <>
+              <Text variant="caption" color="textMuted">
+                {t('routines.blocks.hint')}
+              </Text>
+              {draft.exercises.map((block, index) => (
+                <RunBlockCard
+                  key={block.key}
+                  block={block}
+                  kind={blockKindOf(block)}
+                  number={index + 1}
+                  showIncomplete={errors.blocks !== undefined}
+                  onReorder={openReorder}
+                  onRepetitionsChange={(count) =>
+                    setDraft((current) => setRepetitions(current, block.key, count))
+                  }
+                  onRecoveryChange={(restS) =>
+                    setDraft((current) => setRest(current, block.key, restS))
+                  }
+                  onTargetsChange={(update) =>
+                    setDraft((current) => updateBlockTargets(current, block.key, update))
+                  }
+                  onNotesChange={(notes) =>
+                    setDraft((current) => setExerciseNotes(current, block.key, notes))
+                  }
+                  onRemove={() => setDraft((current) => removeExercise(current, block.key))}
+                />
+              ))}
+              <Button
+                label={t('routines.blocks.add')}
+                icon="plus"
+                variant="secondary"
+                onPress={chooseRunBlock}
+                disabled={!runExerciseId}
+                style={styles.addButton}
+              />
+            </>
+          )}
         </View>
       ) : null}
 
       {usesExercises(draft.label) && draft.label !== 'run' ? (
         <View style={styles.section}>
-          {draft.label === 'hybrid' || draft.label === 'custom' ? (
-            // Exercises are optional here: plan them, or log them on the day.
-            <Text variant="caption" color="textMuted">
-              {t(`routines.editor.exercisesOptional.${draft.label}`)}
-            </Text>
-          ) : null}
-          {draft.exercises.length > 0 ? (
-            <Text variant="caption" color="textMuted">
-              {t('routines.targets.hint')}
-            </Text>
-          ) : null}
-          {draft.exercises.length === 0 ? (
-            draft.label === 'hybrid' || draft.label === 'custom' ? null : (
-              <Text color="textMuted">{t('routines.editor.noExercises')}</Text>
-            )
-          ) : (
-            exerciseSegments(draft.exercises).map(({ groupKey, items }) => {
-              if (groupKey === null) return renderCard(items[0], null);
-              const kind: GroupKind = items.length > 2 ? 'circuit' : 'superset';
-              const [first] = items;
-              return (
-                <ExerciseGroup
-                  key={groupKey}
-                  kind={kind}
-                  rounds={first.sets.length}
-                  restS={first.restS}
-                  exerciseRestS={exerciseRest(items[items.length - 1].exerciseId)}
-                  onRestChange={(restS) => setDraft((current) => setRest(current, first.key, restS))}>
-                  {items.map((item) => renderCard(item, kind))}
-                </ExerciseGroup>
-              );
-            })
-          )}
-          <Button
-            label={t('routines.editor.addExercises')}
-            variant="secondary"
-            onPress={() => setPickerOpen(true)}
-            style={styles.addButton}
+          <SectionHeader
+            title={t('routines.editor.exercisesHeading')}
+            count={t('routines.editor.added', { count: draft.exercises.length })}
           />
+          {draft.exercises.length === 0 ? (
+            <EmptySectionCard
+              icon={ROUTINE_ICONS.strength}
+              title={t('routines.editor.noExercisesTitle')}
+              hint={
+                // Exercises are optional here: plan them, or log them on the day.
+                draft.label === 'hybrid' || draft.label === 'custom'
+                  ? t(`routines.editor.exercisesOptional.${draft.label}`)
+                  : t('routines.editor.noExercisesHint')
+              }
+              actionLabel={t('routines.editor.addExercises')}
+              onAction={() => setPickerOpen(true)}
+            />
+          ) : (
+            <>
+              <Text variant="caption" color="textMuted">
+                {t('routines.targets.hint')}
+              </Text>
+              {exerciseSegments(draft.exercises).map(({ groupKey, items }) => {
+                if (groupKey === null) return renderCard(items[0], null);
+                const kind: GroupKind = items.length > 2 ? 'circuit' : 'superset';
+                const [first] = items;
+                return (
+                  <ExerciseGroup
+                    key={groupKey}
+                    kind={kind}
+                    rounds={first.sets.length}
+                    restS={first.restS}
+                    exerciseRestS={exerciseRest(items[items.length - 1].exerciseId)}
+                    onRestChange={(restS) =>
+                      setDraft((current) => setRest(current, first.key, restS))
+                    }>
+                    {items.map((item) => renderCard(item, kind))}
+                  </ExerciseGroup>
+                );
+              })}
+              <Button
+                label={t('routines.editor.addExercises')}
+                icon="plus"
+                variant="secondary"
+                onPress={() => setPickerOpen(true)}
+                style={styles.addButton}
+              />
+            </>
+          )}
         </View>
       ) : null}
-
-      <View style={styles.section}>
-        <Text variant="caption" color="textMuted">
-          {t('routines.editor.weekdays')}
-        </Text>
-        <WeekdayPicker
-          selected={draft.weekdays}
-          onToggle={(day) => setDraft((current) => toggleWeekday(current, day))}
-        />
-      </View>
-
-      {notesOpen ? (
-        <TextField
-          label={t('routines.editor.notes')}
-          value={draft.notes}
-          onChangeText={(notes) => setDraft((current) => ({ ...current, notes }))}
-          // Only when just asked for, not when the routine opens with a note.
-          autoFocus={draft.notes === ''}
-          multiline
-          maxLength={1000}
-          style={styles.notes}
-        />
-      ) : (
-        <Button
-          label={t('routines.editor.addNote')}
-          variant="ghost"
-          onPress={() => setNotesOpen(true)}
-          style={styles.addNote}
-        />
-      )}
 
       {errors.blocks ? (
         <Text color="danger" role="alert">
@@ -427,6 +460,15 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         <Button label={t('routines.archiveRoutine')} variant="ghost" onPress={handleArchive} />
       ) : null}
 
+      <RoutineNoteSheet
+        visible={noteOpen}
+        note={draft.notes}
+        onClose={() => setNoteOpen(false)}
+        onDone={(notes) => {
+          setDraft((current) => ({ ...current, notes }));
+          setNoteOpen(false);
+        }}
+      />
       <ExercisePicker
         visible={pickerOpen}
         onClose={() => setPickerOpen(false)}
@@ -474,26 +516,21 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.sm,
   },
-  // Name and type on one line; the type keeps to the input's height when
-  // an error shows under the name.
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
+  // The name, a line, then the description, on one card.
+  nameCard: {
+    gap: 0,
+    paddingVertical: spacing.xs,
   },
-  name: {
-    flex: 1,
+  // Only the font and size: a lineHeight would push the text off-centre
+  // in iOS inputs.
+  nameInput: {
+    fontFamily: typography.cardTitle.fontFamily,
+    fontSize: typography.cardTitle.fontSize,
+  },
+  separator: {
+    height: StyleSheet.hairlineWidth,
   },
   addButton: {
     alignSelf: 'center',
-  },
-  addNote: {
-    alignSelf: 'flex-start',
-  },
-  notes: {
-    minHeight: 72,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-    textAlignVertical: 'top',
   },
 });

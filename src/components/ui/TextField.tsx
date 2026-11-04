@@ -19,6 +19,8 @@ export type TextFieldProps = TextInputProps & {
   error?: string;
   // Only for screen readers, when the placeholder already says what it is.
   labelHidden?: boolean;
+  // Plain: no box, for a field that sits on a card, like a routine's name.
+  variant?: 'boxed' | 'plain';
   ref?: Ref<TextInputInstance>;
 };
 
@@ -27,6 +29,7 @@ export function TextField({
   hint,
   error,
   labelHidden = false,
+  variant = 'boxed',
   style,
   ref,
   ...rest
@@ -47,11 +50,13 @@ export function TextField({
         selectionColor={colors.accent}
         style={[
           styles.input,
-          {
-            backgroundColor: colors.surfaceRaised,
-            color: colors.text,
-            borderColor: error ? colors.danger : 'transparent',
-          },
+          variant === 'plain'
+            ? [styles.plain, { color: colors.text }]
+            : {
+                backgroundColor: colors.surfaceRaised,
+                color: colors.text,
+                borderColor: error ? colors.danger : 'transparent',
+              },
           style,
         ]}
         {...rest}
@@ -83,5 +88,9 @@ const styles = StyleSheet.create({
     // in iOS inputs.
     fontFamily: typography.body.fontFamily,
     fontSize: typography.body.fontSize,
+  },
+  plain: {
+    paddingHorizontal: 0,
+    borderWidth: 0,
   },
 });

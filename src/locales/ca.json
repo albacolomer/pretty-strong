@@ -310,7 +310,6 @@
       "durationPlus": "5 minuts més",
       "addDuration": "Afegeix una durada",
       "noDuration": "Sense durada",
-      "weekdays": "Dies (opcional)",
       "exercisesOptional": {
         "hybrid": "Si l'entrenament canvia cada setmana, deixa-la sense exercicis i afegeix-los el dia que entrenis.",
         "custom": "Opcional: afegeix-hi exercicis, o deixa-la sense i marca-la com a feta."
@@ -327,7 +326,6 @@
         "unknown": "No s'ha pogut desar. Torna-ho a provar.",
         "blocksIncomplete": "Posa la distància o el temps de cada bloc."
       },
-      "noExercises": "Encara no hi ha exercicis. Afegeix els que faràs en aquesta rutina.",
       "addExercises": "Afegeix exercicis",
       "rest": "Descans",
       "restValue": "Descans: {{time}}",
@@ -361,7 +359,17 @@
       "addNote": "Afegeix una nota",
       "typeButton": "Tipus: {{type}}",
       "description": "Descripció",
-      "descriptionPlaceholder": "Descripció (opcional): esquena i bíceps"
+      "descriptionPlaceholder": "Descripció (opcional): esquena i bíceps",
+      "optional": "Opcional",
+      "days": "Dies",
+      "note": "Nota",
+      "editNote": "Nota: {{note}}",
+      "notesPlaceholder": "P. ex. escalfa bé les espatlles",
+      "exercisesHeading": "Exercicis",
+      "added_one": "{{count}} afegit",
+      "added_other": "{{count}} afegits",
+      "noExercisesTitle": "Encara no hi ha exercicis",
+      "noExercisesHint": "Afegeix els que faràs en aquesta rutina"
     },
     "sets": {
       "header": "Sèrie",
@@ -424,7 +432,9 @@
         "distance": "Posa la distància.",
         "time": "Posa el temps.",
         "intervals": "Posa la distància o el temps de cada repetició."
-      }
+      },
+      "heading": "Blocs",
+      "empty": "Encara no hi ha blocs"
     }
   },
   "schedule": {
