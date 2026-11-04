@@ -3,6 +3,7 @@ import '@/lib/i18n';
 import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { launchImageLibraryAsync, requestCameraPermissionsAsync } from 'expo-image-picker';
 import { authenticateAsync } from 'expo-local-authentication';
+import { router } from 'expo-router';
 
 import { menus } from '@/components/ui';
 import { fetchProfile, type Profile } from '@/features/profile/api';
@@ -17,6 +18,7 @@ import {
 } from './api';
 import { BodyTab } from './BodyTab';
 import { PhotoCompare } from './PhotoCompare';
+import { MeasurementDetail } from './MeasurementDetail';
 import { lockPhotos } from './usePhotoLock';
 import { addProgressPhoto, deleteProgressPhoto, fetchProgressPhotos } from './photosApi';
 import { WeightHistory } from './WeightHistory';
@@ -42,6 +44,7 @@ jest.mock('./photosApi', () => ({
   setAvatar: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('@/features/profile/api', () => ({ fetchProfile: jest.fn() }));
+jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('expo-local-authentication', () => ({
   authenticateAsync: jest.fn(() => Promise.resolve({ success: true })),
   getEnrolledLevelAsync: jest.fn(() => Promise.resolve(1)),
@@ -107,6 +110,38 @@ describe('Body (US-28)', () => {
     expect(screen.getByLabelText('Pit, –')).toBeOnTheScreen();
     expect(screen.getByLabelText('Bíceps, 31,0 cm')).toBeOnTheScreen();
     expect(screen.getByText('Actualitzat el 2 d’oct. · canvi des del 2 de set.')).toBeOnTheScreen();
+  });
+
+  test('a measured tile opens its chart; one never measured does not', async () => {
+    const user = userEvent.setup();
+    await render(<BodyTab />, { wrapper: createAppWrapper() });
+
+    await user.press(await screen.findByRole('button', { name: 'Cintura, 68,0 cm, −1,0' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/profile/measurement/[key]',
+      params: { key: 'waist' },
+    });
+    expect(screen.queryByRole('button', { name: 'Pit, –' })).toBeNull();
+  });
+
+  test('a measurement: its latest value, the change over the range, the chart and its history', async () => {
+    await render(<MeasurementDetail measurementKey="waist" />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByLabelText('68,0 cm')).toBeOnTheScreen();
+    expect(screen.getByText('−1,0 cm en 1 any · registrat el dv., 2 d’oct.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Cintura: de 69 a 68 cm.')).toBeOnTheScreen();
+    expect(screen.getByLabelText('69,0 cm, dc., 2 de set.')).toBeOnTheScreen();
+  });
+
+  test('a measurement taken once has no chart yet', async () => {
+    await render(<MeasurementDetail measurementKey="custom:Bíceps" />, {
+      wrapper: createAppWrapper(),
+    });
+
+    expect(await screen.findByLabelText('31,0 cm')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Pren aquesta mesura uns quants cops per veure com canvia.'),
+    ).toBeOnTheScreen();
   });
 
   test('Edita saves the ones typed; + Afegeix one of your own', async () => {

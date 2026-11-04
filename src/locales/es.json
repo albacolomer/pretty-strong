@@ -831,6 +831,9 @@
     "newMeasurement": "Medida",
     "valueCm": "{{name}} (cm)",
     "measurementsSaved": "Medidas guardadas ✓",
+    "measurementChartLabel": "{{name}}: de {{from}} a {{to}} cm.",
+    "fewMeasurements": "Toma esta medida unas cuantas veces para ver cómo cambia.",
+    "noMeasurement": "Aún no hay ninguna medida.",
     "parts": {
       "waist": "Cintura",
       "hips": "Cadera",

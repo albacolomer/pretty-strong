@@ -831,6 +831,9 @@
     "newMeasurement": "Measurement",
     "valueCm": "{{name}} (cm)",
     "measurementsSaved": "Measurements saved ✓",
+    "measurementChartLabel": "{{name}}: from {{from}} to {{to}} cm.",
+    "fewMeasurements": "Take this measurement a few times to see how it changes.",
+    "noMeasurement": "No measurements yet.",
     "parts": {
       "waist": "Waist",
       "hips": "Hips",

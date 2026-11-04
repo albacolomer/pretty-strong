@@ -22,33 +22,53 @@ export function measurementKey(measurement: Pick<BodyMeasurement, 'part' | 'cust
   return measurement.part ?? `custom:${measurement.customName}`;
 }
 
-export const WEIGHT_RANGES = ['1m', '3m', '6m', '1y'] as const;
-export type WeightRange = (typeof WEIGHT_RANGES)[number];
+// What a measurement key stands for: "waist" is the waist, "custom:Bíceps"
+// one of your own.
+export function parseMeasurementKey(
+  key: string,
+): Pick<BodyMeasurement, 'part' | 'customName'> {
+  const part = MEASUREMENT_PARTS.find((usual) => usual === key);
+  return part
+    ? { part, customName: null }
+    : { part: null, customName: key.replace(/^custom:/, '') };
+}
 
-const RANGE_DAYS: Record<WeightRange, number> = { '1m': 30, '3m': 91, '6m': 182, '1y': 365 };
+// The periods a weight or measurement chart can show.
+export const BODY_RANGES = ['1m', '3m', '6m', '1y'] as const;
+export type BodyRange = (typeof BODY_RANGES)[number];
+
+const RANGE_DAYS: Record<BodyRange, number> = { '1m': 30, '3m': 91, '6m': 182, '1y': 365 };
 
 // The range's first day, "2026-07-25" for 3 months before 24 October.
-export function rangeStart(range: WeightRange, today: Date): string {
+export function rangeStart(range: BodyRange, today: Date): string {
   return dateKey(addDays(today, -RANGE_DAYS[range]));
 }
 
-// The weights in the range, oldest first.
-export function weightsInRange(
-  weights: readonly BodyWeight[],
-  range: WeightRange,
+// The weights or measurements in the range, oldest first.
+export function inRange<T extends { date: string }>(
+  items: readonly T[],
+  range: BodyRange,
   today: Date,
-): BodyWeight[] {
+): T[] {
   const start = rangeStart(range, today);
-  return weights
-    .filter((weight) => weight.date >= start && weight.date <= dateKey(today))
+  return items
+    .filter((item) => item.date >= start && item.date <= dateKey(today))
     .sort((a, b) => a.date.localeCompare(b.date));
 }
 
-// The latest weight against the first one in the range; null with fewer
-// than two.
-export function weightChange(inRange: readonly BodyWeight[]): number | null {
-  if (inRange.length < 2) return null;
-  return Math.round((inRange.at(-1)!.weightKg - inRange[0].weightKg) * 100) / 100;
+// The last value against the first, oldest first; null with fewer than two.
+export function changeOver(values: readonly number[]): number | null {
+  if (values.length < 2) return null;
+  return Math.round((values.at(-1)! - values[0]) * 100) / 100;
+}
+
+// "−1,5" and "+0,5": a change with its sign.
+export function formatSigned(value: number, language: string, digits: number): string {
+  const number = new Intl.NumberFormat(language, {
+    minimumFractionDigits: digits,
+    maximumFractionDigits: digits,
+  }).format(Math.abs(value));
+  return `${value < 0 ? '−' : value > 0 ? '+' : ''}${number}`;
 }
 
 export type MeasurementSummary = {
@@ -95,6 +115,17 @@ export function latestMeasurements(measurements: readonly BodyMeasurement[]): Me
       summary(measurementKey(measurement), null, measurement.customName),
     ),
   ];
+}
+
+// Every time one measurement was taken ("waist", "custom:Bíceps"), newest
+// first.
+export function measurementHistory(
+  measurements: readonly BodyMeasurement[],
+  key: string,
+): BodyMeasurement[] {
+  return measurements
+    .filter((measurement) => measurementKey(measurement) === key)
+    .sort((a, b) => b.date.localeCompare(a.date));
 }
 
 // The latest day anything was measured, and the day before that: "updated

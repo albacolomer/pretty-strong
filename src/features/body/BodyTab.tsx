@@ -7,34 +7,26 @@ import { Button, Card, GradientText, SegmentedControl, Text } from '@/components
 import { formatShortDate } from '@/features/history/entries';
 import { dateKey, fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
-import { useAppLanguage, type Language } from '@/lib/i18n';
+import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
+import { BodyChart } from './BodyChart';
 import {
+  BODY_RANGES,
+  changeOver,
+  formatSigned,
+  inRange,
   latestMeasurements,
   measurementDays,
   rangeStart,
-  WEIGHT_RANGES,
-  weightChange,
-  weightsInRange,
+  type BodyRange,
   type MeasurementSummary,
-  type WeightRange,
 } from './body';
 import { LogWeightSheet } from './LogWeightSheet';
 import { MeasurementsSheet } from './MeasurementsSheet';
 import { ProgressPhotos } from './ProgressPhotos';
 import { useMeasurements, useWeights } from './useBody';
 import { useMeasurementName } from './useMeasurementName';
-import { WeightChart } from './WeightChart';
-
-// "−1,5" and "+0,5": a change with its sign.
-function signed(value: number, language: Language, digits: number): string {
-  const number = new Intl.NumberFormat(language, {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  }).format(Math.abs(value));
-  return `${value < 0 ? '−' : value > 0 ? '+' : ''}${number}`;
-}
 
 // Profile → Body (US-28): body weight over time, measurements with their
 // change since the time before, and progress photos.
@@ -54,13 +46,14 @@ function WeightCard() {
   const language = useAppLanguage();
   const today = useToday();
   const { data: weights = [], isPending } = useWeights();
-  const [range, setRange] = useState<WeightRange>('3m');
+  const [range, setRange] = useState<BodyRange>('3m');
   const [logging, setLogging] = useState(false);
 
   const latest = weights[0] ?? null;
-  const inRange = weightsInRange(weights, range, today);
-  const change = weightChange(inRange);
+  const shown = inRange(weights, range, today);
+  const change = changeOver(shown.map((weight) => weight.weightKg));
   const kg = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const number = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
   const todayKey = dateKey(today);
   const logged =
     latest === null
@@ -98,7 +91,7 @@ function WeightCard() {
                 change === null
                   ? null
                   : t('body.change', {
-                      change: `${signed(change, language, 1)} kg`,
+                      change: `${formatSigned(change, language, 1)} kg`,
                       range: t(`body.rangeIn.${range}`),
                     }),
                 logged,
@@ -111,11 +104,15 @@ function WeightCard() {
             label={t('body.range')}
             value={range}
             onChange={setRange}
-            options={WEIGHT_RANGES.map((value) => ({ value, label: t(`body.ranges.${value}`) }))}
+            options={BODY_RANGES.map((value) => ({ value, label: t(`body.ranges.${value}`) }))}
           />
-          {inRange.length >= 2 ? (
-            <WeightChart
-              weights={inRange}
+          {shown.length >= 2 ? (
+            <BodyChart
+              points={shown.map((weight) => ({ date: weight.date, value: weight.weightKg }))}
+              label={t('body.chartLabel', {
+                from: number.format(shown[0].weightKg),
+                to: number.format(shown.at(-1)!.weightKg),
+              })}
               range={range}
               start={rangeStart(range, today)}
               today={today}
@@ -177,7 +174,7 @@ function MeasurementsCard() {
       ) : (
         <View style={styles.tiles}>
           {summaries.map((summary) => (
-            <MeasurementTile key={summary.key} summary={summary} language={language} />
+            <MeasurementTile key={summary.key} summary={summary} />
           ))}
           <Pressable
             role="button"
@@ -203,41 +200,52 @@ function MeasurementsCard() {
   );
 }
 
-function MeasurementTile({ summary, language }: { summary: MeasurementSummary; language: Language }) {
+// A measured tile opens that measurement's chart and history.
+function MeasurementTile({ summary }: { summary: MeasurementSummary }) {
   const { colors } = useTheme();
+  const language = useAppLanguage();
   const nameOf = useMeasurementName();
   const cm = new Intl.NumberFormat(language, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const name = nameOf(summary);
+  const measured = summary.valueCm !== null;
   const value = summary.valueCm === null ? '–' : cm.format(summary.valueCm);
 
   return (
-    <View
-      accessible
+    <Pressable
+      role={measured ? 'button' : undefined}
+      disabled={!measured}
       aria-label={[
         name,
-        summary.valueCm === null ? '–' : `${value} cm`,
-        summary.changeCm === null ? null : signed(summary.changeCm, language, 1),
+        measured ? `${value} cm` : value,
+        summary.changeCm === null ? null : formatSigned(summary.changeCm, language, 1),
       ]
         .filter(Boolean)
         .join(', ')}
-      style={[styles.tile, { backgroundColor: colors.accentSoft }]}>
+      onPress={() =>
+        router.push({ pathname: '/profile/measurement/[key]', params: { key: summary.key } })
+      }
+      style={({ pressed }) => [
+        styles.tile,
+        { backgroundColor: colors.accentSoft },
+        pressed && styles.pressed,
+      ]}>
       <Text variant="caption" color="textMuted" numberOfLines={1}>
         {name}
       </Text>
       <View style={styles.value}>
         <Text variant="cardTitle">{value}</Text>
-        {summary.valueCm === null ? null : (
+        {measured ? (
           <Text variant="caption" color="textMuted">
             cm
           </Text>
-        )}
+        ) : null}
       </View>
       {summary.changeCm === null ? null : (
         <Text variant="caption" color="textMuted">
-          {signed(summary.changeCm, language, 1)}
+          {formatSigned(summary.changeCm, language, 1)}
         </Text>
       )}
-    </View>
+    </Pressable>
   );
 }
 

@@ -831,6 +831,9 @@
     "newMeasurement": "Mesura",
     "valueCm": "{{name}} (cm)",
     "measurementsSaved": "Mesures desades ✓",
+    "measurementChartLabel": "{{name}}: de {{from}} a {{to}} cm.",
+    "fewMeasurements": "Pren aquesta mesura uns quants cops per veure com canvia.",
+    "noMeasurement": "Encara no hi ha cap mesura.",
     "parts": {
       "waist": "Cintura",
       "hips": "Malucs",
