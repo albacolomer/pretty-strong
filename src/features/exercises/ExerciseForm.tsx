@@ -14,6 +14,7 @@ import {
   TextSheet,
   useActionSheet,
 } from '@/components/ui';
+import { usePickPhoto } from '@/features/body/usePickPhoto';
 import { spacing, typography, useTheme } from '@/theme';
 
 import type { Exercise } from './exercise';
@@ -32,9 +33,11 @@ import {
   type DraftFieldError,
   type SaveErrorReason,
 } from './exerciseDraft';
+import { ExercisePhotoTile } from './ExercisePhotoTile';
 import { OptionSheet } from './OptionSheet';
 import { useCreateExercise } from './useCreateExercise';
 import { useExerciseSettings, useSaveExerciseNotes } from './useExerciseSettings';
+import { useSetExercisePhoto } from './useSetExercisePhoto';
 import { useUpdateExercise } from './useUpdateExercise';
 import { useEquipmentGroups, useMuscleGroups } from './useSheetOptions';
 import { TRACKING_TYPES, type Muscle, type TrackingType } from './vocabulary';
@@ -53,6 +56,9 @@ const TRACKING_ICONS: Record<TrackingType, SFSymbol> = {
 
 const NOTES_MAX_LENGTH = 1000;
 
+// What's become of the photo here: null while it's as saved.
+type PhotoChange = { base64: string } | 'remove' | null;
+
 type ExerciseFormProps = {
   // Pre-filled from the library search, e.g. "Hip thrust unilateral".
   initialName?: string;
@@ -62,8 +68,8 @@ type ExerciseFormProps = {
 };
 
 // Create a custom exercise (US-04), or edit one of yours (US-05): its
-// name, what you log, muscles and equipment, then a technique video and
-// your note.
+// photo and name, what you log, muscles and equipment, then a technique
+// video and your note.
 export function ExerciseForm({ initialName = '', exercise, onSaved }: ExerciseFormProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -83,6 +89,11 @@ export function ExerciseForm({ initialName = '', exercise, onSaved }: ExerciseFo
   const savedNote = (exercise && settings?.[exercise.id]?.notes) ?? '';
   const [noteDraft, setNoteDraft] = useState<string | null>(null);
   const note = noteDraft ?? savedNote;
+  const pickPhoto = usePickPhoto();
+  const savePhoto = useSetExercisePhoto();
+  const [photo, setPhoto] = useState<PhotoChange>(null);
+  const savedPhotoPath = photo === null ? (exercise?.photoPath ?? null) : null;
+  const hasPhoto = photo === null ? savedPhotoPath !== null : photo !== 'remove';
   const muscleGroups = useMuscleGroups();
   // A muscle that is already a main one can't also be secondary.
   const secondaryGroups = useMuscleGroups((muscle) => !draft.primaryMuscles.includes(muscle));
@@ -111,6 +122,17 @@ export function ExerciseForm({ initialName = '', exercise, onSaved }: ExerciseFo
     );
   }
 
+  async function choosePhoto() {
+    const picked = await pickPhoto({
+      title: t('exercises.form.photo'),
+      square: true,
+      remove: hasPhoto
+        ? { label: t('exercises.form.removePhoto'), run: () => setPhoto('remove') }
+        : undefined,
+    });
+    if (picked) setPhoto({ base64: picked.base64 });
+  }
+
   function handleSave() {
     const found = validateDraft(draft);
     setErrors(found);
@@ -134,6 +156,10 @@ export function ExerciseForm({ initialName = '', exercise, onSaved }: ExerciseFo
           if (noteDraft !== null && cleanNote !== (savedNote || null)) {
             saveNotes.mutate({ exerciseId: saved.id, notes: cleanNote });
           }
+          // Uploading carries on once the form has closed.
+          if (photo !== null) {
+            savePhoto.mutate({ exercise: saved, base64: photo === 'remove' ? null : photo.base64 });
+          }
           onSaved(saved);
         },
       },
@@ -143,23 +169,36 @@ export function ExerciseForm({ initialName = '', exercise, onSaved }: ExerciseFo
   return (
     <View style={styles.form}>
       <Card style={styles.nameCard}>
-        <TextField
-          label={t('exercises.form.name')}
-          labelHidden
-          variant="plain"
-          placeholder={t('exercises.form.namePlaceholder')}
-          value={draft.name}
-          onChangeText={(name) => {
-            setDraft((current) => ({ ...current, name }));
-            // A "name taken" message no longer applies once the name changes.
-            if (save.isError) save.reset();
-          }}
-          error={errorText(errors.name ?? (saveError === 'nameTaken' ? 'nameTaken' : undefined))}
-          maxLength={EXERCISE_NAME_MAX_LENGTH}
-          autoCapitalize="sentences"
-          returnKeyType="done"
-          style={styles.nameInput}
+        <ExercisePhotoTile
+          base64={photo !== null && photo !== 'remove' ? photo.base64 : null}
+          path={savedPhotoPath}
+          label={hasPhoto ? t('exercises.form.changePhoto') : t('exercises.form.addPhoto')}
+          onPress={choosePhoto}
         />
+        <View style={styles.name}>
+          <TextField
+            label={t('exercises.form.name')}
+            labelHidden
+            variant="plain"
+            placeholder={t('exercises.form.namePlaceholder')}
+            value={draft.name}
+            onChangeText={(name) => {
+              setDraft((current) => ({ ...current, name }));
+              // A "name taken" message no longer applies once the name changes.
+              if (save.isError) save.reset();
+            }}
+            error={errorText(errors.name ?? (saveError === 'nameTaken' ? 'nameTaken' : undefined))}
+            maxLength={EXERCISE_NAME_MAX_LENGTH}
+            autoCapitalize="sentences"
+            returnKeyType="done"
+            style={styles.nameInput}
+          />
+          {hasPhoto ? null : (
+            <Text variant="caption" color="textMuted">
+              {t('exercises.form.photoHint')}
+            </Text>
+          )}
+        </View>
       </Card>
 
       <View style={styles.section}>
@@ -331,9 +370,14 @@ const styles = StyleSheet.create({
   section: {
     gap: spacing.sm,
   },
+  // The photo beside the name and, under it, the hint.
   nameCard: {
-    gap: 0,
-    paddingVertical: spacing.xs,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.md,
+  },
+  name: {
+    flex: 1,
   },
   // Only the font and size: a lineHeight would push the text off-centre
   // in iOS inputs.

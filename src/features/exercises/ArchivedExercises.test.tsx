@@ -25,6 +25,7 @@ const oldPress: Exercise = {
   equipment: 'dumbbell',
   isUnilateral: false,
   videoUrl: null,
+  photoPath: null,
 };
 
 beforeEach(() => {

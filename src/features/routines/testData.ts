@@ -15,6 +15,7 @@ export function testExercise(id: string, ca: string): Exercise {
     equipment: 'cable',
     isUnilateral: false,
     videoUrl: null,
+    photoPath: null,
   };
 }
 

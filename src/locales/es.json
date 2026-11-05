@@ -73,7 +73,12 @@
       "extras": "Extras",
       "video": "Vídeo de técnica",
       "videoPlaceholder": "https://www.youtube.com/…",
-      "note": "Nota"
+      "note": "Nota",
+      "photo": "Foto del ejercicio",
+      "addPhoto": "Añade una foto",
+      "changePhoto": "Cambia la foto",
+      "removePhoto": "Quita la foto",
+      "photoHint": "Añade una foto para reconocerlo"
     },
     "menu": {
       "label": "Opciones de «{{name}}»",

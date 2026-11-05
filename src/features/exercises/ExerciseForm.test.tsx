@@ -10,6 +10,7 @@ import {
   createExercise,
   fetchExerciseSettings,
   saveExerciseSettings,
+  setExercisePhoto,
   updateExercise,
 } from './api';
 import type { Exercise } from './exercise';
@@ -21,7 +22,11 @@ jest.mock('./api', () => ({
   updateExercise: jest.fn(),
   fetchExerciseSettings: jest.fn(),
   saveExerciseSettings: jest.fn(() => Promise.resolve()),
+  setExercisePhoto: jest.fn(),
 }));
+// "Fes una foto" or the library: here, always this photo.
+const mockPickPhoto = jest.fn();
+jest.mock('@/features/body/usePickPhoto', () => ({ usePickPhoto: () => mockPickPhoto }));
 const mockCreateExercise = jest.mocked(createExercise);
 
 const saved: Exercise = {
@@ -35,6 +40,7 @@ const saved: Exercise = {
   equipment: 'barbell',
   isUnilateral: true,
   videoUrl: null,
+  photoPath: null,
 };
 
 // Each native action sheet (the list of tracking types) picks the next of
@@ -50,6 +56,8 @@ beforeEach(() => {
     >);
   mockCreateExercise.mockReset();
   jest.mocked(saveExerciseSettings).mockClear();
+  jest.mocked(setExercisePhoto).mockReset();
+  mockPickPhoto.mockReset().mockResolvedValue({ base64: 'SGk=', date: null });
   jest.mocked(fetchExerciseSettings).mockResolvedValue({});
   sheetChoices.length = 0;
   actionSheet = jest
@@ -185,6 +193,52 @@ describe('<ExerciseForm />', () => {
     // The note goes with your settings for the exercise just created.
     await waitFor(() =>
       expect(saveExerciseSettings).toHaveBeenCalledWith('user-1', 'new-1', { notes: 'Banc a 30°' }),
+    );
+  });
+
+  test('a photo is uploaded once the exercise is saved', async () => {
+    const user = userEvent.setup();
+    mockCreateExercise.mockResolvedValue(saved);
+    jest
+      .mocked(setExercisePhoto)
+      .mockResolvedValue({ ...saved, photoPath: 'user-1/exercise/p-1.jpg' });
+    await render(<ExerciseForm initialName="Press inclinat" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    expect(screen.getByText('Afegeix una foto per reconèixer-lo')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Afegeix una foto' }));
+    // Picked, it shows straight away; nothing is uploaded yet.
+    expect(await screen.findByRole('button', { name: 'Canvia la foto' })).toBeOnTheScreen();
+    expect(screen.queryByText('Afegeix una foto per reconèixer-lo')).not.toBeOnTheScreen();
+    expect(setExercisePhoto).not.toHaveBeenCalled();
+
+    await pick(user, /^Músculs principals/, ['Pit']);
+    await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
+
+    await waitFor(() => expect(setExercisePhoto).toHaveBeenCalledWith('user-1', saved, 'SGk='));
+  });
+
+  test('removing the photo of a saved exercise takes it away when saving', async () => {
+    const user = userEvent.setup();
+    const withPhoto = { ...saved, photoPath: 'user-1/exercise/p-1.jpg' };
+    jest.mocked(updateExercise).mockResolvedValue(withPhoto);
+    jest.mocked(setExercisePhoto).mockResolvedValue({ ...saved, photoPath: null });
+    // The picker's last choice, "Treu la foto".
+    mockPickPhoto.mockImplementation(async ({ remove }) => {
+      remove?.run();
+      return null;
+    });
+    await render(<ExerciseForm exercise={withPhoto} onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    await user.press(screen.getByRole('button', { name: 'Canvia la foto' }));
+    expect(await screen.findByRole('button', { name: 'Afegeix una foto' })).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desa els canvis' }));
+
+    await waitFor(() =>
+      expect(setExercisePhoto).toHaveBeenCalledWith('user-1', withPhoto, null),
     );
   });
 

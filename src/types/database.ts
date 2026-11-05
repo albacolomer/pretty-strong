@@ -157,6 +157,7 @@ export type Database = {
           name: string | null
           name_i18n: Json | null
           owner_id: string | null
+          photo_path: string | null
           primary_muscles: string[]
           secondary_muscles: string[]
           slug: string | null
@@ -172,6 +173,7 @@ export type Database = {
           name?: string | null
           name_i18n?: Json | null
           owner_id?: string | null
+          photo_path?: string | null
           primary_muscles?: string[]
           secondary_muscles?: string[]
           slug?: string | null
@@ -187,6 +189,7 @@ export type Database = {
           name?: string | null
           name_i18n?: Json | null
           owner_id?: string | null
+          photo_path?: string | null
           primary_muscles?: string[]
           secondary_muscles?: string[]
           slug?: string | null

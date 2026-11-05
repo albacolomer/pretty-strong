@@ -1,3 +1,4 @@
+import { removePhoto, uploadPhoto } from '@/features/body/photosApi';
 import { supabase } from '@/lib/supabase';
 import type { TablesInsert } from '@/types/database';
 
@@ -89,6 +90,30 @@ export async function updateExercise(id: string, input: ExerciseInput): Promise<
     .select(EXERCISE_COLUMNS)
     .single();
   if (error) throw error;
+  return toExercise(data);
+}
+
+// A new photo for one of your exercises replaces the old one; null takes
+// it away. The new picture is uploaded first and the old one only deleted
+// once the exercise points to the new one, so a failed save loses nothing.
+// Returns the exercise as stored.
+export async function setExercisePhoto(
+  userId: string,
+  exercise: Pick<Exercise, 'id' | 'photoPath'>,
+  base64: string | null,
+): Promise<Exercise> {
+  const path = base64 === null ? null : await uploadPhoto(userId, 'exercise', base64);
+  const { data, error } = await supabase
+    .from('exercises')
+    .update({ photo_path: path })
+    .eq('id', exercise.id)
+    .select(EXERCISE_COLUMNS)
+    .single();
+  if (error) {
+    if (path) await removePhoto(path).catch(() => {});
+    throw error;
+  }
+  if (exercise.photoPath) await removePhoto(exercise.photoPath).catch(() => {});
   return toExercise(data);
 }
 

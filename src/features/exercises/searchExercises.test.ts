@@ -17,6 +17,7 @@ function builtIn(
     equipment: 'machine',
     isUnilateral: false,
     videoUrl: null,
+    photoPath: null,
     ...overrides,
   };
 }

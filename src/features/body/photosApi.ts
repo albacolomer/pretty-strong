@@ -9,7 +9,11 @@ const BUCKET = 'photos';
 // before then.
 export const SIGNED_URL_SECONDS = 60 * 60;
 
-async function upload(userId: string, kind: PhotoKind, base64: string): Promise<string> {
+export async function uploadPhoto(
+  userId: string,
+  kind: PhotoKind,
+  base64: string,
+): Promise<string> {
   const path = photoPath(userId, kind, randomUUID());
   const { error } = await supabase.storage
     .from(BUCKET)
@@ -18,7 +22,7 @@ async function upload(userId: string, kind: PhotoKind, base64: string): Promise<
   return path;
 }
 
-async function remove(path: string): Promise<void> {
+export async function removePhoto(path: string): Promise<void> {
   const { error } = await supabase.storage.from(BUCKET).remove([path]);
   if (error) throw error;
 }
@@ -49,10 +53,10 @@ export async function fetchProgressPhotos(): Promise<ProgressPhoto[]> {
 // Uploads the picture, then records it; if recording fails, the picture
 // goes too, so nothing is left behind.
 export async function addProgressPhoto(userId: string, date: string, base64: string): Promise<void> {
-  const path = await upload(userId, 'progress', base64);
+  const path = await uploadPhoto(userId, 'progress', base64);
   const { error } = await supabase.from('progress_photos').insert({ date, storage_path: path });
   if (error) {
-    await remove(path).catch(() => {});
+    await removePhoto(path).catch(() => {});
     throw error;
   }
 }
@@ -60,7 +64,7 @@ export async function addProgressPhoto(userId: string, date: string, base64: str
 export async function deleteProgressPhoto(photo: ProgressPhoto): Promise<void> {
   const { error } = await supabase.from('progress_photos').delete().eq('id', photo.id);
   if (error) throw error;
-  await remove(photo.storagePath);
+  await removePhoto(photo.storagePath);
 }
 
 // A new profile picture replaces the old one; null takes it away.
@@ -69,14 +73,14 @@ export async function setAvatar(
   base64: string | null,
   oldPath: string | null,
 ): Promise<void> {
-  const path = base64 === null ? null : await upload(userId, 'avatar', base64);
+  const path = base64 === null ? null : await uploadPhoto(userId, 'avatar', base64);
   const { error } = await supabase
     .from('profiles')
     .update({ avatar_path: path })
     .eq('id', userId);
   if (error) {
-    if (path) await remove(path).catch(() => {});
+    if (path) await removePhoto(path).catch(() => {});
     throw error;
   }
-  if (oldPath) await remove(oldPath).catch(() => {});
+  if (oldPath) await removePhoto(oldPath).catch(() => {});
 }

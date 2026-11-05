@@ -32,6 +32,7 @@ function exercise(id: string): Exercise {
     equipment: 'barbell',
     isUnilateral: false,
     videoUrl: null,
+    photoPath: null,
   };
 }
 

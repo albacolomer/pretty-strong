@@ -30,6 +30,7 @@ function builtIn(id: string, ca: string): Exercise {
     equipment: 'barbell',
     isUnilateral: false,
     videoUrl: null,
+    photoPath: null,
   };
 }
 

@@ -34,6 +34,7 @@ function builtIn(slug: string, ca: string, overrides: Partial<Exercise>): Exerci
     equipment: 'machine',
     isUnilateral: false,
     videoUrl: null,
+    photoPath: null,
     ...overrides,
   };
 }

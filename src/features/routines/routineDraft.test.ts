@@ -40,6 +40,7 @@ function exercise(id: string): Exercise {
     equipment: 'none',
     isUnilateral: false,
     videoUrl: null,
+    photoPath: null,
   };
 }
 

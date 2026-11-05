@@ -2,7 +2,7 @@
 
 export type ProgressPhoto = { id: string; date: string; storagePath: string };
 
-export type PhotoKind = 'progress' | 'avatar';
+export type PhotoKind = 'progress' | 'avatar' | 'exercise';
 
 // Where a picture goes in the private photos bucket: always inside your
 // own folder, which is all the bucket's policies let you touch.

@@ -19,10 +19,12 @@ export type Exercise = {
   isUnilateral: boolean;
   // A technique video (YouTube, TikTok…), opened from the exercise's page.
   videoUrl: string | null;
+  // Your photo of one of your own exercises, in the private photos bucket.
+  photoPath: string | null;
 };
 
 export const EXERCISE_COLUMNS =
-  'id, slug, name, name_i18n, tracking_type, primary_muscles, secondary_muscles, equipment, is_unilateral, video_url';
+  'id, slug, name, name_i18n, tracking_type, primary_muscles, secondary_muscles, equipment, is_unilateral, video_url, photo_path';
 
 export type ExerciseRow = Pick<
   Tables<'exercises'>,
@@ -36,6 +38,7 @@ export type ExerciseRow = Pick<
   | 'equipment'
   | 'is_unilateral'
   | 'video_url'
+  | 'photo_path'
 >;
 
 // The database's check constraints already guarantee every code, so the
@@ -52,6 +55,7 @@ export function toExercise(row: ExerciseRow): Exercise {
     equipment: row.equipment as Equipment,
     isUnilateral: row.is_unilateral,
     videoUrl: row.video_url,
+    photoPath: row.photo_path,
   };
 }
 

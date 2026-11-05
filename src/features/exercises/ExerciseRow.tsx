@@ -4,6 +4,8 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Text } from '@/components/ui';
+import { PrivatePhoto } from '@/features/body/PrivatePhoto';
+import { usePhotoUrls } from '@/features/body/usePhotos';
 import type { Language } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
@@ -88,6 +90,8 @@ export function ExercisePicture({ exercise, size }: { exercise: Exercise; size: 
   const muscle = exercise.primaryMuscles[0];
   const box = { width: size, height: size };
 
+  // Your own photo of one of your exercises comes first.
+  if (exercise.photoPath) return <ExercisePhoto path={exercise.photoPath} size={size} />;
   if (source) {
     return <Image source={source} style={[styles.picture, box]} contentFit="cover" aria-hidden />;
   }
@@ -99,6 +103,23 @@ export function ExercisePicture({ exercise, size }: { exercise: Exercise; size: 
       ) : (
         <EquipmentIcon equipment={exercise.equipment} color={colors.accent} size={size * 0.6} />
       )}
+    </View>
+  );
+}
+
+// Your photo of an exercise, from the private bucket. Decorative: the
+// name is always written next to it.
+export function ExercisePhoto({ path, size }: { path: string; size: number }) {
+  const { data: urls } = usePhotoUrls([path]);
+
+  return (
+    <View aria-hidden>
+      <PrivatePhoto
+        path={path}
+        url={urls?.[path]}
+        label=""
+        style={[styles.picture, { width: size, height: size }]}
+      />
     </View>
   );
 }

@@ -58,3 +58,9 @@ globalThis.localStorage = {
     return store.size;
   },
 };
+
+// Tests never reach the database: each feature's api module is mocked
+// where it's used. The client itself is a stand-in too, so a component
+// that only imports it on the way (an exercise's photo, through its
+// signed link) needs no real .env. A test can still mock it its own way.
+jest.mock('@/lib/supabase', () => ({ supabase: {} }));

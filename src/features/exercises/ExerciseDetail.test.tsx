@@ -33,6 +33,7 @@ const hipThrust: Exercise = {
   equipment: 'barbell',
   isUnilateral: false,
   videoUrl: null,
+  photoPath: null,
 };
 const custom: Exercise = {
   ...hipThrust,
@@ -42,6 +43,7 @@ const custom: Exercise = {
   name: 'Hip thrust unilateral',
   isUnilateral: true,
   videoUrl: null,
+  photoPath: null,
 };
 
 beforeEach(() => {
