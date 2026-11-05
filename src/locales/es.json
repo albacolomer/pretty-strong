@@ -82,7 +82,8 @@
     },
     "menu": {
       "label": "Opciones de «{{name}}»",
-      "archive": "Archivar"
+      "archive": "Archivar",
+      "delete": "Borrar"
     },
     "archived": "Se ha archivado «{{name}}»",
     "archiveError": "No se ha podido archivar. Vuelve a intentarlo.",
@@ -116,7 +117,8 @@
       "settingsLoadError": "No se han podido cargar tus notas.",
       "edit": "Editar ejercicio",
       "video": "Vídeo de técnica",
-      "watchVideo": "Mira el vídeo de técnica en {{site}}"
+      "watchVideo": "Mira el vídeo de técnica en {{site}}",
+      "delete": "Borrar ejercicio"
     },
     "picker": {
       "title": "Añadir ejercicios",
@@ -124,7 +126,14 @@
       "backToList": "Volver a la lista",
       "swapTitle": "Cambiar el ejercicio",
       "swap": "Cambiar"
-    }
+    },
+    "deleted": "Se ha borrado «{{name}}»",
+    "deleteError": "No se ha podido borrar. Vuelve a intentarlo.",
+    "undoDeleteError": "No se ha podido recuperar. Vuelve a intentarlo.",
+    "deleteNamed": "Borrar «{{name}}»",
+    "deleteAnyway": "Borrarlo igualmente",
+    "inRoutines_one": "«{{name}}» está en la rutina {{routines}}. Si lo borras, saldrá de ella.",
+    "inRoutines_other": "«{{name}}» está en {{count}} rutinas: {{routines}}. Si lo borras, saldrá de ellas."
   },
   "trackingTypes": {
     "weight_reps": {
@@ -452,7 +461,12 @@
       },
       "heading": "Bloques",
       "empty": "Aún no hay bloques"
-    }
+    },
+    "delete": "Borrar",
+    "deleteRoutine": "Borrar rutina",
+    "deleteNamed": "Borrar «{{name}}»",
+    "deleted": "Se ha borrado «{{name}}»",
+    "deleteError": "No se ha podido borrar. Vuelve a intentarlo."
   },
   "schedule": {
     "today": "Hoy",

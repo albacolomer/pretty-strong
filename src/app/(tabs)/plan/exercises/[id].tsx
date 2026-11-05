@@ -21,7 +21,7 @@ export default function ExerciseDetailScreen() {
       <ExerciseDetail
         exerciseId={id}
         onEdit={() => router.push({ pathname: '/plan/exercises/[id]/edit', params: { id } })}
-        onArchived={() => router.back()}
+        onRemoved={() => router.back()}
       />
     </Screen>
   );

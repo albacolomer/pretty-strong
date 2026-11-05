@@ -7,7 +7,7 @@ import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { fetchArchivedRoutines, fetchRoutines, setRoutineArchived } from './api';
+import { fetchArchivedRoutines, fetchRoutines, setRoutineArchived, setRoutineDeleted } from './api';
 import { NO_TARGETS } from './routine';
 import { RoutineList } from './RoutineList';
 import { upperBody } from './testData';
@@ -17,6 +17,7 @@ jest.mock('./api', () => ({
   fetchRoutines: jest.fn(),
   fetchArchivedRoutines: jest.fn(),
   setRoutineArchived: jest.fn(),
+  setRoutineDeleted: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 const mockFetchRoutines = jest.mocked(fetchRoutines);
@@ -118,6 +119,26 @@ describe('<RoutineList />', () => {
 
     await user.press(await screen.findByRole('button', { name: /Rutines arxivades/ }));
     expect(router.push).toHaveBeenCalledWith('/plan/routines/archived');
+    actionSheet.mockRestore();
+  });
+
+  test('deletes a routine from its menu, with Desfés', async () => {
+    const user = userEvent.setup();
+    const actionSheet = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, callback) => callback(options.options.indexOf('Esborra')));
+    mockFetchRoutines.mockResolvedValue([upperBody]);
+    await render(<RoutineList />, { wrapper: createAppWrapper() });
+
+    // Gone from the list straight away.
+    mockFetchRoutines.mockResolvedValue([]);
+    await user.press(await screen.findByRole('button', { name: 'Opcions de «Tren superior 1»' }));
+
+    expect(setRoutineDeleted).toHaveBeenCalledWith('routine-1', true, false);
+    expect(screen.queryByText('Tren superior 1')).not.toBeOnTheScreen();
+    expect(screen.getByText("S'ha esborrat «Tren superior 1»")).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(setRoutineDeleted).toHaveBeenLastCalledWith('routine-1', false, false);
     actionSheet.mockRestore();
   });
 });

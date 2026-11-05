@@ -18,6 +18,7 @@ import { ExercisePicture } from './ExerciseRow';
 import { ExerciseSettingsEditor } from './ExerciseSettingsEditor';
 import { MuscleFigure } from './MuscleFigure';
 import { useArchiveWithUndo } from './useArchiveWithUndo';
+import { useDeleteExercise } from './useDeleteExercise';
 import { useExercises } from './useExercises';
 import type { Muscle } from './vocabulary';
 
@@ -25,19 +26,20 @@ type ExerciseDetailProps = {
   exerciseId: string;
   // Opens the edit screen (your own exercises only).
   onEdit: () => void;
-  // Called when the exercise is archived from here, e.g. to go back.
-  onArchived: () => void;
+  // Called when the exercise is archived or deleted from here, e.g. to go back.
+  onRemoved: () => void;
 };
 
 const PICTURE_SIZE = 200;
 
 // Plan → Exercicis → an exercise (US-05): what it is and trains.
-export function ExerciseDetail({ exerciseId, onEdit, onArchived }: ExerciseDetailProps) {
+export function ExerciseDetail({ exerciseId, onEdit, onRemoved }: ExerciseDetailProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const language = useAppLanguage();
   const { data: exercises, isPending } = useExercises();
   const archiveExercise = useArchiveWithUndo();
+  const deleteExercise = useDeleteExercise();
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   const exercise = exercises?.find((e) => e.id === exerciseId);
@@ -73,18 +75,30 @@ export function ExerciseDetail({ exerciseId, onEdit, onArchived }: ExerciseDetai
 
       <ExerciseSettingsEditor exerciseId={exercise.id} />
 
-      {/* Only your own exercises can be changed or archived; built-ins are shared. */}
+      {/* Only your own exercises can be changed, archived or deleted; built-ins are shared. */}
       {isCustomExercise(exercise) ? (
         <View style={styles.actions}>
           <Button label={t('exercises.detail.edit')} variant="secondary" onPress={onEdit} />
-          <Button
-            label={t('exercises.detail.archive')}
-            variant="ghost"
-            onPress={() => {
-              onArchived();
-              archiveExercise(exercise);
-            }}
-          />
+          {/* Side by side: Arxiva, and Esborra in red. */}
+          <View style={styles.removeActions}>
+            <Button
+              label={t('exercises.menu.archive')}
+              aria-label={t('exercises.detail.archive')}
+              variant="secondary"
+              onPress={() => {
+                onRemoved();
+                archiveExercise(exercise);
+              }}
+              style={styles.removeAction}
+            />
+            <Button
+              label={t('exercises.menu.delete')}
+              aria-label={t('exercises.detail.delete')}
+              variant="danger"
+              onPress={() => deleteExercise(exercise, { wasArchived: false, onDeleted: onRemoved })}
+              style={styles.removeAction}
+            />
+          </View>
         </View>
       ) : null}
     </View>
@@ -166,6 +180,14 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: spacing.sm,
+  },
+  removeActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  removeAction: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
   },
   muscles: {
     flexDirection: 'row',

@@ -48,7 +48,7 @@ Phase 1, release V1.0 (spec: "MVP scope"). Never build anything listed under "Ou
  
 1. Starting a workout copies the routine into `session_exercises`. Editing a routine never changes past sessions. `session_exercises.routine_exercise_id` links back to the plan.
 2. Store raw facts only. PRs, totals, stats and "last time" are SQL functions or views, never stored columns.
-3. Exercises and routines are archived (`archived_at`), never hard-deleted.
+3. Exercises and routines are archived (`archived_at`) or deleted (`deleted_at`, which also archives them and hides them from every list, while history and the calendar keep showing them), never hard-deleted.
 4. RLS on every table: users read and write only their own rows (directly by `user_id = auth.uid()` or through the parent row). Built-in exercises (`owner_id` null) are readable by everyone and writable by no one.
 5. IDs for sessions, session exercises and sets are UUIDs generated on the phone. A finished workout is uploaded through one Postgres function in a single transaction, as an idempotent upsert.
 6. Units live in column names: `weight_kg`, `distance_m`, `duration_s`, `speed_kmh`, `incline_pct`. Convert only in the UI.

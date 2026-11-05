@@ -11,6 +11,7 @@ import { ExerciseFilterBar, useExerciseSearch } from './ExerciseFilterBar';
 import { ExerciseRow } from './ExerciseRow';
 import { useArchivedExercises } from './useArchiveExercise';
 import { useArchiveWithUndo } from './useArchiveWithUndo';
+import { useDeleteExercise } from './useDeleteExercise';
 import { useExercises } from './useExercises';
 
 // Opens the "new exercise" screen, optionally with a name already filled in.
@@ -28,6 +29,7 @@ export function ExerciseLibrary() {
   const { data: exercises = [], isPending, isError } = useExercises();
   const { data: archived = [] } = useArchivedExercises();
   const archiveExercise = useArchiveWithUndo();
+  const deleteExercise = useDeleteExercise();
   const search = useExerciseSearch(exercises);
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
@@ -36,16 +38,19 @@ export function ExerciseLibrary() {
   const { results, query, hasFilters } = search;
 
   // The native iOS action sheet. Archiving isn't shown as destructive: it
-  // can always be undone.
+  // can always be undone. Deleting can too, but shows red, as it hides the
+  // exercise for good from your lists.
   function openMenu(exercise: Exercise) {
     showActionSheet(
       {
         title: exerciseName(exercise, language),
-        options: [t('exercises.menu.archive'), t('common.cancel')],
-        cancelButtonIndex: 1,
+        options: [t('exercises.menu.archive'), t('exercises.menu.delete'), t('common.cancel')],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 2,
       },
       (index) => {
         if (index === 0) archiveExercise(exercise);
+        if (index === 1) deleteExercise(exercise, { wasArchived: false });
       },
     );
   }

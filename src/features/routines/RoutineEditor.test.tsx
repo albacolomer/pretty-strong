@@ -10,7 +10,7 @@ import { fetchExercises, fetchExerciseSettings } from '@/features/exercises/api'
 import { createAppWrapper } from '@/test-utils/appWrapper';
 import { drop } from '@/test-utils/sortablesMock';
 
-import { fetchRoutines, saveRoutine, setRoutineArchived } from './api';
+import { fetchRoutines, saveRoutine, setRoutineArchived, setRoutineDeleted } from './api';
 import { NO_TARGETS } from './routine';
 import { RoutineEditor } from './RoutineEditor';
 import { testExercise, upperBody } from './testData';
@@ -21,6 +21,7 @@ jest.mock('./api', () => ({
   saveRoutine: jest.fn(),
   fetchArchivedRoutines: jest.fn(),
   setRoutineArchived: jest.fn(),
+  setRoutineDeleted: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('@/features/exercises/api', () => ({
   fetchExercises: jest.fn(),
@@ -583,10 +584,10 @@ describe('<RoutineEditor />', () => {
 
   test('archives a saved routine and leaves, even with unsaved changes', async () => {
     const user = userEvent.setup();
-    const onArchived = jest.fn();
+    const onRemoved = jest.fn();
     jest.mocked(setRoutineArchived).mockResolvedValue();
     await render(
-      <RoutineEditor routineId="routine-1" onSaved={jest.fn()} onArchived={onArchived} />,
+      <RoutineEditor routineId="routine-1" onSaved={jest.fn()} onRemoved={onRemoved} />,
       { wrapper: createAppWrapper() },
     );
     await user.type(await screen.findByLabelText('Nom'), ' B');
@@ -595,16 +596,37 @@ describe('<RoutineEditor />', () => {
 
     expect(setRoutineArchived).toHaveBeenCalledWith('routine-1', true);
     expect(screen.getByText("S'ha arxivat «Tren superior 1»")).toBeOnTheScreen();
-    expect(onArchived).toHaveBeenCalled();
+    expect(onRemoved).toHaveBeenCalled();
     expect(mockSaveRoutine).not.toHaveBeenCalled();
   });
 
+  test('deletes the routine, leaves, and offers undo', async () => {
+    const user = userEvent.setup();
+    const onRemoved = jest.fn();
+    await render(
+      <RoutineEditor routineId="routine-1" onSaved={jest.fn()} onRemoved={onRemoved} />,
+      { wrapper: createAppWrapper() },
+    );
+    // Unsaved edits don't stop it from leaving.
+    await user.type(await screen.findByLabelText('Nom'), ' B');
+
+    await user.press(screen.getByRole('button', { name: 'Esborra la rutina' }));
+
+    expect(setRoutineDeleted).toHaveBeenCalledWith('routine-1', true, false);
+    expect(onRemoved).toHaveBeenCalled();
+    expect(mockStopGuarding).toHaveBeenCalled();
+    expect(mockSaveRoutine).not.toHaveBeenCalled();
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(setRoutineDeleted).toHaveBeenLastCalledWith('routine-1', false, false);
+  });
+
   test('a new routine has nothing to archive', async () => {
-    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} onArchived={jest.fn()} />, {
+    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} onRemoved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
 
     expect(screen.queryByRole('button', { name: 'Arxiva la rutina' })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Esborra la rutina' })).not.toBeOnTheScreen();
     // Let the exercise library finish loading before the test ends.
     await act(async () => {});
   });

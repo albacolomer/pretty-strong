@@ -82,7 +82,8 @@
     },
     "menu": {
       "label": "Opcions de «{{name}}»",
-      "archive": "Arxiva"
+      "archive": "Arxiva",
+      "delete": "Esborra"
     },
     "archived": "S'ha arxivat «{{name}}»",
     "archiveError": "No s'ha pogut arxivar. Torna-ho a provar.",
@@ -116,7 +117,8 @@
       "settingsLoadError": "No s'han pogut carregar les teves notes.",
       "edit": "Edita l'exercici",
       "video": "Vídeo de tècnica",
-      "watchVideo": "Mira el vídeo de tècnica a {{site}}"
+      "watchVideo": "Mira el vídeo de tècnica a {{site}}",
+      "delete": "Esborra l'exercici"
     },
     "picker": {
       "title": "Afegeix exercicis",
@@ -124,7 +126,14 @@
       "backToList": "Torna a la llista",
       "swapTitle": "Canvia l'exercici",
       "swap": "Canvia"
-    }
+    },
+    "deleted": "S'ha esborrat «{{name}}»",
+    "deleteError": "No s'ha pogut esborrar. Torna-ho a provar.",
+    "undoDeleteError": "No s'ha pogut recuperar. Torna-ho a provar.",
+    "deleteNamed": "Esborra «{{name}}»",
+    "deleteAnyway": "Esborra'l igualment",
+    "inRoutines_one": "«{{name}}» és a la rutina {{routines}}. Si l'esborres, en sortirà.",
+    "inRoutines_other": "«{{name}}» és a {{count}} rutines: {{routines}}. Si l'esborres, en sortirà."
   },
   "trackingTypes": {
     "weight_reps": {
@@ -452,7 +461,12 @@
       },
       "heading": "Blocs",
       "empty": "Encara no hi ha blocs"
-    }
+    },
+    "delete": "Esborra",
+    "deleteRoutine": "Esborra la rutina",
+    "deleteNamed": "Esborra «{{name}}»",
+    "deleted": "S'ha esborrat «{{name}}»",
+    "deleteError": "No s'ha pogut esborrar. Torna-ho a provar."
   },
   "schedule": {
     "today": "Avui",

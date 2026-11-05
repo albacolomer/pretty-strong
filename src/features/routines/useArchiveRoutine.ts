@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 
-import { fetchArchivedRoutines, setRoutineArchived } from './api';
+import { fetchArchivedRoutines, setRoutineArchived, setRoutineDeleted } from './api';
 import type { Routine } from './routine';
 import { routinesQueryKey } from './useRoutines';
 
@@ -85,6 +85,63 @@ export function useArchiveRoutineWithUndo() {
     showToast({
       message: t('routines.archived', { name: routine.name }),
       action: { label: t('common.undo'), onPress: () => restore.mutate(routine.id) },
+    });
+  };
+}
+
+type DeleteInput = { id: string; wasArchived: boolean };
+
+// Deleting, or undoing it. It leaves the routine lists at once
+// (optimistic) and comes back if saving fails; the message lives here, as
+// the editor that deleted it may already have closed.
+function useSetRoutineDeleted(deleted: boolean) {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const showToast = useToast();
+  const { session } = useAuth();
+  const keys = [routinesQueryKey(session?.user.id), archivedRoutinesQueryKey(session?.user.id)];
+
+  return useMutation({
+    mutationFn: ({ id, wasArchived }: DeleteInput) => setRoutineDeleted(id, deleted, wasArchived),
+    onMutate: async ({ id }) => {
+      if (!deleted) return undefined;
+      // Stop a refetch in flight from putting it back in the meantime.
+      await Promise.all(keys.map((key) => queryClient.cancelQueries({ queryKey: key, exact: true })));
+      const previous = keys.map((key) => queryClient.getQueryData<Routine[]>(key));
+      for (const key of keys) {
+        queryClient.setQueryData<Routine[]>(key, (current) =>
+          current?.filter((routine) => routine.id !== id),
+        );
+      }
+      return { previous };
+    },
+    onError: (_error, _input, context) => {
+      context?.previous.forEach((list, index) => queryClient.setQueryData(keys[index], list));
+      showToast({ message: t(deleted ? 'routines.deleteError' : 'routines.restoreError') });
+    },
+    onSettled: () =>
+      Promise.all(keys.map((key) => queryClient.invalidateQueries({ queryKey: key, exact: true }))),
+  });
+}
+
+// Delete a routine (data rule 3: hidden everywhere but your history and
+// the calendar's past days), with an undo toast instead of "Are you sure?".
+// Undo puts it back as it was, archived or not.
+export function useDeleteRoutineWithUndo() {
+  const { t } = useTranslation();
+  const showToast = useToast();
+  const remove = useSetRoutineDeleted(true);
+  const restore = useSetRoutineDeleted(false);
+
+  return function deleteRoutine(
+    routine: Pick<Routine, 'id' | 'name'>,
+    { wasArchived }: { wasArchived: boolean },
+  ) {
+    const input = { id: routine.id, wasArchived };
+    remove.mutate(input);
+    showToast({
+      message: t('routines.deleted', { name: routine.name }),
+      action: { label: t('common.undo'), onPress: () => restore.mutate(input) },
     });
   };
 }

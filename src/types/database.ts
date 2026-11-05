@@ -151,6 +151,7 @@ export type Database = {
         Row: {
           archived_at: string | null
           created_at: string
+          deleted_at: string | null
           equipment: string
           id: string
           is_unilateral: boolean
@@ -167,6 +168,7 @@ export type Database = {
         Insert: {
           archived_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           equipment: string
           id?: string
           is_unilateral?: boolean
@@ -183,6 +185,7 @@ export type Database = {
         Update: {
           archived_at?: string | null
           created_at?: string
+          deleted_at?: string | null
           equipment?: string
           id?: string
           is_unilateral?: boolean
@@ -367,6 +370,7 @@ export type Database = {
           archived_at: string | null
           created_at: string
           custom_label: string | null
+          deleted_at: string | null
           description: string | null
           id: string
           label: string
@@ -379,6 +383,7 @@ export type Database = {
           archived_at?: string | null
           created_at?: string
           custom_label?: string | null
+          deleted_at?: string | null
           description?: string | null
           id?: string
           label?: string
@@ -391,6 +396,7 @@ export type Database = {
           archived_at?: string | null
           created_at?: string
           custom_label?: string | null
+          deleted_at?: string | null
           description?: string | null
           id?: string
           label?: string

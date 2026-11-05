@@ -2,10 +2,14 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent } from '@testing-library/react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
+import type { Routine } from '@/features/routines/routine';
+import { upperBody } from '@/features/routines/testData';
+import { useRoutines } from '@/features/routines/useRoutines';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { fetchExerciseSettings, setExerciseArchived } from './api';
+import { fetchExerciseSettings, setExerciseArchived, setExerciseDeleted } from './api';
 import type { Exercise } from './exercise';
 import { ExerciseDetail } from './ExerciseDetail';
 import { useExercises } from './useExercises';
@@ -13,9 +17,12 @@ import { useExercises } from './useExercises';
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('./api', () => ({
   setExerciseArchived: jest.fn(),
+  setExerciseDeleted: jest.fn(() => Promise.resolve()),
   fetchExerciseSettings: jest.fn(),
   saveExerciseSettings: jest.fn(),
 }));
+// Your active routines, to warn before deleting an exercise that's in one.
+jest.mock('@/features/routines/useRoutines', () => ({ useRoutines: jest.fn() }));
 // Fake only the library data; keep the real query keys.
 jest.mock('./useExercises', () => ({
   ...jest.requireActual('./useExercises'),
@@ -59,12 +66,27 @@ beforeEach(() => {
     >);
   jest.mocked(setExerciseArchived).mockReset().mockResolvedValue(custom);
   jest.mocked(fetchExerciseSettings).mockResolvedValue({});
+  jest.mocked(setExerciseDeleted).mockClear();
+  jest.mocked(useRoutines).mockReturnValue({ data: [] } as unknown as ReturnType<typeof useRoutines>);
 });
+
+// The routines that have the custom exercise in them.
+function routinesWithCustom(...names: string[]) {
+  const routines: Routine[] = names.map((name, index) => ({
+    ...upperBody,
+    id: `routine-${index}`,
+    name,
+    exercises: [{ ...upperBody.exercises[0], exerciseId: 'custom-1', exercise: custom }],
+  }));
+  jest
+    .mocked(useRoutines)
+    .mockReturnValue({ data: routines } as unknown as ReturnType<typeof useRoutines>);
+}
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<ExerciseDetail />', () => {
   test('shows what a built-in exercise is and trains, without an archive button', async () => {
-    await render(<ExerciseDetail exerciseId="hip_thrust" onEdit={jest.fn()} onArchived={jest.fn()} />, {
+    await render(<ExerciseDetail exerciseId="hip_thrust" onEdit={jest.fn()} onRemoved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
     // Your notes and rest load just after; wait like a user would.
@@ -81,8 +103,8 @@ describe('<ExerciseDetail />', () => {
 
   test('archives your own exercise, goes back and offers undo', async () => {
     const user = userEvent.setup();
-    const onArchived = jest.fn();
-    await render(<ExerciseDetail exerciseId="custom-1" onEdit={jest.fn()} onArchived={onArchived} />, {
+    const onRemoved = jest.fn();
+    await render(<ExerciseDetail exerciseId="custom-1" onEdit={jest.fn()} onRemoved={onRemoved} />, {
       wrapper: createAppWrapper(),
     });
     await screen.findByText('Descans per defecte');
@@ -90,15 +112,60 @@ describe('<ExerciseDetail />', () => {
     expect(screen.getByText('10 repeticions vol dir 10 per costat.')).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: "Arxiva l'exercici" }));
 
-    expect(onArchived).toHaveBeenCalled();
+    expect(onRemoved).toHaveBeenCalled();
     expect(setExerciseArchived).toHaveBeenCalledWith('custom-1', true);
     expect(screen.getByText("S'ha arxivat «Hip thrust unilateral»")).toBeOnTheScreen();
+  });
+
+  test('deletes your own exercise, goes back and offers undo', async () => {
+    const user = userEvent.setup();
+    const onRemoved = jest.fn();
+    await render(<ExerciseDetail exerciseId="custom-1" onEdit={jest.fn()} onRemoved={onRemoved} />, {
+      wrapper: createAppWrapper(),
+    });
+    await screen.findByText('Descans per defecte');
+
+    await user.press(screen.getByRole('button', { name: "Esborra l'exercici" }));
+
+    expect(onRemoved).toHaveBeenCalled();
+    expect(setExerciseDeleted).toHaveBeenCalledWith('custom-1', true, false);
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(setExerciseDeleted).toHaveBeenLastCalledWith('custom-1', false, false);
+  });
+
+  test('deleting an exercise that is in routines says which first', async () => {
+    const user = userEvent.setup();
+    const onRemoved = jest.fn();
+    routinesWithCustom('Tren inferior 1', 'Glutis');
+    const choices = ['Cancel·la', "Esborra'l igualment"];
+    const actionSheet = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, callback) =>
+        callback(options.options.indexOf(choices.shift() ?? '')),
+      );
+    await render(<ExerciseDetail exerciseId="custom-1" onEdit={jest.fn()} onRemoved={onRemoved} />, {
+      wrapper: createAppWrapper(),
+    });
+    await screen.findByText('Descans per defecte');
+
+    // Cancel·la: nothing happens.
+    await user.press(screen.getByRole('button', { name: "Esborra l'exercici" }));
+    expect(actionSheet.mock.lastCall?.[0].title).toBe(
+      "«Hip thrust unilateral» és a 2 rutines: Tren inferior 1, Glutis. Si l'esborres, en sortirà.",
+    );
+    expect(setExerciseDeleted).not.toHaveBeenCalled();
+    expect(onRemoved).not.toHaveBeenCalled();
+
+    await user.press(screen.getByRole('button', { name: "Esborra l'exercici" }));
+    expect(setExerciseDeleted).toHaveBeenCalledWith('custom-1', true, false);
+    expect(onRemoved).toHaveBeenCalled();
+    actionSheet.mockRestore();
   });
 
   test('opens the edit screen for your own exercise', async () => {
     const user = userEvent.setup();
     const onEdit = jest.fn();
-    await render(<ExerciseDetail exerciseId="custom-1" onEdit={onEdit} onArchived={jest.fn()} />, {
+    await render(<ExerciseDetail exerciseId="custom-1" onEdit={onEdit} onRemoved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
     await screen.findByText('Descans per defecte');
@@ -109,7 +176,7 @@ describe('<ExerciseDetail />', () => {
   });
 
   test('says so when the exercise is not in the library', async () => {
-    await render(<ExerciseDetail exerciseId="missing" onEdit={jest.fn()} onArchived={jest.fn()} />, {
+    await render(<ExerciseDetail exerciseId="missing" onEdit={jest.fn()} onRemoved={jest.fn()} />, {
       wrapper: createAppWrapper(),
     });
 

@@ -6,15 +6,21 @@ import { spacing, useTheme } from '@/theme';
 
 import type { Routine } from './routine';
 import { RoutineTypeTag } from './RoutineTypeTag';
-import { useArchivedRoutines, useRestoreRoutine } from './useArchiveRoutine';
+import {
+  useArchivedRoutines,
+  useDeleteRoutineWithUndo,
+  useRestoreRoutine,
+} from './useArchiveRoutine';
 
-// Plan → Rutines → Rutines arxivades: bring a routine back (US-06).
+// Plan → Rutines → Rutines arxivades: bring a routine back (US-06), or
+// delete it for good from your lists (history and the calendar keep it).
 export function ArchivedRoutines() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showToast = useToast();
   const { data: archived, isPending, isError } = useArchivedRoutines();
   const restore = useRestoreRoutine();
+  const deleteRoutine = useDeleteRoutineWithUndo();
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
@@ -37,12 +43,21 @@ export function ArchivedRoutines() {
             </Text>
             <RoutineTypeTag routine={routine} />
           </View>
-          <Button
-            label={t('routines.restore')}
-            variant="secondary"
-            onPress={() => restoreRoutine(routine)}
-            disabled={restore.isPending}
-          />
+          <View style={styles.actions}>
+            <Button
+              label={t('routines.delete')}
+              variant="ghost"
+              aria-label={t('routines.deleteNamed', { name: routine.name })}
+              onPress={() => deleteRoutine(routine, { wasArchived: true })}
+            />
+            <Button
+              label={t('routines.restore')}
+              variant="secondary"
+              onPress={() => restoreRoutine(routine)}
+              disabled={restore.isPending}
+              style={styles.restore}
+            />
+          </View>
         </Card>
       ))}
     </View>
@@ -59,6 +74,14 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   name: {
+    flex: 1,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  restore: {
     flex: 1,
   },
 });

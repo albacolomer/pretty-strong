@@ -13,7 +13,7 @@ import {
 import { MetalFill } from './MetalFill';
 import { Text } from './Text';
 
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 export type ButtonProps = {
   label: string;
@@ -33,10 +33,12 @@ const textColors: Record<ButtonVariant, ColorToken> = {
   primary: 'onMetal',
   secondary: 'text',
   ghost: 'accent',
+  danger: 'danger',
 };
 
 // Primary: brushed metal, like Avui's GO. Secondary: a white pill raised
-// off the page. Ghost: just the accent-coloured label.
+// off the page. Ghost: just the accent-coloured label. Danger: the white
+// pill with a red label, e.g. "Esborra".
 export function Button({
   label,
   onPress,
@@ -59,7 +61,7 @@ export function Button({
       aria-label={ariaLabel}
       style={({ pressed }) => [
         styles.button,
-        variant === 'secondary' && { backgroundColor: colors.surface },
+        (variant === 'secondary' || variant === 'danger') && { backgroundColor: colors.surface },
         variant !== 'ghost' && { boxShadow: shadows.control },
         pressed && styles.pressed,
         disabled && styles.disabled,

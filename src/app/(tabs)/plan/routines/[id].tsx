@@ -20,7 +20,7 @@ export default function RoutineScreen() {
       <RoutineEditor
         routineId={id}
         onSaved={() => router.back()}
-        onArchived={() => router.back()}
+        onRemoved={() => router.back()}
       />
     </Screen>
   );

@@ -82,7 +82,8 @@
     },
     "menu": {
       "label": "Options for “{{name}}”",
-      "archive": "Archive"
+      "archive": "Archive",
+      "delete": "Delete"
     },
     "archived": "“{{name}}” archived",
     "archiveError": "Couldn't archive it. Try again.",
@@ -116,7 +117,8 @@
       "settingsLoadError": "Couldn't load your notes.",
       "edit": "Edit exercise",
       "video": "Technique video",
-      "watchVideo": "Watch the technique video on {{site}}"
+      "watchVideo": "Watch the technique video on {{site}}",
+      "delete": "Delete exercise"
     },
     "picker": {
       "title": "Add exercises",
@@ -124,7 +126,14 @@
       "backToList": "Back to the list",
       "swapTitle": "Swap exercise",
       "swap": "Swap"
-    }
+    },
+    "deleted": "“{{name}}” deleted",
+    "deleteError": "Couldn't delete it. Try again.",
+    "undoDeleteError": "Couldn't bring it back. Try again.",
+    "deleteNamed": "Delete “{{name}}”",
+    "deleteAnyway": "Delete it anyway",
+    "inRoutines_one": "“{{name}}” is in the routine {{routines}}. Deleting it takes it out.",
+    "inRoutines_other": "“{{name}}” is in {{count}} routines: {{routines}}. Deleting it takes it out of them."
   },
   "trackingTypes": {
     "weight_reps": {
@@ -452,7 +461,12 @@
       },
       "heading": "Blocks",
       "empty": "No blocks yet"
-    }
+    },
+    "delete": "Delete",
+    "deleteRoutine": "Delete routine",
+    "deleteNamed": "Delete “{{name}}”",
+    "deleted": "“{{name}}” deleted",
+    "deleteError": "Couldn't delete it. Try again."
   },
   "schedule": {
     "today": "Today",

@@ -8,7 +8,11 @@ import { inset, radius, spacing, touch, useTheme } from '@/theme';
 
 import type { Routine } from './routine';
 import { ROUTINE_ICONS } from './routineIcons';
-import { useArchivedRoutines, useArchiveRoutineWithUndo } from './useArchiveRoutine';
+import {
+  useArchivedRoutines,
+  useArchiveRoutineWithUndo,
+  useDeleteRoutineWithUndo,
+} from './useArchiveRoutine';
 import { useRoutineSummary } from './useRoutineSummary';
 import { useRoutines } from './useRoutines';
 
@@ -20,21 +24,25 @@ export function RoutineList() {
   const { data: routines, isPending, isError } = useRoutines();
   const { data: archived = [] } = useArchivedRoutines();
   const archiveRoutine = useArchiveRoutineWithUndo();
+  const deleteRoutine = useDeleteRoutineWithUndo();
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
 
   // The native iOS action sheet. Archiving isn't shown as destructive: it
-  // can always be undone.
+  // can always be undone. Deleting can too, but shows red, as it hides the
+  // routine for good from your lists.
   function openMenu(routine: Routine) {
     showActionSheet(
       {
         title: routine.name,
-        options: [t('routines.archive'), t('common.cancel')],
-        cancelButtonIndex: 1,
+        options: [t('routines.archive'), t('routines.delete'), t('common.cancel')],
+        destructiveButtonIndex: 1,
+        cancelButtonIndex: 2,
       },
       (index) => {
         if (index === 0) archiveRoutine(routine);
+        if (index === 1) deleteRoutine(routine, { wasArchived: false });
       },
     );
   }

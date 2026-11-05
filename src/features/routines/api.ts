@@ -11,7 +11,7 @@ function selectRoutines() {
   return supabase
     .from('routines')
     .select(
-      `id, name, label, custom_label, planned_duration_s, notes, description, weekly_schedule(weekday, position), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}))`,
+      `id, name, label, custom_label, planned_duration_s, notes, description, weekly_schedule(weekday, position), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}, deleted_at))`,
     )
     .order('position', { referencedTable: 'routine_exercises' });
 }
@@ -20,17 +20,20 @@ type RoutineRow = NonNullable<Awaited<ReturnType<typeof selectRoutines>>['data']
 
 // Your active routines, oldest first, each with its exercises in order (and
 // each exercise's details, archived ones included, so names never go
-// missing) and its weekdays. RLS only returns your own.
+// missing; deleted ones are left out) and its weekdays. RLS only returns
+// your own.
 export async function fetchRoutines(): Promise<Routine[]> {
   const { data, error } = await selectRoutines().is('archived_at', null).order('created_at');
   if (error) throw error;
   return data.map(toRoutine);
 }
 
-// Your archived routines, most recently archived first (US-06).
+// Your archived routines, most recently archived first (US-06); deleted
+// ones are left out.
 export async function fetchArchivedRoutines(): Promise<Routine[]> {
   const { data, error } = await selectRoutines()
     .not('archived_at', 'is', null)
+    .is('deleted_at', null)
     .order('archived_at', { ascending: false });
   if (error) throw error;
   return data.map(toRoutine);
@@ -43,6 +46,26 @@ export async function setRoutineArchived(id: string, archived: boolean): Promise
   const { error } = await supabase
     .from('routines')
     .update({ archived_at: archived ? new Date().toISOString() : null })
+    .eq('id', id);
+  if (error) throw error;
+}
+
+// Deleting hides a routine from every list, the archived one too, but keeps
+// its row, so past workouts and the calendar still show it (data rule 3).
+// It's archived as well, which Today and the week already leave out. Undo
+// (`deleted` false) puts it back as it was: archived or not.
+export async function setRoutineDeleted(
+  id: string,
+  deleted: boolean,
+  wasArchived: boolean,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('routines')
+    .update({
+      deleted_at: deleted ? now : null,
+      ...(wasArchived ? {} : { archived_at: deleted ? now : null }),
+    })
     .eq('id', id);
   if (error) throw error;
 }
@@ -62,25 +85,28 @@ function toRoutine(row: RoutineRow): Routine {
     dayPositions: Object.fromEntries(
       row.weekly_schedule.map((item) => [item.weekday, item.position]),
     ),
-    exercises: row.routine_exercises.map((item) => ({
-      id: item.id,
-      exerciseId: item.exercise_id,
-      exercise: toExercise(item.exercise),
-      restS: item.rest_s,
-      groupKey: item.group_key,
-      notes: item.notes,
-      sets: [...item.routine_sets]
-        .sort((a, b) => a.position - b.position)
-        .map((set) => ({
-          weightKg: set.target_weight_kg,
-          reps: set.target_reps,
-          durationS: set.target_duration_s,
-          distanceM: set.target_distance_m,
-          speedKmh: set.target_speed_kmh,
-          inclinePct: set.target_incline_pct,
-          level: set.target_level,
-        })),
-    })),
+    // A deleted exercise leaves the routines it was in.
+    exercises: row.routine_exercises
+      .filter((item) => item.exercise.deleted_at === null)
+      .map((item) => ({
+        id: item.id,
+        exerciseId: item.exercise_id,
+        exercise: toExercise(item.exercise),
+        restS: item.rest_s,
+        groupKey: item.group_key,
+        notes: item.notes,
+        sets: [...item.routine_sets]
+          .sort((a, b) => a.position - b.position)
+          .map((set) => ({
+            weightKg: set.target_weight_kg,
+            reps: set.target_reps,
+            durationS: set.target_duration_s,
+            distanceM: set.target_distance_m,
+            speedKmh: set.target_speed_kmh,
+            inclinePct: set.target_incline_pct,
+            level: set.target_level,
+          })),
+      })),
   };
 }
 

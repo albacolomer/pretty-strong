@@ -7,7 +7,7 @@ import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { fetchArchivedExercises, setExerciseArchived } from './api';
+import { fetchArchivedExercises, setExerciseArchived, setExerciseDeleted } from './api';
 import type { Exercise } from './exercise';
 import { ExerciseLibrary } from './ExerciseLibrary';
 import { useExercises } from './useExercises';
@@ -19,7 +19,13 @@ jest.mock('./useExercises', () => ({
 }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
-jest.mock('./api', () => ({ fetchArchivedExercises: jest.fn(), setExerciseArchived: jest.fn() }));
+jest.mock('./api', () => ({
+  fetchArchivedExercises: jest.fn(),
+  setExerciseArchived: jest.fn(),
+  setExerciseDeleted: jest.fn(() => Promise.resolve()),
+}));
+// No routines have it, so deleting doesn't ask first.
+jest.mock('@/features/routines/useRoutines', () => ({ useRoutines: () => ({ data: [] }) }));
 const mockSetArchived = jest.mocked(setExerciseArchived);
 
 function builtIn(slug: string, ca: string, overrides: Partial<Exercise>): Exercise {
@@ -170,7 +176,7 @@ describe('<ExerciseLibrary />', () => {
     await user.press(screen.getByRole('button', { name: 'Opcions de «Mi press»' }));
 
     expect(actionSheet).toHaveBeenCalledWith(
-      expect.objectContaining({ title: 'Mi press', options: ['Arxiva', 'Cancel·la'] }),
+      expect.objectContaining({ title: 'Mi press', options: ['Arxiva', 'Esborra', 'Cancel·la'] }),
       expect.any(Function),
     );
     expect(mockSetArchived).toHaveBeenCalledWith('custom-1', true);
@@ -179,6 +185,25 @@ describe('<ExerciseLibrary />', () => {
     await user.press(screen.getByRole('button', { name: 'Desfés' }));
 
     expect(mockSetArchived).toHaveBeenLastCalledWith('custom-1', false);
+    actionSheet.mockRestore();
+  });
+
+  test('deletes from the menu, with an undo toast', async () => {
+    const user = userEvent.setup();
+    libraryShows([...exercises, custom]);
+    const actionSheet = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, callback) => callback(options.options.indexOf('Esborra')));
+    await renderLibrary();
+
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Mi press»' }));
+
+    // Red, though Desfés still brings it back.
+    expect(actionSheet.mock.lastCall?.[0].destructiveButtonIndex).toBe(1);
+    expect(setExerciseDeleted).toHaveBeenCalledWith('custom-1', true, false);
+    expect(await screen.findByText("S'ha esborrat «Mi press»")).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    expect(setExerciseDeleted).toHaveBeenLastCalledWith('custom-1', false, false);
     actionSheet.mockRestore();
   });
 

@@ -17,13 +17,14 @@ export async function fetchExercises(): Promise<Exercise[]> {
 }
 
 // Your own archived exercises, most recently archived first. Built-ins are
-// never archived by users, so they're left out.
+// never archived by users, so they're left out, and so are deleted ones.
 export async function fetchArchivedExercises(): Promise<Exercise[]> {
   const { data, error } = await supabase
     .from('exercises')
     .select(EXERCISE_COLUMNS)
     .not('archived_at', 'is', null)
     .not('owner_id', 'is', null)
+    .is('deleted_at', null)
     .order('archived_at', { ascending: false });
   if (error) throw error;
   return data.map(toExercise);
@@ -41,6 +42,26 @@ export async function setExerciseArchived(id: string, archived: boolean): Promis
     .single();
   if (error) throw error;
   return toExercise(data);
+}
+
+// Deleting hides an exercise from every list, the archived one too, but
+// keeps its row, so past workouts still show it (data rule 3). It's
+// archived as well, which the library and the unique names already leave
+// out. Undo (`deleted` false) puts it back as it was: archived or not.
+export async function setExerciseDeleted(
+  id: string,
+  deleted: boolean,
+  wasArchived: boolean,
+): Promise<void> {
+  const now = new Date().toISOString();
+  const { error } = await supabase
+    .from('exercises')
+    .update({
+      deleted_at: deleted ? now : null,
+      ...(wasArchived ? {} : { archived_at: deleted ? now : null }),
+    })
+    .eq('id', id);
+  if (error) throw error;
 }
 
 // What the form edits on a custom exercise.

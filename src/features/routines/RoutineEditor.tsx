@@ -71,7 +71,7 @@ import {
   type DraftExercise,
   type RoutineDraftErrors,
 } from './routineDraft';
-import { useArchiveRoutineWithUndo } from './useArchiveRoutine';
+import { useArchiveRoutineWithUndo, useDeleteRoutineWithUndo } from './useArchiveRoutine';
 import { useRoutines, useSaveRoutine } from './useRoutines';
 import { WeekdayPicker } from './WeekdayPicker';
 
@@ -80,13 +80,14 @@ type RoutineEditorProps = {
   routineId: string | null;
   // With the routine's id, new or not.
   onSaved: (routineId: string) => void;
-  // Given for a saved routine: offers "Arxiva la rutina", then leaves.
-  onArchived?: () => void;
+  // Given for a saved routine: offers "Arxiva la rutina" and "Esborra la
+  // rutina", then leaves.
+  onRemoved?: () => void;
 };
 
 // Create or edit a routine (US-07, US-10). Waits for the routine to load,
 // then edits a draft that is only saved with "Desa la rutina".
-export function RoutineEditor({ routineId, onSaved, onArchived }: RoutineEditorProps) {
+export function RoutineEditor({ routineId, onSaved, onRemoved }: RoutineEditorProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { data: routines, isPending } = useRoutines();
@@ -95,12 +96,12 @@ export function RoutineEditor({ routineId, onSaved, onArchived }: RoutineEditorP
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   const routine = routines?.find((r) => r.id === routineId);
   if (!routine) return <Text color="textMuted">{t('routines.editor.notFound')}</Text>;
-  return <RoutineForm routine={routine} onSaved={onSaved} onArchived={onArchived} />;
+  return <RoutineForm routine={routine} onSaved={onSaved} onRemoved={onRemoved} />;
 }
 
 type RoutineFormProps = Omit<RoutineEditorProps, 'routineId'> & { routine: Routine | null };
 
-function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
+function RoutineForm({ routine, onSaved, onRemoved }: RoutineFormProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showActionSheet = useActionSheet();
@@ -108,6 +109,7 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
   const showToast = useToast();
   const save = useSaveRoutine();
   const archiveRoutine = useArchiveRoutineWithUndo();
+  const deleteRoutine = useDeleteRoutineWithUndo();
   // What's saved now; the draft is compared with it to spot changes.
   const [saved] = useState(() => (routine ? draftFromRoutine(routine) : emptyRoutineDraft()));
   const [draft, setDraft] = useState(saved);
@@ -217,13 +219,13 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
     });
   }
 
-  // Unsaved edits go with it: archiving can be undone, and the routine is
-  // kept as it was last saved.
-  function handleArchive() {
-    if (!routine || !onArchived) return;
-    archiveRoutine(routine);
+  // Unsaved edits go with it: archiving and deleting can be undone, and the
+  // routine is kept as it was last saved.
+  function handleRemove(remove: () => void) {
+    if (!routine || !onRemoved) return;
+    remove();
     leave();
-    onArchived();
+    onRemoved();
   }
 
   // A class holds no exercises and a run only run blocks: switching takes
@@ -484,8 +486,24 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         disabled={save.isPending}
       />
 
-      {routine && onArchived ? (
-        <Button label={t('routines.archiveRoutine')} variant="ghost" onPress={handleArchive} />
+      {routine && onRemoved ? (
+        // Side by side under the save button: Arxiva, and Esborra in red.
+        <View style={styles.removeActions}>
+          <Button
+            label={t('routines.archive')}
+            aria-label={t('routines.archiveRoutine')}
+            variant="secondary"
+            onPress={() => handleRemove(() => archiveRoutine(routine))}
+            style={styles.removeAction}
+          />
+          <Button
+            label={t('routines.delete')}
+            aria-label={t('routines.deleteRoutine')}
+            variant="danger"
+            onPress={() => handleRemove(() => deleteRoutine(routine, { wasArchived: false }))}
+            style={styles.removeAction}
+          />
+        </View>
       ) : null}
 
       <TextSheet
@@ -563,5 +581,13 @@ const styles = StyleSheet.create({
   },
   addButton: {
     alignSelf: 'center',
+  },
+  removeActions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  removeAction: {
+    flex: 1,
+    paddingHorizontal: spacing.md,
   },
 });
