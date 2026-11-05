@@ -6,7 +6,8 @@
     "back": "Enrere",
     "done": "Fet",
     "cancel": "Cancel·la",
-    "undo": "Desfés"
+    "undo": "Desfés",
+    "optional": "Opcional"
   },
   "tabs": {
     "today": "Avui",
@@ -46,10 +47,8 @@
       "name": "Nom",
       "trackingType": "Què registraràs?",
       "primaryMuscles": "Músculs principals",
-      "primaryMusclesOptional": "Músculs principals (opcional)",
       "primaryPlaceholder": "Tria'n almenys un",
       "secondaryMuscles": "Músculs secundaris (opcional)",
-      "secondaryPlaceholder": "Cap",
       "equipment": "Material",
       "unilateral": "Un costat cada vegada",
       "unilateralHint": "10 repeticions vol dir 10 per costat.",
@@ -60,10 +59,21 @@
         "musclesRequired": "Tria almenys un múscul principal.",
         "nameTaken": "Ja tens un exercici amb aquest nom.",
         "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
-        "unknown": "No s'ha pogut desar. Torna-ho a provar."
+        "unknown": "No s'ha pogut desar. Torna-ho a provar.",
+        "videoUrlInvalid": "Enganxa l'enllaç sencer, que comenci per https://."
       },
       "editTitle": "Edita l'exercici",
-      "saveChanges": "Desa els canvis"
+      "saveChanges": "Desa els canvis",
+      "namePlaceholder": "Nom de l'exercici",
+      "whatYouLog": "Què registres",
+      "change": "Canvia",
+      "trackingTypeButton": "Què registraràs: {{type}}",
+      "musclesAndEquipment": "Músculs i material",
+      "secondaryShort": "Secundaris",
+      "extras": "Extres",
+      "video": "Vídeo de tècnica",
+      "videoPlaceholder": "https://www.youtube.com/…",
+      "note": "Nota"
     },
     "menu": {
       "label": "Opcions de «{{name}}»",
@@ -99,7 +109,9 @@
       "saveError": "No s'ha pogut desar. Torna-ho a provar.",
       "restValue": "Descans per defecte: {{time}}",
       "settingsLoadError": "No s'han pogut carregar les teves notes.",
-      "edit": "Edita l'exercici"
+      "edit": "Edita l'exercici",
+      "video": "Vídeo de tècnica",
+      "watchVideo": "Mira el vídeo de tècnica a {{site}}"
     },
     "picker": {
       "title": "Afegeix exercicis",
@@ -361,7 +373,6 @@
       "typeButton": "Tipus: {{type}}",
       "description": "Descripció",
       "descriptionPlaceholder": "Descripció (opcional): esquena i bíceps",
-      "optional": "Opcional",
       "days": "Dies",
       "note": "Nota",
       "editNote": "Nota: {{note}}",

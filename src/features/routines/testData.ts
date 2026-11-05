@@ -14,6 +14,7 @@ export function testExercise(id: string, ca: string): Exercise {
     secondaryMuscles: [],
     equipment: 'cable',
     isUnilateral: false,
+    videoUrl: null,
   };
 }
 

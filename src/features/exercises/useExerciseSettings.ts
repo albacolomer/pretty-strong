@@ -63,3 +63,28 @@ export function useSaveExerciseSettings(exerciseId: string) {
     },
   });
 }
+
+// Saves the notes of the exercise given when saving: the form's Nota, for
+// an exercise that may only have just been created.
+export function useSaveExerciseNotes() {
+  const queryClient = useQueryClient();
+  const { t } = useTranslation();
+  const showToast = useToast();
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const key = exerciseSettingsQueryKey(userId);
+
+  return useMutation({
+    mutationFn: ({ exerciseId, notes }: { exerciseId: string; notes: string | null }) => {
+      if (!userId) throw new Error('Not signed in.');
+      return saveExerciseSettings(userId, exerciseId, { notes });
+    },
+    onSuccess: (_result, { exerciseId, notes }) => {
+      queryClient.setQueryData<SettingsByExercise>(key, (current) => ({
+        ...current,
+        [exerciseId]: { ...NO_SETTINGS, ...current?.[exerciseId], notes },
+      }));
+    },
+    onError: () => showToast({ message: t('exercises.detail.saveError') }),
+  });
+}

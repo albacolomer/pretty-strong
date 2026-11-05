@@ -4,21 +4,6 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Card, Text } from '@/components/ui';
 import { gaps, radius, spacing, useTheme } from '@/theme';
 
-// A section's heading in small capitals, with a count on the right:
-// "EXERCICIS · 3 afegits".
-export function SectionHeader({ title, count }: { title: string; count: string }) {
-  return (
-    <View style={styles.header}>
-      <Text variant="label" color="textMuted" accessibilityRole="header" style={styles.title}>
-        {title}
-      </Text>
-      <Text variant="caption" color="textMuted">
-        {count}
-      </Text>
-    </View>
-  );
-}
-
 type EmptySectionCardProps = {
   icon: SFSymbol;
   title: string;
@@ -65,15 +50,6 @@ export function EmptySectionCard({
 }
 
 const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    gap: spacing.sm,
-    paddingHorizontal: spacing.xs,
-  },
-  title: {
-    flex: 1,
-  },
   empty: {
     alignItems: 'center',
     gap: spacing.lg,

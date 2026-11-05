@@ -17,10 +17,12 @@ export type Exercise = {
   secondaryMuscles: Muscle[];
   equipment: Equipment;
   isUnilateral: boolean;
+  // A technique video (YouTube, TikTok…), opened from the exercise's page.
+  videoUrl: string | null;
 };
 
 export const EXERCISE_COLUMNS =
-  'id, slug, name, name_i18n, tracking_type, primary_muscles, secondary_muscles, equipment, is_unilateral';
+  'id, slug, name, name_i18n, tracking_type, primary_muscles, secondary_muscles, equipment, is_unilateral, video_url';
 
 export type ExerciseRow = Pick<
   Tables<'exercises'>,
@@ -33,6 +35,7 @@ export type ExerciseRow = Pick<
   | 'secondary_muscles'
   | 'equipment'
   | 'is_unilateral'
+  | 'video_url'
 >;
 
 // The database's check constraints already guarantee every code, so the
@@ -48,6 +51,7 @@ export function toExercise(row: ExerciseRow): Exercise {
     secondaryMuscles: row.secondary_muscles as Muscle[],
     equipment: row.equipment as Equipment,
     isUnilateral: row.is_unilateral,
+    videoUrl: row.video_url,
   };
 }
 

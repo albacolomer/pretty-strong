@@ -6,7 +6,8 @@
     "back": "Back",
     "done": "Done",
     "cancel": "Cancel",
-    "undo": "Undo"
+    "undo": "Undo",
+    "optional": "Optional"
   },
   "tabs": {
     "today": "Today",
@@ -46,10 +47,8 @@
       "name": "Name",
       "trackingType": "What will you log?",
       "primaryMuscles": "Main muscles",
-      "primaryMusclesOptional": "Main muscles (optional)",
       "primaryPlaceholder": "Pick at least one",
       "secondaryMuscles": "Secondary muscles (optional)",
-      "secondaryPlaceholder": "None",
       "equipment": "Equipment",
       "unilateral": "One side at a time",
       "unilateralHint": "10 reps means 10 on each side.",
@@ -60,10 +59,21 @@
         "musclesRequired": "Pick at least one main muscle.",
         "nameTaken": "You already have an exercise with this name.",
         "network": "No connection. Check it and try again.",
-        "unknown": "Couldn't save it. Try again."
+        "unknown": "Couldn't save it. Try again.",
+        "videoUrlInvalid": "Paste the whole link, starting with https://."
       },
       "editTitle": "Edit exercise",
-      "saveChanges": "Save changes"
+      "saveChanges": "Save changes",
+      "namePlaceholder": "Exercise name",
+      "whatYouLog": "What you log",
+      "change": "Change",
+      "trackingTypeButton": "What you'll log: {{type}}",
+      "musclesAndEquipment": "Muscles & equipment",
+      "secondaryShort": "Secondary",
+      "extras": "Extras",
+      "video": "Technique video",
+      "videoPlaceholder": "https://www.youtube.com/…",
+      "note": "Note"
     },
     "menu": {
       "label": "Options for “{{name}}”",
@@ -99,7 +109,9 @@
       "saveError": "Couldn't save it. Try again.",
       "restValue": "Default rest: {{time}}",
       "settingsLoadError": "Couldn't load your notes.",
-      "edit": "Edit exercise"
+      "edit": "Edit exercise",
+      "video": "Technique video",
+      "watchVideo": "Watch the technique video on {{site}}"
     },
     "picker": {
       "title": "Add exercises",
@@ -361,7 +373,6 @@
       "typeButton": "Type: {{type}}",
       "description": "Description",
       "descriptionPlaceholder": "Description (optional): back & biceps",
-      "optional": "Optional",
       "days": "Days",
       "note": "Note",
       "editNote": "Note: {{note}}",

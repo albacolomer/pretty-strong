@@ -24,6 +24,7 @@ const oldPress: Exercise = {
   secondaryMuscles: [],
   equipment: 'dumbbell',
   isUnilateral: false,
+  videoUrl: null,
 };
 
 beforeEach(() => {

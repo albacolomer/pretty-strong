@@ -6,7 +6,8 @@
     "back": "Atrás",
     "done": "Hecho",
     "cancel": "Cancelar",
-    "undo": "Deshacer"
+    "undo": "Deshacer",
+    "optional": "Opcional"
   },
   "tabs": {
     "today": "Hoy",
@@ -46,10 +47,8 @@
       "name": "Nombre",
       "trackingType": "¿Qué registrarás?",
       "primaryMuscles": "Músculos principales",
-      "primaryMusclesOptional": "Músculos principales (opcional)",
       "primaryPlaceholder": "Elige al menos uno",
       "secondaryMuscles": "Músculos secundarios (opcional)",
-      "secondaryPlaceholder": "Ninguno",
       "equipment": "Material",
       "unilateral": "Un lado cada vez",
       "unilateralHint": "10 repeticiones significa 10 por lado.",
@@ -60,10 +59,21 @@
         "musclesRequired": "Elige al menos un músculo principal.",
         "nameTaken": "Ya tienes un ejercicio con este nombre.",
         "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
-        "unknown": "No se ha podido guardar. Vuelve a intentarlo."
+        "unknown": "No se ha podido guardar. Vuelve a intentarlo.",
+        "videoUrlInvalid": "Pega el enlace entero, que empiece por https://."
       },
       "editTitle": "Editar ejercicio",
-      "saveChanges": "Guardar cambios"
+      "saveChanges": "Guardar cambios",
+      "namePlaceholder": "Nombre del ejercicio",
+      "whatYouLog": "Qué registras",
+      "change": "Cambiar",
+      "trackingTypeButton": "Qué registrarás: {{type}}",
+      "musclesAndEquipment": "Músculos y material",
+      "secondaryShort": "Secundarios",
+      "extras": "Extras",
+      "video": "Vídeo de técnica",
+      "videoPlaceholder": "https://www.youtube.com/…",
+      "note": "Nota"
     },
     "menu": {
       "label": "Opciones de «{{name}}»",
@@ -99,7 +109,9 @@
       "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
       "restValue": "Descanso por defecto: {{time}}",
       "settingsLoadError": "No se han podido cargar tus notas.",
-      "edit": "Editar ejercicio"
+      "edit": "Editar ejercicio",
+      "video": "Vídeo de técnica",
+      "watchVideo": "Mira el vídeo de técnica en {{site}}"
     },
     "picker": {
       "title": "Añadir ejercicios",
@@ -361,7 +373,6 @@
       "typeButton": "Tipo: {{type}}",
       "description": "Descripción",
       "descriptionPlaceholder": "Descripción (opcional): espalda y bíceps",
-      "optional": "Opcional",
       "days": "Días",
       "note": "Nota",
       "editNote": "Nota: {{note}}",

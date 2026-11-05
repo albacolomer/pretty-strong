@@ -1,16 +1,27 @@
 import '@/lib/i18n';
 
-import { fireEvent, render, screen, userEvent } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { createQueryWrapper } from '@/test-utils/queryWrapper';
+import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { createExercise, updateExercise } from './api';
+import {
+  createExercise,
+  fetchExerciseSettings,
+  saveExerciseSettings,
+  updateExercise,
+} from './api';
 import type { Exercise } from './exercise';
 import { ExerciseForm } from './ExerciseForm';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
-jest.mock('./api', () => ({ createExercise: jest.fn(), updateExercise: jest.fn() }));
+jest.mock('./api', () => ({
+  createExercise: jest.fn(),
+  updateExercise: jest.fn(),
+  fetchExerciseSettings: jest.fn(),
+  saveExerciseSettings: jest.fn(() => Promise.resolve()),
+}));
 const mockCreateExercise = jest.mocked(createExercise);
 
 const saved: Exercise = {
@@ -23,7 +34,13 @@ const saved: Exercise = {
   secondaryMuscles: ['calves'],
   equipment: 'barbell',
   isUnilateral: true,
+  videoUrl: null,
 };
+
+// Each native action sheet (the list of tracking types) picks the next of
+// these labels, or is cancelled when there's none.
+const sheetChoices: string[] = [];
+let actionSheet: jest.SpyInstance;
 
 beforeEach(() => {
   jest
@@ -32,24 +49,43 @@ beforeEach(() => {
       typeof useAuth
     >);
   mockCreateExercise.mockReset();
+  jest.mocked(saveExerciseSettings).mockClear();
+  jest.mocked(fetchExerciseSettings).mockResolvedValue({});
+  sheetChoices.length = 0;
+  actionSheet = jest
+    .spyOn(menus, 'show')
+    .mockImplementation((options, callback) =>
+      callback(options.options.indexOf(sheetChoices.shift() ?? '')),
+    );
 });
 
-// Opens a picker field, taps the given options, then "Fet".
-async function pick(user: ReturnType<typeof userEvent.setup>, field: string, options: string[]) {
-  await user.press(screen.getByRole('button', { name: field }));
+afterEach(() => actionSheet.mockRestore());
+
+type User = ReturnType<typeof userEvent.setup>;
+
+// Opens a row's list, taps the given options, then "Fet". Rows are named
+// by their label and value, e.g. "Material, Sense material".
+async function pick(user: User, row: RegExp, options: string[]) {
+  await user.press(screen.getByRole('button', { name: row }));
   for (const option of options) {
     await user.press(screen.getByLabelText(option));
   }
   await user.press(screen.getByRole('button', { name: 'Fet' }));
 }
 
+// Picks a tracking type from the list "Canvia" opens.
+async function chooseTrackingType(user: User, current: string, type: string) {
+  sheetChoices.push(type);
+  await user.press(screen.getByRole('button', { name: `Què registraràs: ${current}` }));
+}
+
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<ExerciseForm />', () => {
   test('starts with no equipment, shows what is missing and does not save', async () => {
     const user = userEvent.setup();
-    await render(<ExerciseForm onSaved={jest.fn()} />, { wrapper: createQueryWrapper() });
+    await render(<ExerciseForm onSaved={jest.fn()} />, { wrapper: createAppWrapper() });
 
-    expect(screen.getByRole('button', { name: 'Material' })).toHaveTextContent(/Sense material/);
+    expect(screen.getByRole('button', { name: 'Material, Sense material' })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
 
@@ -62,12 +98,12 @@ describe('<ExerciseForm />', () => {
     const user = userEvent.setup();
     mockCreateExercise.mockResolvedValue({ ...saved, trackingType: 'run' });
     await render(<ExerciseForm initialName="Cursa de muntanya" onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
-    await user.press(screen.getByRole('radio', { name: 'Córrer' }));
+    await chooseTrackingType(user, 'Pes i repeticions', 'Córrer');
 
-    expect(screen.getByRole('button', { name: 'Músculs principals (opcional)' })).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Músculs principals, Opcional' })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
 
@@ -81,22 +117,22 @@ describe('<ExerciseForm />', () => {
     const onSaved = jest.fn();
     mockCreateExercise.mockResolvedValue(saved);
     await render(<ExerciseForm initialName="Hip thrust unilateral" onSaved={onSaved} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     expect(screen.getByLabelText('Nom')).toHaveDisplayValue('Hip thrust unilateral');
-    expect(screen.getByRole('radio', { name: 'Pes i repeticions' })).toBeChecked();
 
-    await user.press(screen.getByRole('radio', { name: 'Temps' }));
-    await pick(user, 'Músculs principals', ['Glutis', 'Isquiotibials']);
+    await chooseTrackingType(user, 'Pes i repeticions', 'Temps');
+    expect(screen.getByRole('button', { name: 'Què registraràs: Temps' })).toBeOnTheScreen();
+    await pick(user, /^Músculs principals/, ['Glutis', 'Isquiotibials']);
 
     // A main muscle isn't offered again as a secondary one.
-    await user.press(screen.getByRole('button', { name: 'Músculs secundaris (opcional)' }));
+    await user.press(screen.getByRole('button', { name: 'Secundaris, Opcional' }));
     expect(screen.queryByRole('checkbox', { name: 'Glutis' })).not.toBeOnTheScreen();
     await user.press(screen.getByLabelText('Bessons'));
     await user.press(screen.getByRole('button', { name: 'Fet' }));
 
-    await pick(user, 'Material', ['Barra']);
+    await pick(user, /^Material/, ['Barra']);
     await fireEvent(screen.getByRole('switch', { name: 'Un costat cada vegada' }), 'valueChange', true);
     await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
 
@@ -108,8 +144,48 @@ describe('<ExerciseForm />', () => {
       secondaryMuscles: ['calves'],
       equipment: 'barbell',
       isUnilateral: true,
+      videoUrl: null,
     });
     expect(onSaved).toHaveBeenCalledWith(saved);
+    // No note was written, so none is saved.
+    expect(saveExerciseSettings).not.toHaveBeenCalled();
+  });
+
+  test('a technique video link and a note are saved with the exercise', async () => {
+    const user = userEvent.setup();
+    mockCreateExercise.mockResolvedValue(saved);
+    await render(<ExerciseForm initialName="Press inclinat" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    await pick(user, /^Músculs principals/, ['Pit']);
+
+    // Something that isn't a link is refused in the sheet.
+    await user.press(screen.getByRole('button', { name: 'Vídeo de tècnica, Opcional' }));
+    await user.type(screen.getByLabelText('Vídeo de tècnica'), 'youtube');
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(
+      screen.getByText("Enganxa l'enllaç sencer, que comenci per https://."),
+    ).toBeOnTheScreen();
+    await user.clear(screen.getByLabelText('Vídeo de tècnica'));
+    await user.type(screen.getByLabelText('Vídeo de tècnica'), ' https://www.youtube.com/watch?v=abc ');
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    // The row shows the site, not the whole link.
+    expect(screen.getByRole('button', { name: 'Vídeo de tècnica, youtube.com' })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Nota, Opcional' }));
+    await user.type(screen.getByLabelText('Les teves notes'), 'Banc a 30°');
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(screen.getByRole('button', { name: 'Nota, Banc a 30°' })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
+
+    expect(mockCreateExercise).toHaveBeenCalledWith(
+      expect.objectContaining({ videoUrl: 'https://www.youtube.com/watch?v=abc' }),
+    );
+    // The note goes with your settings for the exercise just created.
+    await waitFor(() =>
+      expect(saveExerciseSettings).toHaveBeenCalledWith('user-1', 'new-1', { notes: 'Banc a 30°' }),
+    );
   });
 
   test('edits one of your exercises, starting from what is saved', async () => {
@@ -117,16 +193,20 @@ describe('<ExerciseForm />', () => {
     const onSaved = jest.fn();
     const updated = { ...saved, name: 'Hip thrust a una cama' };
     jest.mocked(updateExercise).mockResolvedValue(updated);
+    jest.mocked(fetchExerciseSettings).mockResolvedValue({
+      'new-1': { notes: 'Peus amples', defaultRestS: null },
+    });
     await render(<ExerciseForm exercise={saved} onSaved={onSaved} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
     const name = screen.getByLabelText('Nom');
     expect(name).toHaveDisplayValue('Hip thrust unilateral');
-    expect(screen.getByRole('radio', { name: 'Temps' })).toBeChecked();
-    expect(screen.getByRole('button', { name: 'Músculs principals' })).toHaveTextContent(
-      /Glutis, Isquiotibials/,
-    );
+    expect(screen.getByRole('button', { name: 'Què registraràs: Temps' })).toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: 'Músculs principals, Glutis, Isquiotibials' }),
+    ).toBeOnTheScreen();
+    expect(await screen.findByRole('button', { name: 'Nota, Peus amples' })).toBeOnTheScreen();
 
     await user.clear(name);
     await user.type(name, 'Hip thrust a una cama');
@@ -139,20 +219,23 @@ describe('<ExerciseForm />', () => {
       secondaryMuscles: ['calves'],
       equipment: 'barbell',
       isUnilateral: true,
+      videoUrl: null,
     });
     expect(mockCreateExercise).not.toHaveBeenCalled();
     expect(onSaved).toHaveBeenCalledWith(updated);
+    // The note wasn't touched, so it isn't saved again.
+    expect(saveExerciseSettings).not.toHaveBeenCalled();
   });
 
   test('explains a name you already use', async () => {
     const user = userEvent.setup();
     mockCreateExercise.mockRejectedValue({ code: '23505', message: 'duplicate key value' });
     await render(<ExerciseForm initialName="Press raro" onSaved={jest.fn()} />, {
-      wrapper: createQueryWrapper(),
+      wrapper: createAppWrapper(),
     });
 
-    await pick(user, 'Músculs principals', ['Pit']);
-    await pick(user, 'Material', ['Manuelles']);
+    await pick(user, /^Músculs principals/, ['Pit']);
+    await pick(user, /^Material/, ['Manuelles']);
     await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
 
     expect(await screen.findByText('Ja tens un exercici amb aquest nom.')).toBeOnTheScreen();

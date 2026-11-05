@@ -16,6 +16,7 @@ function builtIn(
     secondaryMuscles: [],
     equipment: 'machine',
     isUnilateral: false,
+    videoUrl: null,
     ...overrides,
   };
 }

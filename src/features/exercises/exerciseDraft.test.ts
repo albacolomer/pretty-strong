@@ -36,6 +36,7 @@ describe('draftFromExercise', () => {
       secondaryMuscles: ['triceps'],
       equipment: 'dumbbell',
       isUnilateral: true,
+      videoUrl: null,
     });
 
     expect(draft).toEqual({
@@ -45,6 +46,7 @@ describe('draftFromExercise', () => {
       secondaryMuscles: ['triceps'],
       equipment: 'dumbbell',
       isUnilateral: true,
+      videoUrl: '',
     });
   });
 });

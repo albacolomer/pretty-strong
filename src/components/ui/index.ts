@@ -12,6 +12,8 @@ export { KeyboardDoneBar, NumberInput, type NumberInputProps } from './NumberInp
 export { Screen, type ScreenProps } from './Screen';
 export { ScreenTitle, type ScreenTitleProps } from './ScreenTitle';
 export { SelectField, type SelectFieldProps } from './SelectField';
+export { SectionHeader } from './SectionHeader';
+export { SettingsCard, SettingsRow } from './SettingsRows';
 export { Sheet, type SheetProps } from './Sheet';
 export {
   SegmentedControl,
@@ -21,5 +23,6 @@ export {
 export { StepButton, Stepper, type StepperProps } from './Stepper';
 export { Text, type TextProps } from './Text';
 export { TextField, type TextFieldProps } from './TextField';
+export { TextSheet } from './TextSheet';
 export { ToastProvider, useToast, type ToastOptions } from './Toast';
 export { useActionSheet } from './useActionSheet';

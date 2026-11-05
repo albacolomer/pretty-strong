@@ -1,10 +1,9 @@
 import { useTranslation } from 'react-i18next';
 
-import { useActionSheet } from '@/components/ui';
+import { SettingsRow, useActionSheet } from '@/components/ui';
 
 import { ROUTINE_LABELS, type RoutineLabel } from './routine';
 import { ROUTINE_ICONS } from './routineIcons';
-import { SettingsRow } from './SettingsRows';
 
 type RoutineTypeRowProps = {
   value: RoutineLabel;

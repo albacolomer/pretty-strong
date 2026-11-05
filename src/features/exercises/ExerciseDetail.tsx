@@ -1,11 +1,19 @@
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
 
-import { Button, Card, GradientText, Text } from '@/components/ui';
+import {
+  Button,
+  Card,
+  GradientText,
+  SettingsCard,
+  SettingsRow,
+  Text,
+} from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
 import { exerciseName, isCustomExercise } from './exercise';
+import { linkHost } from './exerciseDraft';
 import { ExercisePicture } from './ExerciseRow';
 import { ExerciseSettingsEditor } from './ExerciseSettingsEditor';
 import { MuscleFigure } from './MuscleFigure';
@@ -55,6 +63,8 @@ export function ExerciseDetail({ exerciseId, onEdit, onArchived }: ExerciseDetai
         ) : null}
       </Card>
 
+      {exercise.videoUrl ? <VideoRow url={exercise.videoUrl} /> : null}
+
       <MuscleList title={t('exercises.detail.primaryMuscles')} muscles={exercise.primaryMuscles} />
       <MuscleList
         title={t('exercises.detail.secondaryMuscles')}
@@ -78,6 +88,27 @@ export function ExerciseDetail({ exerciseId, onEdit, onArchived }: ExerciseDetai
         </View>
       ) : null}
     </View>
+  );
+}
+
+// The technique video, opened where it lives: the YouTube or TikTok app,
+// or Safari. Playing it inside the app comes with US-27.
+function VideoRow({ url }: { url: string }) {
+  const { t } = useTranslation();
+  const site = linkHost(url);
+
+  return (
+    <SettingsCard>
+      <SettingsRow
+        icon="play.rectangle"
+        label={t('exercises.detail.video')}
+        value={site}
+        onPress={() => {
+          Linking.openURL(url).catch(() => {});
+        }}
+        aria-label={t('exercises.detail.watchVideo', { site })}
+      />
+    </SettingsCard>
   );
 }
 

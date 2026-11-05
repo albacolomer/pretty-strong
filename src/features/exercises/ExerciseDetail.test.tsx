@@ -32,6 +32,7 @@ const hipThrust: Exercise = {
   secondaryMuscles: ['hamstrings'],
   equipment: 'barbell',
   isUnilateral: false,
+  videoUrl: null,
 };
 const custom: Exercise = {
   ...hipThrust,
@@ -40,6 +41,7 @@ const custom: Exercise = {
   names: null,
   name: 'Hip thrust unilateral',
   isUnilateral: true,
+  videoUrl: null,
 };
 
 beforeEach(() => {

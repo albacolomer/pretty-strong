@@ -8,8 +8,12 @@ import {
   Button,
   Card,
   HeaderBackButton,
+  SectionHeader,
+  SettingsCard,
+  SettingsRow,
   Text,
   TextField,
+  TextSheet,
   useActionSheet,
   useToast,
 } from '@/components/ui';
@@ -36,8 +40,7 @@ import { PlannedDurationField } from './PlannedDurationField';
 import { ReorderExercisesSheet } from './ReorderExercisesSheet';
 import { RoutineExerciseCard, type GroupKind } from './RoutineExerciseCard';
 import { ROUTINE_ICONS } from './routineIcons';
-import { RoutineNoteSheet } from './RoutineNoteSheet';
-import { EmptySectionCard, SectionHeader } from './RoutineSection';
+import { EmptySectionCard } from './RoutineSection';
 import { RoutineTypeRow } from './RoutineTypeRow';
 import { RunBlockCard } from './RunBlockCard';
 import { RUN_BLOCK_KINDS, RUN_EXERCISE_SLUG, runBlockSummary, type RunBlockKind } from './runBlocks';
@@ -70,7 +73,6 @@ import {
 } from './routineDraft';
 import { useArchiveRoutineWithUndo } from './useArchiveRoutine';
 import { useRoutines, useSaveRoutine } from './useRoutines';
-import { SettingsCard, SettingsRow } from './SettingsRows';
 import { WeekdayPicker } from './WeekdayPicker';
 
 type RoutineEditorProps = {
@@ -486,9 +488,12 @@ function RoutineForm({ routine, onSaved, onArchived }: RoutineFormProps) {
         <Button label={t('routines.archiveRoutine')} variant="ghost" onPress={handleArchive} />
       ) : null}
 
-      <RoutineNoteSheet
+      <TextSheet
         visible={noteOpen}
-        note={draft.notes}
+        title={t('routines.editor.notes')}
+        label={t('routines.editor.notes')}
+        placeholder={t('routines.editor.notesPlaceholder')}
+        value={draft.notes}
         onClose={() => setNoteOpen(false)}
         onDone={(notes) => {
           setDraft((current) => ({ ...current, notes }));

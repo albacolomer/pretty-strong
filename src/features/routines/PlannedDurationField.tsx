@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Stepper } from '@/components/ui';
+import { Button, SettingsRow, Stepper } from '@/components/ui';
 import { spacing } from '@/theme';
 
 import {
@@ -11,7 +11,6 @@ import {
   PLANNED_DURATION_MIN_S,
   PLANNED_DURATION_STEP_S,
 } from './routine';
-import { SettingsRow } from './SettingsRows';
 
 type PlannedDurationFieldProps = {
   // Null: no planned duration.

@@ -23,6 +23,7 @@ function exercise(id: string): Exercise {
     secondaryMuscles: [],
     equipment: 'barbell',
     isUnilateral: false,
+    videoUrl: null,
   };
 }
 
@@ -48,6 +49,7 @@ test('adds the saved exercise to the cached library', async () => {
     secondaryMuscles: [],
     equipment: 'barbell',
     isUnilateral: false,
+    videoUrl: null,
   });
 
   await waitFor(() => expect(result.current.isSuccess).toBe(true));

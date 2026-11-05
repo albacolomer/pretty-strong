@@ -50,6 +50,7 @@ export type ExerciseInput = {
   secondaryMuscles: Muscle[];
   equipment: Equipment;
   isUnilateral: boolean;
+  videoUrl: string | null;
 };
 
 export type NewExercise = ExerciseInput & { ownerId: string };
@@ -62,6 +63,7 @@ function toRowFields(input: ExerciseInput) {
     secondary_muscles: input.secondaryMuscles,
     equipment: input.equipment,
     is_unilateral: input.isUnilateral,
+    video_url: input.videoUrl,
   };
 }
 

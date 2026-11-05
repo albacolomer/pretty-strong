@@ -33,6 +33,7 @@ function builtIn(slug: string, ca: string, overrides: Partial<Exercise>): Exerci
     secondaryMuscles: [],
     equipment: 'machine',
     isUnilateral: false,
+    videoUrl: null,
     ...overrides,
   };
 }

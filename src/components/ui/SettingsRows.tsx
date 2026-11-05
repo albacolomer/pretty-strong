@@ -3,8 +3,10 @@ import { Children, Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, Text } from '@/components/ui';
 import { gaps, radius, spacing, touch, useTheme } from '@/theme';
+
+import { Card } from './Card';
+import { Text } from './Text';
 
 const ICON = 36;
 
@@ -31,25 +33,41 @@ export function SettingsCard({ children }: { children: ReactNode }) {
 
 type SettingsRowProps = {
   icon: SFSymbol;
+  // Blue for what the row is mainly about; grey for extras.
+  tone?: 'accent' | 'muted';
   label: string;
+  // A second, smaller line under the label: "kg · reps".
+  detail?: string;
   // On the right: "Força", the start of a note.
   value?: string;
+  // On the right in the accent colour, instead of a value: "Canvia".
+  action?: string;
   // With no value, "Opcional" on the right.
   optional?: boolean;
+  // On the right instead of the value and ›, e.g. a switch.
+  accessory?: ReactNode;
+  // Already translated, shown under the row in red.
+  error?: string;
   // Makes the row a button with a ›.
   onPress?: () => void;
+  // What VoiceOver says for the button; its label and value unless said.
   'aria-label'?: string;
   // Under the label, the card's full width: the weekdays, a stepper.
   children?: ReactNode;
 };
 
-// One setting of a routine: an icon in a tile, its label, and its value
-// or what's under it, e.g. "Tipus · Força ›".
+// One setting: an icon in a tile, its label, and its value or what's
+// under it, e.g. "Tipus · Força ›".
 export function SettingsRow({
   icon,
+  tone = 'accent',
   label,
+  detail,
   value,
+  action,
   optional = false,
+  accessory,
+  error,
   onPress,
   'aria-label': ariaLabel,
   children,
@@ -59,29 +77,52 @@ export function SettingsRow({
 
   const line = (
     <>
-      <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-        <SymbolView name={icon} size={17} weight="medium" tintColor={colors.accent} />
+      <View
+        style={[
+          styles.icon,
+          { backgroundColor: tone === 'accent' ? colors.accentSoft : colors.surfaceRaised },
+        ]}>
+        <SymbolView
+          name={icon}
+          size={17}
+          weight="medium"
+          tintColor={tone === 'accent' ? colors.accent : colors.textSecondary}
+        />
       </View>
-      <Text variant="bodyStrong">{label}</Text>
-      <View style={styles.right}>
-        {value ? (
-          <Text color="textMuted" numberOfLines={1} style={styles.value}>
-            {value}
-          </Text>
-        ) : optional ? (
+      {/* With a switch the label takes the room; otherwise the value does. */}
+      <View style={accessory ? styles.grow : styles.shrink}>
+        <Text variant="bodyStrong">{label}</Text>
+        {detail ? (
           <Text variant="caption" color="textMuted">
-            {t('routines.editor.optional')}
+            {detail}
           </Text>
         ) : null}
-        {onPress ? (
-          <SymbolView
-            name="chevron.right"
-            size={13}
-            weight="semibold"
-            tintColor={colors.control}
-          />
-        ) : null}
       </View>
+      {accessory ?? (
+        <View style={styles.right}>
+          {action ? (
+            <Text variant="bodyStrong" color="accent">
+              {action}
+            </Text>
+          ) : value ? (
+            <Text color="textMuted" numberOfLines={1} style={styles.shrink}>
+              {value}
+            </Text>
+          ) : optional ? (
+            <Text variant="caption" color="textMuted">
+              {t('common.optional')}
+            </Text>
+          ) : null}
+          {onPress ? (
+            <SymbolView
+              name="chevron.right"
+              size={13}
+              weight="semibold"
+              tintColor={colors.control}
+            />
+          ) : null}
+        </View>
+      )}
     </>
   );
 
@@ -90,7 +131,12 @@ export function SettingsRow({
       {onPress ? (
         <Pressable
           role="button"
-          aria-label={ariaLabel}
+          aria-label={
+            ariaLabel ??
+            [label, value ?? (optional ? t('common.optional') : undefined)]
+              .filter(Boolean)
+              .join(', ')
+          }
           onPress={onPress}
           style={({ pressed }) => [styles.line, pressed && styles.pressed]}>
           {line}
@@ -98,6 +144,11 @@ export function SettingsRow({
       ) : (
         <View style={styles.line}>{line}</View>
       )}
+      {error ? (
+        <Text variant="caption" color="danger" style={styles.error}>
+          {error}
+        </Text>
+      ) : null}
       {children}
     </View>
   );
@@ -130,7 +181,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // Takes the rest of the line, so a long note is cut short on the right.
+  grow: {
+    flex: 1,
+  },
+  shrink: {
+    flexShrink: 1,
+  },
+  // Takes the rest of the line, so a long value is cut short on the right.
   right: {
     flex: 1,
     flexDirection: 'row',
@@ -138,8 +195,9 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     gap: spacing.sm,
   },
-  value: {
-    flexShrink: 1,
+  // Lined up with the label.
+  error: {
+    marginLeft: ICON + gaps.loose,
   },
   pressed: {
     opacity: 0.75,

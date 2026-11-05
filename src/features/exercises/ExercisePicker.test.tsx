@@ -2,15 +2,20 @@ import '@/lib/i18n';
 
 import { render, screen, userEvent } from '@testing-library/react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
-import { createQueryWrapper } from '@/test-utils/queryWrapper';
+import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { createExercise, fetchExercises } from './api';
 import type { Exercise } from './exercise';
 import { ExercisePicker } from './ExercisePicker';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
-jest.mock('./api', () => ({ fetchExercises: jest.fn(), createExercise: jest.fn() }));
+jest.mock('./api', () => ({
+  fetchExercises: jest.fn(),
+  createExercise: jest.fn(),
+  fetchExerciseSettings: jest.fn(() => Promise.resolve({})),
+}));
 const mockCreateExercise = jest.mocked(createExercise);
 
 function builtIn(id: string, ca: string): Exercise {
@@ -24,6 +29,7 @@ function builtIn(id: string, ca: string): Exercise {
     secondaryMuscles: [],
     equipment: 'barbell',
     isUnilateral: false,
+    videoUrl: null,
   };
 }
 
@@ -44,7 +50,7 @@ beforeEach(() => {
 
 async function renderPicker(props: Partial<Parameters<typeof ExercisePicker>[0]> = {}) {
   await render(<ExercisePicker visible onClose={jest.fn()} onAdd={jest.fn()} {...props} />, {
-    wrapper: createQueryWrapper(),
+    wrapper: createAppWrapper(),
   });
   // Wait for the library to load.
   await screen.findByRole('checkbox', { name: /Esquat amb barra/ });
@@ -113,8 +119,13 @@ describe('<ExercisePicker />', () => {
 
     // The form opens in the sheet, with the searched name.
     expect(screen.getByLabelText('Nom')).toHaveDisplayValue('Pont de glutis');
-    await user.press(screen.getByRole('radio', { name: 'Repeticions' }));
-    await user.press(screen.getByRole('button', { name: 'Músculs principals' }));
+    // "Canvia" opens the list of tracking types.
+    const actionSheet = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, callback) => callback(options.options.indexOf('Repeticions')));
+    await user.press(screen.getByRole('button', { name: 'Què registraràs: Pes i repeticions' }));
+    actionSheet.mockRestore();
+    await user.press(screen.getByRole('button', { name: /^Músculs principals/ }));
     await user.press(screen.getByLabelText('Glutis'));
     await user.press(screen.getByRole('button', { name: 'Fet' }));
     await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));

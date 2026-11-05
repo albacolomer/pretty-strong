@@ -11,6 +11,8 @@ export type ExerciseDraft = {
   secondaryMuscles: Muscle[];
   equipment: Equipment;
   isUnilateral: boolean;
+  // As typed; empty for none.
+  videoUrl: string;
 };
 
 export const EXERCISE_NAME_MAX_LENGTH = 60;
@@ -24,6 +26,7 @@ export function emptyDraft(name = ''): ExerciseDraft {
     secondaryMuscles: [],
     equipment: 'none',
     isUnilateral: false,
+    videoUrl: '',
   };
 }
 
@@ -36,6 +39,7 @@ export function draftFromExercise(exercise: Exercise): ExerciseDraft {
     secondaryMuscles: [...exercise.secondaryMuscles],
     equipment: exercise.equipment,
     isUnilateral: exercise.isUnilateral,
+    videoUrl: exercise.videoUrl ?? '',
   };
 }
 
@@ -48,10 +52,25 @@ export function needsMuscles(trackingType: TrackingType): boolean {
   return !MUSCLES_OPTIONAL.includes(trackingType);
 }
 
+// A technique video's link: a web address (https://…), or nothing. Saved
+// as typed, without the spaces around it; null for none.
+export function readVideoUrl(text: string): string | null | 'invalid' {
+  const trimmed = text.trim();
+  if (trimmed === '') return null;
+  return /^https?:\/\/[^\s/]+\.[^\s]+$/i.test(trimmed) ? trimmed : 'invalid';
+}
+
+// The site a link is on, to show in place of the whole link:
+// "youtube.com" for https://www.youtube.com/watch?v=….
+export function linkHost(url: string): string {
+  const match = /^https?:\/\/(?:www\.|m\.)?([^/?#]+)/i.exec(url);
+  return match ? match[1].toLowerCase() : url;
+}
+
 // Each error is also the last part of its translation key:
 // exercises.form.errors.<error>.
-export type DraftFieldError = 'required' | 'nameTooLong' | 'musclesRequired';
-export type DraftErrors = Partial<Record<'name' | 'primaryMuscles', DraftFieldError>>;
+export type DraftFieldError = 'required' | 'nameTooLong' | 'musclesRequired' | 'videoUrlInvalid';
+export type DraftErrors = Partial<Record<'name' | 'primaryMuscles' | 'videoUrl', DraftFieldError>>;
 
 export function validateDraft(draft: ExerciseDraft): DraftErrors {
   const errors: DraftErrors = {};
@@ -61,6 +80,7 @@ export function validateDraft(draft: ExerciseDraft): DraftErrors {
   if (needsMuscles(draft.trackingType) && draft.primaryMuscles.length === 0) {
     errors.primaryMuscles = 'musclesRequired';
   }
+  if (readVideoUrl(draft.videoUrl) === 'invalid') errors.videoUrl = 'videoUrlInvalid';
   return errors;
 }
 

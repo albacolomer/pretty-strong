@@ -31,6 +31,7 @@ function exercise(id: string): Exercise {
     secondaryMuscles: [],
     equipment: 'barbell',
     isUnilateral: false,
+    videoUrl: null,
   };
 }
 
