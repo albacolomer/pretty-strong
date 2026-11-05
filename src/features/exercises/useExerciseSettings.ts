@@ -11,7 +11,7 @@ import {
   type ExerciseSettingsChange,
 } from './api';
 
-export const NO_SETTINGS: ExerciseSettings = { notes: null, defaultRestS: null };
+export const NO_SETTINGS: ExerciseSettings = { notes: null, defaultRestS: null, videoUrl: null };
 
 export function exerciseSettingsQueryKey(userId: string | undefined) {
   return ['exerciseSettings', userId] as const;

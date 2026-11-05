@@ -32,6 +32,7 @@ const oldPress: Exercise = {
   isUnilateral: false,
   videoUrl: null,
   photoPath: null,
+  technique: null,
 };
 
 beforeEach(() => {

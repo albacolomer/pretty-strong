@@ -41,6 +41,7 @@ const saved: Exercise = {
   isUnilateral: true,
   videoUrl: null,
   photoPath: null,
+  technique: null,
 };
 
 // Each native action sheet (the list of tracking types) picks the next of
@@ -248,7 +249,7 @@ describe('<ExerciseForm />', () => {
     const updated = { ...saved, name: 'Hip thrust a una cama' };
     jest.mocked(updateExercise).mockResolvedValue(updated);
     jest.mocked(fetchExerciseSettings).mockResolvedValue({
-      'new-1': { notes: 'Peus amples', defaultRestS: null },
+      'new-1': { notes: 'Peus amples', defaultRestS: null, videoUrl: null },
     });
     await render(<ExerciseForm exercise={saved} onSaved={onSaved} />, {
       wrapper: createAppWrapper(),

@@ -41,6 +41,7 @@ function builtIn(slug: string, ca: string, overrides: Partial<Exercise>): Exerci
     isUnilateral: false,
     videoUrl: null,
     photoPath: null,
+    technique: null,
     ...overrides,
   };
 }

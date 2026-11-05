@@ -83,7 +83,7 @@ beforeEach(() => {
     .mocked(fetchExercises)
     .mockResolvedValue([testExercise('squat', 'Esquat amb barra'), testExercise('rdl', 'Pes mort romanès')]);
   // Your own default rest for the squat; the app default (1:30) for others.
-  jest.mocked(fetchExerciseSettings).mockResolvedValue({ squat: { notes: null, defaultRestS: 150 } });
+  jest.mocked(fetchExerciseSettings).mockResolvedValue({ squat: { notes: null, defaultRestS: 150, videoUrl: null } });
   mockSaveRoutine.mockReset().mockResolvedValue('routine-1');
   mockPreventRemove.mockReset().mockReturnValue(mockStopGuarding);
   mockStopGuarding.mockClear();

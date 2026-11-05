@@ -49,7 +49,7 @@ jest.mock('@/features/body/photosApi', () => ({
 // Your default rest: 2:30 for the first exercise, the app's for the rest.
 jest.mock('@/features/exercises/api', () => ({
   fetchExerciseSettings: jest.fn(() =>
-    Promise.resolve({ 'exercise-1': { notes: null, defaultRestS: 150 } }),
+    Promise.resolve({ 'exercise-1': { notes: null, defaultRestS: 150, videoUrl: null } }),
   ),
 }));
 // No competitions or special dates, unless a test adds some.

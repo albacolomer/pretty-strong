@@ -4,6 +4,8 @@ import type { Tables } from '@/types/database';
 import type { Equipment, Muscle, TrackingType } from './vocabulary';
 
 export type ExerciseNames = Record<Language, string>;
+// Short technique tips, in each language.
+export type ExerciseTechnique = Record<Language, string[]>;
 
 // An exercise as the app uses it. Built-ins have `names` in every language;
 // custom exercises (US-04) have a single `name`.
@@ -21,10 +23,12 @@ export type Exercise = {
   videoUrl: string | null;
   // Your photo of one of your own exercises, in the private photos bucket.
   photoPath: string | null;
+  // Built-ins only.
+  technique: ExerciseTechnique | null;
 };
 
 export const EXERCISE_COLUMNS =
-  'id, slug, name, name_i18n, tracking_type, primary_muscles, secondary_muscles, equipment, is_unilateral, video_url, photo_path';
+  'id, slug, name, name_i18n, tracking_type, primary_muscles, secondary_muscles, equipment, is_unilateral, video_url, photo_path, technique_i18n';
 
 export type ExerciseRow = Pick<
   Tables<'exercises'>,
@@ -39,6 +43,7 @@ export type ExerciseRow = Pick<
   | 'is_unilateral'
   | 'video_url'
   | 'photo_path'
+  | 'technique_i18n'
 >;
 
 // The database's check constraints already guarantee every code, so the
@@ -56,6 +61,7 @@ export function toExercise(row: ExerciseRow): Exercise {
     isUnilateral: row.is_unilateral,
     videoUrl: row.video_url,
     photoPath: row.photo_path,
+    technique: row.technique_i18n as ExerciseTechnique | null,
   };
 }
 

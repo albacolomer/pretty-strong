@@ -50,7 +50,7 @@ describe('<ExerciseSettingsEditor />', () => {
 
   test('picks a preset, and can go back to the app default', async () => {
     const user = userEvent.setup();
-    mockFetch.mockResolvedValue({ hip_thrust: { notes: null, defaultRestS: 120 } });
+    mockFetch.mockResolvedValue({ hip_thrust: { notes: null, defaultRestS: 120, videoUrl: null } });
     await renderEditor();
 
     expect(screen.getByRole('radio', { name: '2:00' })).toBeChecked();

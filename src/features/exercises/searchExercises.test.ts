@@ -18,6 +18,7 @@ function builtIn(
     isUnilateral: false,
     videoUrl: null,
     photoPath: null,
+    technique: null,
     ...overrides,
   };
 }

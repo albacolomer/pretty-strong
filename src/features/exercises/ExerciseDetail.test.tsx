@@ -41,6 +41,7 @@ const hipThrust: Exercise = {
   isUnilateral: false,
   videoUrl: null,
   photoPath: null,
+  technique: null,
 };
 const custom: Exercise = {
   ...hipThrust,
@@ -51,6 +52,7 @@ const custom: Exercise = {
   isUnilateral: true,
   videoUrl: null,
   photoPath: null,
+  technique: null,
 };
 
 beforeEach(() => {
@@ -173,6 +175,25 @@ describe('<ExerciseDetail />', () => {
     await user.press(screen.getByRole('button', { name: "Edita l'exercici" }));
 
     expect(onEdit).toHaveBeenCalled();
+  });
+
+  test('shows the technique tips in your language', async () => {
+    jest.mocked(useExercises).mockReturnValue({
+      data: [
+        {
+          ...hipThrust,
+          technique: { ca: ['Mentó avall'], es: ['Barbilla abajo'], en: ['Chin down'] },
+        },
+      ],
+      isPending: false,
+    } as ReturnType<typeof useExercises>);
+    await render(<ExerciseDetail exerciseId="hip_thrust" onEdit={jest.fn()} onRemoved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    expect(screen.getByText('Tècnica')).toBeOnTheScreen();
+    expect(screen.getByText('Mentó avall')).toBeOnTheScreen();
+    await screen.findByText('Descans per defecte');
   });
 
   test('says so when the exercise is not in the library', async () => {

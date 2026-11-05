@@ -38,6 +38,7 @@ describe('draftFromExercise', () => {
       isUnilateral: true,
       videoUrl: null,
       photoPath: null,
+      technique: null,
     });
 
     expect(draft).toEqual({

@@ -1,21 +1,14 @@
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Linking, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import {
-  Button,
-  Card,
-  GradientText,
-  SettingsCard,
-  SettingsRow,
-  Text,
-} from '@/components/ui';
+import { Button, Card, GradientText, Text } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { radius, spacing, useTheme } from '@/theme';
 
 import { exerciseName, isCustomExercise } from './exercise';
-import { linkHost } from './exerciseDraft';
 import { ExercisePicture } from './ExerciseRow';
 import { ExerciseSettingsEditor } from './ExerciseSettingsEditor';
+import { ExerciseVideo } from './ExerciseVideo';
 import { MuscleFigure } from './MuscleFigure';
 import { useArchiveWithUndo } from './useArchiveWithUndo';
 import { useDeleteExercise } from './useDeleteExercise';
@@ -65,7 +58,8 @@ export function ExerciseDetail({ exerciseId, onEdit, onRemoved }: ExerciseDetail
         ) : null}
       </Card>
 
-      {exercise.videoUrl ? <VideoRow url={exercise.videoUrl} /> : null}
+      <TechniqueTips tips={exercise.technique?.[language] ?? []} />
+      <ExerciseVideo exercise={exercise} />
 
       <MuscleList title={t('exercises.detail.primaryMuscles')} muscles={exercise.primaryMuscles} />
       <MuscleList
@@ -105,24 +99,26 @@ export function ExerciseDetail({ exerciseId, onEdit, onRemoved }: ExerciseDetail
   );
 }
 
-// The technique video, opened where it lives: the YouTube or TikTok app,
-// or Safari. Playing it inside the app comes with US-27.
-function VideoRow({ url }: { url: string }) {
+// How to do it well; nothing when there are no tips (your own exercises).
+function TechniqueTips({ tips }: { tips: readonly string[] }) {
   const { t } = useTranslation();
-  const site = linkHost(url);
+  const { colors } = useTheme();
+  if (tips.length === 0) return null;
 
   return (
-    <SettingsCard>
-      <SettingsRow
-        icon="play.rectangle"
-        label={t('exercises.detail.video')}
-        value={site}
-        onPress={() => {
-          Linking.openURL(url).catch(() => {});
-        }}
-        aria-label={t('exercises.detail.watchVideo', { site })}
-      />
-    </SettingsCard>
+    <View style={styles.section}>
+      <Text variant="caption" color="textMuted">
+        {t('exercises.detail.technique')}
+      </Text>
+      <Card>
+        {tips.map((tip) => (
+          <View key={tip} style={styles.tip}>
+            <View style={[styles.tipDot, { backgroundColor: colors.accent }]} />
+            <Text style={styles.tipText}>{tip}</Text>
+          </View>
+        ))}
+      </Card>
+    </View>
   );
 }
 
@@ -188,6 +184,20 @@ const styles = StyleSheet.create({
   removeAction: {
     flex: 1,
     paddingHorizontal: spacing.md,
+  },
+  tip: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  // In line with the first line of its tip.
+  tipDot: {
+    width: spacing.sm,
+    height: spacing.sm,
+    borderRadius: radius.pill,
+    marginTop: spacing.sm,
+  },
+  tipText: {
+    flex: 1,
   },
   muscles: {
     flexDirection: 'row',

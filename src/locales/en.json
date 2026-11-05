@@ -118,6 +118,10 @@
       "edit": "Edit exercise",
       "video": "Technique video",
       "watchVideo": "Watch the technique video on {{site}}",
+      "changeVideo": "Change video",
+      "addVideo": "Add a video",
+      "useSuggestedVideo": "Back to the suggested video",
+      "technique": "Technique",
       "delete": "Delete exercise"
     },
     "picker": {

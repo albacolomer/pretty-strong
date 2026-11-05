@@ -16,6 +16,7 @@ export function testExercise(id: string, ca: string): Exercise {
     isUnilateral: false,
     videoUrl: null,
     photoPath: null,
+    technique: null,
   };
 }
 

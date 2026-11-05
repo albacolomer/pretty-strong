@@ -31,6 +31,7 @@ function builtIn(id: string, ca: string): Exercise {
     isUnilateral: false,
     videoUrl: null,
     photoPath: null,
+    technique: null,
   };
 }
 

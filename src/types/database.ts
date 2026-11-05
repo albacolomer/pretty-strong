@@ -162,6 +162,7 @@ export type Database = {
           primary_muscles: string[]
           secondary_muscles: string[]
           slug: string | null
+          technique_i18n: Json | null
           tracking_type: string
           video_url: string | null
         }
@@ -179,6 +180,7 @@ export type Database = {
           primary_muscles?: string[]
           secondary_muscles?: string[]
           slug?: string | null
+          technique_i18n?: Json | null
           tracking_type: string
           video_url?: string | null
         }
@@ -196,6 +198,7 @@ export type Database = {
           primary_muscles?: string[]
           secondary_muscles?: string[]
           slug?: string | null
+          technique_i18n?: Json | null
           tracking_type?: string
           video_url?: string | null
         }
@@ -582,6 +585,7 @@ export type Database = {
           exercise_id: string
           notes: string | null
           user_id: string
+          video_url: string | null
         }
         Insert: {
           created_at?: string
@@ -589,6 +593,7 @@ export type Database = {
           exercise_id: string
           notes?: string | null
           user_id: string
+          video_url?: string | null
         }
         Update: {
           created_at?: string
@@ -596,6 +601,7 @@ export type Database = {
           exercise_id?: string
           notes?: string | null
           user_id?: string
+          video_url?: string | null
         }
         Relationships: [
           {

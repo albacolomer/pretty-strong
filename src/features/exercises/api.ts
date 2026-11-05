@@ -138,8 +138,13 @@ export async function setExercisePhoto(
   return toExercise(data);
 }
 
-// Your personal layer on an exercise (US-05): notes and default rest.
-export type ExerciseSettings = { notes: string | null; defaultRestS: number | null };
+// Your personal layer on an exercise (US-05): notes, default rest and your
+// own technique video, used instead of the exercise's.
+export type ExerciseSettings = {
+  notes: string | null;
+  defaultRestS: number | null;
+  videoUrl: string | null;
+};
 export type ExerciseSettingsChange = Partial<ExerciseSettings>;
 
 // All your settings at once (one small row per exercise you've annotated),
@@ -148,10 +153,13 @@ export type ExerciseSettingsChange = Partial<ExerciseSettings>;
 export async function fetchExerciseSettings(): Promise<Record<string, ExerciseSettings>> {
   const { data, error } = await supabase
     .from('user_exercise_settings')
-    .select('exercise_id, notes, default_rest_s');
+    .select('exercise_id, notes, default_rest_s, video_url');
   if (error) throw error;
   return Object.fromEntries(
-    data.map((row) => [row.exercise_id, { notes: row.notes, defaultRestS: row.default_rest_s }]),
+    data.map((row) => [
+      row.exercise_id,
+      { notes: row.notes, defaultRestS: row.default_rest_s, videoUrl: row.video_url },
+    ]),
   );
 }
 
@@ -165,6 +173,7 @@ export async function saveExerciseSettings(
   const row: TablesInsert<'user_exercise_settings'> = { user_id: userId, exercise_id: exerciseId };
   if ('notes' in change) row.notes = change.notes;
   if ('defaultRestS' in change) row.default_rest_s = change.defaultRestS;
+  if ('videoUrl' in change) row.video_url = change.videoUrl;
   const { error } = await supabase
     .from('user_exercise_settings')
     .upsert(row, { onConflict: 'user_id,exercise_id' });
