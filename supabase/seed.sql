@@ -1,8 +1,10 @@
 -- Built-in exercise library (US-03).
 --
 -- Safe to run again: rows are matched by slug and updated in place, never
--- duplicated. To change the library, edit this file and run
---   npx supabase db push --include-seed
+-- duplicated. To change the library, edit this file and paste it into
+-- Supabase's SQL Editor: db push --include-seed can skip a seed that has
+-- changed when there's no new migration. Technique tips and videos are in
+-- seed_technique.sql.
 -- Never delete a line: to retire an exercise, archive it (archived_at), so
 -- past workouts keep pointing at it (data rule 3).
 --
