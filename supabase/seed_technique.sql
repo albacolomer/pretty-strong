@@ -1,7 +1,8 @@
--- Technique tips for the built-in exercises (US-03).
+-- Technique tips and suggested videos for the built-in exercises (US-03, US-27).
 --
--- Safe to run again: rows are matched by slug and only technique_i18n changes.
--- To change a tip, edit this file and paste it all into Supabase's SQL Editor.
+-- Safe to run again: rows are matched by slug and only technique_i18n and
+-- video_url change. To change one, edit this file and paste it all into
+-- Supabase's SQL Editor.
 -- The tips of an exercise are shown in this order, so every language has the
 -- same number of them, in the same order.
 --
@@ -437,4 +438,70 @@ from (values
     "en": ["Stand tall, looking ahead", "Whole foot on the pedals, heels down", "Push and pull with your arms to work your whole body"]
   }$$)
 ) as library (slug, tips)
+where exercise.slug = library.slug;
+
+-- Suggested technique videos: vertical, 90 s at most. An exercise that isn't
+-- here has no video yet, on purpose. Anyone can use their own link instead
+-- (user_exercise_settings.video_url), so these only change what's suggested.
+update public.exercises as exercise
+set video_url = library.url
+from (values
+  ('barbell_bench_press', 'https://www.tiktok.com/@deltabolic/video/7607635914105326849'),
+  ('dumbbell_bench_press', 'https://www.tiktok.com/@deltabolic/video/7415668943324450053'),
+  ('incline_dumbbell_press', 'https://www.tiktok.com/@deltabolic/video/7616907152652782849'),
+  ('pec_deck', 'https://www.tiktok.com/@deltabolic/video/7524499936168217912'),
+  ('cable_fly', 'https://www.tiktok.com/@deltabolic/video/7554529864800374017'),
+  ('lat_pulldown', 'https://www.tiktok.com/@stephaniebesna/video/7378245269474856197'),
+  ('machine_row', 'https://www.tiktok.com/@tylerpath/video/7262760056062627118'),
+  ('barbell_row', 'https://www.tiktok.com/@the_french_fit/video/7497802585487854894'),
+  ('pull_up', 'https://www.tiktok.com/@squatuniversity/video/7454430750784474398'),
+  ('straight_arm_pulldown', 'https://www.tiktok.com/@deltabolic/video/7498145524617334021'),
+  ('face_pull', 'https://www.tiktok.com/@deltabolic/video/7603951007076191489'),
+  ('dumbbell_shrug', 'https://www.tiktok.com/@tiboinshape/video/7396665010417749281'),
+  ('back_extension', 'https://www.tiktok.com/@thegymgroup/video/7546590572266458390'),
+  ('dumbbell_shoulder_press', 'https://www.tiktok.com/@deltabolic/video/7460671234355891462'),
+  ('machine_shoulder_press', 'https://www.tiktok.com/@coreycoachmcb/video/7157799076048801029'),
+  ('lateral_raise', 'https://www.tiktok.com/@deltabolic/video/7440639070792879415'),
+  ('cable_lateral_raise', 'https://www.tiktok.com/@deltabolic/video/7625375149541379329'),
+  ('rear_delt_fly', 'https://www.tiktok.com/@deltabolic/video/7464276336924790021'),
+  ('dumbbell_curl', 'https://www.tiktok.com/@hazzytrainer/video/7339819006343253254'),
+  ('hammer_curl', 'https://www.tiktok.com/@getfitwithandyy/video/7267921917330459910'),
+  ('barbell_curl', 'https://www.tiktok.com/@deltabolic/video/7451754414399966470'),
+  ('cable_curl', 'https://www.tiktok.com/@deltabolic/video/7473645877161233719'),
+  ('triceps_pushdown', 'https://www.tiktok.com/@deltabolic/video/7442112157812018488'),
+  ('overhead_triceps_extension', 'https://www.tiktok.com/@deltabolic/video/7621359575739960577'),
+  ('bench_dip', 'https://www.tiktok.com/@deltabolic/video/7512952024208526598'),
+  ('goblet_squat', 'https://www.tiktok.com/@fitgurlmel/video/7280246912085806378'),
+  ('leg_press', 'https://www.tiktok.com/@arielyu.fit/video/7474641943750806830'),
+  ('deadlift', 'https://www.tiktok.com/@enjayaba/video/7283809505299860741'),
+  ('romanian_deadlift', 'https://www.tiktok.com/@hurricane_gh1/video/7340099017428225323'),
+  ('dumbbell_romanian_deadlift', 'https://www.tiktok.com/@arielyu.fit/video/7513299605396933934'),
+  ('hip_thrust', 'https://www.tiktok.com/@jeremyethier/video/7343366085023911174'),
+  ('glute_bridge', 'https://www.tiktok.com/@coachrauve/video/6839763795259231493'),
+  ('cable_kickback', 'https://www.tiktok.com/@arielyu.fit/video/7453493791564107051'),
+  ('bulgarian_split_squat', 'https://www.tiktok.com/@stephaniebesna/video/7332175881273724166'),
+  ('reverse_lunge', 'https://www.tiktok.com/@stephaniebesna/video/7351160165086907653'),
+  ('step_up', 'https://www.tiktok.com/@arielyu.fit/video/7558123336362954039'),
+  ('leg_extension', 'https://www.tiktok.com/@deltabolic/video/7507771948806475014'),
+  ('lying_leg_curl', 'https://www.tiktok.com/@jaesthetix.training/video/7433484931151531269'),
+  ('seated_leg_curl', 'https://www.tiktok.com/@deltabolic/video/7577965531286834433'),
+  ('hip_adduction', 'https://www.tiktok.com/@haydensteelefit/video/7216411324924890411'),
+  ('banded_lateral_walk', 'https://www.tiktok.com/@fit_with_tay/video/7356577784359111979'),
+  ('standing_calf_raise', 'https://www.tiktok.com/@noahperlofit/video/7209006521282628910'),
+  ('kettlebell_swing', 'https://www.tiktok.com/@squatuniversity/video/7289085890612268334'),
+  ('box_jump', 'https://www.tiktok.com/@boltfitnesstraining/video/7166664841766194478'),
+  ('plank', 'https://www.tiktok.com/@deltabolic/video/7667347978708913409'),
+  ('hollow_hold', 'https://www.tiktok.com/@coachjuanky/video/7452999796119342369'),
+  ('crunch', 'https://www.tiktok.com/@smartfitcolombia/video/7083273539956100358'),
+  ('reverse_crunch', 'https://www.tiktok.com/@brandonspfit/video/7342964765406334254'),
+  ('bicycle_crunch', 'https://www.tiktok.com/@terrencejfit/video/7253146184930495790'),
+  ('russian_twist', 'https://www.tiktok.com/@lean4ever_/video/7233793884457946394'),
+  ('mountain_climber', 'https://www.tiktok.com/@fuertafit/video/7219683045329145093'),
+  ('hanging_knee_raise', 'https://www.tiktok.com/@brockashby/video/6956905090716404993'),
+  ('cable_crunch', 'https://www.tiktok.com/@deltabolic/video/7468103892346162437'),
+  ('pallof_press', 'https://www.tiktok.com/@kelly_kohn/video/7313175156174769454'),
+  ('ski_erg', 'https://www.tiktok.com/@annabelleronnfeldt/video/7436336534803975431'),
+  ('sled_push', 'https://www.tiktok.com/@247represent/video/7318345880048848160'),
+  ('rowing', 'https://www.tiktok.com/@annabelleronnfeldt/video/7392900461130484999')
+) as library (slug, url)
 where exercise.slug = library.slug;
