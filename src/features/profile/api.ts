@@ -26,7 +26,7 @@ export async function updateProfileLanguage(userId: string, language: Language):
 // What Edita el perfil changes. Empty text is stored as null.
 export type ProfileDetails = Pick<
   Profile,
-  'display_name' | 'city' | 'focus' | 'weekly_goal' | 'daily_step_goal'
+  'display_name' | 'bio' | 'city' | 'gender' | 'birth_date' | 'weekly_goal' | 'daily_step_goal'
 >;
 
 export async function updateProfileDetails(

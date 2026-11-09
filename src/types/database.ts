@@ -207,11 +207,13 @@ export type Database = {
       profiles: {
         Row: {
           avatar_path: string | null
+          bio: string | null
+          birth_date: string | null
           city: string | null
           created_at: string
           daily_step_goal: number
           display_name: string | null
-          focus: string | null
+          gender: string | null
           hide_progress_photos: boolean
           id: string
           language: string
@@ -220,11 +222,13 @@ export type Database = {
         }
         Insert: {
           avatar_path?: string | null
+          bio?: string | null
+          birth_date?: string | null
           city?: string | null
           created_at?: string
           daily_step_goal?: number
           display_name?: string | null
-          focus?: string | null
+          gender?: string | null
           hide_progress_photos?: boolean
           id: string
           language?: string
@@ -233,11 +237,13 @@ export type Database = {
         }
         Update: {
           avatar_path?: string | null
+          bio?: string | null
+          birth_date?: string | null
           city?: string | null
           created_at?: string
           daily_step_goal?: number
           display_name?: string | null
-          focus?: string | null
+          gender?: string | null
           hide_progress_photos?: boolean
           id?: string
           language?: string

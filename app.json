@@ -57,7 +57,8 @@
         {
           "motionPermission": "Pretty Strong fa servir el comptador de passos de l'iPhone per mostrar els passos d'avui."
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true,

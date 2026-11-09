@@ -33,6 +33,18 @@ jest.mock('@/features/body/photosApi', () => ({
   deleteProgressPhoto: jest.fn(() => Promise.resolve()),
   setAvatar: jest.fn(() => Promise.resolve()),
 }));
+// iOS's date wheels: one tap picks 20 November 1996.
+jest.mock('@react-native-community/datetimepicker', () => {
+  const { createElement } = jest.requireActual<typeof import('react')>('react');
+  const { Pressable } = jest.requireActual<typeof import('react-native')>('react-native');
+  return function DateWheels({ onChange }: { onChange: (event: unknown, date: Date) => void }) {
+    return createElement(Pressable, {
+      role: 'button',
+      'aria-label': '20 de novembre de 1996',
+      onPress: () => onChange({ type: 'set' }, new Date(1996, 10, 20)),
+    });
+  };
+});
 jest.mock('expo-image-picker', () => ({
   requestCameraPermissionsAsync: jest.fn(() => Promise.resolve({ granted: true })),
   launchCameraAsync: jest.fn(),
@@ -48,7 +60,9 @@ const profile: Profile = {
   created_at: '2026-10-13T10:00:00Z',
   display_name: 'Alba Colomer',
   city: 'Barcelona',
-  focus: 'HYROX i força',
+  bio: 'HYROX i força',
+  gender: null,
+  birth_date: null,
   weekly_goal: null,
   avatar_path: null,
   hide_progress_photos: false,
@@ -98,13 +112,14 @@ beforeEach(() => {
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('Profile', () => {
-  test('the header: name, city and focus, workouts, streak and this week', async () => {
+  test('the header: name, city and bio, workouts, streak and this week', async () => {
     const user = userEvent.setup();
     const onEdit = jest.fn();
     await render(<ProfileHeader onEdit={onEdit} />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByRole('header', { name: 'Alba Colomer' })).toBeOnTheScreen();
-    expect(screen.getByText('Barcelona · HYROX i força')).toBeOnTheScreen();
+    expect(screen.getByText('Barcelona')).toBeOnTheScreen();
+    expect(screen.getByText('HYROX i força')).toBeOnTheScreen();
     expect(await screen.findByLabelText('Entrenaments: 8')).toBeOnTheScreen();
     await waitFor(() => expect(screen.getByLabelText('Aquesta setmana: 3 / 4')).toBeOnTheScreen());
     expect(screen.getByLabelText('Ratxa: 2 setm.')).toBeOnTheScreen();
@@ -138,28 +153,41 @@ describe('Profile', () => {
   });
 
   test('without a name, the username', async () => {
-    jest.mocked(fetchProfile).mockResolvedValue({ ...profile, display_name: null, city: null, focus: null });
+    jest.mocked(fetchProfile).mockResolvedValue({ ...profile, display_name: null, city: null, bio: null });
     await render(<ProfileHeader onEdit={jest.fn()} />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByRole('header', { name: '@alba' })).toBeOnTheScreen();
   });
 
-  test('Edita el perfil: name, city, focus, and goals of your own', async () => {
+  test('Edita el perfil: about you and your goals, saved together with Desa', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();
+    const actionSheet = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, callback) => callback(options.options.indexOf('Dona')));
     jest.mocked(updateProfileDetails).mockImplementation((_id, details) =>
       Promise.resolve({ ...profile, ...details }),
     );
     await render(<EditProfile onClose={onClose} />, { wrapper: createAppWrapper() });
 
-    const city = await screen.findByLabelText('Ciutat');
-    expect(city.props.value).toBe('Barcelona');
+    await user.press(await screen.findByRole('button', { name: 'Ciutat, Barcelona' }));
+    await user.clear(screen.getByLabelText('Ciutat'));
+    await user.type(screen.getByLabelText('Ciutat'), 'Girona');
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(screen.getByRole('button', { name: 'Ciutat, Girona' })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Gènere, Opcional' }));
+    expect(screen.getByRole('button', { name: 'Gènere, Dona' })).toBeOnTheScreen();
+
+    // Today is 21 October 2026: not 30 until November.
+    await user.press(screen.getByRole('button', { name: 'Edat, Opcional' }));
+    await user.press(screen.getByRole('button', { name: '20 de novembre de 1996' }));
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(screen.getByRole('button', { name: 'Edat, 29 anys' })).toBeOnTheScreen();
+
     // From the plan until changed.
     await waitFor(() => expect(screen.getByLabelText('4 entrenaments a la setmana')).toBeOnTheScreen());
     expect(screen.queryByRole('button', { name: /Fes servir els dies planificats/ })).not.toBeOnTheScreen();
-
-    await user.clear(city);
-    await user.type(city, 'Girona');
     await user.press(screen.getByRole('button', { name: 'Un entrenament més' }));
     expect(screen.getByLabelText('5 entrenaments a la setmana')).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Fes servir els dies planificats (4)' })).toBeOnTheScreen();
@@ -168,35 +196,69 @@ describe('Profile', () => {
     await user.press(screen.getByRole('button', { name: '500 passos més' }));
     await user.press(screen.getByRole('button', { name: '500 passos més' }));
     expect(screen.getByLabelText('11.000 passos al dia')).toBeOnTheScreen();
+
+    // Nothing is saved until Desa.
+    expect(updateProfileDetails).not.toHaveBeenCalled();
     await user.press(screen.getByRole('button', { name: 'Desa' }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     expect(updateProfileDetails).toHaveBeenCalledWith('user-1', {
       display_name: 'Alba Colomer',
+      bio: 'HYROX i força',
       city: 'Girona',
-      focus: 'HYROX i força',
+      gender: 'female',
+      birth_date: '1996-11-20',
       weekly_goal: 5,
       daily_step_goal: 11000,
     });
+    actionSheet.mockRestore();
   });
 
   test('back to the planned days, and empty fields saved as none', async () => {
     const user = userEvent.setup();
-    jest.mocked(fetchProfile).mockResolvedValue({ ...profile, weekly_goal: 6 });
+    jest.mocked(fetchProfile).mockResolvedValue({
+      ...profile,
+      weekly_goal: 6,
+      gender: 'female',
+      birth_date: '1996-11-20',
+    });
+    const actionSheet = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, callback) =>
+        callback(options.options.indexOf('Prefereixo no dir-ho')),
+      );
     jest.mocked(updateProfileDetails).mockImplementation((_id, details) =>
       Promise.resolve({ ...profile, ...details }),
     );
     await render(<EditProfile onClose={jest.fn()} />, { wrapper: createAppWrapper() });
 
     await user.press(await screen.findByRole('button', { name: 'Fes servir els dies planificats (4)' }));
-    await user.clear(screen.getByLabelText('Què entrenes'));
+    await user.press(screen.getByRole('button', { name: 'Bio, HYROX i força' }));
+    await user.clear(screen.getByLabelText('Bio'));
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    await user.press(screen.getByRole('button', { name: 'Gènere, Dona' }));
+    await user.press(screen.getByRole('button', { name: 'Edat, 29 anys' }));
+    await user.press(screen.getByRole('button', { name: 'Treu la data' }));
     await user.press(screen.getByRole('button', { name: 'Desa' }));
 
     await waitFor(() =>
       expect(updateProfileDetails).toHaveBeenCalledWith(
         'user-1',
-        expect.objectContaining({ focus: null, weekly_goal: null }),
+        expect.objectContaining({ bio: null, gender: null, birth_date: null, weekly_goal: null }),
       ),
     );
+    actionSheet.mockRestore();
+  });
+
+  test('Cancel·la in a sheet keeps what was there', async () => {
+    const user = userEvent.setup();
+    await render(<EditProfile onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+
+    await user.press(await screen.findByRole('button', { name: 'Nom, Alba Colomer' }));
+    await user.type(screen.getByLabelText('Nom'), ' Soler');
+    // The sheet's, over the form's own.
+    await user.press(screen.getAllByRole('button', { name: 'Cancel·la' }).at(-1)!);
+
+    expect(screen.getByRole('button', { name: 'Nom, Alba Colomer' })).toBeOnTheScreen();
   });
 });

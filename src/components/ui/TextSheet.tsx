@@ -19,8 +19,9 @@ type TextSheetProps = {
   onDone: (text: string) => void;
   // An already translated message when what's typed can't be kept.
   validate?: (text: string) => string | undefined;
-  // A note: several lines. A link: one line, typed as is.
-  kind?: 'note' | 'link';
+  // A note: several lines. A line: one, e.g. a name. A link: one line,
+  // typed as is.
+  kind?: 'note' | 'line' | 'link';
   maxLength?: number;
 };
 
@@ -52,6 +53,7 @@ export function TextSheet({
     }
   }
   const link = kind === 'link';
+  const note = kind === 'note';
   const keyboardType: KeyboardTypeOptions = link ? 'url' : 'default';
 
   return (
@@ -76,12 +78,12 @@ export function TextSheet({
         }}
         error={error}
         autoFocus
-        multiline={!link}
+        multiline={note}
         keyboardType={keyboardType}
-        autoCapitalize={link ? 'none' : 'sentences'}
+        autoCapitalize={link ? 'none' : note ? 'sentences' : 'words'}
         autoCorrect={!link}
         maxLength={maxLength}
-        style={link ? undefined : styles.note}
+        style={note ? styles.note : undefined}
       />
     </Sheet>
   );

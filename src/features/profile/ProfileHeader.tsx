@@ -14,19 +14,18 @@ import { Avatar } from './Avatar';
 import { useProfile } from './useProfile';
 import { useWeeklyGoal } from './useWeeklyGoal';
 
-// The top of Profile: your picture (or initial), name, city and focus, then workouts in all,
+// The top of Profile: your picture (or initial), name, city and bio, then workouts in all,
 // the streak (weeks in a row at 75% of the goal or more) and this week
 // against the goal (walks and stretching left out); "Edita el perfil"
 // under them.
 export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
   const { t } = useTranslation();
-  const { colors, shadows } = useTheme();
+  const { colors } = useTheme();
   const today = useToday();
   const { data: profile } = useProfile();
   const { entries } = useHistoryEntries();
 
   const name = profile?.display_name || (profile ? `@${profile.username}` : '');
-  const line = [profile?.city, profile?.focus].filter(Boolean).join(' · ');
   const goal = useWeeklyGoal();
   const counts = weeklyCounts(entries);
   const thisWeek = counts.get(dateKey(startOfWeek(today))) ?? 0;
@@ -48,9 +47,14 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
         <GradientText variant="title" accessibilityRole="header" style={styles.centred}>
           {name}
         </GradientText>
-        {line ? (
+        {profile?.city ? (
           <Text variant="caption" color="textMuted">
-            {line}
+            {profile.city}
+          </Text>
+        ) : null}
+        {profile?.bio ? (
+          <Text color="textSecondary" style={styles.centred}>
+            {profile.bio}
           </Text>
         ) : null}
       </View>
@@ -76,17 +80,21 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
       <Pressable
         role="button"
         onPress={onEdit}
+        // Drawn thin; the tap area still reaches touch.min.
+        hitSlop={(touch.min - EDIT_HEIGHT) / 2}
         style={({ pressed }) => [
           styles.edit,
-          { backgroundColor: colors.surface, boxShadow: shadows.control },
+          { backgroundColor: colors.surface, borderColor: colors.border },
           pressed && styles.pressed,
         ]}>
-        <SymbolView name="pencil" size={16} weight="light" tintColor={colors.textSecondary} />
-        <Text variant="bodyStrong">{t('profile.edit')}</Text>
+        <SymbolView name="pencil" size={14} weight="light" tintColor={colors.textSecondary} />
+        <Text variant="control">{t('profile.edit')}</Text>
       </Pressable>
     </View>
   );
 }
+
+const EDIT_HEIGHT = 36;
 
 const styles = StyleSheet.create({
   header: {
@@ -114,8 +122,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    minHeight: touch.min,
+    height: EDIT_HEIGHT,
     borderRadius: radius.pill,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   pressed: {
     opacity: 0.75,
