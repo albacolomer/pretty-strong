@@ -100,7 +100,6 @@
     "detail": {
       "title": "Ejercicio",
       "notFound": "No se ha encontrado este ejercicio.",
-      "tracking": "Qué registras",
       "primaryMuscles": "Músculos principales",
       "secondaryMuscles": "Músculos secundarios",
       "archive": "Archivar ejercicio",
@@ -111,7 +110,6 @@
       "restPlus": "+15 s",
       "usingAppDefault": "Usa el de la app ({{time}}).",
       "useAppDefault": "Usar el de la app",
-      "saved": "Guardado ✓",
       "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
       "restValue": "Descanso por defecto: {{time}}",
       "settingsLoadError": "No se han podido cargar tus notas.",
@@ -122,6 +120,10 @@
       "addVideo": "Añadir un vídeo",
       "useSuggestedVideo": "Volver al vídeo recomendado",
       "technique": "Técnica",
+      "info": "Información del ejercicio",
+      "infoFor": "Ver la información de {{name}}",
+      "yours": "Tu ajuste",
+      "addNotes": "Añadir",
       "delete": "Borrar ejercicio"
     },
     "picker": {

@@ -30,7 +30,7 @@ jest.mock('@/features/exercises/api', () => ({
 // The header's options; its left button is shown so tests can press it.
 const mockScreenOptions = jest.fn();
 jest.mock('expo-router', () => ({
-  router: { back: jest.fn() },
+  router: { back: jest.fn(), push: jest.fn() },
   Stack: {
     Screen: ({ options }: { options: { headerLeft?: () => React.ReactNode } }) => {
       mockScreenOptions(options);
@@ -89,6 +89,7 @@ beforeEach(() => {
   mockStopGuarding.mockClear();
   mockScreenOptions.mockClear();
   jest.mocked(router.back).mockClear();
+  jest.mocked(router.push).mockClear();
   sheetChoices.length = 0;
   actionSheet = jest
     .spyOn(menus, 'show')
@@ -287,6 +288,26 @@ describe('<RoutineEditor />', () => {
     await fromMenu(user, 'Tracció al pit', "Usa el descans de l'exercici");
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
     expect(mockSaveRoutine.mock.lastCall?.[0].exercises[0]).toMatchObject({ rest_s: null });
+  });
+
+  test('opens an exercise’s page from its card and from its menu', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    const page = {
+      pathname: '/plan/exercises/[id]',
+      params: { id: upperBody.exercises[0].exerciseId, from: 'routine' },
+    };
+
+    await user.press(
+      await screen.findByRole('button', { name: 'Mira la informació de Tracció al pit' }),
+    );
+    expect(router.push).toHaveBeenLastCalledWith(page);
+
+    jest.mocked(router.push).mockClear();
+    await fromMenu(user, 'Tracció al pit', "Informació de l'exercici");
+    expect(router.push).toHaveBeenLastCalledWith(page);
   });
 
   test('adds and edits this routine’s note on each exercise', async () => {

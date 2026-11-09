@@ -100,7 +100,6 @@
     "detail": {
       "title": "Exercise",
       "notFound": "This exercise wasn't found.",
-      "tracking": "What you log",
       "primaryMuscles": "Main muscles",
       "secondaryMuscles": "Secondary muscles",
       "archive": "Archive exercise",
@@ -111,7 +110,6 @@
       "restPlus": "+15 s",
       "usingAppDefault": "Using the app default ({{time}}).",
       "useAppDefault": "Use the app default",
-      "saved": "Saved ✓",
       "saveError": "Couldn't save it. Try again.",
       "restValue": "Default rest: {{time}}",
       "settingsLoadError": "Couldn't load your notes.",
@@ -122,6 +120,10 @@
       "addVideo": "Add a video",
       "useSuggestedVideo": "Back to the suggested video",
       "technique": "Technique",
+      "info": "Exercise info",
+      "infoFor": "See {{name}} info",
+      "yours": "Your settings",
+      "addNotes": "Add",
       "delete": "Delete exercise"
     },
     "picker": {

@@ -1,42 +1,62 @@
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, GradientText, Text } from '@/components/ui';
+import {
+  GradientText,
+  SettingsCard,
+  SettingsRow,
+  Text,
+} from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
 
-import { exerciseName, isCustomExercise } from './exercise';
+import { exerciseName, isCustomExercise, type Exercise } from './exercise';
 import { ExercisePicture } from './ExerciseRow';
 import { ExerciseSettingsEditor } from './ExerciseSettingsEditor';
-import { ExerciseVideo } from './ExerciseVideo';
-import { MuscleFigure } from './MuscleFigure';
+import { ExerciseTechnique } from './ExerciseTechnique';
 import { useArchiveWithUndo } from './useArchiveWithUndo';
 import { useDeleteExercise } from './useDeleteExercise';
 import { useExercises } from './useExercises';
 import type { Muscle } from './vocabulary';
 
-type ExerciseDetailProps = {
-  exerciseId: string;
+type ExerciseActions = {
   // Opens the edit screen (your own exercises only).
-  onEdit: () => void;
-  // Called when the exercise is archived or deleted from here, e.g. to go back.
-  onRemoved: () => void;
+  onEdit?: () => void;
+  // Called when the exercise is archived or deleted from here, e.g. to go
+  // back. Left out, those two aren't offered: from a routine that's being
+  // edited, or from a workout.
+  onRemoved?: () => void;
 };
 
-const PICTURE_SIZE = 200;
+const PICTURE_SIZE = 160;
 
-// Plan → Exercicis → an exercise (US-05): what it is and trains.
-export function ExerciseDetail({ exerciseId, onEdit, onRemoved }: ExerciseDetailProps) {
+// Plan → Exercicis → an exercise (US-05): what it is, how to do it, and
+// your own settings on it.
+export function ExerciseDetail({
+  exerciseId,
+  ...actions
+}: ExerciseActions & { exerciseId: string }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  const language = useAppLanguage();
   const { data: exercises, isPending } = useExercises();
-  const archiveExercise = useArchiveWithUndo();
-  const deleteExercise = useDeleteExercise();
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   const exercise = exercises?.find((e) => e.id === exerciseId);
   if (!exercise) return <Text color="textMuted">{t('exercises.detail.notFound')}</Text>;
+
+  return <ExerciseView exercise={exercise} {...actions} />;
+}
+
+// The exercise's page itself, for when you already have the exercise.
+export function ExerciseView({
+  exercise,
+  onEdit,
+  onRemoved,
+}: ExerciseActions & { exercise: Exercise }) {
+  const { t } = useTranslation();
+  const language = useAppLanguage();
+  const archiveExercise = useArchiveWithUndo();
+  const deleteExercise = useDeleteExercise();
 
   return (
     <View style={styles.detail}>
@@ -45,120 +65,98 @@ export function ExerciseDetail({ exerciseId, onEdit, onRemoved }: ExerciseDetail
         <GradientText variant="title" accessibilityRole="header" style={styles.centered}>
           {exerciseName(exercise, language)}
         </GradientText>
+        <Text variant="caption" color="textMuted" style={styles.centered}>
+          {`${t(`equipment.${exercise.equipment}`)} · ${t(`trackingTypes.${exercise.trackingType}.detail`)}`}
+        </Text>
+        {exercise.isUnilateral ? (
+          <Text variant="caption" color="textMuted" style={styles.centered}>
+            {t('exercises.form.unilateralHint')}
+          </Text>
+        ) : null}
+        <MuscleChips primary={exercise.primaryMuscles} secondary={exercise.secondaryMuscles} />
       </View>
 
-      <Card>
-        <Fact
-          label={t('exercises.detail.tracking')}
-          value={`${t(`trackingTypes.${exercise.trackingType}.label`)} · ${t(`trackingTypes.${exercise.trackingType}.detail`)}`}
-        />
-        <Fact label={t('exercises.equipment')} value={t(`equipment.${exercise.equipment}`)} />
-        {exercise.isUnilateral ? (
-          <Fact label={t('exercises.form.unilateral')} value={t('exercises.form.unilateralHint')} />
-        ) : null}
-      </Card>
-
-      <TechniqueTips tips={exercise.technique?.[language] ?? []} />
-      <ExerciseVideo exercise={exercise} />
-
-      <MuscleList title={t('exercises.detail.primaryMuscles')} muscles={exercise.primaryMuscles} />
-      <MuscleList
-        title={t('exercises.detail.secondaryMuscles')}
-        muscles={exercise.secondaryMuscles}
-      />
-
+      <ExerciseTechnique exercise={exercise} />
       <ExerciseSettingsEditor exerciseId={exercise.id} />
 
       {/* Only your own exercises can be changed, archived or deleted; built-ins are shared. */}
-      {isCustomExercise(exercise) ? (
-        <View style={styles.actions}>
-          <Button label={t('exercises.detail.edit')} variant="secondary" onPress={onEdit} />
-          {/* Side by side: Arxiva, and Esborra in red. */}
-          <View style={styles.removeActions}>
-            <Button
+      {isCustomExercise(exercise) && (onEdit || onRemoved) ? (
+        <SettingsCard>
+          {onEdit ? (
+            <SettingsRow icon="pencil" label={t('exercises.detail.edit')} onPress={onEdit} />
+          ) : null}
+          {onRemoved ? (
+            <SettingsRow
+              icon="archivebox"
+              tone="muted"
               label={t('exercises.menu.archive')}
               aria-label={t('exercises.detail.archive')}
-              variant="secondary"
               onPress={() => {
                 onRemoved();
                 archiveExercise(exercise);
               }}
-              style={styles.removeAction}
             />
-            <Button
+          ) : null}
+          {onRemoved ? (
+            <SettingsRow
+              icon="trash"
+              tone="danger"
               label={t('exercises.menu.delete')}
               aria-label={t('exercises.detail.delete')}
-              variant="danger"
               onPress={() => deleteExercise(exercise, { wasArchived: false, onDeleted: onRemoved })}
-              style={styles.removeAction}
             />
-          </View>
-        </View>
+          ) : null}
+        </SettingsCard>
       ) : null}
     </View>
   );
 }
 
-// How to do it well; nothing when there are no tips (your own exercises).
-function TechniqueTips({ tips }: { tips: readonly string[] }) {
+// What it trains at a glance: main muscles in blue, the others in grey.
+function MuscleChips({
+  primary,
+  secondary,
+}: {
+  primary: readonly Muscle[];
+  secondary: readonly Muscle[];
+}) {
+  const { t } = useTranslation();
+  if (primary.length === 0 && secondary.length === 0) return null;
+  const names = (muscles: readonly Muscle[]) => muscles.map((m) => t(`muscles.${m}`)).join(', ');
+
+  return (
+    <View
+      accessible
+      aria-label={[
+        primary.length > 0 ? `${t('exercises.detail.primaryMuscles')}: ${names(primary)}` : '',
+        secondary.length > 0 ? `${t('exercises.detail.secondaryMuscles')}: ${names(secondary)}` : '',
+      ]
+        .filter(Boolean)
+        .join('. ')}
+      style={styles.chips}>
+      {primary.map((muscle) => (
+        <MuscleChip key={muscle} muscle={muscle} main />
+      ))}
+      {secondary.map((muscle) => (
+        <MuscleChip key={muscle} muscle={muscle} />
+      ))}
+    </View>
+  );
+}
+
+function MuscleChip({ muscle, main = false }: { muscle: Muscle; main?: boolean }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
-  if (tips.length === 0) return null;
 
   return (
-    <View style={styles.section}>
-      <Text variant="caption" color="textMuted">
-        {t('exercises.detail.technique')}
+    <View
+      style={[styles.chip, { backgroundColor: main ? colors.accentSoft : colors.surfaceRaised }]}>
+      <Text variant="caption" color={main ? 'accent' : 'textSecondary'}>
+        {t(`muscles.${muscle}`)}
       </Text>
-      <Card>
-        {tips.map((tip) => (
-          <View key={tip} style={styles.tip}>
-            <View style={[styles.tipDot, { backgroundColor: colors.accent }]} />
-            <Text style={styles.tipText}>{tip}</Text>
-          </View>
-        ))}
-      </Card>
     </View>
   );
 }
-
-function Fact({ label, value }: { label: string; value: string }) {
-  return (
-    <View>
-      <Text variant="caption" color="textMuted">
-        {label}
-      </Text>
-      <Text>{value}</Text>
-    </View>
-  );
-}
-
-// Each muscle with its little body figure; nothing when there are none.
-function MuscleList({ title, muscles }: { title: string; muscles: readonly Muscle[] }) {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
-  if (muscles.length === 0) return null;
-
-  return (
-    <View style={styles.section}>
-      <Text variant="caption" color="textMuted">
-        {title}
-      </Text>
-      <View style={styles.muscles}>
-        {muscles.map((muscle) => (
-          <View key={muscle} style={styles.muscle}>
-            <View style={[styles.figure, { backgroundColor: colors.surfaceRaised }]}>
-              <MuscleFigure muscle={muscle} height={44} />
-            </View>
-            <Text>{t(`muscles.${muscle}`)}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-const FIGURE_SIZE = 48;
 
 const styles = StyleSheet.create({
   detail: {
@@ -166,55 +164,21 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    gap: spacing.md,
+    gap: spacing.sm,
   },
   centered: {
     textAlign: 'center',
   },
-  section: {
-    gap: spacing.sm,
-  },
-  actions: {
-    gap: spacing.sm,
-  },
-  removeActions: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  removeAction: {
-    flex: 1,
-    paddingHorizontal: spacing.md,
-  },
-  tip: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-  },
-  // In line with the first line of its tip.
-  tipDot: {
-    width: spacing.sm,
-    height: spacing.sm,
-    borderRadius: radius.pill,
-    marginTop: spacing.sm,
-  },
-  tipText: {
-    flex: 1,
-  },
-  muscles: {
+  chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.md,
-  },
-  muscle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  figure: {
-    width: FIGURE_SIZE,
-    height: FIGURE_SIZE,
-    borderRadius: FIGURE_SIZE / 2,
-    alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    gap: spacing.xs,
+    marginTop: spacing.xs,
+  },
+  chip: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: radius.pill,
   },
 });

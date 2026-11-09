@@ -1,12 +1,14 @@
+import { router } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Card, MenuButton, Text, useActionSheet } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing } from '@/theme';
+import { spacing, touch, useTheme } from '@/theme';
 
 import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
 import { RestField } from './RestField';
@@ -39,8 +41,10 @@ type RoutineExerciseCardProps = {
 };
 
 // One exercise in the routine editor: picture, name and ⋯; its sets, each
-// with its first-time plan; then rest and "+ Nota" on one line. The ⋯ menu holds
-// everything else: reorder, supersets, the exercise's own rest, remove.
+// with its first-time plan; then rest and "+ Nota" on one line. The picture and
+// name open the exercise's page; the page opens on top, so the editor stays as
+// it is. The ⋯ menu holds that too, and everything else: reorder, supersets,
+// the exercise's own rest, remove.
 export function RoutineExerciseCard({
   item,
   exercise,
@@ -58,11 +62,21 @@ export function RoutineExerciseCard({
   onRemove,
 }: RoutineExerciseCardProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const name = exercise ? exerciseName(exercise, language) : '…';
   // The note shows once asked for with "+ Nota", or straight away if set.
   const [notesOpen, setNotesOpen] = useState(item.notes !== '');
+
+  function openExercise() {
+    if (exercise) {
+      router.push({
+        pathname: '/plan/exercises/[id]',
+        params: { id: exercise.id, from: 'routine' },
+      });
+    }
+  }
 
   function showSheet(
     title: string,
@@ -96,6 +110,7 @@ export function RoutineExerciseCard({
         ? t('routines.editor.menu.superset')
         : t(`routines.editor.menu.addTo.${group}`);
     const actions = [
+      ...(exercise ? [{ label: t('exercises.detail.info'), run: openExercise }] : []),
       ...(onReorder ? [{ label: t('routines.reorder.open'), run: onReorder }] : []),
       ...(supersetOptions.length > 0 ? [{ label: supersetLabel, run: pickSupersetPartner }] : []),
       ...(group ? [{ label: t(`routines.editor.menu.leave.${group}`), run: onLeaveGroup }] : []),
@@ -111,10 +126,20 @@ export function RoutineExerciseCard({
   return (
     <Card>
       <View style={styles.titleRow}>
-        {exercise ? <ExercisePicture exercise={exercise} size={40} /> : null}
-        <Text variant="bodyStrong" style={styles.name}>
-          {name}
-        </Text>
+        <Pressable
+          role="button"
+          aria-label={t('exercises.detail.infoFor', { name })}
+          disabled={!exercise}
+          onPress={openExercise}
+          style={({ pressed }) => [styles.title, pressed && styles.pressed]}>
+          {exercise ? <ExercisePicture exercise={exercise} size={40} /> : null}
+          <Text variant="bodyStrong" style={styles.name}>
+            {name}
+          </Text>
+          {exercise ? (
+            <SymbolView name="info.circle" size={16} tintColor={colors.textMuted} />
+          ) : null}
+        </Pressable>
         <MenuButton label={t('exercises.menu.label', { name })} onPress={openMenu} />
       </View>
 
@@ -163,8 +188,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  name: {
+  // Takes the row up to the ⋯, so the whole title is one big target.
+  title: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: touch.min,
+  },
+  name: {
+    flexShrink: 1,
+  },
+  pressed: {
+    opacity: 0.75,
   },
   bottomRow: {
     flexDirection: 'row',

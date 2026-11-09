@@ -101,6 +101,28 @@ const active = () => useWorkoutStore.getState().active;
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<ActiveWorkoutView />', () => {
+  test('opens an exercise’s page over the workout, from its card and its menu', async () => {
+    const user = userEvent.setup();
+    const onClose = jest.fn();
+    await render(<ActiveWorkoutView onClose={onClose} />, { wrapper: createAppWrapper() });
+
+    await user.press(
+      screen.getByRole('button', { name: 'Mira la informació de Tracció al pit' }),
+    );
+
+    // The page, without what changes the exercise; the workout is still there.
+    expect(screen.getByRole('button', { name: 'Fet' })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: "Esborra l'exercici" })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: "Edita l'exercici" })).not.toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Fet' }));
+    expect(onClose).not.toHaveBeenCalled();
+    expect(active()).not.toBeNull();
+
+    sheetChoices.push("Informació de l'exercici");
+    await user.press(screen.getByRole('button', { name: 'Opcions de «Tracció al pit»' }));
+    expect(screen.getByRole('button', { name: 'Fet' })).toBeOnTheScreen();
+  });
+
   test('shows each exercise with its note and sets, the plan pre-filled in grey', async () => {
     await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
 

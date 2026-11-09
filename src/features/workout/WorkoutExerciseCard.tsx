@@ -1,6 +1,7 @@
+import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Button, Card, MenuButton, Text, TextField } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
@@ -9,7 +10,7 @@ import { AddNoteButton } from '@/features/routines/ExerciseNoteField';
 import { EXERCISE_NOTES_MAX_LENGTH } from '@/features/routines/routine';
 import type { TargetsUpdate } from '@/features/routines/TargetFields';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing } from '@/theme';
+import { spacing, touch, useTheme } from '@/theme';
 
 import { shownNumbers, type ActiveExercise } from './activeWorkout';
 import { formatPace, pace, workoutInputs } from './cardio';
@@ -24,6 +25,8 @@ type WorkoutExerciseCardProps = {
   nextSetId: string | null;
   onType: (setId: string, update: TargetsUpdate) => void;
   onToggle: (setId: string) => void;
+  // The exercise's page, from its picture and name.
+  onInfo: () => void;
   // The exercise's ⋯ menu, and a set's menu (tap its number).
   onMenu: () => void;
   onSetMenu: (setId: string) => void;
@@ -43,6 +46,7 @@ export function WorkoutExerciseCard({
   nextSetId,
   onType,
   onToggle,
+  onInfo,
   onMenu,
   onSetMenu,
   onAddSet,
@@ -50,6 +54,7 @@ export function WorkoutExerciseCard({
   onSaveNoteToRoutine,
 }: WorkoutExerciseCardProps) {
   const { t } = useTranslation();
+  const { colors } = useTheme();
   const language = useAppLanguage();
   const titleOf = useExerciseTitle();
   const name = titleOf(exercise);
@@ -77,10 +82,17 @@ export function WorkoutExerciseCard({
   return (
     <Card style={skipped && styles.skipped}>
       <View style={styles.titleRow}>
-        <ExercisePicture exercise={exercise.exercise} size={40} />
-        <Text variant="cardTitle" style={styles.name} accessibilityRole="header">
-          {name}
-        </Text>
+        <Pressable
+          role="button"
+          aria-label={t('exercises.detail.infoFor', { name })}
+          onPress={onInfo}
+          style={({ pressed }) => [styles.title, pressed && styles.pressed]}>
+          <ExercisePicture exercise={exercise.exercise} size={40} />
+          <Text variant="cardTitle" style={styles.name} accessibilityRole="header">
+            {name}
+          </Text>
+          <SymbolView name="info.circle" size={16} tintColor={colors.textMuted} />
+        </Pressable>
         {comparison ? (
           <VsLastTimeBadge comparison={comparison} />
         ) : skipped ? null : (
@@ -194,8 +206,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: spacing.md,
   },
-  name: {
+  // Takes the row up to the sets count, so the whole title is one big target.
+  title: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: touch.min,
+  },
+  name: {
+    flexShrink: 1,
+  },
+  pressed: {
+    opacity: 0.75,
   },
   header: {
     flexDirection: 'row',

@@ -6,7 +6,7 @@ import { ExerciseDetail } from '@/features/exercises/ExerciseDetail';
 
 export default function ExerciseDetailScreen() {
   const { t } = useTranslation();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, from } = useLocalSearchParams<{ id: string; from?: string }>();
 
   return (
     <Screen>
@@ -21,7 +21,8 @@ export default function ExerciseDetailScreen() {
       <ExerciseDetail
         exerciseId={id}
         onEdit={() => router.push({ pathname: '/plan/exercises/[id]/edit', params: { id } })}
-        onRemoved={() => router.back()}
+        // A routine being edited may have this exercise in it.
+        onRemoved={from === 'routine' ? undefined : () => router.back()}
       />
     </Screen>
   );

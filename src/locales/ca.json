@@ -100,7 +100,6 @@
     "detail": {
       "title": "Exercici",
       "notFound": "No s'ha trobat aquest exercici.",
-      "tracking": "Què registres",
       "primaryMuscles": "Músculs principals",
       "secondaryMuscles": "Músculs secundaris",
       "archive": "Arxiva l'exercici",
@@ -111,7 +110,6 @@
       "restPlus": "+15 s",
       "usingAppDefault": "Fa servir el de l'app ({{time}}).",
       "useAppDefault": "Usa el de l'app",
-      "saved": "Desat ✓",
       "saveError": "No s'ha pogut desar. Torna-ho a provar.",
       "restValue": "Descans per defecte: {{time}}",
       "settingsLoadError": "No s'han pogut carregar les teves notes.",
@@ -122,6 +120,10 @@
       "addVideo": "Afegeix un vídeo",
       "useSuggestedVideo": "Torna al vídeo recomanat",
       "technique": "Tècnica",
+      "info": "Informació de l'exercici",
+      "infoFor": "Mira la informació de {{name}}",
+      "yours": "El teu ajust",
+      "addNotes": "Afegeix",
       "delete": "Esborra l'exercici"
     },
     "picker": {

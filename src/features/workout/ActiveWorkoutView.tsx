@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Text, useActionSheet } from '@/components/ui';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
+import { ExerciseInfoSheet } from '@/features/exercises/ExerciseInfoSheet';
 import { ReorderExercisesSheet } from '@/features/routines/ReorderExercisesSheet';
 import { cancelScheduled, setWorkoutScreenOpen } from '@/lib/notifications';
 import { inset, spacing, touch, useTheme } from '@/theme';
@@ -114,6 +115,7 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
             exercise.sets.some((set) => set.id === setId && set.completedAt !== null),
           )
         }
+        onInfo={() => changes.openInfo(exercise)}
         onMenu={() => changes.openExerciseMenu(exercise)}
         onSetMenu={(setId) => changes.openSetMenu(exercise, setId)}
         onAddSet={() => changes.addSet(exercise)}
@@ -256,6 +258,7 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
         onAdd={changes.pickerDone}
         onDismissed={changes.onPickerDismissed}
       />
+      <ExerciseInfoSheet exercise={changes.info?.exercise ?? null} onClose={changes.closeInfo} />
       <ReorderExercisesSheet
         visible={changes.reordering}
         items={workout.exercises}

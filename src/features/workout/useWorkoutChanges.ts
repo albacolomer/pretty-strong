@@ -58,6 +58,8 @@ export function useWorkoutChanges(workout: ActiveWorkout, source: WorkoutSource)
   const language = useAppLanguage();
   const titleOf = useExerciseTitle();
   const showToast = useToast();
+  // The exercise whose page is open over the workout.
+  const [info, setInfo] = useState<ActiveExercise | null>(null);
   const queryClient = useQueryClient();
   const { data: library = [] } = useExercises();
   const { data: settings } = useExerciseSettings();
@@ -139,6 +141,7 @@ export function useWorkoutChanges(workout: ActiveWorkout, source: WorkoutSource)
   function openExerciseMenu(exercise: ActiveExercise) {
     const skipped = exercise.change === 'skipped';
     sheet(nameOf(exercise), [
+      { label: t('exercises.detail.info'), run: () => setInfo(exercise) },
       ...(!skipped && canSwap(exercise)
         ? [{ label: t('workout.swapExercise'), run: () => setPicker({ swapId: exercise.id }) }]
         : []),
@@ -308,6 +311,9 @@ export function useWorkoutChanges(workout: ActiveWorkout, source: WorkoutSource)
     },
     openExerciseMenu,
     openSetMenu,
+    info,
+    openInfo: setInfo,
+    closeInfo: () => setInfo(null),
     addSet: (exercise: ActiveExercise) =>
       update((current) => addSet(current, exercise.id, randomUUID())),
     setNotes: (exercise: ActiveExercise, notes: string) =>

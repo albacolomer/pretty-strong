@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Button, NumberInput, Text, TextField } from '@/components/ui';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
+import { ExerciseInfoSheet } from '@/features/exercises/ExerciseInfoSheet';
 import { ReorderExercisesSheet } from '@/features/routines/ReorderExercisesSheet';
 import { dateKey } from '@/features/schedule/dates';
 import { DayStepper } from '@/features/schedule/DayStepper';
@@ -103,7 +104,8 @@ export function WorkoutEditor({ initialDraft, initialDetails, original, onClose 
               toggleSet(current, exercise.id, setId, doneAt(draft.date, original?.endedAt)),
             )
           }
-          onMenu={() => changes.openExerciseMenu(exercise)}
+          onInfo={() => changes.openInfo(exercise)}
+              onMenu={() => changes.openExerciseMenu(exercise)}
           onSetMenu={(setId) => changes.openSetMenu(exercise, setId)}
           onAddSet={() => changes.addSet(exercise)}
           onNotesChange={(notes) => changes.setNotes(exercise, notes)}
@@ -151,6 +153,7 @@ export function WorkoutEditor({ initialDraft, initialDetails, original, onClose 
         onAdd={changes.pickerDone}
         onDismissed={changes.onPickerDismissed}
       />
+      <ExerciseInfoSheet exercise={changes.info?.exercise ?? null} onClose={changes.closeInfo} />
       <ReorderExercisesSheet
         visible={changes.reordering}
         items={draft.exercises}

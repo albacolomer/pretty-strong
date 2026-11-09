@@ -3,12 +3,13 @@ import '@/lib/i18n';
 import { render, screen, userEvent } from '@testing-library/react-native';
 import { Linking } from 'react-native';
 
+import { menus } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { fetchExerciseSettings, saveExerciseSettings } from './api';
 import type { Exercise } from './exercise';
-import { ExerciseVideo } from './ExerciseVideo';
+import { ExerciseTechnique } from './ExerciseTechnique';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('./api', () => ({ fetchExerciseSettings: jest.fn(), saveExerciseSettings: jest.fn() }));
@@ -39,7 +40,7 @@ function yourLink(videoUrl: string) {
 }
 
 async function renderVideo(exercise: Exercise) {
-  await render(<ExerciseVideo exercise={exercise} />, { wrapper: createAppWrapper() });
+  await render(<ExerciseTechnique exercise={exercise} />, { wrapper: createAppWrapper() });
 }
 
 beforeEach(() => {
@@ -52,7 +53,7 @@ beforeEach(() => {
   mockSave.mockReset().mockResolvedValue();
 });
 
-describe('<ExerciseVideo />', () => {
+describe('<ExerciseTechnique />', () => {
   test('opens the suggested video where it lives', async () => {
     const user = userEvent.setup();
     const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue();
@@ -101,7 +102,14 @@ describe('<ExerciseVideo />', () => {
     yourLink(YOURS);
     await renderVideo(hipThrust);
 
-    await user.press(await screen.findByRole('button', { name: 'Torna al vídeo recomanat' }));
+    const menu = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, onPick) =>
+        onPick(options.options.indexOf('Torna al vídeo recomanat')),
+      );
+
+    await user.press(await screen.findByRole('button', { name: 'Canvia el vídeo' }));
+    menu.mockRestore();
 
     expect(mockSave).toHaveBeenCalledWith('user-1', 'hip_thrust', { videoUrl: null });
     expect(

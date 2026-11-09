@@ -1,11 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, SegmentedControl, Text, TextField } from '@/components/ui';
+import {
+  Button,
+  SectionHeader,
+  SegmentedControl,
+  SettingsCard,
+  SettingsRow,
+  Sheet,
+  Text,
+  TextSheet,
+} from '@/components/ui';
 import { spacing, useTheme } from '@/theme';
 
-import type { ExerciseSettingsChange } from './api';
 import {
   adjustRest,
   APP_DEFAULT_REST_S,
@@ -18,53 +26,78 @@ import { NO_SETTINGS, useExerciseSettings, useSaveExerciseSettings } from './use
 
 const NOTES_MAX_LENGTH = 1000;
 
-type Field = 'notes' | 'rest';
+type OpenSheet = 'notes' | 'rest';
 
-// Your notes and default rest on an exercise (US-05). Saves automatically:
-// notes when you leave the field (or the screen), the rest on every change.
+// Your layer on an exercise (US-05): your notes and your default rest, each
+// a row that opens its sheet.
 export function ExerciseSettingsEditor({ exerciseId }: { exerciseId: string }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { data, isPending, isError } = useExerciseSettings();
   const save = useSaveExerciseSettings(exerciseId);
   const settings = data?.[exerciseId] ?? NO_SETTINGS;
-  // What's being typed, until it's saved; null when nothing is pending.
-  const [notesDraft, setNotesDraft] = useState<string | null>(null);
-  const [lastSaved, setLastSaved] = useState<Field | null>(null);
-
-  // If the screen closes while you're still typing, save what's there.
-  // Refs, because the clean-up below only runs once, at the very end.
-  const pendingNotes = useRef<string | null>(null);
-  const saveOnClose = useRef(save.mutate);
-  useEffect(() => {
-    saveOnClose.current = save.mutate;
-  });
-  useEffect(
-    () => () => {
-      if (pendingNotes.current !== null) saveOnClose.current({ notes: cleanNotes(pendingNotes.current) });
-    },
-    [],
-  );
-
-  function saveChange(field: Field, change: ExerciseSettingsChange) {
-    setLastSaved(null);
-    save.mutate(change, { onSuccess: () => setLastSaved(field) });
-  }
-
-  function saveNotes() {
-    if (notesDraft === null) return;
-    const notes = cleanNotes(notesDraft);
-    setNotesDraft(null);
-    pendingNotes.current = null;
-    if (notes !== settings.notes) saveChange('notes', { notes });
-  }
+  const [openSheet, setOpenSheet] = useState<OpenSheet | null>(null);
+  const close = () => setOpenSheet(null);
 
   // Don't show (or let anyone change) values until your saved ones are here:
   // +15 s must start from your saved rest, not the app default.
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('exercises.detail.settingsLoadError')}</Text>;
 
-  const rest = settings.defaultRestS;
+  return (
+    <View style={styles.section}>
+      <SectionHeader title={t('exercises.detail.yours')} />
+      <SettingsCard>
+        <SettingsRow
+          icon="note.text"
+          label={t('exercises.detail.notes')}
+          value={settings.notes?.split('\n')[0]}
+          action={settings.notes ? undefined : t('exercises.detail.addNotes')}
+          onPress={() => setOpenSheet('notes')}
+        />
+        <SettingsRow
+          icon="timer"
+          label={t('exercises.detail.defaultRest')}
+          value={formatRest(settings.defaultRestS ?? APP_DEFAULT_REST_S)}
+          onPress={() => setOpenSheet('rest')}
+        />
+      </SettingsCard>
+
+      <TextSheet
+        visible={openSheet === 'notes'}
+        title={t('exercises.detail.notes')}
+        label={t('exercises.detail.notes')}
+        placeholder={t('exercises.detail.notesPlaceholder')}
+        value={settings.notes ?? ''}
+        maxLength={NOTES_MAX_LENGTH}
+        onClose={close}
+        onDone={(text) => {
+          const notes = cleanNotes(text);
+          if (notes !== settings.notes) save.mutate({ notes });
+          close();
+        }}
+      />
+      <RestSheet
+        visible={openSheet === 'rest'}
+        rest={settings.defaultRestS}
+        onChange={(defaultRestS) => save.mutate({ defaultRestS })}
+        onClose={close}
+      />
+    </View>
+  );
+}
+
+type RestSheetProps = {
+  visible: boolean;
+  // Your default rest; null when you use the app's.
+  rest: number | null;
+  onChange: (seconds: number | null) => void;
+  onClose: () => void;
+};
+
+// Each change is saved straight away, so there's only Fet.
+function RestSheet({ visible, rest, onChange, onClose }: RestSheetProps) {
+  const { t } = useTranslation();
   const shownRest = formatRest(rest ?? APP_DEFAULT_REST_S);
   const presetOptions = REST_PRESETS_S.map((seconds) => ({
     value: String(seconds),
@@ -72,34 +105,18 @@ export function ExerciseSettingsEditor({ exerciseId }: { exerciseId: string }) {
   }));
 
   return (
-    <View style={styles.editor}>
-      <View style={styles.section}>
-        <TextField
-          label={t('exercises.detail.notes')}
-          placeholder={t('exercises.detail.notesPlaceholder')}
-          value={notesDraft ?? settings.notes ?? ''}
-          onChangeText={(text) => {
-            setNotesDraft(text);
-            pendingNotes.current = text;
-          }}
-          onBlur={saveNotes}
-          multiline
-          maxLength={NOTES_MAX_LENGTH}
-          style={styles.notes}
-        />
-        {lastSaved === 'notes' ? <SavedLabel /> : null}
-      </View>
-
-      <View style={styles.section}>
-        <Text variant="caption" color="textMuted">
-          {t('exercises.detail.defaultRest')}
-        </Text>
+    <Sheet
+      visible={visible}
+      title={t('exercises.detail.defaultRest')}
+      cancelLabel={t('common.done')}
+      onCancel={onClose}>
+      <View style={styles.rest}>
         <View style={styles.stepper}>
           <Button
             label={t('exercises.detail.restMinus')}
             variant="secondary"
             disabled={(rest ?? APP_DEFAULT_REST_S) <= 0}
-            onPress={() => saveChange('rest', { defaultRestS: adjustRest(rest, -REST_STEP_S) })}
+            onPress={() => onChange(adjustRest(rest, -REST_STEP_S))}
           />
           <Text
             variant="timer"
@@ -112,7 +129,7 @@ export function ExerciseSettingsEditor({ exerciseId }: { exerciseId: string }) {
             label={t('exercises.detail.restPlus')}
             variant="secondary"
             disabled={(rest ?? APP_DEFAULT_REST_S) >= REST_MAX_S}
-            onPress={() => saveChange('rest', { defaultRestS: adjustRest(rest, REST_STEP_S) })}
+            onPress={() => onChange(adjustRest(rest, REST_STEP_S))}
           />
         </View>
         <SegmentedControl
@@ -120,7 +137,7 @@ export function ExerciseSettingsEditor({ exerciseId }: { exerciseId: string }) {
           options={presetOptions}
           // Not one of the presets (e.g. 1:45, or none): nothing is selected.
           value={String(rest)}
-          onChange={(seconds) => saveChange('rest', { defaultRestS: Number(seconds) })}
+          onChange={(seconds) => onChange(Number(seconds))}
         />
         {rest === null ? (
           <Text variant="caption" color="textMuted">
@@ -130,12 +147,11 @@ export function ExerciseSettingsEditor({ exerciseId }: { exerciseId: string }) {
           <Button
             label={t('exercises.detail.useAppDefault')}
             variant="ghost"
-            onPress={() => saveChange('rest', { defaultRestS: null })}
+            onPress={() => onChange(null)}
           />
         )}
-        {lastSaved === 'rest' ? <SavedLabel /> : null}
       </View>
-    </View>
+    </Sheet>
   );
 }
 
@@ -145,27 +161,12 @@ function cleanNotes(text: string): string | null {
   return trimmed === '' ? null : trimmed;
 }
 
-function SavedLabel() {
-  const { t } = useTranslation();
-  return (
-    <Text variant="caption" color="textMuted">
-      {t('exercises.detail.saved')}
-    </Text>
-  );
-}
-
 const styles = StyleSheet.create({
-  editor: {
-    gap: spacing.xl,
-  },
   section: {
     gap: spacing.sm,
   },
-  notes: {
-    minHeight: 96,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.md,
-    textAlignVertical: 'top',
+  rest: {
+    gap: spacing.md,
   },
   stepper: {
     flexDirection: 'row',

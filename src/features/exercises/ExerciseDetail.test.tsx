@@ -95,10 +95,13 @@ describe('<ExerciseDetail />', () => {
     await screen.findByText('Descans per defecte');
 
     expect(screen.getByRole('header', { name: 'Hip thrust amb barra' })).toBeOnTheScreen();
-    expect(screen.getByText('Pes i repeticions · kg · reps')).toBeOnTheScreen();
-    expect(screen.getByText('Barra')).toBeOnTheScreen();
+    expect(screen.getByText('Barra · kg · reps')).toBeOnTheScreen();
     expect(screen.getByText('Glutis')).toBeOnTheScreen();
     expect(screen.getByText('Isquiotibials')).toBeOnTheScreen();
+    expect(
+      screen.getByLabelText('Músculs principals: Glutis. Músculs secundaris: Isquiotibials'),
+    ).toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Afegeix un vídeo' })).toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: "Arxiva l'exercici" })).not.toBeOnTheScreen();
     expect(screen.queryByRole('button', { name: "Edita l'exercici" })).not.toBeOnTheScreen();
   });
@@ -112,6 +115,7 @@ describe('<ExerciseDetail />', () => {
     await screen.findByText('Descans per defecte');
 
     expect(screen.getByText('10 repeticions vol dir 10 per costat.')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Afegeix un vídeo' })).not.toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: "Arxiva l'exercici" }));
 
     expect(onRemoved).toHaveBeenCalled();
@@ -194,6 +198,17 @@ describe('<ExerciseDetail />', () => {
     expect(screen.getByText('Tècnica')).toBeOnTheScreen();
     expect(screen.getByText('Mentó avall')).toBeOnTheScreen();
     await screen.findByText('Descans per defecte');
+  });
+
+  test('from a routine, your own exercise can be edited but not removed', async () => {
+    await render(<ExerciseDetail exerciseId="custom-1" onEdit={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+    await screen.findByText('Descans per defecte');
+
+    expect(screen.getByRole('button', { name: "Edita l'exercici" })).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: "Arxiva l'exercici" })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: "Esborra l'exercici" })).not.toBeOnTheScreen();
   });
 
   test('says so when the exercise is not in the library', async () => {
