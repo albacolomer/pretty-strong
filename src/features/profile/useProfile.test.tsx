@@ -25,6 +25,9 @@ const profile: Profile = {
   avatar_path: null,
   hide_progress_photos: false,
   daily_step_goal: 10000,
+  weight_unit: 'kg',
+  length_unit: 'cm',
+  distance_unit: 'km',
 };
 
 function signedInAs(userId: string | null) {

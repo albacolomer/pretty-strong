@@ -9,11 +9,19 @@ import { fetchHistoryEntries } from '@/features/history/api';
 import { fetchRoutines } from '@/features/routines/api';
 import { setAvatar } from '@/features/body/photosApi';
 import { upperBody } from '@/features/routines/testData';
+import { METRIC_UNITS } from '@/lib/units';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
 import { fetchProfile, updateProfileDetails, type Profile } from './api';
 import { EditProfile } from './EditProfile';
 import { ProfileHeader } from './ProfileHeader';
+import { useSyncProfileUnits, useUnitsStore } from './useUnits';
+
+// The tabs layout's sync, which keeps your saved units on the phone.
+function SyncUnits() {
+  useSyncProfileUnits();
+  return null;
+}
 
 jest.mock('@/features/schedule/sportsApi', () => ({ fetchWeeklySports: jest.fn(() => Promise.resolve([])) }));
 jest.mock('@/features/auth/AuthProvider', () => ({
@@ -67,6 +75,9 @@ const profile: Profile = {
   avatar_path: null,
   hide_progress_photos: false,
   daily_step_goal: 10000,
+  weight_unit: 'kg',
+  length_unit: 'cm',
+  distance_unit: 'km',
 };
 
 const workout = (date: string): HistoryEntry => ({
@@ -210,6 +221,9 @@ describe('Profile', () => {
       birth_date: '1996-11-20',
       weekly_goal: 5,
       daily_step_goal: 11000,
+      weight_unit: 'kg',
+      length_unit: 'cm',
+      distance_unit: 'km',
     });
     actionSheet.mockRestore();
   });
@@ -248,6 +262,47 @@ describe('Profile', () => {
       ),
     );
     actionSheet.mockRestore();
+  });
+
+  test('units: pounds, inches and miles, saved with Desa and kept on the phone', async () => {
+    const user = userEvent.setup();
+    const choices = ['Lliures (lb)', 'Polzades (in)', 'Milles (mi)'];
+    const actionSheet = jest
+      .spyOn(menus, 'show')
+      .mockImplementation((options, callback) =>
+        callback(options.options.indexOf(choices.shift() ?? '')),
+      );
+    jest.mocked(updateProfileDetails).mockImplementation((_id, details) =>
+      Promise.resolve({ ...profile, ...details }),
+    );
+    await render(
+      <>
+        <SyncUnits />
+        <EditProfile onClose={jest.fn()} />
+      </>,
+      { wrapper: createAppWrapper() },
+    );
+
+    await user.press(await screen.findByRole('button', { name: 'Pes, kg' }));
+    await user.press(screen.getByRole('button', { name: 'Mides, cm' }));
+    await user.press(screen.getByRole('button', { name: 'Distància, km' }));
+    expect(screen.getByRole('button', { name: 'Pes, lb' })).toBeOnTheScreen();
+    // Nothing changes on the phone until it's saved.
+    expect(useUnitsStore.getState().units).toEqual(METRIC_UNITS);
+
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    await waitFor(() =>
+      expect(updateProfileDetails).toHaveBeenCalledWith(
+        'user-1',
+        expect.objectContaining({ weight_unit: 'lb', length_unit: 'in', distance_unit: 'mi' }),
+      ),
+    );
+    await waitFor(() =>
+      expect(useUnitsStore.getState().units).toEqual({ weight: 'lb', length: 'in', distance: 'mi' }),
+    );
+    actionSheet.mockRestore();
+    useUnitsStore.setState({ units: METRIC_UNITS });
   });
 
   test('Cancel·la in a sheet keeps what was there', async () => {

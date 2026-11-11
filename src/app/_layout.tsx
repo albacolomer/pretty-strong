@@ -42,12 +42,14 @@ export default function RootLayout() {
 
 // Signed in: only the tabs exist. Signed out: only the auth screens exist.
 // When the session changes, the router moves to the group that is allowed.
+// redirectTo names the screen: left to itself the router would go to
+// "/(auth)", which has no index screen, and show "Unmatched route".
 function RootNavigator() {
   const { session } = useAuth();
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!session}>
+      <Stack.Protected guard={!!session} redirectTo="/sign-in">
         <Stack.Screen name="(tabs)" />
         {/* Over the tabs, so nothing outside it is tapped by accident mid-set. */}
         <Stack.Screen

@@ -213,12 +213,15 @@ export type Database = {
           created_at: string
           daily_step_goal: number
           display_name: string | null
+          distance_unit: string
           gender: string | null
           hide_progress_photos: boolean
           id: string
           language: string
+          length_unit: string
           username: string
           weekly_goal: number | null
+          weight_unit: string
         }
         Insert: {
           avatar_path?: string | null
@@ -228,12 +231,15 @@ export type Database = {
           created_at?: string
           daily_step_goal?: number
           display_name?: string | null
+          distance_unit?: string
           gender?: string | null
           hide_progress_photos?: boolean
           id: string
           language?: string
+          length_unit?: string
           username: string
           weekly_goal?: number | null
+          weight_unit?: string
         }
         Update: {
           avatar_path?: string | null
@@ -243,12 +249,15 @@ export type Database = {
           created_at?: string
           daily_step_goal?: number
           display_name?: string | null
+          distance_unit?: string
           gender?: string | null
           hide_progress_photos?: boolean
           id?: string
           language?: string
+          length_unit?: string
           username?: string
           weekly_goal?: number | null
+          weight_unit?: string
         }
         Relationships: []
       }

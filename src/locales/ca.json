@@ -283,12 +283,36 @@
     "stepGoalPlus": "500 passos més",
     "save": "Desa",
     "saved": "Perfil desat ✓",
-    "saveError": "No s'ha pogut desar el perfil. Torna-ho a provar."
+    "saveError": "No s'ha pogut desar el perfil. Torna-ho a provar.",
+    "units": "Unitats",
+    "unitKinds": {
+      "weight": "Pes",
+      "length": "Mides",
+      "distance": "Distància"
+    }
   },
   "languages": {
     "ca": "Català",
     "es": "Español",
     "en": "English"
+  },
+  "units": {
+    "short": {
+      "kg": "kg",
+      "lb": "lb",
+      "cm": "cm",
+      "in": "in",
+      "km": "km",
+      "mi": "mi"
+    },
+    "names": {
+      "kg": "Quilograms (kg)",
+      "lb": "Lliures (lb)",
+      "cm": "Centímetres (cm)",
+      "in": "Polzades (in)",
+      "km": "Quilòmetres (km)",
+      "mi": "Milles (mi)"
+    }
   },
   "weekdays": {
     "short": {

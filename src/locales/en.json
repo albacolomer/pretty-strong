@@ -283,12 +283,36 @@
     "stepGoalPlus": "500 steps more",
     "save": "Save",
     "saved": "Profile saved ✓",
-    "saveError": "Couldn't save your profile. Try again."
+    "saveError": "Couldn't save your profile. Try again.",
+    "units": "Units",
+    "unitKinds": {
+      "weight": "Weight",
+      "length": "Measurements",
+      "distance": "Distance"
+    }
   },
   "languages": {
     "ca": "Català",
     "es": "Español",
     "en": "English"
+  },
+  "units": {
+    "short": {
+      "kg": "kg",
+      "lb": "lb",
+      "cm": "cm",
+      "in": "in",
+      "km": "km",
+      "mi": "mi"
+    },
+    "names": {
+      "kg": "Kilograms (kg)",
+      "lb": "Pounds (lb)",
+      "cm": "Centimetres (cm)",
+      "in": "Inches (in)",
+      "km": "Kilometres (km)",
+      "mi": "Miles (mi)"
+    }
   },
   "weekdays": {
     "short": {

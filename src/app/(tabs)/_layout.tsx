@@ -2,6 +2,7 @@ import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { useTranslation } from 'react-i18next';
 
 import { useSyncProfileLanguage } from '@/features/profile/useSyncProfileLanguage';
+import { useSyncProfileUnits } from '@/features/profile/useUnits';
 import { useLockPhotosInBackground } from '@/features/body/usePhotoLock';
 import { useSaveDailySteps } from '@/features/steps/useSaveDailySteps';
 import { useSaveFinishedWorkouts } from '@/features/workout/useSaveFinishedWorkouts';
@@ -11,6 +12,7 @@ export default function TabsLayout() {
   const { t } = useTranslation();
   const { colors } = useTheme();
   useSyncProfileLanguage();
+  useSyncProfileUnits();
   // Finished workouts reach the database whatever tab is open.
   useSaveFinishedWorkouts();
   // The phone forgets steps after a week; the calendar keeps them.
