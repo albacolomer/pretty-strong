@@ -110,7 +110,7 @@ describe('toFinishPayload', () => {
     workout = updateTyped(workout, row.id, row.sets[1].id, (typed) => ({ ...typed, reps: 12, weightKg: 30 }));
     workout = toggleSet(workout, row.id, row.sets[1].id, '2026-10-20T17:10:00.000Z');
 
-    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', energy: null, notes: null });
+    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', feeling: null, notes: null });
 
     expect(payload).toMatchObject({
       id: workout.id,
@@ -133,15 +133,15 @@ describe('toFinishPayload', () => {
     expect(payload.exercises[1].sets[0]).toMatchObject({ weight_kg: 30, reps: 12 });
   });
 
-  test('sends the energy and the note from the summary; a blank note is none', () => {
+  test('sends how it felt and the note from the summary; a blank note is none', () => {
     const workout = { ...start(), endedAt: '2026-10-20T18:00:00.000Z' };
 
-    expect(toFinishPayload({ ...workout, energy: 4, notes: ' Molt bé ' })).toMatchObject({
-      energy: 4,
+    expect(toFinishPayload({ ...workout, feeling: 4, notes: ' Molt bé ' })).toMatchObject({
+      feeling: 4,
       notes: 'Molt bé',
     });
-    expect(toFinishPayload({ ...workout, energy: null, notes: '  ' })).toMatchObject({
-      energy: null,
+    expect(toFinishPayload({ ...workout, feeling: null, notes: '  ' })).toMatchObject({
+      feeling: null,
       notes: null,
     });
   });
@@ -306,7 +306,7 @@ describe('changes during the workout (this workout only)', () => {
     workout = setRpe(workout, lat.id, lat.sets[1].id, 8.5);
     workout = toggleSet(workout, lat.id, lat.sets[1].id, '2026-10-20T17:05:00.000Z');
 
-    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', energy: null, notes: null });
+    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', feeling: null, notes: null });
     expect(payload.exercises[0].sets[0]).toMatchObject({ set_type: 'drop', rpe: 8.5 });
   });
 
@@ -333,7 +333,7 @@ describe('changes during the workout (this workout only)', () => {
 
     expect(countSets(workout)).toEqual({ done: 0, total: 8 });
     expect(workoutOrder(workout).some((item) => item.exerciseId === row.id)).toBe(false);
-    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', energy: null, notes: null });
+    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', feeling: null, notes: null });
     expect(payload.exercises).toEqual([
       expect.objectContaining({ exercise_id: 'exercise-2', change: 'skipped', change_reason: 'machine_busy', sets: [] }),
     ]);
@@ -371,7 +371,7 @@ describe('changes during the workout (this workout only)', () => {
     workout = toggleSet(workout, lat.id, lat.sets[0].id, '2026-10-20T17:05:00.000Z');
 
     expect(workout.exercises[0].routineNote).toBe('Agafada ampla');
-    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', energy: null, notes: null });
+    const payload = toFinishPayload({ ...workout, endedAt: '2026-10-20T18:00:00.000Z', feeling: null, notes: null });
     expect(payload.exercises[0].notes).toBe('Agafada neutra avui');
   });
 
@@ -390,9 +390,17 @@ describe('changes during the workout (this workout only)', () => {
     expect(upgraded.exercises[0].sets[0]).toMatchObject({ setType: 'normal', rpe: null });
   });
 
-  test('a finished workout saved before the summary gets no energy and no note', () => {
+  test('a finished workout saved before the summary gets no feeling and no note', () => {
     const old = { ...start(), endedAt: '2026-10-20T18:00:00.000Z' } as FinishedWorkout;
 
-    expect(upgradeFinished(old)).toMatchObject({ energy: null, notes: null });
+    expect(upgradeFinished(old)).toMatchObject({ feeling: null, notes: null });
+  });
+
+  test('one waiting since before "Com t\'has sentit?" has its energy doubled', () => {
+    const old = { ...start(), endedAt: '2026-10-20T18:00:00.000Z', energy: 4, notes: null };
+
+    const upgraded = upgradeFinished(old as unknown as FinishedWorkout);
+    expect(upgraded).toMatchObject({ feeling: 8 });
+    expect(upgraded).not.toHaveProperty('energy');
   });
 });

@@ -18,7 +18,7 @@ const past: PastWorkout = {
   startedAt: '2026-10-20T17:00:00.000Z',
   endedAt: '2026-10-20T18:00:00.000Z',
   durationS: null,
-  energy: 3,
+  feeling: 3,
   notes: null,
   plannedSportId: null,
   sport: null,
@@ -54,7 +54,7 @@ describe('editing a past workout (US-23)', () => {
     expect(toPastWorkout(draftFromPast(past), detailsFromPast(past), past)).toEqual(past);
   });
 
-  test('changed numbers, an extra set, an unticked one, energy and a note', () => {
+  test('changed numbers, an extra set, an unticked one, how it felt and a note', () => {
     let draft = draftFromPast(past);
     const [lat] = draft.exercises;
     draft = updateTyped(draft, lat.id, 'set-1', () => lift(42.5, 10));
@@ -62,14 +62,14 @@ describe('editing a past workout (US-23)', () => {
     draft = addSet(draft, lat.id, 'set-3');
     draft = toggleSet(draft, lat.id, 'set-3', '2026-10-20T18:00:00.000Z');
 
-    const saved = toPastWorkout(draft, { ...detailsFromPast(past), energy: 5, notes: ' Bé ' }, past);
+    const saved = toPastWorkout(draft, { ...detailsFromPast(past), feeling: 5, notes: ' Bé ' }, past);
 
     expect(saved.exercises[0].sets.map((set) => [set.id, set.numbers.weightKg, set.numbers.reps])).toEqual([
       ['set-1', 42.5, 10],
       // The new set starts from the one before it, as in a workout.
       ['set-3', 40, 9],
     ]);
-    expect(saved).toMatchObject({ energy: 5, notes: 'Bé' });
+    expect(saved).toMatchObject({ feeling: 5, notes: 'Bé' });
   });
 
   test('a new date moves its times; a new duration moves its end', () => {
@@ -115,7 +115,7 @@ describe('logging a workout afterwards (US-24)', () => {
 
     const saved = toPastWorkout(
       draft,
-      { date: '2026-10-15', durationS: 3600, energy: null, notes: '' },
+      { date: '2026-10-15', durationS: 3600, feeling: null, notes: '' },
       null,
     );
 
@@ -138,6 +138,6 @@ describe('logging a workout afterwards (US-24)', () => {
   test('without a routine it starts empty', () => {
     const draft = draftForDay(null, '2026-10-15', newId, () => 90);
     expect(draft).toMatchObject({ routineId: null, routineName: '', exercises: [] });
-    expect(toPastWorkout(draft, { date: '2026-10-15', durationS: null, energy: null, notes: '' }, null).routineName).toBeNull();
+    expect(toPastWorkout(draft, { date: '2026-10-15', durationS: null, feeling: null, notes: '' }, null).routineName).toBeNull();
   });
 });

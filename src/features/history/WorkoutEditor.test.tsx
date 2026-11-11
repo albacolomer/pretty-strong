@@ -1,6 +1,6 @@
 import '@/lib/i18n';
 
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 
 import { fetchRoutines } from '@/features/routines/api';
 import { NO_TARGETS, type Routine } from '@/features/routines/routine';
@@ -50,7 +50,7 @@ const past: PastWorkout = {
   startedAt: '2026-10-20T17:00:00.000Z',
   endedAt: '2026-10-20T18:00:00.000Z',
   durationS: null,
-  energy: null,
+  feeling: null,
   notes: null,
   plannedSportId: null,
   sport: null,
@@ -100,12 +100,15 @@ describe('editing a past workout (US-23)', () => {
 
     await user.clear(kg);
     await user.type(kg, '42,5');
-    await user.press(screen.getByRole('radio', { name: '4 de 5' }));
+    // "Com t'has sentit?" from nothing: one step up starts at the middle.
+    await fireEvent(screen.getByRole('adjustable', { name: "Com t'has sentit?" }), 'accessibilityAction', {
+      nativeEvent: { actionName: 'increment' },
+    });
     await user.press(screen.getByRole('button', { name: 'Desa' }));
 
     await waitFor(() => expect(onClose).toHaveBeenCalled());
     const saved = jest.mocked(saveWorkout).mock.lastCall?.[0];
-    expect(saved).toMatchObject({ id: 'session-1', date: '2026-10-19', energy: 4, logMode: 'live' });
+    expect(saved).toMatchObject({ id: 'session-1', date: '2026-10-19', feeling: 5, logMode: 'live' });
     expect(saved?.exercises[0].sets[0].numbers).toMatchObject({ weightKg: 42.5, reps: 10 });
   });
 

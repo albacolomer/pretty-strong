@@ -980,7 +980,7 @@ describe('<Today />', () => {
       defaultRestS: () => 90,
     });
     useWorkoutStore.setState({
-      pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z', energy: null, notes: null }],
+      pending: [{ ...workout, endedAt: '2026-10-20T08:00:00.000Z', feeling: null, notes: null }],
     });
     await render(<Today />, { wrapper: createAppWrapper() });
 

@@ -113,7 +113,7 @@ const workout: PastWorkout = {
   startedAt: '2026-10-20T17:00:00.000Z',
   endedAt: '2026-10-20T18:00:00.000Z',
   durationS: null,
-  energy: 4,
+  feeling: 4,
   notes: 'Molt bé',
   plannedSportId: null,
   sport: null,
@@ -487,7 +487,7 @@ describe('History', () => {
             defaultRestS: () => 90,
           }),
           endedAt: '2026-10-21T17:45:00.000Z',
-          energy: null,
+          feeling: null,
           notes: null,
         },
       ],
@@ -498,7 +498,7 @@ describe('History', () => {
     ).toBeOnTheScreen();
   });
 
-  test('a workout: totals, energy, note and its sets', async () => {
+  test('a workout: totals, how it felt, note and its sets', async () => {
     jest.mocked(fetchPastWorkout).mockResolvedValue(workout);
     await render(<PastWorkoutView id="session-1" onEdit={jest.fn()} onDeleted={jest.fn()} />, {
       wrapper: createAppWrapper(),
@@ -507,7 +507,7 @@ describe('History', () => {
     expect(await screen.findByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
     expect(screen.getByText('Dimarts, 20 d’octubre')).toBeOnTheScreen();
     expect(screen.getByText('1 h · 1 exercici · 1 sèrie · 400 kg')).toBeOnTheScreen();
-    expect(screen.getByText('Energia: 4 de 5')).toBeOnTheScreen();
+    expect(screen.getByText("Com t'has sentit: 4/10 · Regular")).toBeOnTheScreen();
     expect(screen.getByText('Molt bé')).toBeOnTheScreen();
     expect(screen.getByText('40 kg × 10')).toBeOnTheScreen();
     expect(screen.getByText('@8')).toBeOnTheScreen();

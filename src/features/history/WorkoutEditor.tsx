@@ -15,7 +15,7 @@ import {
   updateTyped,
   type ActiveWorkout,
 } from '@/features/workout/activeWorkout';
-import { EnergyPicker } from '@/features/workout/EnergyPicker';
+import { FeelingSlider } from '@/features/workout/FeelingSlider';
 import { readMinutes, SESSION_NOTES_MAX_LENGTH } from '@/features/workout/session';
 import { useLastTime } from '@/features/workout/useLastTime';
 import { useWorkoutChanges } from '@/features/workout/useWorkoutChanges';
@@ -36,7 +36,7 @@ type WorkoutEditorProps = {
 };
 
 // Edits a past workout (US-23) or logs one afterwards (US-24): the day, how
-// long, energy and a note, then the same exercise cards as a live workout,
+// long, how it felt and a note, then the same exercise cards as a live workout,
 // with no rest timer. Ticked sets are the ones saved. Nothing changes until
 // "Desa".
 export function WorkoutEditor({ initialDraft, initialDetails, original, onClose }: WorkoutEditorProps) {
@@ -120,7 +120,7 @@ export function WorkoutEditor({ initialDraft, initialDetails, original, onClose 
         onPress={changes.openAddPicker}
       />
 
-      <EnergyPicker value={details.energy} onChange={(energy) => changeDetails({ energy })} />
+      <FeelingSlider value={details.feeling} onChange={(feeling) => changeDetails({ feeling })} />
       <TextField
         label={t('workout.summary.notes')}
         placeholder={t('workout.summary.notesPlaceholder')}

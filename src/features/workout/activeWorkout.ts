@@ -4,7 +4,12 @@ import { NO_TARGETS, type ExerciseTargets, type Routine } from '@/features/routi
 import { runBlockKind, type RunBlockKind } from '@/features/routines/runBlocks';
 
 import type { NextSet, RestTimer } from './restTimer';
-import type { ChangeReason, Energy, ExerciseChangeReason } from './session';
+import {
+  feelingFromEnergy,
+  type ChangeReason,
+  type ExerciseChangeReason,
+  type Feeling,
+} from './session';
 
 // The workout being done right now (US-13, US-15, US-22). It lives on the
 // phone (workoutStore) until it's finished, then goes to the database in
@@ -88,7 +93,7 @@ export type ActiveWorkout = {
 };
 
 // What the finish summary adds (US-21); both optional.
-export type WrapUp = { energy: Energy | null; notes: string | null };
+export type WrapUp = { feeling: Feeling | null; notes: string | null };
 
 // Finished, waiting to be saved to the database.
 export type FinishedWorkout = ActiveWorkout & WrapUp & { endedAt: string };
@@ -562,7 +567,7 @@ export function toFinishPayload(workout: FinishedWorkout) {
     change_reason: workout.changeReason,
     started_at: workout.startedAt,
     ended_at: workout.endedAt,
-    energy: workout.energy,
+    feeling: workout.feeling,
     notes: workout.notes?.trim() || null,
     exercises: workout.exercises
       .map((exercise) => ({
@@ -633,6 +638,14 @@ export function upgradeWorkout<T extends ActiveWorkout>(saved: T): T {
 }
 
 // The same for a finished workout waiting to be saved.
-export function upgradeFinished(saved: FinishedWorkout): FinishedWorkout {
-  return { ...upgradeWorkout(saved), energy: saved.energy ?? null, notes: saved.notes ?? null };
+// One waiting since before "Com t'has sentit?" has its energy doubled.
+export function upgradeFinished(
+  saved: FinishedWorkout & { energy?: number | null },
+): FinishedWorkout {
+  const { energy, ...rest } = saved;
+  return {
+    ...upgradeWorkout(rest),
+    feeling: saved.feeling ?? (energy ? feelingFromEnergy(energy) : null),
+    notes: saved.notes ?? null,
+  };
 }

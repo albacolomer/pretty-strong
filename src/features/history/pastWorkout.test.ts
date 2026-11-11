@@ -46,7 +46,7 @@ const workout: PastWorkout = {
   startedAt: '2026-10-20T17:00:00.000Z',
   endedAt: '2026-10-20T18:05:00.000Z',
   durationS: null,
-  energy: 4,
+  feeling: 4,
   notes: 'Molt bé',
   plannedSportId: null,
   sport: null,
@@ -108,7 +108,7 @@ describe('toSavePayload', () => {
       id: 'session-1',
       log_mode: 'live',
       duration_s: null,
-      energy: 4,
+      feeling: 4,
       notes: 'Molt bé',
     });
     expect(payload.exercises[0]).toMatchObject({ id: 'se-lat', change: 'swapped', swapped_from_id: 'pulldown' });

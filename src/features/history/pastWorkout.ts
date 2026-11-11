@@ -5,7 +5,7 @@ import { formatInput } from '@/features/routines/targets';
 import type { Sport } from '@/features/schedule/sports';
 import type { SetNumbers, SetType } from '@/features/workout/activeWorkout';
 import { formatPace, pace } from '@/features/workout/cardio';
-import type { ChangeReason, Energy, ExerciseChangeReason } from '@/features/workout/session';
+import type { ChangeReason, ExerciseChangeReason, Feeling } from '@/features/workout/session';
 import { liveDuration } from '@/features/workout/session';
 import { formatElapsed } from '@/features/workout/useElapsed';
 import type { Language } from '@/lib/i18n';
@@ -51,7 +51,7 @@ export type PastWorkout = {
   startedAt: string | null;
   endedAt: string | null;
   durationS: number | null;
-  energy: Energy | null;
+  feeling: Feeling | null;
   notes: string | null;
   // A sport's session (see HistoryEntry).
   plannedSportId: string | null;
@@ -161,7 +161,7 @@ export function toSavePayload(workout: PastWorkout) {
     started_at: workout.startedAt,
     ended_at: workout.endedAt,
     duration_s: workout.durationS,
-    energy: workout.energy,
+    feeling: workout.feeling,
     notes: workout.notes,
     planned_sport_id: workout.plannedSportId,
     sport: workout.sport,

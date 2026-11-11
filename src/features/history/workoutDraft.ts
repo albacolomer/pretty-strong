@@ -6,7 +6,7 @@ import {
   workoutFromRoutine,
   type ActiveWorkout,
 } from '@/features/workout/activeWorkout';
-import type { Energy } from '@/features/workout/session';
+import type { Feeling } from '@/features/workout/session';
 
 import { workoutDuration, type PastExercise, type PastWorkout } from './pastWorkout';
 
@@ -19,7 +19,7 @@ export type DraftDetails = {
   date: string;
   // Null: not given (a quick log may have none).
   durationS: number | null;
-  energy: Energy | null;
+  feeling: Feeling | null;
   notes: string;
 };
 
@@ -69,7 +69,7 @@ export function detailsFromPast(past: PastWorkout): DraftDetails {
   return {
     date: past.date,
     durationS: workoutDuration(past),
-    energy: past.energy,
+    feeling: past.feeling,
     notes: past.notes ?? '',
   };
 }
@@ -179,7 +179,7 @@ export function toPastWorkout(
     startedAt,
     endedAt,
     durationS: live ? null : details.durationS,
-    energy: details.energy,
+    feeling: details.feeling,
     notes: details.notes.trim() === '' ? null : details.notes.trim(),
     // A sport's or an event's session stays one.
     plannedSportId: original?.plannedSportId ?? null,

@@ -3,15 +3,24 @@ import { useTranslation } from 'react-i18next';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, GradientText, Text, TextField } from '@/components/ui';
+import {
+  Button,
+  Card,
+  GradientText,
+  ScreenTitle,
+  SectionHeader,
+  Text,
+  TextField,
+} from '@/components/ui';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';
+import { formatDayTitle, fromDateKey } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { inset, spacing, useTheme } from '@/theme';
 
 import type { ActiveWorkout, WrapUp } from './activeWorkout';
-import { EnergyPicker } from './EnergyPicker';
-import { SESSION_NOTES_MAX_LENGTH, type Energy } from './session';
+import { FeelingSlider } from './FeelingSlider';
+import { SESSION_NOTES_MAX_LENGTH, type Feeling } from './session';
 import { VsLastTimeBadge } from './VsLastTimeBadge';
 import { useExerciseTitle } from './useExerciseTitle';
 import { summarize } from './workoutSummary';
@@ -24,39 +33,48 @@ type WorkoutSummaryViewProps = {
   onSave: (wrapUp: WrapUp) => void;
 };
 
-// After "Acaba l'entrenament" (US-21, spec: WorkoutSummary): how it went
-// and what beat last time, then energy and a note, both optional. Nothing
-// is saved until "Desa"; "Torna" goes back to the workout.
+type Stat = { label: string; value: string; unit?: string };
+
+// After "Acaba l'entrenament" (US-21, spec: WorkoutSummary), laid out like
+// Avui: the day and "BONA FEINA!", the routine, its numbers two by two in
+// one card (as on "Tot fet"), what beat last time, "Com t'has sentit?" on a
+// line from 0 to 10, and a note; those two optional. Nothing is saved
+// until "Desa"; "Torna" goes back to the workout.
 export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: WorkoutSummaryViewProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const language = useAppLanguage();
   const titleOf = useExerciseTitle();
-  const [energy, setEnergy] = useState<Energy | null>(null);
+  const [feeling, setFeeling] = useState<Feeling | null>(null);
   const [notes, setNotes] = useState('');
   const summary = summarize(workout, endedAt);
   const kg = new Intl.NumberFormat(language, { maximumFractionDigits: 1 });
   const km = new Intl.NumberFormat(language, { maximumFractionDigits: 2 });
 
-  const stats = [
+  const stats: Stat[] = [
     { label: t('workout.summary.duration'), value: formatDuration(summary.durationS) },
-    { label: t('workout.summary.exercises'), value: String(summary.exercises) },
-    { label: t('workout.summary.sets'), value: String(summary.sets) },
     // Only when something was lifted (not for a run, say).
     ...(summary.volumeKg > 0
-      ? [{ label: t('workout.summary.volume'), value: `${kg.format(summary.volumeKg)} kg` }]
+      ? [{ label: t('workout.summary.volume'), value: kg.format(summary.volumeKg), unit: 'kg' }]
       : []),
     // Only after a run or a cardio machine with a distance.
     ...(summary.distanceM > 0
       ? [
           {
             label: t('workout.summary.distance'),
-            value: `${km.format(summary.distanceM / 1000)} km`,
+            value: km.format(summary.distanceM / 1000),
+            unit: 'km',
           },
         ]
       : []),
+    { label: t('workout.summary.sets'), value: String(summary.sets) },
+    { label: t('workout.summary.exercises'), value: String(summary.exercises) },
   ];
+  // Two to a row.
+  const rows = stats.flatMap((stat, index) =>
+    index % 2 === 0 ? [stats.slice(index, index + 2)] : [],
+  );
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background }]}>
@@ -65,43 +83,48 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="interactive"
         automaticallyAdjustKeyboardInsets>
-        <View>
-          <GradientText
-            variant="title"
-            accessibilityRole="header"
-            containerStyle={styles.fit}>
-            {t('workout.summary.title')}
-          </GradientText>
-          <Text color="textMuted">{workout.routineName}</Text>
+        <View style={styles.header}>
+          <ScreenTitle
+            eyebrow={formatDayTitle(fromDateKey(workout.date), language)}
+            title={t('workout.summary.title')}
+          />
+          {workout.routineName ? (
+            <Text variant="cardTitle" color="textSecondary">
+              {workout.routineName}
+            </Text>
+          ) : null}
         </View>
 
-        <View style={styles.stats}>
-          {stats.map((stat) => (
-            <Card
-              key={stat.label}
-              accessible
-              aria-label={t('workout.summary.stat', stat)}
-              style={styles.stat}>
-              <GradientText variant="cardTitle" containerStyle={styles.fit}>
-                {stat.value}
-              </GradientText>
-              <Text variant="caption" color="textMuted">
-                {stat.label}
-              </Text>
-            </Card>
+        <Card style={styles.grid}>
+          {rows.map((row, index) => (
+            <View
+              key={row[0].label}
+              style={[
+                styles.gridRow,
+                index > 0 && { borderTopWidth: 1, borderTopColor: colors.separator },
+              ]}>
+              {row.map((stat, column) => (
+                <StatCell key={stat.label} stat={stat} divider={column > 0} />
+              ))}
+              {/* An odd one out keeps its half of the row. */}
+              {row.length === 1 ? <View style={styles.stat} /> : null}
+            </View>
           ))}
-        </View>
+        </Card>
 
         {summary.highlights.length > 0 ? (
           <View style={styles.section}>
-            <Text variant="label" color="textMuted" accessibilityRole="header">
-              {t('workout.summary.highlights')}
-            </Text>
-            <Card style={styles.highlights}>
-              {summary.highlights.map(({ exercise, comparison }) => (
-                <View key={exercise.id} style={styles.highlight}>
-                  <ExercisePicture exercise={exercise.exercise} size={32} />
-                  <Text style={styles.highlightName} numberOfLines={2}>
+            <SectionHeader title={t('workout.summary.highlights')} />
+            <Card style={styles.list}>
+              {summary.highlights.map(({ exercise, comparison }, index) => (
+                <View
+                  key={exercise.id}
+                  style={[
+                    styles.highlight,
+                    index > 0 && { borderTopWidth: 1, borderTopColor: colors.separator },
+                  ]}>
+                  <ExercisePicture exercise={exercise.exercise} size={36} />
+                  <Text variant="bodyStrong" style={styles.highlightName} numberOfLines={2}>
                     {titleOf(exercise)}
                   </Text>
                   <VsLastTimeBadge comparison={comparison} />
@@ -111,17 +134,21 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
           </View>
         ) : null}
 
-        <EnergyPicker value={energy} onChange={setEnergy} />
+        <FeelingSlider value={feeling} onChange={setFeeling} />
 
-        <TextField
-          label={t('workout.summary.notes')}
-          placeholder={t('workout.summary.notesPlaceholder')}
-          value={notes}
-          onChangeText={setNotes}
-          multiline
-          maxLength={SESSION_NOTES_MAX_LENGTH}
-          style={styles.notes}
-        />
+        <View style={styles.section}>
+          <SectionHeader title={t('workout.summary.notes')} />
+          <TextField
+            label={t('workout.summary.notes')}
+            labelHidden
+            placeholder={t('workout.summary.notesPlaceholder')}
+            value={notes}
+            onChangeText={setNotes}
+            multiline
+            maxLength={SESSION_NOTES_MAX_LENGTH}
+            style={styles.notes}
+          />
+        </View>
       </ScrollView>
 
       <View
@@ -138,7 +165,7 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
         />
         <Button
           label={t('workout.summary.save')}
-          onPress={() => onSave({ energy, notes: notes.trim() === '' ? null : notes.trim() })}
+          onPress={() => onSave({ feeling, notes: notes.trim() === '' ? null : notes.trim() })}
           style={styles.footerButton}
         />
       </View>
@@ -146,39 +173,77 @@ export function WorkoutSummaryView({ workout, endedAt, onBack, onSave }: Workout
   );
 }
 
+// "DURADA" over "1 h 05 min", "KG ALÇATS" over "4.250 kg".
+function StatCell({ stat, divider }: { stat: Stat; divider: boolean }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+
+  return (
+    <View
+      accessible
+      aria-label={t('workout.summary.stat', {
+        label: stat.label,
+        value: [stat.value, stat.unit].filter(Boolean).join(' '),
+      })}
+      style={[styles.stat, divider && { borderLeftWidth: 1, borderLeftColor: colors.separator }]}>
+      <Text variant="label" color="textMuted">
+        {stat.label}
+      </Text>
+      <View style={styles.figure}>
+        <GradientText variant="figure">{stat.value}</GradientText>
+        {stat.unit ? (
+          <Text variant="caption" color="textMuted">
+            {' '}
+            {stat.unit}
+          </Text>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
-  // A gradient fits its text, not the whole width.
-  fit: {
-    alignSelf: 'flex-start',
-  },
   screen: {
     flex: 1,
   },
   content: {
-    padding: spacing.lg,
+    paddingHorizontal: spacing.lg,
+    paddingBottom: spacing.xl,
     gap: spacing.xl,
   },
-  stats: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.sm,
-  },
-  // Two to a row.
-  stat: {
-    flexBasis: '40%',
-    flexGrow: 1,
+  header: {
     gap: spacing.xs,
+  },
+  grid: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    gap: 0,
+  },
+  gridRow: {
+    flexDirection: 'row',
+  },
+  stat: {
+    flex: 1,
+    gap: spacing.xs,
+    paddingHorizontal: inset.cardX,
+    paddingVertical: inset.cardY,
+  },
+  figure: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
   },
   section: {
     gap: spacing.sm,
   },
-  highlights: {
-    gap: spacing.md,
+  list: {
+    paddingVertical: 0,
+    gap: 0,
   },
   highlight: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
+    paddingVertical: spacing.md,
   },
   highlightName: {
     flex: 1,
@@ -198,8 +263,5 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     flex: 1,
-  },
-  pressed: {
-    opacity: 0.75,
   },
 });

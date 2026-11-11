@@ -4,7 +4,9 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import { Button, Card, GradientText, MenuButton, Text, useActionSheet } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
-import { formatDuration } from '@/features/routines/routine';import { formatDayTitle, fromDateKey } from '@/features/schedule/dates';
+import { formatDuration } from '@/features/routines/routine';
+import { formatDayTitle, fromDateKey } from '@/features/schedule/dates';
+import { feelingMood } from '@/features/workout/session';
 import { useAppLanguage } from '@/lib/i18n';
 import { spacing, useTheme } from '@/theme';
 
@@ -19,7 +21,7 @@ import {
 import { useDeleteWorkout, usePastWorkout } from './useHistory';
 
 // History → a workout (US-23, spec: Workout detail): when and how long,
-// totals, energy and note, then each exercise with its sets as saved.
+// totals, how it felt and the note, then each exercise with its sets as saved.
 // "Edita" opens it in the editor; ⋯ also deletes it, with "Desfés".
 export function PastWorkoutView({
   id,
@@ -101,10 +103,15 @@ function Details({
       </View>
 
       {stats.length > 0 ? <Text variant="bodyStrong">{stats.join(' · ')}</Text> : null}
-      {workout.energy !== null || workout.notes ? (
+      {workout.feeling !== null || workout.notes ? (
         <Card>
-          {workout.energy !== null ? (
-            <Text>{t('history.energy', { energy: workout.energy })}</Text>
+          {workout.feeling !== null ? (
+            <Text>
+              {t('history.feeling', {
+                value: workout.feeling,
+                mood: t(`workout.summary.moods.${feelingMood(workout.feeling)}`),
+              })}
+            </Text>
           ) : null}
           {workout.notes ? <Text color="textMuted">{workout.notes}</Text> : null}
         </Card>

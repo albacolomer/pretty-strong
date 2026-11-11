@@ -1,6 +1,6 @@
 import '@/lib/i18n';
 
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import * as Haptics from 'expo-haptics';
 
 import { menus } from '@/components/ui';
@@ -18,6 +18,7 @@ import { useWorkoutStore } from './workoutStore';
 jest.mock('expo-haptics', () => ({
   impactAsync: jest.fn(() => Promise.resolve()),
   notificationAsync: jest.fn(() => Promise.resolve()),
+  selectionAsync: jest.fn(() => Promise.resolve()),
   ImpactFeedbackStyle: { Light: 'light' },
   NotificationFeedbackType: { Success: 'success' },
 }));
@@ -178,10 +179,10 @@ describe('<ActiveWorkoutView />', () => {
     const { active: after, pending } = useWorkoutStore.getState();
     expect(after).toBeNull();
     expect(pending.map((workout) => workout.id)).toEqual([workoutId]);
-    expect(pending[0]).toMatchObject({ endedAt: expect.any(String), energy: null, notes: null });
+    expect(pending[0]).toMatchObject({ endedAt: expect.any(String), feeling: null, notes: null });
   });
 
-  test('the summary: totals, what beat last time, energy and a note', async () => {
+  test('the summary: totals, what beat last time, how it felt and a note', async () => {
     const user = userEvent.setup();
     const onClose = jest.fn();
     const lift = (weightKg: number, reps: number) => ({ ...NO_TARGETS, weightKg, reps });
@@ -210,15 +211,24 @@ describe('<ActiveWorkoutView />', () => {
     expect(screen.getByRole('button', { name: "Acaba l'entrenament" })).toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: "Acaba l'entrenament" }));
-    await user.press(screen.getByRole('radio', { name: '2 de 5' }));
-    // Changed my mind: 4.
-    await user.press(screen.getByRole('radio', { name: '4 de 5' }));
-    expect(screen.getByRole('radio', { name: '4 de 5' })).toBeChecked();
-    expect(screen.getByRole('radio', { name: '2 de 5' })).not.toBeChecked();
+    // "Com t'has sentit?": nothing until it's touched; slid to 8 (the line
+    // is 330 wide, 16 from the screen's edge), then one step down by VoiceOver.
+    const feeling = screen.getByRole('adjustable', { name: "Com t'has sentit?" });
+    expect(feeling).toHaveAccessibilityValue({ text: 'Sense puntuar' });
+    await fireEvent(feeling, 'layout', { nativeEvent: { layout: { width: 330 } } });
+    await fireEvent(feeling, 'responderGrant', { nativeEvent: { pageX: 271, locationX: 255 } });
+    expect(feeling).toHaveAccessibilityValue({ now: 8, text: '8 de 10, Molt bé' });
+    await fireEvent(feeling, 'responderMove', { nativeEvent: { pageX: 400, locationX: 384 } });
+    expect(feeling).toHaveAccessibilityValue({ now: 10, text: '10 de 10, Increïble' });
+    await fireEvent(feeling, 'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
+    await fireEvent(feeling, 'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
+    await fireEvent(feeling, 'accessibilityAction', { nativeEvent: { actionName: 'decrement' } });
+    expect(feeling).toHaveAccessibilityValue({ now: 7 });
+    expect(screen.getByText('Bé')).toBeOnTheScreen();
     await user.type(screen.getByLabelText('Nota (opcional)'), 'Molt bé ');
     await user.press(screen.getByRole('button', { name: 'Desa' }));
 
-    expect(useWorkoutStore.getState().pending[0]).toMatchObject({ energy: 4, notes: 'Molt bé' });
+    expect(useWorkoutStore.getState().pending[0]).toMatchObject({ feeling: 7, notes: 'Molt bé' });
     expect(onClose).toHaveBeenCalled();
   });
 

@@ -38,7 +38,7 @@ export function LogPastWorkout({ date, routineId, onClose }: LogPastWorkoutProps
         randomUUID,
         (exerciseId) => settings.data?.[exerciseId]?.defaultRestS ?? APP_DEFAULT_REST_S,
       )}
-      initialDetails={{ date, durationS: routine?.plannedDurationS ?? null, energy: null, notes: '' }}
+      initialDetails={{ date, durationS: routine?.plannedDurationS ?? null, feeling: null, notes: '' }}
       original={null}
       onClose={onClose}
     />

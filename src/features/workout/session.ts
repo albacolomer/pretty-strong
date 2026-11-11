@@ -10,10 +10,26 @@ export type ChangeReason = (typeof CHANGE_REASONS)[number];
 
 export type SessionStatus = 'in_progress' | 'completed' | 'skipped';
 
-// How much energy was left at the end, 1 (none) to 5 (plenty), matching
-// workout_sessions_energy_check.
-export const ENERGY_LEVELS = [1, 2, 3, 4, 5] as const;
-export type Energy = (typeof ENERGY_LEVELS)[number];
+// "Com t'has sentit?" at the end, 0 (awful) to 10 (amazing), in whole
+// steps, matching workout_sessions_feeling_check.
+export const FEELING_MIN = 0;
+export const FEELING_MAX = 10;
+export type Feeling = number;
+
+// The word under the number: two steps to each, 10 on its own.
+export const FEELING_MOODS = ['awful', 'bad', 'okay', 'good', 'great', 'amazing'] as const;
+export type FeelingMood = (typeof FEELING_MOODS)[number];
+
+export function feelingMood(feeling: Feeling): FeelingMood {
+  const step = Math.min(Math.max(Math.round(feeling), FEELING_MIN), FEELING_MAX);
+  return FEELING_MOODS[Math.floor(step / 2)];
+}
+
+// A workout finished before "Com t'has sentit?" kept energy 1 to 5; it's
+// doubled, as the database did with the saved ones.
+export function feelingFromEnergy(energy: number): Feeling {
+  return energy * 2;
+}
 
 // Matches workout_sessions_notes_length.
 export const SESSION_NOTES_MAX_LENGTH = 1000;
