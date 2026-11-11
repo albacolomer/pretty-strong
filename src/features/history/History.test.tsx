@@ -305,6 +305,20 @@ describe('History', () => {
     expect(screen.getByRole('button', { name: '+ Registra una activitat' })).toBeOnTheScreen();
   });
 
+  test("an event's day is never a rest day, even with nothing else done", async () => {
+    jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
+    // Only Mondays planned; the race is today, a Wednesday.
+    jest.mocked(fetchRoutines).mockResolvedValueOnce([{ ...upperBody, weekdays: [1] }]);
+    jest.mocked(fetchEvents).mockResolvedValue([{ ...hyrox, date: '2026-10-21' }]);
+    await render(<CalendarTab />, { wrapper: createAppWrapper() });
+
+    expect(
+      await screen.findByRole('button', { name: 'Opcions de HYROX Barcelona' }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByText('Avui és el teu dia de descans.')).not.toBeOnTheScreen();
+    expect(screen.queryByText('Avui encara no hi ha cap activitat.')).not.toBeOnTheScreen();
+  });
+
   test("a day whose routine moved away this week is a rest day", async () => {
     jest.mocked(fetchHistoryEntries).mockResolvedValue([]);
     // Planned on Wednesdays, but this week it went to Friday.

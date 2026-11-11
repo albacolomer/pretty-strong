@@ -80,8 +80,10 @@ export function CalendarTab() {
   const isToday = selected === todayKey;
   const future = selected > todayKey;
   // A rest day: nothing planned that day (that week's moves counted), when
-  // there is a plan.
+  // there is a plan. A competition or special date counts as something, so
+  // its day is never a rest day (US-30).
   const restDay =
+    dayEvents.length === 0 &&
     (routines.some((routine) => routine.weekdays.length > 0) || sports.length > 0) &&
     activitiesOnDate(routines, sports, moves, fromDateKey(selected)).length === 0;
 
@@ -153,7 +155,8 @@ export function CalendarTab() {
       <>
         {dayEntries.length > 0 ? (
           dayEntries.map((entry) => <WorkoutRow key={entry.id} entry={entry} />)
-        ) : (
+        ) : dayEvents.length > 0 ? null : (
+          // An event's day already has the event above: no "nothing" line.
           <Text color="textMuted">
             {restDay
               ? t(isToday ? 'history.restToday' : 'history.restDay')
