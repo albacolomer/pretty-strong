@@ -32,3 +32,18 @@ export async function removeFromDay(routineId: string, weekday: Weekday): Promis
     .eq('weekday', weekday);
   if (error) throw error;
 }
+
+// A routine dragged (or moved from its menu) to another day of the usual
+// week, at `position` there. One update of its row, so it's never on both
+// days or neither; the routine can't already be on `to` (the key is
+// routine and day).
+export type DayMove = { routineId: string; from: Weekday; to: Weekday; position: number };
+
+export async function moveToDay(move: DayMove): Promise<void> {
+  const { error } = await supabase
+    .from('weekly_schedule')
+    .update({ weekday: move.to, position: move.position })
+    .eq('routine_id', move.routineId)
+    .eq('weekday', move.from);
+  if (error) throw error;
+}

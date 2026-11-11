@@ -1,6 +1,6 @@
 import '@/lib/i18n';
 
-import { render, screen, userEvent, waitFor } from '@testing-library/react-native';
+import { fireEvent, render, screen, userEvent, waitFor } from '@testing-library/react-native';
 import { router } from 'expo-router';
 
 import { menus } from '@/components/ui';
@@ -8,15 +8,16 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import { fetchRoutines } from '@/features/routines/api';
 import type { Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
-import { drop } from '@/test-utils/sortablesMock';
+import { drop, startDrag } from '@/test-utils/sortablesMock';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { addToDay, removeFromDay } from './api';
+import { addToDay, moveToDay, removeFromDay } from './api';
 import { weekdayOf } from './dates';
 import type { WeeklySport } from './sports';
 import {
   addWeeklySport,
   fetchWeeklySports,
+  moveWeeklySport,
   removeWeeklySport,
   reorderDay,
   updateWeeklySport,
@@ -25,12 +26,13 @@ import { WeekSchedule } from './WeekSchedule';
 
 jest.mock('@/features/auth/AuthProvider', () => ({ useAuth: jest.fn() }));
 jest.mock('@/features/routines/api', () => ({ fetchRoutines: jest.fn() }));
-jest.mock('./api', () => ({ addToDay: jest.fn(), removeFromDay: jest.fn() }));
+jest.mock('./api', () => ({ addToDay: jest.fn(), removeFromDay: jest.fn(), moveToDay: jest.fn() }));
 jest.mock('./sportsApi', () => ({
   fetchWeeklySports: jest.fn(),
   addWeeklySport: jest.fn(() => Promise.resolve()),
   updateWeeklySport: jest.fn(() => Promise.resolve()),
   removeWeeklySport: jest.fn(() => Promise.resolve()),
+  moveWeeklySport: jest.fn(() => Promise.resolve()),
   reorderDay: jest.fn(() => Promise.resolve()),
 }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -87,6 +89,8 @@ beforeEach(() => {
   jest.mocked(fetchWeeklySports).mockResolvedValue([padel, basketball]);
   jest.mocked(addToDay).mockReset().mockResolvedValue();
   jest.mocked(removeFromDay).mockReset().mockResolvedValue();
+  jest.mocked(moveToDay).mockReset().mockResolvedValue();
+  jest.mocked(moveWeeklySport).mockClear();
   jest.mocked(addWeeklySport).mockClear();
   jest.mocked(updateWeeklySport).mockClear();
   jest.mocked(removeWeeklySport).mockClear();
@@ -110,7 +114,8 @@ describe('<WeekSchedule />', () => {
     await render(<WeekSchedule />, { wrapper: createAppWrapper() });
 
     expect(await screen.findByText('Pàdel')).toBeOnTheScreen();
-    expect(screen.getByRole('header', { name: 'La teva setmana habitual' })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'La teva setmana' })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Dia a dia' })).toBeOnTheScreen();
     expect(
       screen.getByText('3 entrenaments · 2 esports · 5 dies de descans. Es repeteix cada setmana.'),
     ).toBeOnTheScreen();
@@ -152,6 +157,71 @@ describe('<WeekSchedule />', () => {
     await user.press(monday);
     expect(onScrollTo).toHaveBeenCalledTimes(2);
     expect(onScrollTo.mock.calls.every(([y]) => typeof y === 'number')).toBe(true);
+  });
+
+  test('"Mou a un altre dia…": only the days it isn\'t on, at the end there, with Desfés', async () => {
+    const user = userEvent.setup();
+    await render(<WeekSchedule />, { wrapper: createAppWrapper() });
+
+    // Tren superior is on Monday and Thursday: Thursday isn't offered.
+    sheetChoices.push('Mou a un altre dia…', 'Dimecres');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de «Tren superior», Dilluns' }));
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual([
+      'Dimarts',
+      'Dimecres',
+      'Divendres',
+      'Dissabte',
+      'Diumenge',
+      'Cancel·la',
+    ]);
+    await waitFor(() =>
+      expect(moveToDay).toHaveBeenCalledWith({ routineId: 'upper', from: 1, to: 3, position: 0 }),
+    );
+    expect(await screen.findByText('Dimecres: hi has mogut «Tren superior»')).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desfés' }));
+    await waitFor(() =>
+      expect(moveToDay).toHaveBeenLastCalledWith({ routineId: 'upper', from: 3, to: 1, position: 0 }),
+    );
+  });
+
+  test('a sport moves to another day from its menu too', async () => {
+    const user = userEvent.setup();
+    await render(<WeekSchedule />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Mou a un altre dia…', 'Divendres');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de «Pàdel», Dilluns' }));
+    await waitFor(() => expect(moveWeeklySport).toHaveBeenCalledWith('padel', 5, 0));
+  });
+
+  test('a row dragged onto another day\'s card moves there; onto its own, nothing', async () => {
+    await render(<WeekSchedule />, { wrapper: createAppWrapper() });
+    await screen.findByRole('button', { name: 'Opcions de «Pàdel», Dilluns' });
+    // One drop zone per day, Monday first.
+    const zones = screen.getAllByTestId('sortable-zone');
+    expect(zones).toHaveLength(7);
+
+    await startDrag('routine:run');
+    await fireEvent(zones[0], 'itemDrop');
+    expect(moveToDay).not.toHaveBeenCalled();
+
+    await startDrag('routine:run');
+    await fireEvent(zones[5], 'itemEnter');
+    await fireEvent(zones[5], 'itemDrop');
+    await waitFor(() =>
+      expect(moveToDay).toHaveBeenCalledWith({ routineId: 'run', from: 1, to: 6, position: 0 }),
+    );
+  });
+
+  test('a routine dropped on a day that already has it stays, and says why', async () => {
+    await render(<WeekSchedule />, { wrapper: createAppWrapper() });
+    await screen.findByRole('button', { name: 'Opcions de «Pàdel», Dilluns' });
+
+    // Thursday's (the last list a key is rendered in) onto Monday.
+    await startDrag('routine:upper');
+    await fireEvent(screen.getAllByTestId('sortable-zone')[0], 'itemDrop');
+    expect(moveToDay).not.toHaveBeenCalled();
+    expect(await screen.findByText('Dilluns ja té «Tren superior»')).toBeOnTheScreen();
   });
 
   test('+ Afegeix a routine: only the ones not on that day, after what is there', async () => {

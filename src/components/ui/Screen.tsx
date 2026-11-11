@@ -1,5 +1,6 @@
-import type { ReactNode, Ref } from 'react';
-import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
+import type { ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { type AnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { inset, spacing, useTheme } from '@/theme';
@@ -13,11 +14,13 @@ export type ScreenProps = {
   // Centres the content vertically, e.g. for the sign-in screen.
   centered?: boolean;
   children?: ReactNode;
-  // The ScrollView, e.g. to scroll down to a day in Plan → Setmana.
-  ref?: Ref<ScrollViewInstance>;
+  // The ScrollView, e.g. to scroll down to a day in Plan → Setmana, or to
+  // scroll by itself while something is dragged to its edge.
+  ref?: AnimatedRef<Animated.ScrollView>;
 };
 
-// The ScrollView is the screen's root view on purpose: iOS then adds the
+// The ScrollView (Reanimated's, so a drag can scroll it) is the screen's
+// root view on purpose: iOS then adds the
 // status bar and tab bar insets for us, and tapping the current tab
 // scrolls it back to the top. (Those insets come on top of the content's
 // height, so content that grows to fill the screen would scroll by them:
@@ -27,7 +30,7 @@ export function Screen({ title, action, centered = false, children, ref }: Scree
   const insets = useSafeAreaInsets();
 
   return (
-    <ScrollView
+    <Animated.ScrollView
       ref={ref}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[
@@ -58,7 +61,7 @@ export function Screen({ title, action, centered = false, children, ref }: Scree
         </View>
       ) : null}
       {children}
-    </ScrollView>
+    </Animated.ScrollView>
   );
 }
 

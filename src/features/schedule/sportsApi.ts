@@ -50,6 +50,19 @@ export async function updateWeeklySport(
   if (error) throw error;
 }
 
+// A sport dragged (or moved from its menu) to another day, at `position`.
+export async function moveWeeklySport(
+  id: string,
+  weekday: Weekday,
+  position: number,
+): Promise<void> {
+  const { error } = await supabase
+    .from('weekly_sports')
+    .update({ weekday, position })
+    .eq('id', id);
+  if (error) throw error;
+}
+
 export async function removeWeeklySport(id: string): Promise<void> {
   const { error } = await supabase.from('weekly_sports').delete().eq('id', id);
   if (error) throw error;

@@ -4,6 +4,8 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import type Animated from 'react-native-reanimated';
+import type { AnimatedRef } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 
 import { Card, Text, useActionSheet, useToast } from '@/components/ui';
@@ -26,10 +28,11 @@ import { weekdayOf } from './dates';
 import { SPORT_ICONS, type WeeklySport } from './sports';
 import { useActivityName } from './useActivityName';
 import { useToday } from './useToday';
-import { useAddToDay, useRemoveFromDay } from './useWeekSchedule';
+import { useAddToDay, useMoveToDay, useRemoveFromDay } from './useWeekSchedule';
 import { WeekStrip } from './WeekStrip';
 import {
   useAddSport,
+  useMoveSport,
   useRemoveSport,
   useReorderDay,
   useUpdateSport,
@@ -41,11 +44,22 @@ function openRoutine(routine: Routine) {
   router.push({ pathname: '/plan/routines/[id]', params: { id: routine.id } });
 }
 
-// Plan → Setmana (US-09): your usual week, Monday to Sunday. First the
-// whole week at a glance (WeekStrip); a tap on a day there scrolls down to
-// it. Then each day has its routines and sports, in the order you drag
-// them into; "+ Afegeix" adds either. A day with neither is a rest day.
-export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void }) {
+// Plan → Setmana (US-09): "La teva setmana", your usual week, Monday to
+// Sunday. First the whole week at a glance (WeekStrip): a tap on a day
+// scrolls down to it, and a line held and dragged to another day moves it
+// there. Then, under a divider, day by day: each day's routines and sports
+// in the order you drag them into; drag one onto another day's card to
+// move it (or use its menu: "Mou a un altre dia…"). "+ Afegeix" adds
+// either. A day with neither is a rest day.
+export function WeekSchedule({
+  onScrollTo,
+  scrollableRef,
+}: {
+  onScrollTo?: (y: number) => void;
+  // The screen's ScrollView, which scrolls by itself while a row is
+  // dragged to its edge.
+  scrollableRef?: AnimatedRef<Animated.ScrollView>;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showActionSheet = useActionSheet();
@@ -60,6 +74,11 @@ export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void 
   const updateSport = useUpdateSport();
   const removeSport = useRemoveSport();
   const reorderDay = useReorderDay();
+  const moveToDay = useMoveToDay();
+  const moveSport = useMoveSport();
+  // The row being dragged in the list, and the day card it's over.
+  const dragging = useRef<{ activity: DayActivity; day: Weekday } | null>(null);
+  const [overDay, setOverDay] = useState<Weekday | null>(null);
   // The add/edit sheet: what it's for, whether it's showing, and a count
   // that gives each opening a fresh start.
   const [sheet, setSheet] = useState<{ mode: ActivitySheetMode; visible: boolean; opened: number }>(
@@ -74,6 +93,9 @@ export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void 
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
 
   const summary = weekSummary(routines, sports);
+  // Loaded by now; named again because TypeScript forgets that inside the
+  // functions below.
+  const planned = routines;
   const sheetDay = sheet.mode.kind === 'add' ? sheet.mode.day : sheet.mode.sport.weekday;
 
   function open(mode: ActivitySheetMode) {
@@ -104,8 +126,61 @@ export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void 
     }
   }
 
-  // Tap an activity: open the routine or change the sport's time, or take
-  // it off the day (with "Desfés", so it isn't shown as destructive).
+  // To another day, at the end of it, with "Desfés" back to where it was.
+  // A routine can't go to a day that already has it.
+  function move(activity: DayActivity, from: Weekday, to: Weekday) {
+    if (from === to) return;
+    const name = nameOf(activity);
+    const toName = t(`weekdays.long.${to}`);
+    const position = nextDayPosition(planned, sports, to);
+    if (activity.kind === 'routine') {
+      const { routine } = activity;
+      if (routine.weekdays.includes(to)) {
+        showToast({ message: t('schedule.alreadyOn', { day: toName, name }) });
+        return;
+      }
+      const back = { routineId: routine.id, from: to, to: from, position: routine.dayPositions[from] ?? 0 };
+      moveToDay.mutate({ routineId: routine.id, from, to, position });
+      showToast({
+        message: t('schedule.moved', { day: toName, name }),
+        action: { label: t('common.undo'), onPress: () => moveToDay.mutate(back) },
+      });
+    } else {
+      const { sport } = activity;
+      moveSport.mutate({ id: sport.id, weekday: to, position });
+      showToast({
+        message: t('schedule.moved', { day: toName, name }),
+        action: {
+          label: t('common.undo'),
+          onPress: () =>
+            moveSport.mutate({ id: sport.id, weekday: from, position: sport.position }),
+        },
+      });
+    }
+  }
+
+  // "Mou a un altre dia…": the days it isn't on yet.
+  function moveMenu(activity: DayActivity, from: Weekday) {
+    const days = WEEKDAYS.filter(
+      (day) =>
+        day !== from && (activity.kind !== 'routine' || !activity.routine.weekdays.includes(day)),
+    );
+    showActionSheet(
+      {
+        title: t('schedule.moveTitle', { name: nameOf(activity) }),
+        options: [...days.map((day) => t(`weekdays.long.${day}`)), t('common.cancel')],
+        cancelButtonIndex: days.length,
+      },
+      (index) => {
+        const to = days[index];
+        if (to) move(activity, from, to);
+      },
+    );
+  }
+
+  // Tap an activity: open the routine or change the sport's time, move it
+  // to another day, or take it off the day (with "Desfés", so it isn't
+  // shown as destructive).
   function openMenu(activity: DayActivity, day: Weekday) {
     const first =
       activity.kind === 'routine'
@@ -114,12 +189,13 @@ export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void 
     showActionSheet(
       {
         title: nameOf(activity),
-        options: [first.label, t('schedule.remove'), t('common.cancel')],
-        cancelButtonIndex: 2,
+        options: [first.label, t('schedule.moveTo'), t('schedule.remove'), t('common.cancel')],
+        cancelButtonIndex: 3,
       },
       (index) => {
         if (index === 0) first.run();
-        if (index === 1) remove(activity, day);
+        if (index === 1) moveMenu(activity, day);
+        if (index === 2) remove(activity, day);
       },
     );
   }
@@ -130,13 +206,6 @@ export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void 
       onLayout={(event) => {
         weekTop.current = event.nativeEvent.layout.y;
       }}>
-      <WeekStrip
-        routines={routines}
-        sports={sports}
-        today={today}
-        onDayPress={(day) => onScrollTo?.(weekTop.current + (dayTops.current[day] ?? 0))}
-      />
-
       <View>
         <Text variant="label" color="textMuted" accessibilityRole="header">
           {t('schedule.usualWeek')}
@@ -152,83 +221,120 @@ export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void 
         </Text>
       </View>
 
-      {WEEKDAYS.map((day) => {
-        const activities = activitiesOnDay(routines, sports, day);
-        const dayName = t(`weekdays.long.${day}`);
-        const rest = activities.length === 0;
-        return (
-          <Card
-            key={day}
-            onLayout={(event) => {
-              dayTops.current[day] = event.nativeEvent.layout.y;
-            }}
-            style={[
-              styles.day,
-              rest && [styles.restDay, { borderColor: colors.control }],
-            ]}>
-            <View style={styles.dayHeader}>
-              <Text variant="label" color="textMuted" accessibilityRole="header">
-                {dayName}
-              </Text>
-              {rest ? (
-                <View style={styles.restTag}>
-                  <SymbolView name="moon" size={14} weight="light" tintColor={colors.textMuted} />
-                  <Text variant="caption" color="textMuted">
-                    {t('schedule.restDay')}
-                  </Text>
-                </View>
-              ) : activities.length > 1 ? (
-                <Text variant="caption" color="textMuted">
-                  {t('schedule.activities', { count: activities.length })}
-                </Text>
-              ) : null}
-              {day === today ? (
-                <View style={[styles.todayTag, { backgroundColor: colors.accent }]}>
-                  <Text variant="label" color="onAccent">
-                    {t('schedule.today')}
-                  </Text>
-                </View>
-              ) : null}
-              <View style={styles.spacer} />
-              <Pressable
-                role="button"
-                aria-label={t('schedule.addFor', { day: dayName })}
-                onPress={() => open({ kind: 'add', day })}
-                hitSlop={8}
-                style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
-                <Text variant="bodyStrong" color="accent">
-                  {t('schedule.add')}
-                </Text>
-              </Pressable>
-            </View>
+      <WeekStrip
+        routines={routines}
+        sports={sports}
+        today={today}
+        onDayPress={(day) => onScrollTo?.(weekTop.current + (dayTops.current[day] ?? 0))}
+        onMove={move}
+      />
 
-            {rest ? null : (
-              <Sortable.Grid
-                data={activities}
-                keyExtractor={(activity) => activity.key}
-                renderItem={({ item }) => (
-                  <ActivityRow
-                    activity={item}
-                    day={day}
-                    draggable={activities.length > 1}
-                    onPress={() => openMenu(item, day)}
+      {/* The week at a glance above, day by day below. */}
+      <View style={[styles.divider, { backgroundColor: colors.border }]} />
+      <Text variant="label" color="textMuted" accessibilityRole="header">
+        {t('schedule.dayByDay')}
+      </Text>
+
+      <Sortable.MultiZoneProvider>
+
+        {WEEKDAYS.map((day) => {
+          const activities = activitiesOnDay(routines, sports, day);
+          const dayName = t(`weekdays.long.${day}`);
+          const rest = activities.length === 0;
+          return (
+            <Sortable.BaseZone
+              key={day}
+              onLayout={(event) => {
+                dayTops.current[day] = event.nativeEvent.layout.y;
+              }}
+              // Not its own day: nothing would move.
+              onItemEnter={() => {
+                if (dragging.current?.day !== day) setOverDay(day);
+              }}
+              onItemLeave={() => setOverDay((current) => (current === day ? null : current))}
+              onItemDrop={() => {
+                setOverDay(null);
+                const dragged = dragging.current;
+                dragging.current = null;
+                if (dragged && dragged.day !== day) move(dragged.activity, dragged.day, day);
+              }}>
+              <Card
+                style={[
+                  styles.day,
+                  rest && [styles.restDay, { borderColor: colors.control }],
+                  // The card a dragged row would land on.
+                  overDay === day && [styles.dropTarget, { borderColor: colors.accent }],
+                ]}>
+                <View style={styles.dayHeader}>
+                  <Text variant="label" color="textMuted" accessibilityRole="header">
+                    {dayName}
+                  </Text>
+                  {rest ? (
+                    <View style={styles.restTag}>
+                      <SymbolView name="moon" size={14} weight="light" tintColor={colors.textMuted} />
+                      <Text variant="caption" color="textMuted">
+                        {t('schedule.restDay')}
+                      </Text>
+                    </View>
+                  ) : activities.length > 1 ? (
+                    <Text variant="caption" color="textMuted">
+                      {t('schedule.activities', { count: activities.length })}
+                    </Text>
+                  ) : null}
+                  {day === today ? (
+                    <View style={[styles.todayTag, { backgroundColor: colors.accent }]}>
+                      <Text variant="label" color="onAccent">
+                        {t('schedule.today')}
+                      </Text>
+                    </View>
+                  ) : null}
+                  <View style={styles.spacer} />
+                  <Pressable
+                    role="button"
+                    aria-label={t('schedule.addFor', { day: dayName })}
+                    onPress={() => open({ kind: 'add', day })}
+                    hitSlop={8}
+                    style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
+                    <Text variant="bodyStrong" color="accent">
+                      {t('schedule.add')}
+                    </Text>
+                  </Pressable>
+                </View>
+
+                {rest ? null : (
+                  <Sortable.Grid
+                    data={activities}
+                    keyExtractor={(activity) => activity.key}
+                    renderItem={({ item }) => (
+                      <ActivityRow
+                        activity={item}
+                        day={day}
+                        draggable={activities.length > 1}
+                        onPress={() => openMenu(item, day)}
+                      />
+                    )}
+                    onDragEnd={({ fromIndex, toIndex }) => {
+                      if (fromIndex === toIndex) return;
+                      const order = [...activities];
+                      const [moved] = order.splice(fromIndex, 1);
+                      order.splice(toIndex, 0, moved);
+                      reorderDay.mutate({ day, order });
+                    }}
+                    onDragStart={({ fromIndex }) => {
+                      const activity = activities[fromIndex];
+                      dragging.current = activity ? { activity, day } : null;
+                    }}
+                    // Only the handle starts a drag, so scrolling never moves anything.
+                    customHandle
+                    scrollableRef={scrollableRef}
+                    rowGap={0}
                   />
                 )}
-                onDragEnd={({ fromIndex, toIndex }) => {
-                  if (fromIndex === toIndex) return;
-                  const order = [...activities];
-                  const [moved] = order.splice(fromIndex, 1);
-                  order.splice(toIndex, 0, moved);
-                  reorderDay.mutate({ day, order });
-                }}
-                // Only the handle starts a drag, so scrolling never moves anything.
-                customHandle
-                rowGap={0}
-              />
-            )}
-          </Card>
-        );
-      })}
+              </Card>
+            </Sortable.BaseZone>
+          );
+        })}
+      </Sortable.MultiZoneProvider>
 
       <ActivitySheet
         key={sheet.opened}
@@ -362,6 +468,14 @@ function ActivityRow({
 const styles = StyleSheet.create({
   week: {
     gap: spacing.md,
+  },
+  // Between the week at a glance and the list.
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    marginVertical: spacing.sm,
+  },
+  dropTarget: {
+    borderWidth: 1.5,
   },
   day: {
     gap: spacing.xs,

@@ -10,6 +10,7 @@ import type { WeeklySport } from './sports';
 import {
   addWeeklySport,
   fetchWeeklySports,
+  moveWeeklySport,
   removeWeeklySport,
   reorderDay,
   updateWeeklySport,
@@ -70,6 +71,15 @@ export function useUpdateSport() {
       updateWeeklySport(id, change),
     (sports, { id, change }) =>
       sports.map((sport) => (sport.id === id ? { ...sport, ...change } : sport)),
+  );
+}
+
+export function useMoveSport() {
+  return useSportsMutation(
+    ({ id, weekday, position }: { id: string; weekday: Weekday; position: number }) =>
+      moveWeeklySport(id, weekday, position),
+    (sports, { id, weekday, position }) =>
+      sports.map((sport) => (sport.id === id ? { ...sport, weekday, position } : sport)),
   );
 }
 

@@ -6,16 +6,16 @@ import { useAuth } from '@/features/auth/AuthProvider';
 import type { Routine } from '@/features/routines/routine';
 import { routinesQueryKey } from '@/features/routines/useRoutines';
 
-import { addToDay, removeFromDay, type DayEntry } from './api';
+import { addToDay, moveToDay, removeFromDay, type DayEntry, type DayMove } from './api';
 import { withDay, withoutDay } from './week';
 
 // Adding a routine to a day, or taking it off, changes the routines list
 // straight away (the week comes from it), and puts it back if saving fails.
 // Messages live here, not in mutate() callbacks, so they show even if the
 // screen has closed.
-function useDayMutation(
-  save: (entry: DayEntry, userId: string) => Promise<void>,
-  change: (routine: Routine, entry: DayEntry) => Routine,
+function useDayMutation<T extends { routineId: string }>(
+  save: (entry: T, userId: string) => Promise<void>,
+  change: (routine: Routine, entry: T) => Routine,
 ) {
   const queryClient = useQueryClient();
   const { t } = useTranslation();
@@ -25,7 +25,7 @@ function useDayMutation(
   const key = routinesQueryKey(userId);
 
   return useMutation({
-    mutationFn: (entry: DayEntry) => {
+    mutationFn: (entry: T) => {
       if (!userId) throw new Error('Not signed in.');
       return save(entry, userId);
     },
@@ -47,14 +47,22 @@ function useDayMutation(
 }
 
 export function useAddToDay() {
-  return useDayMutation(addToDay, (routine, entry) =>
+  return useDayMutation<DayEntry>(addToDay, (routine, entry) =>
     withDay(routine, entry.weekday, entry.position),
   );
 }
 
 export function useRemoveFromDay() {
-  return useDayMutation(
+  return useDayMutation<DayEntry>(
     (entry) => removeFromDay(entry.routineId, entry.weekday),
     (routine, entry) => withoutDay(routine, entry.weekday),
+  );
+}
+
+// To another day of the usual week, at the end of it.
+export function useMoveToDay() {
+  return useDayMutation<DayMove>(
+    (move) => moveToDay(move),
+    (routine, move) => withDay(withoutDay(routine, move.from), move.to, move.position),
   );
 }

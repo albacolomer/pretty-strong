@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import type { ScrollViewInstance } from 'react-native';
+import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen, SegmentedControl } from '@/components/ui';
@@ -14,7 +14,7 @@ type Section = 'routines' | 'exercises' | 'week';
 export default function PlanScreen() {
   const { t } = useTranslation();
   const [section, setSection] = useState<Section>('routines');
-  const scroll = useRef<ScrollViewInstance>(null);
+  const scroll = useAnimatedRef<Animated.ScrollView>();
   const insets = useSafeAreaInsets();
 
   const sections = [
@@ -35,6 +35,7 @@ export default function PlanScreen() {
       {section === 'exercises' ? <ExerciseLibrary /> : null}
       {section === 'week' ? (
         <WeekSchedule
+          scrollableRef={scroll}
           // A day tapped in the week strip: its card just under the status bar.
           onScrollTo={(y) =>
             scroll.current?.scrollTo({ y: y - insets.top - spacing.lg, animated: true })
