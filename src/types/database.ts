@@ -706,8 +706,8 @@ export type Database = {
           energy: number | null
           event_kind: string | null
           event_name: string | null
-          feeling: number | null
           external_id: string | null
+          feeling: number | null
           id: string
           log_mode: string
           notes: string | null
@@ -731,8 +731,8 @@ export type Database = {
           energy?: number | null
           event_kind?: string | null
           event_name?: string | null
-          feeling?: number | null
           external_id?: string | null
+          feeling?: number | null
           id: string
           log_mode?: string
           notes?: string | null
@@ -756,8 +756,8 @@ export type Database = {
           energy?: number | null
           event_kind?: string | null
           event_name?: string | null
-          feeling?: number | null
           external_id?: string | null
+          feeling?: number | null
           id?: string
           log_mode?: string
           notes?: string | null
