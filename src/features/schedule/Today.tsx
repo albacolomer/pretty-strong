@@ -25,9 +25,8 @@ import {
 } from '@/features/routines/routine';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { useRoutines } from '@/features/routines/useRoutines';
-import { workoutFromRoutine } from '@/features/workout/activeWorkout';
+import { workoutFromRoutine, type ActiveWorkout } from '@/features/workout/activeWorkout';
 import { QuickLogSheet, type QuickLog } from '@/features/workout/QuickLogSheet';
-import { ResumeBanner } from '@/features/workout/ResumeBanner';
 import {
   CHANGE_REASONS,
   liveDuration,
@@ -96,7 +95,8 @@ function eventFields(event: CalendarEvent) {
 // ring (GO, or ✓ for a class or a sport; a gold ✓ for a competition or
 // special date, which comes first, US-30), with Previsualitza / Canvia / Salta (which
 // can move a routine to a free day or shift the week, US-29); on a
-// rest day, a word on recovery, what's next and Caminar / Estiraments. Above
+// rest day, a word on recovery, what's next and Caminar / Estiraments. While
+// a workout is going, the big button is its "Reprèn", with its time. Above
 // it, yesterday's routine if it wasn't logged at all (US-29). Under it,
 // "També avui" with the day's other activities, what was logged without
 // being planned, and a + to log more. Once it's all done: "Gairebé fet" (the
@@ -357,11 +357,25 @@ export function Today() {
     return sport ? nameOf({ kind: 'sport', sport }) : shownFor(routine, session).name;
   }
 
-  // The main one: today's event still to do, else the first routine to
-  // start still to do, else any routine or sport still to do, else (all
-  // logged) the first of the day.
+  // A workout going now has the big button ("Reprèn"), wherever it was
+  // started: in today's planned routine's own place, or on its own when it
+  // came from +, or from yesterday before midnight.
+  const goingPlanned = active
+    ? planned.find(
+        (activity): activity is RoutineActivity =>
+          activity.kind === 'routine' &&
+          active.date === day &&
+          active.plannedRoutineId === activity.routine.id,
+      )
+    : undefined;
+  const goingElsewhere = active !== null && goingPlanned === undefined;
+
+  // The main one: the routine going now, else today's event still to do,
+  // else the first routine to start still to do, else any routine or sport
+  // still to do, else (all logged) the first of the day.
   const open = planned.filter((activity) => !sessionOf(activity));
   const main =
+    goingPlanned ??
     open.find((activity) => activity.kind === 'event') ??
     open.find(
       (activity) => activity.kind === 'routine' && usesExercises(activity.routine.label),
@@ -377,7 +391,10 @@ export function Today() {
     planned.length > 0 &&
     open.length === 0 &&
     planned.some((activity) => sessionOf(activity)?.status === 'completed');
-  const others = allDone ? planned : planned.filter((activity) => activity !== main);
+  // "Tot fet" waits for a workout going on its own to finish.
+  const showDone = allDone && !active;
+  const others =
+    allDone || goingElsewhere ? planned : planned.filter((activity) => activity !== main);
 
   // "Esquena i bíceps · 7 exercicis · ~1 h 30 min", "19:00 · 1 h", or an
   // event's "HYROX · Fira de Barcelona" (its kind when it has a name).
@@ -396,7 +413,10 @@ export function Today() {
         .filter(Boolean)
         .join(' · ');
     }
-    const routine = shown ?? activity.routine;
+    return routineDetails(shown ?? activity.routine);
+  }
+
+  function routineDetails(routine: Routine): string {
     const duration = routineDuration(routine, APP_DEFAULT_REST_S);
     const count = routine.exercises.length;
     return [
@@ -821,15 +841,6 @@ export function Today() {
     sheet(name, [{ label: t('common.undo'), run: () => deleteSession.mutate(session) }]);
   }
 
-  // Is this routine the workout going now?
-  function isActive(routine: Routine, shown: Routine) {
-    return (
-      active?.date === day &&
-      active.plannedRoutineId === routine.id &&
-      active.routineId === shown.id
-    );
-  }
-
   function statusText(session: WorkoutSession): string {
     const parts =
       session.status === 'completed'
@@ -964,30 +975,32 @@ export function Today() {
     }
     const shown = shownFor(routine, session);
     const startable = usesExercises(shown.label);
-    const going = isActive(routine, shown);
-    const actions: HeroAction[] = session
-      ? []
-      : [
-          ...(startable && shown.exercises.length > 0
-            ? [
-                {
-                  aria: t('today.previewFor', { name: shown.name }),
-                  icon: 'eye' as const,
-                  onPress: () => setPreviewing({ routine: shown, planned: routine }),
-                },
-              ]
-            : []),
-          {
-            aria: t('today.swapFor', { name: shown.name }),
-            icon: 'arrow.left.arrow.right',
-            onPress: () => swap(routine),
-          },
-          {
-            aria: t('today.skipFor', { name: shown.name }),
-            icon: 'forward.end',
-            onPress: () => skipRoutine(activity),
-          },
-        ];
+    // Going now: nothing to preview, swap or skip until it's finished.
+    const going = active && activity === goingPlanned ? active : null;
+    const actions: HeroAction[] =
+      session || going
+        ? []
+        : [
+            ...(startable && shown.exercises.length > 0
+              ? [
+                  {
+                    aria: t('today.previewFor', { name: shown.name }),
+                    icon: 'eye' as const,
+                    onPress: () => setPreviewing({ routine: shown, planned: routine }),
+                  },
+                ]
+              : []),
+            {
+              aria: t('today.swapFor', { name: shown.name }),
+              icon: 'arrow.left.arrow.right',
+              onPress: () => swap(routine),
+            },
+            {
+              aria: t('today.skipFor', { name: shown.name }),
+              icon: 'forward.end',
+              onPress: () => skipRoutine(activity),
+            },
+          ];
     return (
       <TodayHero
         {...ring}
@@ -995,24 +1008,56 @@ export function Today() {
         insteadOf={shown.id !== routine.id ? t('today.insteadOf', { name: routine.name }) : null}
         details={detailsOf(activity, shown)}
         main={
-          session
-            ? null
-            : startable
-              ? {
-                  kind: 'go',
-                  caption: going ? t('workout.resume') : t('today.goCaption'),
-                  aria: t('workout.startFor', { name: shown.name }),
-                  onPress: () => (going ? router.push('/workout') : start(shown, routine.id)),
-                }
-              : {
-                  // A class: marked done, not started.
-                  kind: 'done',
-                  caption: t('today.done'),
-                  aria: t('today.doneFor', { name: shown.name }),
-                  onPress: () => markDone(activity),
-                }
+          going
+            ? {
+                kind: 'resume',
+                name: shown.name,
+                startedAt: going.startedAt,
+                onPress: () => router.push('/workout'),
+              }
+            : session
+              ? null
+              : startable
+                ? {
+                    kind: 'go',
+                    caption: t('today.goCaption'),
+                    aria: t('workout.startFor', { name: shown.name }),
+                    onPress: () => start(shown, routine.id),
+                  }
+                : {
+                    // A class: marked done, not started.
+                    kind: 'done',
+                    caption: t('today.done'),
+                    aria: t('today.doneFor', { name: shown.name }),
+                    onPress: () => markDone(activity),
+                  }
         }
         actions={actions}
+      />
+    );
+  }
+
+  // A workout going on its own (from +, or from yesterday): its name and
+  // what it is, and "Reprèn"; the day's plan waits under "També avui".
+  function renderGoingHero(workout: ActiveWorkout) {
+    const routine = allRoutines.find((other) => other.id === workout.routineId);
+    const name = workout.routineName || t('history.noRoutine');
+    return (
+      <TodayHero
+        segments={segments}
+        done={doneThisWeek}
+        progress={progress}
+        status={null}
+        name={name}
+        insteadOf={null}
+        details={routine ? routineDetails(routine) : ''}
+        main={{
+          kind: 'resume',
+          name,
+          startedAt: workout.startedAt,
+          onPress: () => router.push('/workout'),
+        }}
+        actions={[]}
       />
     );
   }
@@ -1076,7 +1121,6 @@ export function Today() {
       };
     }
     const shown = shownFor(routine, session);
-    const going = isActive(routine, shown);
     return {
       key: activity.key,
       icon: ROUTINE_ICONS[shown.label],
@@ -1091,10 +1135,7 @@ export function Today() {
           : sheet(shown.name, [
               ...(usesExercises(shown.label)
                 ? [
-                    {
-                      label: going ? t('workout.resume') : t('workout.start'),
-                      run: () => (going ? router.push('/workout') : start(shown, routine.id)),
-                    },
+                    { label: t('workout.start'), run: () => start(shown, routine.id) },
                     {
                       label: t('today.preview'),
                       run: () => setPreviewing({ routine: shown, planned: routine }),
@@ -1327,7 +1368,6 @@ export function Today() {
   return (
     <View style={styles.today}>
       {header}
-      {active ? <ResumeBanner workout={active} /> : null}
       {missed ? (
         <MissedDay
           name={missed.routine.name}
@@ -1336,10 +1376,12 @@ export function Today() {
         />
       ) : null}
       {/* A done day has today's steps among its numbers. */}
-      {allDone ? null : <StepsCard today={today} />}
+      {showDone ? null : <StepsCard today={today} />}
 
       {/* With an event today there's always something to show. */}
-      {todayEvents.length === 0 && allRoutines.length === 0 && sports.length === 0 ? (
+      {active && goingElsewhere ? (
+        renderGoingHero(active)
+      ) : todayEvents.length === 0 && allRoutines.length === 0 && sports.length === 0 ? (
         <Card>
           <Text color="textMuted">{t('schedule.noRoutines')}</Text>
         </Card>
@@ -1347,7 +1389,7 @@ export function Today() {
         <Card>
           <Text color="textMuted">{t('today.noWeek')}</Text>
         </Card>
-      ) : allDone ? (
+      ) : showDone ? (
         <DayDone
           today={today}
           planned={{
@@ -1371,7 +1413,7 @@ export function Today() {
         />
       )}
 
-      {allDone ? (
+      {showDone ? (
         <>
           <CompletedList items={completed} onAdd={addActivity} />
           {tomorrow ? <TomorrowCard {...tomorrow} /> : null}

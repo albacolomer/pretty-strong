@@ -100,6 +100,13 @@ const lightGradients = {
     colors: ['#E8CB6E', '#C9A227', '#9C7A12', '#D8B652'],
     locations: [0, 0.4, 0.62, 1],
   },
+  // The big button while a workout is going: the metal's shape in deep
+  // steel, so "Reprèn" looks nothing like GO.
+  live: {
+    angle: 145,
+    colors: ['#4A7192', '#2E5573', '#1A3247', '#3B6283'],
+    locations: [0, 0.4, 0.62, 1],
+  },
   // A progress bar's filled part.
   bar: {
     angle: 90,
@@ -126,6 +133,7 @@ const darkGradients: Record<GradientName, Gradient> = {
   },
   metal: lightGradients.metal,
   gold: lightGradients.gold,
+  live: lightGradients.live,
   bar: {
     angle: 90,
     colors: ['#4A7192', '#A9C6DC', '#DCE8F1'],

@@ -849,15 +849,15 @@ describe('<Today />', () => {
     });
     await render(<Today />, { wrapper: createAppWrapper() });
 
-    // The banner: what's going and for how long, one tap back in.
-    expect(await screen.findByText('En curs · Tren superior 1')).toBeOnTheScreen();
-    const banner = screen.getByRole('button', {
+    // The big button itself: what's going and for how long, one tap back
+    // in. No GO, and nothing to swap or skip while it's going.
+    const resume = await screen.findByRole('button', {
       name: /^Reprèn «Tren superior 1», en curs des de fa 0:\d\d$/,
     });
-    expect(banner).toHaveTextContent(/0:\d\d/);
-    expect(screen.getByRole('button', { name: 'Comença «Tren superior 1»' })).toHaveTextContent(
-      /Reprèn/,
-    );
+    expect(resume).toHaveTextContent(/En curs.*0:\d\d.*Reprèn/);
+    expect(screen.queryByRole('button', { name: 'Comença «Tren superior 1»' })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Salta «Tren superior 1»' })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Canvia «Tren superior 1»' })).not.toBeOnTheScreen();
 
     sheetChoices.push('Una rutina');
     await user.press(screen.getByRole('button', { name: 'Registra una altra activitat' }));
@@ -865,8 +865,28 @@ describe('<Today />', () => {
     expect(screen.getByText('Ja tens un entrenament en marxa.')).toBeOnTheScreen();
     expect(router.push).not.toHaveBeenCalled();
 
-    await user.press(banner);
+    await user.press(resume);
     expect(router.push).toHaveBeenCalledWith('/workout');
+  });
+
+  test('a workout started from + has the big button, and the plan waits under "També avui"', async () => {
+    useWorkoutStore.setState({
+      active: workoutFromRoutine(legs, {
+        date: '2026-10-20',
+        plannedRoutineId: null,
+        changeReason: null,
+        startedAt: new Date().toISOString(),
+        newId: () => Math.random().toString(),
+        defaultRestS: () => 90,
+      }),
+    });
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(
+      await screen.findByRole('button', { name: /^Reprèn «Cames», en curs des de fa 0:\d\d$/ }),
+    ).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Comença «Tren superior 1»' })).not.toBeOnTheScreen();
+    expect(screen.getByText('Tren superior 1')).toBeOnTheScreen();
   });
 
   test('+ starts any routine, unplanned, or a new one', async () => {

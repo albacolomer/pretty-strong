@@ -654,7 +654,7 @@
     "start": "Empezar",
     "startFor": "Empezar «{{name}}»",
     "resume": "Reanudar",
-    "resumeBanner": "En curso · {{name}}",
+    "inProgress": "En curso",
     "resumeFor": "Reanudar «{{name}}», en curso desde hace {{time}}",
     "alreadyActive": "Ya tienes un entrenamiento en marcha.",
     "otherRoutine": "Hacer otra rutina",

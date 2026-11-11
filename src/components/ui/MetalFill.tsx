@@ -8,13 +8,13 @@ import { GradientView } from './GradientView';
 // light on its top edge (an inset shadow, which the gradient would cover if
 // it were on the button itself). It fills its parent, which gives the
 // shape and the drop shadow; put it before the content. Steel unless said
-// (gold on an event's day).
+// (gold on an event's day, deep steel while a workout is going).
 export function MetalFill({
   borderRadius,
   gradient = 'metal',
 }: {
   borderRadius: number;
-  gradient?: Extract<GradientName, 'metal' | 'gold'>;
+  gradient?: Extract<GradientName, 'metal' | 'gold' | 'live'>;
 }) {
   const { shadows } = useTheme();
 
