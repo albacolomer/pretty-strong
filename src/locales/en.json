@@ -536,6 +536,7 @@
     "saveError": "Couldn't save it. Try again.",
     "noRoutines": "You don't have any routines yet. Create one in Routines, then choose the days you do it.",
     "usualWeek": "Your usual week",
+    "stripDay": "{{day}}: {{plan}}. Go to it in the list",
     "workouts_one": "{{count}} workout",
     "workouts_other": "{{count}} workouts",
     "sports_one": "{{count}} sport",

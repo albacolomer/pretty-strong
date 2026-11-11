@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import type { ReactNode, Ref } from 'react';
+import { ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { inset, spacing, useTheme } from '@/theme';
@@ -13,6 +13,8 @@ export type ScreenProps = {
   // Centres the content vertically, e.g. for the sign-in screen.
   centered?: boolean;
   children?: ReactNode;
+  // The ScrollView, e.g. to scroll down to a day in Plan → Setmana.
+  ref?: Ref<ScrollViewInstance>;
 };
 
 // The ScrollView is the screen's root view on purpose: iOS then adds the
@@ -20,12 +22,13 @@ export type ScreenProps = {
 // scrolls it back to the top. (Those insets come on top of the content's
 // height, so content that grows to fill the screen would scroll by them:
 // only centred screens, which add the insets themselves, grow.)
-export function Screen({ title, action, centered = false, children }: ScreenProps) {
+export function Screen({ title, action, centered = false, children, ref }: ScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
     <ScrollView
+      ref={ref}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[
         styles.content,

@@ -536,6 +536,7 @@
     "saveError": "No s'ha pogut desar. Torna-ho a provar.",
     "noRoutines": "Encara no tens rutines. Crea'n una a Rutines i després tria els dies que la fas.",
     "usualWeek": "La teva setmana habitual",
+    "stripDay": "{{day}}: {{plan}}. Ves-hi a la llista",
     "workouts_one": "{{count}} entrenament",
     "workouts_other": "{{count}} entrenaments",
     "sports_one": "{{count}} esport",

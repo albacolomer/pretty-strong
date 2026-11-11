@@ -536,6 +536,7 @@
     "saveError": "No se ha podido guardar. Vuelve a intentarlo.",
     "noRoutines": "Todavía no tienes rutinas. Crea una en Rutinas y luego elige los días que la haces.",
     "usualWeek": "Tu semana habitual",
+    "stripDay": "{{day}}: {{plan}}. Ir a la lista",
     "workouts_one": "{{count}} entrenamiento",
     "workouts_other": "{{count}} entrenamientos",
     "sports_one": "{{count}} deporte",

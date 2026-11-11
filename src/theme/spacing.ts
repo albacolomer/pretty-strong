@@ -31,6 +31,8 @@ export const inset = {
 } as const;
 
 export const radius = {
+  // A line in the week strip, like a calendar's event.
+  small: 4,
   input: 12,
   card: 18,
   pill: 999,

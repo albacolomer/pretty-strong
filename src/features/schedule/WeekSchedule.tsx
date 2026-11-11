@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -27,6 +27,7 @@ import { SPORT_ICONS, type WeeklySport } from './sports';
 import { useActivityName } from './useActivityName';
 import { useToday } from './useToday';
 import { useAddToDay, useRemoveFromDay } from './useWeekSchedule';
+import { WeekStrip } from './WeekStrip';
 import {
   useAddSport,
   useRemoveSport,
@@ -40,10 +41,11 @@ function openRoutine(routine: Routine) {
   router.push({ pathname: '/plan/routines/[id]', params: { id: routine.id } });
 }
 
-// Plan → Setmana (US-09): your usual week, Monday to Sunday. Each day has
-// its routines and sports, in the order you drag them into; "+ Afegeix"
-// adds either. A day with neither is a rest day.
-export function WeekSchedule() {
+// Plan → Setmana (US-09): your usual week, Monday to Sunday. First the
+// whole week at a glance (WeekStrip); a tap on a day there scrolls down to
+// it. Then each day has its routines and sports, in the order you drag
+// them into; "+ Afegeix" adds either. A day with neither is a rest day.
+export function WeekSchedule({ onScrollTo }: { onScrollTo?: (y: number) => void }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showActionSheet = useActionSheet();
@@ -63,6 +65,10 @@ export function WeekSchedule() {
   const [sheet, setSheet] = useState<{ mode: ActivitySheetMode; visible: boolean; opened: number }>(
     { mode: { kind: 'add', day: 1 }, visible: false, opened: 0 },
   );
+  // Where the week and each day's card are, for a tap in the strip: the
+  // week within the screen's scroll, each day within the week.
+  const weekTop = useRef(0);
+  const dayTops = useRef<Partial<Record<Weekday, number>>>({});
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
@@ -119,7 +125,18 @@ export function WeekSchedule() {
   }
 
   return (
-    <GestureHandlerRootView style={styles.week}>
+    <GestureHandlerRootView
+      style={styles.week}
+      onLayout={(event) => {
+        weekTop.current = event.nativeEvent.layout.y;
+      }}>
+      <WeekStrip
+        routines={routines}
+        sports={sports}
+        today={today}
+        onDayPress={(day) => onScrollTo?.(weekTop.current + (dayTops.current[day] ?? 0))}
+      />
+
       <View>
         <Text variant="label" color="textMuted" accessibilityRole="header">
           {t('schedule.usualWeek')}
@@ -142,6 +159,9 @@ export function WeekSchedule() {
         return (
           <Card
             key={day}
+            onLayout={(event) => {
+              dayTops.current[day] = event.nativeEvent.layout.y;
+            }}
             style={[
               styles.day,
               rest && [styles.restDay, { borderColor: colors.control }],

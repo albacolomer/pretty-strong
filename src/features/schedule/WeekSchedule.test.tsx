@@ -131,6 +131,29 @@ describe('<WeekSchedule />', () => {
     expect(screen.getByText('Avui')).toBeOnTheScreen();
   });
 
+  test('the week strip: each day at a glance; a tap scrolls down to it in the list', async () => {
+    const user = userEvent.setup();
+    const onScrollTo = jest.fn();
+    await render(<WeekSchedule onScrollTo={onScrollTo} />, { wrapper: createAppWrapper() });
+
+    const monday = await screen.findByRole('button', {
+      name: 'Dilluns: Tren superior, Sèries, Pàdel. Ves-hi a la llista',
+    });
+    expect(
+      screen.getByRole('button', { name: 'Dimarts: Dia de descans. Ves-hi a la llista' }),
+    ).toBeOnTheScreen();
+
+    // Each day's card, as laid out in the list.
+    const cards = screen.getAllByRole('header', { name: /^(Dilluns|Dijous)$/ });
+    expect(cards).toHaveLength(2);
+    await user.press(
+      screen.getByRole('button', { name: 'Dijous: Tren superior, Bàsquet. Ves-hi a la llista' }),
+    );
+    await user.press(monday);
+    expect(onScrollTo).toHaveBeenCalledTimes(2);
+    expect(onScrollTo.mock.calls.every(([y]) => typeof y === 'number')).toBe(true);
+  });
+
   test('+ Afegeix a routine: only the ones not on that day, after what is there', async () => {
     const user = userEvent.setup();
     await render(<WeekSchedule />, { wrapper: createAppWrapper() });
