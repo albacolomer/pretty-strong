@@ -523,6 +523,61 @@ describe('<RoutineEditor />', () => {
     ]);
   });
 
+  test('a cardio machine measures only what it chooses: chips, + and ✕ with Desfés', async () => {
+    const user = userEvent.setup();
+    const treadmill = { ...testExercise('treadmill', 'Cinta'), trackingType: 'cardio_machine' as const };
+    jest.mocked(fetchRoutines).mockResolvedValue([
+      {
+        ...upperBody,
+        exercises: [
+          {
+            ...upperBody.exercises[0],
+            id: 're-treadmill',
+            exerciseId: 'treadmill',
+            exercise: treadmill,
+            sets: [{ ...NO_TARGETS, durationS: 1200 }],
+          },
+        ],
+      },
+    ]);
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    // Never chosen, nothing but a time planned: just the time.
+    expect(await screen.findByLabelText('min · Cinta, sèrie 1')).toHaveDisplayValue('20');
+    expect(screen.getByText('Temps')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('% pendent · Cinta, sèrie 1')).not.toBeOnTheScreen();
+    // The time always stays: no ✕ on it.
+    expect(screen.queryByRole('button', { name: 'Treu Temps de «Cinta»' })).not.toBeOnTheScreen();
+
+    // + → Inclinació: its column shows.
+    sheetChoices.push('Inclinació');
+    await user.press(screen.getByRole('button', { name: 'Afegeix una mesura a «Cinta»' }));
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual([
+      'Distància',
+      'Velocitat',
+      'Inclinació',
+      'Nivell',
+      'Cancel·la',
+    ]);
+    await user.type(screen.getByLabelText('% pendent · Cinta, sèrie 1'), '12');
+
+    // ✕ takes it off with its numbers; Desfés brings both back.
+    await user.press(screen.getByRole('button', { name: 'Treu Inclinació de «Cinta»' }));
+    expect(screen.queryByLabelText('% pendent · Cinta, sèrie 1')).not.toBeOnTheScreen();
+    await user.press(await screen.findByRole('button', { name: 'Desfés' }));
+    expect(screen.getByLabelText('% pendent · Cinta, sèrie 1')).toHaveDisplayValue('12');
+
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    const saved = mockSaveRoutine.mock.lastCall?.[0];
+    expect(saved?.exercises[0]).toMatchObject({ measures: ['duration', 'incline'] });
+    expect(saved?.exercises[0].sets[0]).toMatchObject({
+      target_duration_s: 1200,
+      target_incline_pct: 12,
+    });
+  });
+
   test('a run routine is made of blocks, each needing its distance or time', async () => {
     const user = userEvent.setup();
     const run = { ...testExercise('run', 'Córrer'), trackingType: 'run' as const };

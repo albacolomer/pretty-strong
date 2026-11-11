@@ -15,9 +15,11 @@ import {
   makeSuperset,
   removeExercise,
   removeSet,
+  restoreExercise,
   type RoutineDraft,
   setExerciseNotes,
   setLabel,
+  setMeasures,
   setPlannedDuration,
   setRepetitions,
   setRest,
@@ -63,6 +65,7 @@ const upperBody: Routine = {
       exercise: exercise('lat'),
       restS: 120,
       groupKey: null,
+      measures: null,
       notes: null,
       sets: Array(4).fill({ ...NO_TARGETS, reps: 10, weightKg: 42.5 }),
     },
@@ -73,6 +76,7 @@ const upperBody: Routine = {
       exercise: exercise('row'),
       restS: null,
       groupKey: null,
+      measures: null,
       notes: null,
       sets: Array(3).fill(NO_TARGETS),
     },
@@ -89,6 +93,27 @@ describe('validateRoutineDraft', () => {
       name: 'nameTooLong',
     });
     expect(validateRoutineDraft({ ...emptyRoutineDraft(), name: 'Cames' })).toEqual({});
+  });
+});
+
+describe('measures', () => {
+  test('taking one off clears its numbers; restoreExercise puts it back', () => {
+    const draft = addExercises(emptyRoutineDraft(), ['treadmill']);
+    const [item] = draft.exercises;
+    const typed = updateSetTargets(draft, item.key, item.sets[0].key, (targets) => ({
+      ...targets,
+      durationS: 600,
+      inclinePct: 12,
+    }));
+    const chosen = setMeasures(typed, item.key, ['duration', 'incline']);
+    expect(chosen.exercises[0].measures).toEqual(['duration', 'incline']);
+    expect(chosen.exercises[0].sets[0].targets.inclinePct).toBe(12);
+
+    const removed = setMeasures(chosen, item.key, ['duration'], 'incline');
+    expect(removed.exercises[0].measures).toEqual(['duration']);
+    expect(removed.exercises[0].sets[0].targets).toMatchObject({ durationS: 600, inclinePct: null });
+
+    expect(restoreExercise(removed, chosen.exercises[0]).exercises[0]).toEqual(chosen.exercises[0]);
   });
 });
 
@@ -119,9 +144,9 @@ describe('toSaveInput', () => {
       description: null,
       weekdays: [1, 4],
       exercises: [
-        { id: 're-1', exercise_id: 'lat', rest_s: 120, group_key: null, notes: null, sets: Array(4).fill(tenAt42) },
-        { id: 're-2', exercise_id: 'row', rest_s: null, group_key: null, notes: null, sets: Array(3).fill(noPlan) },
-        { exercise_id: 'curl', rest_s: null, group_key: null, notes: null, sets: [noPlan] },
+        { id: 're-1', exercise_id: 'lat', rest_s: 120, group_key: null, notes: null, measures: null, sets: Array(4).fill(tenAt42) },
+        { id: 're-2', exercise_id: 'row', rest_s: null, group_key: null, notes: null, measures: null, sets: Array(3).fill(noPlan) },
+        { exercise_id: 'curl', rest_s: null, group_key: null, notes: null, measures: null, sets: [noPlan] },
       ],
     });
   });

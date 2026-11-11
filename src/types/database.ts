@@ -291,6 +291,7 @@ export type Database = {
           exercise_id: string
           group_key: string | null
           id: string
+          measures: string[] | null
           notes: string | null
           position: number
           rest_s: number | null
@@ -301,6 +302,7 @@ export type Database = {
           exercise_id: string
           group_key?: string | null
           id?: string
+          measures?: string[] | null
           notes?: string | null
           position: number
           rest_s?: number | null
@@ -311,6 +313,7 @@ export type Database = {
           exercise_id?: string
           group_key?: string | null
           id?: string
+          measures?: string[] | null
           notes?: string | null
           position?: number
           rest_s?: number | null

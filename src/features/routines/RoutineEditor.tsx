@@ -58,8 +58,10 @@ import {
   makeSuperset,
   removeExercise,
   removeSet,
+  restoreExercise,
   setExerciseNotes,
   setLabel,
+  setMeasures,
   setPlannedDuration,
   setRepetitions,
   setRest,
@@ -71,6 +73,7 @@ import {
   type DraftExercise,
   type RoutineDraftErrors,
 } from './routineDraft';
+import { measureUsed, type Measure } from './targets';
 import { useArchiveRoutineWithUndo, useDeleteRoutineWithUndo } from './useArchiveRoutine';
 import { useRoutines, useSaveRoutine } from './useRoutines';
 import { WeekdayPicker } from './WeekdayPicker';
@@ -142,6 +145,22 @@ function RoutineForm({ routine, onSaved, onRemoved }: RoutineFormProps) {
   // In each card's ⋯ menu; reordering only makes sense with two or more.
   const openReorder = draft.exercises.length > 1 ? () => setReorderOpen(true) : undefined;
 
+  // A measure taken off takes its numbers with it: "Desfés" brings both
+  // back. With no numbers to lose, + puts it back just as well.
+  function changeMeasures(item: DraftExercise, measures: Measure[], removed: Measure | null) {
+    setDraft((current) => setMeasures(current, item.key, measures, removed));
+    if (!removed || !measureUsed(removed, item.sets.map((set) => set.targets))) return;
+    showToast({
+      message: t('routines.measures.removed', {
+        measure: t(`routines.measures.names.${removed}`),
+      }),
+      action: {
+        label: t('common.undo'),
+        onPress: () => setDraft((current) => restoreExercise(current, item)),
+      },
+    });
+  }
+
   function renderCard(item: DraftExercise, group: GroupKind | null) {
     // Any exercise outside this one's own group.
     const supersetOptions = draft.exercises
@@ -168,6 +187,7 @@ function RoutineForm({ routine, onSaved, onRemoved }: RoutineFormProps) {
         onSetTargetsChange={(setKey, update) =>
           setDraft((current) => updateSetTargets(current, item.key, setKey, update))
         }
+        onMeasuresChange={(measures, removed) => changeMeasures(item, measures, removed)}
         onRestChange={(restS) => setDraft((current) => setRest(current, item.key, restS))}
         onNotesChange={(notes) => setDraft((current) => setExerciseNotes(current, item.key, notes))}
         onMakeSuperset={(otherKey) =>

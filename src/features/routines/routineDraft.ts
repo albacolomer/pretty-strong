@@ -7,6 +7,7 @@ import {
   runBlockKind,
   type RunBlockKind,
 } from './runBlocks';
+import { withoutMeasure, type Measure } from './targets';
 import {
   DEFAULT_PLANNED_DURATION_S,
   NO_TARGETS,
@@ -42,6 +43,9 @@ export type DraftExercise = {
   notes: string;
   // At least one, in order.
   sets: DraftSet[];
+  // What a cardio machine or a carry measures: null until chosen with its
+  // chips (see measuresOf).
+  measures: Measure[] | null;
   // In a run routine: the kind of block it was added as. Null: it follows
   // from its numbers (see runBlockKind), as for blocks loaded from the
   // database.
@@ -100,6 +104,7 @@ export function draftFromRoutine(routine: Routine): RoutineDraft {
       groupKey: exercise.groupKey,
       notes: exercise.notes ?? '',
       sets: exercise.sets.map((targets) => newSet(targets)),
+      measures: exercise.measures,
       runBlock: null,
     })),
   };
@@ -155,6 +160,7 @@ export function toSaveInput(draft: RoutineDraft, routineId: string | null): Save
       rest_s: exercise.restS,
       group_key: exercise.groupKey,
       notes: emptyAsNull(exercise.notes),
+      measures: exercise.measures,
       sets: exercise.sets.map(({ targets }) => ({
         target_weight_kg: targets.weightKg,
         target_reps: targets.reps,
@@ -223,6 +229,7 @@ export function addRunBlock(
         groupKey: null,
         notes: '',
         sets: Array.from({ length: intervals ? DEFAULT_INTERVALS : 1 }, () => newSet()),
+        measures: null,
         runBlock: kind,
       },
     ],
@@ -286,6 +293,7 @@ export function addExercises(draft: RoutineDraft, exerciseIds: readonly string[]
         groupKey: null,
         notes: '',
         sets: [newSet()],
+        measures: null,
         runBlock: null,
       })),
     ],
@@ -335,6 +343,29 @@ export function updateSetTargets(
       set.key === setKey ? { ...set, targets: update(set.targets) } : set,
     ),
   }));
+}
+
+// The chips over a cardio machine's or a carry's sets: what it measures
+// now. A measure taken off takes its numbers with it, so none are kept
+// out of sight (the editor offers "Desfés").
+export function setMeasures(
+  draft: RoutineDraft,
+  key: string,
+  measures: Measure[],
+  removed: Measure | null = null,
+): RoutineDraft {
+  return updateExercise(draft, key, (exercise) => ({
+    ...exercise,
+    measures,
+    sets: removed
+      ? exercise.sets.map((set) => ({ ...set, targets: withoutMeasure(set.targets, removed) }))
+      : exercise.sets,
+  }));
+}
+
+// Puts one exercise back as it was, e.g. for "Desfés".
+export function restoreExercise(draft: RoutineDraft, previous: DraftExercise): RoutineDraft {
+  return updateExercise(draft, previous.key, () => previous);
 }
 
 // Rest; in a superset or circuit, the rest after each round of the group.

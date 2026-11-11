@@ -461,6 +461,21 @@
       "roundsValue_other": "{{count}} rondes",
       "rest": "Descans entre rondes"
     },
+    "measures": {
+      "title": "Mesures",
+      "addFor": "Afegeix una mesura a «{{name}}»",
+      "pickTitle": "Què vols mesurar?",
+      "removeFor": "Treu {{measure}} de «{{name}}»",
+      "removed": "S'ha tret: {{measure}}",
+      "names": {
+        "weight": "Pes",
+        "distance": "Distància",
+        "duration": "Temps",
+        "speed": "Velocitat",
+        "incline": "Inclinació",
+        "level": "Nivell"
+      }
+    },
     "targets": {
       "hint": "Els números de cada exercici són per al primer entrenament d'aquesta rutina; després, cada sèrie comença amb el que vas fer l'últim cop.",
       "inputs": {

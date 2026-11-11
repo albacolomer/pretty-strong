@@ -461,6 +461,21 @@
       "roundsValue_other": "{{count}} rondas",
       "rest": "Descanso entre rondas"
     },
+    "measures": {
+      "title": "Medidas",
+      "addFor": "Añadir una medida a «{{name}}»",
+      "pickTitle": "¿Qué quieres medir?",
+      "removeFor": "Quitar {{measure}} de «{{name}}»",
+      "removed": "Se ha quitado: {{measure}}",
+      "names": {
+        "weight": "Peso",
+        "distance": "Distancia",
+        "duration": "Tiempo",
+        "speed": "Velocidad",
+        "incline": "Inclinación",
+        "level": "Nivel"
+      }
+    },
     "targets": {
       "hint": "Los números de cada ejercicio son para el primer entrenamiento de esta rutina; después, cada serie empieza con lo que hiciste la última vez.",
       "inputs": {

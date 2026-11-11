@@ -1,5 +1,16 @@
-import { NO_TARGETS } from './routine';
-import { formatInput, inputValue, parseInput, TARGET_INPUTS, withInput } from './targets';
+import { NO_TARGETS, type ExerciseTargets } from './routine';
+import {
+  formatInput,
+  inputValue,
+  measuresOf,
+  measuresToAdd,
+  parseInput,
+  readMeasures,
+  routineInputs,
+  TARGET_INPUTS,
+  withInput,
+  withoutMeasure,
+} from './targets';
 
 describe('TARGET_INPUTS', () => {
   test('each tracking type plans the numbers it logs', () => {
@@ -57,5 +68,64 @@ describe('withInput and inputValue', () => {
     targets = withInput(targets, 'minutes', null);
     expect(targets.durationS).toBe(30);
     expect(withInput(targets, 'seconds', null).durationS).toBeNull();
+  });
+});
+
+describe('measures (cardio machines and carries)', () => {
+  const plan = (targets: Partial<ExerciseTargets>): ExerciseTargets => ({ ...NO_TARGETS, ...targets });
+
+  test('a new one has its defaults; one saved before keeps what its plan uses', () => {
+    expect(measuresOf('cardio_machine', null, [NO_TARGETS])).toEqual(['duration']);
+    expect(measuresOf('weight_distance', null, [NO_TARGETS])).toEqual(['weight', 'distance']);
+    // A stairmaster planned at level 8: time and level.
+    expect(measuresOf('cardio_machine', null, [plan({ durationS: 600, level: 8 })])).toEqual([
+      'duration',
+      'level',
+    ]);
+  });
+
+  test('once chosen, just those, in order, and always the one that stays', () => {
+    expect(measuresOf('cardio_machine', ['level', 'incline'], [plan({ speedKmh: 5 })])).toEqual([
+      'duration',
+      'incline',
+      'level',
+    ]);
+    // A sled push with no weight: just the distance.
+    expect(measuresOf('weight_distance', [], [])).toEqual(['distance']);
+    expect(measuresOf('weight_reps', null, [])).toEqual([]);
+  });
+
+  test('+ offers the rest', () => {
+    expect(measuresToAdd('cardio_machine', ['duration', 'level'])).toEqual([
+      'distance',
+      'speed',
+      'incline',
+    ]);
+    expect(measuresToAdd('weight_distance', ['weight', 'distance'])).toEqual(['duration']);
+  });
+
+  test('the fields: time is minutes and seconds; other types keep all theirs', () => {
+    expect(routineInputs('cardio_machine', ['duration', 'incline'], [])).toEqual([
+      'minutes',
+      'seconds',
+      'inclinePct',
+    ]);
+    expect(routineInputs('weight_distance', ['distance', 'duration'], [])).toEqual([
+      'distanceM',
+      'minutes',
+      'seconds',
+    ]);
+    expect(routineInputs('weight_reps', ['duration'], [])).toEqual(TARGET_INPUTS.weight_reps);
+  });
+
+  test('taking one off clears its numbers', () => {
+    const stairs = plan({ durationS: 600, inclinePct: 12, level: 8 });
+    expect(withoutMeasure(stairs, 'incline')).toEqual({ ...stairs, inclinePct: null });
+    expect(withoutMeasure(stairs, 'duration')).toEqual({ ...stairs, durationS: null });
+  });
+
+  test('saved text: unknown ones are dropped', () => {
+    expect(readMeasures(null)).toBeNull();
+    expect(readMeasures(['duration', 'rowing_strokes', 'level'])).toEqual(['duration', 'level']);
   });
 });

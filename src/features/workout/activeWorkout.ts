@@ -2,6 +2,7 @@ import type { Exercise } from '@/features/exercises/exercise';
 import { moveWithinGroups, withoutLoneGroups } from '@/features/routines/grouping';
 import { NO_TARGETS, type ExerciseTargets, type Routine } from '@/features/routines/routine';
 import { runBlockKind, type RunBlockKind } from '@/features/routines/runBlocks';
+import { MEASURE_CHOICES, measuresOf, type Measure } from '@/features/routines/targets';
 
 import type { NextSet, RestTimer } from './restTimer';
 import {
@@ -68,8 +69,11 @@ export type ActiveExercise = {
   // A block of a run routine (US-19): its kind and the routine's plan for
   // it, for its title ("Sèries · 6 × 400 m"). Null for anything else.
   runBlock: { kind: RunBlockKind; plan: SetNumbers[] } | null;
-  // A cardio machine shows only the fields in use, until all are asked
-  // for (see workoutInputs).
+  // What a cardio machine or a carry measures, as the routine chose it
+  // (fixed when the workout starts). Null when it isn't from the routine.
+  measures: Measure[] | null;
+  // A cardio machine or a carry shows only the fields in use, until all
+  // are asked for (see workoutInputs).
   allFields: boolean;
 };
 
@@ -147,6 +151,9 @@ export function workoutFromRoutine(routine: Routine, options: StartOptions): Act
         replaced: null,
         changeReason: null,
         runBlock,
+        measures: MEASURE_CHOICES[item.exercise.trackingType]
+          ? measuresOf(item.exercise.trackingType, item.measures, item.sets)
+          : null,
         allFields: false,
       };
     }),
@@ -367,6 +374,7 @@ export function addExercises(
         replaced: null,
         changeReason: null,
         runBlock: null,
+        measures: null,
         allFields: false,
       })),
     ],
@@ -431,6 +439,7 @@ export function swapExercise(
       replaced: added ? null : (exercise.replaced ?? exercise.exercise),
       changeReason: added ? null : reason,
       runBlock: null,
+      measures: null,
       allFields: false,
     };
   });
@@ -626,6 +635,7 @@ export function upgradeWorkout<T extends ActiveWorkout>(saved: T): T {
         replaced: exercise.replaced ?? null,
         changeReason: exercise.changeReason ?? null,
         runBlock: exercise.runBlock ?? null,
+        measures: exercise.measures ?? null,
         allFields: exercise.allFields ?? false,
         sets: exercise.sets.map((set) => ({
           ...set,

@@ -37,6 +37,7 @@ export const upperBody: Routine = {
       exercise: testExercise(`exercise-${index + 1}`, ca),
       restS: null,
       groupKey: null,
+      measures: null,
       notes: null,
       // Three sets, no plan yet.
       sets: [NO_TARGETS, NO_TARGETS, NO_TARGETS],
@@ -60,6 +61,7 @@ export const sundayRun: Routine = {
       exercise: runExercise,
       restS: null,
       groupKey: null,
+      measures: null,
       notes: null,
       sets: [{ ...NO_TARGETS, distanceM: 1000 }],
     },
@@ -69,6 +71,7 @@ export const sundayRun: Routine = {
       exercise: runExercise,
       restS: 90,
       groupKey: null,
+      measures: null,
       notes: null,
       sets: [
         { ...NO_TARGETS, distanceM: 400 },

@@ -1,5 +1,7 @@
 import type { Exercise } from '@/features/exercises/exercise';
 
+import type { Measure } from './targets';
+
 // Routine types (spec: "Routine types"), matching routines_label_check in
 // the routine_types_plan_and_week migration. Each is also the last part of
 // its translation key: routines.labels.<label>.
@@ -73,6 +75,9 @@ export type RoutineExercise = {
   notes: string | null;
   // One plan per set, in order (routine_sets); at least one.
   sets: ExerciseTargets[];
+  // What a cardio machine or a carry measures here (see measuresOf). Null:
+  // not chosen yet, so its defaults and whatever its plan uses.
+  measures: Measure[] | null;
 };
 
 export type Routine = {

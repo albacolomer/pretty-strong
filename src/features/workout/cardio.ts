@@ -1,5 +1,12 @@
 import { RUN_BLOCK_INPUTS } from '@/features/routines/runBlocks';
-import { TARGET_INPUTS, inputValue, type TargetInput } from '@/features/routines/targets';
+import {
+  MEASURE_CHOICES,
+  TARGET_INPUTS,
+  inputValue,
+  measureInputs,
+  routineInputs,
+  type TargetInput,
+} from '@/features/routines/targets';
 
 import type { ActiveExercise, SetNumbers } from './activeWorkout';
 
@@ -29,16 +36,21 @@ export function formatPace(secondsPerKm: number): string {
 const CARDIO_EXTRAS: readonly TargetInput[] = ['distanceM', 'speedKmh', 'inclinePct', 'level'];
 
 // The fields an exercise's rows show. Run intervals are in metres, other
-// runs in km; both log the time too, for the pace. A cardio machine shows
-// its time and the fields its plan or last time use (a stairmaster: time
-// and level), or all of them with nothing to go on, or once asked for
-// (allFields).
+// runs in km; both log the time too, for the pace. A cardio machine or a
+// carry from the routine shows what the routine measures; once asked for
+// (allFields), everything. Added during the workout, a cardio machine
+// shows its time and the fields its last time used (a stairmaster: time
+// and level), or all of them with nothing to go on; a carry, its weight
+// and distance (and time, if last time had one).
 export function workoutInputs(exercise: ActiveExercise): readonly TargetInput[] {
   if (exercise.runBlock?.kind === 'intervals') return RUN_BLOCK_INPUTS.intervals;
-  const all = TARGET_INPUTS[exercise.exercise.trackingType];
-  if (exercise.exercise.trackingType !== 'cardio_machine' || exercise.allFields) return all;
+  const { trackingType } = exercise.exercise;
+  const all = TARGET_INPUTS[trackingType];
+  if (!MEASURE_CHOICES[trackingType] || exercise.allFields) return all;
+  if (exercise.measures) return measureInputs(exercise.measures);
   // Not what's typed: a field would vanish while it's being cleared.
   const known = [...exercise.sets.map((set) => set.planned), ...(exercise.previous ?? [])];
+  if (trackingType !== 'cardio_machine') return routineInputs(trackingType, null, known);
   const used = (input: TargetInput) => known.some((numbers) => inputValue(numbers, input) !== null);
   if (!all.some(used)) return all;
   return all.filter((input) => !CARDIO_EXTRAS.includes(input) || used(input));

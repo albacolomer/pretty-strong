@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase';
 import type { Database } from '@/types/database';
 
 import { WEEKDAYS, type Routine, type RoutineLabel, type Weekday } from './routine';
+import { readMeasures, type Measure } from './targets';
 
 const ROUTINE_SET_COLUMNS =
   'position, target_weight_kg, target_reps, target_duration_s, target_distance_m, target_speed_kmh, target_incline_pct, target_level';
@@ -11,7 +12,7 @@ function selectRoutines() {
   return supabase
     .from('routines')
     .select(
-      `id, name, label, custom_label, planned_duration_s, notes, description, weekly_schedule(weekday, position), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}, deleted_at))`,
+      `id, name, label, custom_label, planned_duration_s, notes, description, weekly_schedule(weekday, position), routine_exercises(id, exercise_id, position, rest_s, group_key, notes, measures, routine_sets(${ROUTINE_SET_COLUMNS}), exercise:exercises(${EXERCISE_COLUMNS}, deleted_at))`,
     )
     .order('position', { referencedTable: 'routine_exercises' });
 }
@@ -95,6 +96,7 @@ function toRoutine(row: RoutineRow): Routine {
         restS: item.rest_s,
         groupKey: item.group_key,
         notes: item.notes,
+        measures: readMeasures(item.measures),
         sets: [...item.routine_sets]
           .sort((a, b) => a.position - b.position)
           .map((set) => ({
@@ -118,6 +120,8 @@ export type SaveRoutineExercise = {
   rest_s: number | null;
   group_key: string | null;
   notes: string | null;
+  // Null: not chosen (see Routine's measures).
+  measures: Measure[] | null;
   // At least one, in order.
   sets: SaveRoutineSet[];
 };

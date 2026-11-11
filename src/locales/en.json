@@ -461,6 +461,21 @@
       "roundsValue_other": "{{count}} rounds",
       "rest": "Rest between rounds"
     },
+    "measures": {
+      "title": "Measures",
+      "addFor": "Add a measure to “{{name}}”",
+      "pickTitle": "What do you want to measure?",
+      "removeFor": "Remove {{measure}} from “{{name}}”",
+      "removed": "Removed: {{measure}}",
+      "names": {
+        "weight": "Weight",
+        "distance": "Distance",
+        "duration": "Time",
+        "speed": "Speed",
+        "incline": "Incline",
+        "level": "Level"
+      }
+    },
     "targets": {
       "hint": "Each exercise's numbers are for this routine's first workout; after that, every set starts from what you did last time.",
       "inputs": {

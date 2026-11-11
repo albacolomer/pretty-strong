@@ -25,7 +25,8 @@ export const TARGET_INPUTS: Record<TrackingType, readonly TargetInput[]> = {
   weight_reps: ['reps', 'weightKg'],
   bodyweight_reps: ['reps', 'weightKg'],
   duration: ['minutes', 'seconds'],
-  weight_distance: ['weightKg', 'distanceM'],
+  // Time only when chosen (see MEASURE_CHOICES).
+  weight_distance: ['weightKg', 'distanceM', 'minutes', 'seconds'],
   cardio_machine: ['minutes', 'seconds', 'distanceM', 'speedKmh', 'inclinePct', 'level'],
   run: ['distanceKm', 'minutes', 'seconds'],
 };
@@ -128,4 +129,99 @@ export function withInput(
     case 'level':
       return { ...targets, level: value };
   }
+}
+
+// What a cardio machine or a carry measures, chosen per exercise in a
+// routine (stored in routine_exercises.measures): only those columns show,
+// in the editor and in the workout. Time is two fields, minutes and seconds.
+export const MEASURES = ['weight', 'distance', 'duration', 'speed', 'incline', 'level'] as const;
+export type Measure = (typeof MEASURES)[number];
+
+const MEASURE_INPUTS: Record<Measure, readonly TargetInput[]> = {
+  weight: ['weightKg'],
+  distance: ['distanceM'],
+  duration: ['minutes', 'seconds'],
+  speed: ['speedKmh'],
+  incline: ['inclinePct'],
+  level: ['level'],
+};
+
+type MeasureChoice = {
+  // Every measure it can have, in the order they show.
+  all: readonly Measure[];
+  // The one that always stays: something has to be measured.
+  fixed: Measure;
+  // What a new one starts with.
+  defaults: readonly Measure[];
+};
+
+// The tracking types whose measures are chosen; the others always show
+// all of theirs (TARGET_INPUTS).
+export const MEASURE_CHOICES: Partial<Record<TrackingType, MeasureChoice>> = {
+  cardio_machine: {
+    all: ['duration', 'distance', 'speed', 'incline', 'level'],
+    fixed: 'duration',
+    defaults: ['duration'],
+  },
+  weight_distance: {
+    all: ['weight', 'distance', 'duration'],
+    fixed: 'distance',
+    defaults: ['weight', 'distance'],
+  },
+};
+
+// Whether any of these plans or sets has a number for it.
+export function measureUsed(measure: Measure, known: readonly ExerciseTargets[]): boolean {
+  return known.some((targets) =>
+    MEASURE_INPUTS[measure].some((input) => inputValue(targets, input) !== null),
+  );
+}
+
+// An exercise's measures, in order and with the fixed one: as chosen, or
+// (none chosen yet, as for routines saved before) its defaults and any its
+// plan already has numbers for. Empty for a type that doesn't choose.
+export function measuresOf(
+  trackingType: TrackingType,
+  chosen: readonly Measure[] | null,
+  known: readonly ExerciseTargets[],
+): Measure[] {
+  const choice = MEASURE_CHOICES[trackingType];
+  if (!choice) return [];
+  return choice.all.filter((measure) => {
+    if (measure === choice.fixed) return true;
+    if (chosen) return chosen.includes(measure);
+    return choice.defaults.includes(measure) || measureUsed(measure, known);
+  });
+}
+
+// The ones still to add with "+".
+export function measuresToAdd(trackingType: TrackingType, shown: readonly Measure[]): Measure[] {
+  return (MEASURE_CHOICES[trackingType]?.all ?? []).filter((measure) => !shown.includes(measure));
+}
+
+export function measureInputs(measures: readonly Measure[]): TargetInput[] {
+  return measures.flatMap((measure) => MEASURE_INPUTS[measure]);
+}
+
+// The fields an exercise in a routine shows.
+export function routineInputs(
+  trackingType: TrackingType,
+  chosen: readonly Measure[] | null,
+  known: readonly ExerciseTargets[],
+): readonly TargetInput[] {
+  return MEASURE_CHOICES[trackingType]
+    ? measureInputs(measuresOf(trackingType, chosen, known))
+    : TARGET_INPUTS[trackingType];
+}
+
+// A plan without that measure's numbers, once it's taken off.
+export function withoutMeasure(targets: ExerciseTargets, measure: Measure): ExerciseTargets {
+  return MEASURE_INPUTS[measure].reduce((next, input) => withInput(next, input, null), targets);
+}
+
+// Saved text → measures; anything unknown is dropped.
+export function readMeasures(saved: readonly string[] | null): Measure[] | null {
+  return saved === null
+    ? null
+    : saved.filter((item): item is Measure => (MEASURES as readonly string[]).includes(item));
 }

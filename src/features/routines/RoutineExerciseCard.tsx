@@ -11,11 +11,12 @@ import { useAppLanguage } from '@/lib/i18n';
 import { spacing, touch, useTheme } from '@/theme';
 
 import { AddNoteButton, ExerciseNoteInput } from './ExerciseNoteField';
+import { MeasureChips } from './MeasureChips';
 import { RestField } from './RestField';
 import type { DraftExercise } from './routineDraft';
 import { SetTable } from './SetTable';
 import type { TargetsUpdate } from './TargetFields';
-import { TARGET_INPUTS } from './targets';
+import { MEASURE_CHOICES, measureInputs, measuresOf, TARGET_INPUTS, type Measure } from './targets';
 
 export type GroupKind = 'superset' | 'circuit';
 
@@ -33,6 +34,8 @@ type RoutineExerciseCardProps = {
   onAddSet: () => void;
   onRemoveSet: (setKey: string) => void;
   onSetTargetsChange: (setKey: string, update: TargetsUpdate) => void;
+  // A measure added or taken off (a cardio machine's or a carry's chips).
+  onMeasuresChange: (measures: Measure[], removed: Measure | null) => void;
   onRestChange: (restS: number | null) => void;
   onNotesChange: (notes: string) => void;
   onMakeSuperset: (otherKey: string) => void;
@@ -40,8 +43,9 @@ type RoutineExerciseCardProps = {
   onRemove: () => void;
 };
 
-// One exercise in the routine editor: picture, name and ⋯; its sets, each
-// with its first-time plan; then rest and "+ Nota" on one line. The picture and
+// One exercise in the routine editor: picture, name and ⋯; for a cardio
+// machine or a carry, what it measures; its sets, each with its first-time
+// plan; then rest and "+ Nota" on one line. The picture and
 // name open the exercise's page; the page opens on top, so the editor stays as
 // it is. The ⋯ menu holds that too, and everything else: reorder, supersets,
 // the exercise's own rest, remove.
@@ -55,6 +59,7 @@ export function RoutineExerciseCard({
   onAddSet,
   onRemoveSet,
   onSetTargetsChange,
+  onMeasuresChange,
   onRestChange,
   onNotesChange,
   onMakeSuperset,
@@ -66,6 +71,15 @@ export function RoutineExerciseCard({
   const showActionSheet = useActionSheet();
   const language = useAppLanguage();
   const name = exercise ? exerciseName(exercise, language) : '…';
+  // A cardio machine or a carry: only the measures chosen.
+  const choosesMeasures = exercise ? MEASURE_CHOICES[exercise.trackingType] !== undefined : false;
+  const measures = exercise
+    ? measuresOf(
+        exercise.trackingType,
+        item.measures,
+        item.sets.map((set) => set.targets),
+      )
+    : [];
   // The note shows once asked for with "+ Nota", or straight away if set.
   const [notesOpen, setNotesOpen] = useState(item.notes !== '');
 
@@ -143,9 +157,20 @@ export function RoutineExerciseCard({
         <MenuButton label={t('exercises.menu.label', { name })} onPress={openMenu} />
       </View>
 
+      {exercise && choosesMeasures ? (
+        <MeasureChips
+          trackingType={exercise.trackingType}
+          measures={measures}
+          exerciseName={name}
+          onChange={onMeasuresChange}
+        />
+      ) : null}
+
       {exercise ? (
         <SetTable
-          inputs={TARGET_INPUTS[exercise.trackingType]}
+          inputs={
+            choosesMeasures ? measureInputs(measures) : TARGET_INPUTS[exercise.trackingType]
+          }
           sets={item.sets}
           exerciseName={name}
           onChange={onSetTargetsChange}

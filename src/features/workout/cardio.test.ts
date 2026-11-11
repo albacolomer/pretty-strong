@@ -123,8 +123,29 @@ describe('cardio machines (US-19)', () => {
     expect(afterSet(workout, stairs.sets[1].id).restS).toBe(60);
   });
 
-  test('show the time and the fields in use, or all of them', () => {
+  test('from the routine: what it measures, fixed when the workout starts', () => {
     const [stairs] = start(finisher).exercises;
+    // Never chosen: the time, and the level its plan has.
+    expect(stairs.measures).toEqual(['duration', 'level']);
+    expect(workoutInputs(stairs)).toEqual(['minutes', 'seconds', 'level']);
+    // Last time's speed and incline don't add columns: the routine says.
+    const previous = [{ ...NO_TARGETS, durationS: 600, speedKmh: 5, inclinePct: 12 }];
+    expect(workoutInputs({ ...stairs, previous })).toEqual(['minutes', 'seconds', 'level']);
+
+    // Chosen in the routine: just those.
+    const chosen = {
+      ...finisher,
+      exercises: finisher.exercises.map((item) => ({
+        ...item,
+        measures: ['duration' as const, 'incline' as const],
+      })),
+    };
+    expect(workoutInputs(start(chosen).exercises[0])).toEqual(['minutes', 'seconds', 'inclinePct']);
+  });
+
+  test('added during the workout: the time and the fields in use, or all of them', () => {
+    const [fromRoutine] = start(finisher).exercises;
+    const stairs = { ...fromRoutine, measures: null };
     expect(workoutInputs(stairs)).toEqual(['minutes', 'seconds', 'level']);
 
     // Last time also had speed and incline: those show too, in order.

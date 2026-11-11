@@ -60,6 +60,7 @@ export function draftFromPast(past: PastWorkout): ActiveWorkout {
       replaced: exercise.replaced,
       changeReason: exercise.changeReason,
       runBlock: null,
+      measures: null,
       allFields: true,
     })),
   };
