@@ -466,6 +466,7 @@
       "addFor": "Afegeix una mesura a «{{name}}»",
       "pickTitle": "Què vols mesurar?",
       "removeFor": "Treu {{measure}} de «{{name}}»",
+      "changeFor": "Canvia {{measure}} de «{{name}}»",
       "removed": "S'ha tret: {{measure}}",
       "names": {
         "weight": "Pes",

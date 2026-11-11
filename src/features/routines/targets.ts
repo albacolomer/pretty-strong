@@ -147,10 +147,9 @@ const MEASURE_INPUTS: Record<Measure, readonly TargetInput[]> = {
 };
 
 type MeasureChoice = {
-  // Every measure it can have, in the order they show.
+  // Every measure it can have, in the order they show. Any of them can go,
+  // as long as one is left: something has to be measured.
   all: readonly Measure[];
-  // The one that always stays: something has to be measured.
-  fixed: Measure;
   // What a new one starts with.
   defaults: readonly Measure[];
 };
@@ -160,12 +159,10 @@ type MeasureChoice = {
 export const MEASURE_CHOICES: Partial<Record<TrackingType, MeasureChoice>> = {
   cardio_machine: {
     all: ['duration', 'distance', 'speed', 'incline', 'level'],
-    fixed: 'duration',
     defaults: ['duration'],
   },
   weight_distance: {
     all: ['weight', 'distance', 'duration'],
-    fixed: 'distance',
     defaults: ['weight', 'distance'],
   },
 };
@@ -177,9 +174,10 @@ export function measureUsed(measure: Measure, known: readonly ExerciseTargets[])
   );
 }
 
-// An exercise's measures, in order and with the fixed one: as chosen, or
-// (none chosen yet, as for routines saved before) its defaults and any its
-// plan already has numbers for. Empty for a type that doesn't choose.
+// An exercise's measures, in order: as chosen, or (none chosen yet, as for
+// routines saved before) its defaults and any its plan already has numbers
+// for. Never none: an empty choice counts as not chosen. Empty for a type
+// that doesn't choose.
 export function measuresOf(
   trackingType: TrackingType,
   chosen: readonly Measure[] | null,
@@ -187,11 +185,12 @@ export function measuresOf(
 ): Measure[] {
   const choice = MEASURE_CHOICES[trackingType];
   if (!choice) return [];
-  return choice.all.filter((measure) => {
-    if (measure === choice.fixed) return true;
-    if (chosen) return chosen.includes(measure);
-    return choice.defaults.includes(measure) || measureUsed(measure, known);
-  });
+  const picked = chosen && chosen.length > 0 ? chosen : null;
+  return choice.all.filter((measure) =>
+    picked
+      ? picked.includes(measure)
+      : choice.defaults.includes(measure) || measureUsed(measure, known),
+  );
 }
 
 // The ones still to add with "+".

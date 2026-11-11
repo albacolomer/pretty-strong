@@ -20,18 +20,20 @@ type MeasureChipsProps = {
   onChange: (measures: Measure[], removed: Measure | null) => void;
 };
 
-// Over a cardio machine's or a carry's sets: "MESURES [Temps] [Nivell ✕]
-// [+]". Only these columns show. The ✕ takes one off (not the one that
-// always stays, e.g. Temps); + lists the rest in a menu.
+// Over a cardio machine's or a carry's sets: "MESURES [Temps ✕] [Nivell ✕]
+// [+]". Only these columns show. The ✕ takes one off; the last one left
+// has a ▾ instead and swaps for another (Temps → Distància), since
+// something has to be measured. + lists the rest in a menu.
 export function MeasureChips({ trackingType, measures, exerciseName, onChange }: MeasureChipsProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showActionSheet = useActionSheet();
-  const fixed = MEASURE_CHOICES[trackingType]?.fixed;
   const toAdd = measuresToAdd(trackingType, measures);
+  const only = measures.length === 1 ? measures[0] : null;
   const nameOf = (measure: Measure) => t(`routines.measures.names.${measure}`);
 
-  function add() {
+  // The others, in a menu; `pick` gets the one chosen.
+  function choose(pick: (measure: Measure) => void) {
     showActionSheet(
       {
         title: t('routines.measures.pickTitle'),
@@ -40,10 +42,14 @@ export function MeasureChips({ trackingType, measures, exerciseName, onChange }:
       },
       (index) => {
         const measure = toAdd[index];
-        if (measure) onChange([...measures, measure], null);
+        if (measure) pick(measure);
       },
     );
   }
+
+  // In the order they show.
+  const ordered = (list: Measure[]) =>
+    (MEASURE_CHOICES[trackingType]?.all ?? []).filter((measure) => list.includes(measure));
 
   return (
     <View style={styles.row}>
@@ -51,12 +57,27 @@ export function MeasureChips({ trackingType, measures, exerciseName, onChange }:
         {t('routines.measures.title')}
       </Text>
       {measures.map((measure) =>
-        measure === fixed ? (
-          <View key={measure} style={[styles.chip, { backgroundColor: colors.accentSoft }]}>
+        measure === only ? (
+          <Pressable
+            key={measure}
+            role="button"
+            aria-label={t('routines.measures.changeFor', {
+              measure: nameOf(measure),
+              name: exerciseName,
+            })}
+            hitSlop={HIT_SLOP}
+            disabled={toAdd.length === 0}
+            onPress={() => choose((other) => onChange([other], measure))}
+            style={({ pressed }) => [
+              styles.chip,
+              { backgroundColor: colors.accentSoft },
+              pressed && styles.pressed,
+            ]}>
             <Text variant="captionMedium" color="accent">
               {nameOf(measure)}
             </Text>
-          </View>
+            <SymbolView name="chevron.down" size={10} weight="semibold" tintColor={colors.accent} />
+          </Pressable>
         ) : (
           <Pressable
             key={measure}
@@ -89,7 +110,7 @@ export function MeasureChips({ trackingType, measures, exerciseName, onChange }:
           role="button"
           aria-label={t('routines.measures.addFor', { name: exerciseName })}
           hitSlop={HIT_SLOP}
-          onPress={add}
+          onPress={() => choose((measure) => onChange(ordered([...measures, measure]), null))}
           style={({ pressed }) => [
             styles.chip,
             styles.add,

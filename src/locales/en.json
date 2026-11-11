@@ -466,6 +466,7 @@
       "addFor": "Add a measure to “{{name}}”",
       "pickTitle": "What do you want to measure?",
       "removeFor": "Remove {{measure}} from “{{name}}”",
+      "changeFor": "Change {{measure}} on “{{name}}”",
       "removed": "Removed: {{measure}}",
       "names": {
         "weight": "Weight",

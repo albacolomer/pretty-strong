@@ -84,14 +84,15 @@ describe('measures (cardio machines and carries)', () => {
     ]);
   });
 
-  test('once chosen, just those, in order, and always the one that stays', () => {
+  test('once chosen, just those, in order; none chosen counts as not chosen', () => {
     expect(measuresOf('cardio_machine', ['level', 'incline'], [plan({ speedKmh: 5 })])).toEqual([
-      'duration',
       'incline',
       'level',
     ]);
-    // A sled push with no weight: just the distance.
-    expect(measuresOf('weight_distance', [], [])).toEqual(['distance']);
+    // A rower by distance only; a sled push with no weight.
+    expect(measuresOf('cardio_machine', ['distance'], [])).toEqual(['distance']);
+    expect(measuresOf('weight_distance', ['distance'], [])).toEqual(['distance']);
+    expect(measuresOf('weight_distance', [], [])).toEqual(['weight', 'distance']);
     expect(measuresOf('weight_reps', null, [])).toEqual([]);
   });
 

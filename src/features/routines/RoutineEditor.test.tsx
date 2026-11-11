@@ -523,7 +523,7 @@ describe('<RoutineEditor />', () => {
     ]);
   });
 
-  test('a cardio machine measures only what it chooses: chips, + and ✕ with Desfés', async () => {
+  test('a cardio machine measures only what it chooses: chips, +, ✕ with Desfés, and a swap', async () => {
     const user = userEvent.setup();
     const treadmill = { ...testExercise('treadmill', 'Cinta'), trackingType: 'cardio_machine' as const };
     jest.mocked(fetchRoutines).mockResolvedValue([
@@ -548,8 +548,9 @@ describe('<RoutineEditor />', () => {
     expect(await screen.findByLabelText('min · Cinta, sèrie 1')).toHaveDisplayValue('20');
     expect(screen.getByText('Temps')).toBeOnTheScreen();
     expect(screen.queryByLabelText('% pendent · Cinta, sèrie 1')).not.toBeOnTheScreen();
-    // The time always stays: no ✕ on it.
+    // The only one left can't go, but it can be swapped for another.
     expect(screen.queryByRole('button', { name: 'Treu Temps de «Cinta»' })).not.toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Canvia Temps de «Cinta»' })).toBeOnTheScreen();
 
     // + → Inclinació: its column shows.
     sheetChoices.push('Inclinació');
@@ -569,12 +570,50 @@ describe('<RoutineEditor />', () => {
     await user.press(await screen.findByRole('button', { name: 'Desfés' }));
     expect(screen.getByLabelText('% pendent · Cinta, sèrie 1')).toHaveDisplayValue('12');
 
+    // With two, the time can go too: just the incline is left.
+    await user.press(screen.getByRole('button', { name: 'Treu Temps de «Cinta»' }));
+    expect(screen.queryByLabelText('min · Cinta, sèrie 1')).not.toBeOnTheScreen();
+
     await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
     const saved = mockSaveRoutine.mock.lastCall?.[0];
-    expect(saved?.exercises[0]).toMatchObject({ measures: ['duration', 'incline'] });
+    expect(saved?.exercises[0]).toMatchObject({ measures: ['incline'] });
     expect(saved?.exercises[0].sets[0]).toMatchObject({
-      target_duration_s: 1200,
+      target_duration_s: null,
       target_incline_pct: 12,
+    });
+  });
+
+  test('a carry measured by distance only: the last measure swaps for another', async () => {
+    const user = userEvent.setup();
+    const sled = { ...testExercise('sled', 'Trineu'), trackingType: 'weight_distance' as const };
+    jest.mocked(fetchRoutines).mockResolvedValue([
+      {
+        ...upperBody,
+        exercises: [
+          {
+            ...upperBody.exercises[0],
+            id: 're-sled',
+            exerciseId: 'sled',
+            exercise: sled,
+            sets: [NO_TARGETS],
+            measures: ['weight'],
+          },
+        ],
+      },
+    ]);
+    await render(<RoutineEditor routineId="routine-1" onSaved={jest.fn()} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    sheetChoices.push('Distància');
+    await user.press(await screen.findByRole('button', { name: 'Canvia Pes de «Trineu»' }));
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual(['Distància', 'Temps', 'Cancel·la']);
+    expect(screen.getByLabelText('metres · Trineu, sèrie 1')).toBeOnTheScreen();
+    expect(screen.queryByLabelText('kg · Trineu, sèrie 1')).not.toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    expect(mockSaveRoutine.mock.lastCall?.[0].exercises[0]).toMatchObject({
+      measures: ['distance'],
     });
   });
 
