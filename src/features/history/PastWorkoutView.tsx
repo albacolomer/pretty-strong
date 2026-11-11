@@ -1,14 +1,23 @@
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Button, Card, GradientText, MenuButton, Text, useActionSheet } from '@/components/ui';
+import {
+  Button,
+  Card,
+  GradientText,
+  GradientView,
+  MenuButton,
+  SectionHeader,
+  Text,
+  useActionSheet,
+} from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { formatDuration } from '@/features/routines/routine';
 import { formatDayTitle, fromDateKey } from '@/features/schedule/dates';
-import { feelingMood } from '@/features/workout/session';
+import { FEELING_MAX, feelingMood, type Feeling } from '@/features/workout/session';
 import { useAppLanguage } from '@/lib/i18n';
-import { spacing, useTheme } from '@/theme';
+import { inset, radius, spacing, useTheme } from '@/theme';
 
 import { formatInput } from '@/features/routines/targets';
 
@@ -104,25 +113,69 @@ function Details({
 
       {stats.length > 0 ? <Text variant="bodyStrong">{stats.join(' · ')}</Text> : null}
       {workout.feeling !== null || workout.notes ? (
-        <Card>
-          {workout.feeling !== null ? (
-            <Text>
-              {t('history.feeling', {
-                value: workout.feeling,
-                mood: t(`workout.summary.moods.${feelingMood(workout.feeling)}`),
-              })}
-            </Text>
-          ) : null}
-          {workout.notes ? <Text color="textMuted">{workout.notes}</Text> : null}
-        </Card>
+        <WrapUp feeling={workout.feeling} notes={workout.notes} />
       ) : null}
 
       {workout.exercises.length === 0 ? (
         <Text color="textMuted">{t('history.noExercises')}</Text>
       ) : (
-        workout.exercises.map((exercise) => <ExerciseCard key={exercise.id} exercise={exercise} />)
+        <View style={styles.exercises}>
+          <SectionHeader title={t('workout.summary.exercises')} />
+          {workout.exercises.map((exercise) => (
+            <ExerciseCard key={exercise.id} exercise={exercise} />
+          ))}
+        </View>
       )}
       <Button label={t('history.edit')} onPress={onEdit} />
+    </View>
+  );
+}
+
+// How it went, in its own tinted panel (not a white card like the
+// exercises): "COM ET VAS SENTIR?" with the number big, its word and a bar
+// out of 10, then the note as a quote.
+function WrapUp({ feeling, notes }: { feeling: Feeling | null; notes: string | null }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const mood = feeling === null ? null : t(`workout.summary.moods.${feelingMood(feeling)}`);
+
+  return (
+    <View style={[styles.wrapUp, { backgroundColor: colors.accentSoft }]}>
+      {feeling !== null ? (
+        <View
+          accessible
+          aria-label={t('history.feelingLabel', { value: feeling, mood })}
+          style={styles.feeling}>
+          <Text variant="label" color="textMuted">
+            {t('history.feeling')}
+          </Text>
+          <View style={styles.readout}>
+            <GradientText variant="figure">{String(feeling)}</GradientText>
+            <Text variant="caption" color="textMuted" style={styles.outOf}>
+              / {FEELING_MAX}
+            </Text>
+            <Text variant="bodyStrong" color="accent" style={styles.mood}>
+              {mood}
+            </Text>
+          </View>
+          <View style={[styles.rail, { backgroundColor: colors.track }]}>
+            <GradientView
+              gradient="bar"
+              style={[styles.fill, { width: `${(feeling / FEELING_MAX) * 100}%` }]}
+            />
+          </View>
+        </View>
+      ) : null}
+      {notes ? (
+        <View style={styles.note}>
+          <Text variant="label" color="textMuted">
+            {t('history.note')}
+          </Text>
+          <View style={[styles.quote, { borderLeftColor: colors.accent }]}>
+            <Text color="textSecondary">{notes}</Text>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -225,5 +278,45 @@ const styles = StyleSheet.create({
   setNumber: {
     width: 28,
     textAlign: 'center',
+  },
+  exercises: {
+    gap: spacing.sm,
+  },
+  // Flat and tinted, so it doesn't read as one more exercise.
+  wrapUp: {
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
+    paddingHorizontal: inset.cardX,
+    paddingVertical: inset.cardY,
+    gap: spacing.lg,
+  },
+  feeling: {
+    gap: spacing.xs,
+  },
+  readout: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  outOf: {
+    marginLeft: spacing.xs,
+  },
+  mood: {
+    marginLeft: spacing.md,
+  },
+  rail: {
+    height: 6,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+  },
+  fill: {
+    height: '100%',
+    borderRadius: radius.pill,
+  },
+  note: {
+    gap: spacing.xs,
+  },
+  quote: {
+    borderLeftWidth: 3,
+    paddingLeft: spacing.md,
   },
 });

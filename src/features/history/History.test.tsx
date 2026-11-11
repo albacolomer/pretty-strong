@@ -507,7 +507,7 @@ describe('History', () => {
     expect(await screen.findByRole('header', { name: 'Tren superior 1' })).toBeOnTheScreen();
     expect(screen.getByText('Dimarts, 20 d’octubre')).toBeOnTheScreen();
     expect(screen.getByText('1 h · 1 exercici · 1 sèrie · 400 kg')).toBeOnTheScreen();
-    expect(screen.getByText("Com t'has sentit: 4/10 · Regular")).toBeOnTheScreen();
+    expect(screen.getByLabelText('Com et vas sentir: 4 de 10, Regular')).toBeOnTheScreen();
     expect(screen.getByText('Molt bé')).toBeOnTheScreen();
     expect(screen.getByText('40 kg × 10')).toBeOnTheScreen();
     expect(screen.getByText('@8')).toBeOnTheScreen();
