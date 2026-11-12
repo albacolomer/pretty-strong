@@ -13,6 +13,8 @@ export type ScreenProps = {
   action?: ReactNode;
   // Centres the content vertically, e.g. for the sign-in screen.
   centered?: boolean;
+  // False keeps it from scrolling, e.g. while something is dragged sideways.
+  scrollEnabled?: boolean;
   children?: ReactNode;
   // The ScrollView, e.g. to scroll down to a day in Plan → Setmana, or to
   // scroll by itself while something is dragged to its edge.
@@ -25,13 +27,21 @@ export type ScreenProps = {
 // scrolls it back to the top. (Those insets come on top of the content's
 // height, so content that grows to fill the screen would scroll by them:
 // only centred screens, which add the insets themselves, grow.)
-export function Screen({ title, action, centered = false, children, ref }: ScreenProps) {
+export function Screen({
+  title,
+  action,
+  centered = false,
+  scrollEnabled = true,
+  children,
+  ref,
+}: ScreenProps) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
 
   return (
     <Animated.ScrollView
       ref={ref}
+      scrollEnabled={scrollEnabled}
       style={{ backgroundColor: colors.background }}
       contentContainerStyle={[
         styles.content,

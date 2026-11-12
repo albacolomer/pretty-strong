@@ -4,8 +4,12 @@ import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import type Animated from 'react-native-reanimated';
-import type { AnimatedRef } from 'react-native-reanimated';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  type AnimatedRef,
+  type SharedValue,
+} from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 
 import { Card, Text, useActionSheet, useToast } from '@/components/ui';
@@ -54,8 +58,11 @@ function openRoutine(routine: Routine) {
 export function WeekSchedule({
   onScrollTo,
   scrollableRef,
+  onDragChange,
 }: {
   onScrollTo?: (y: number) => void;
+  // A line in the strip lifted or let go: the screen keeps still meanwhile.
+  onDragChange?: (dragging: boolean) => void;
   // The screen's ScrollView, which scrolls by itself while a row is
   // dragged to its edge.
   scrollableRef?: AnimatedRef<Animated.ScrollView>;
@@ -78,7 +85,8 @@ export function WeekSchedule({
   const moveSport = useMoveSport();
   // The row being dragged in the list, and the day card it's over.
   const dragging = useRef<{ activity: DayActivity; day: Weekday } | null>(null);
-  const [overDay, setOverDay] = useState<Weekday | null>(null);
+  // On the UI thread, so marking it re-renders nothing mid-drag. 0: none.
+  const overDay = useSharedValue<number>(0);
   // The add/edit sheet: what it's for, whether it's showing, and a count
   // that gives each opening a fresh start.
   const [sheet, setSheet] = useState<{ mode: ActivitySheetMode; visible: boolean; opened: number }>(
@@ -216,7 +224,10 @@ export function WeekSchedule({
       style={styles.week}
       onLayout={(event) => {
         const { y, height } = event.nativeEvent.layout;
-        setWeek({ y, height });
+        // Only when it changes: no re-render mid-drag for nothing.
+        setWeek((current) =>
+          current.y === y && current.height === height ? current : { y, height },
+        );
       }}>
       <View>
         <Text variant="label" color="textMuted" accessibilityRole="header">
@@ -239,6 +250,7 @@ export function WeekSchedule({
         today={today}
         onDayPress={(day) => onScrollTo?.(week.y + (dayBoxes[day]?.y ?? 0))}
         onMove={move}
+        onDragChange={onDragChange}
       />
 
       {/* The week at a glance above, day by day below. */}
@@ -258,15 +270,21 @@ export function WeekSchedule({
               key={day}
               onLayout={(event) => {
                 const { y, height } = event.nativeEvent.layout;
-                setDayBoxes((current) => ({ ...current, [day]: { y, height } }));
+                setDayBoxes((current) =>
+                  current[day]?.y === y && current[day]?.height === height
+                    ? current
+                    : { ...current, [day]: { y, height } },
+                );
               }}
               // Not its own day: nothing would move.
               onItemEnter={() => {
-                if (dragging.current?.day !== day) setOverDay(day);
+                if (dragging.current?.day !== day) overDay.set(day);
               }}
-              onItemLeave={() => setOverDay((current) => (current === day ? null : current))}
+              onItemLeave={() => {
+                if (overDay.get() === day) overDay.set(0);
+              }}
               onItemDrop={() => {
-                setOverDay(null);
+                overDay.set(0);
                 const dragged = dragging.current;
                 dragging.current = null;
                 if (dragged && dragged.day !== day) move(dragged.activity, dragged.day, day);
@@ -275,9 +293,8 @@ export function WeekSchedule({
                 style={[
                   styles.day,
                   rest && [styles.restDay, { borderColor: colors.control }],
-                  // The card a dragged row would land on.
-                  overDay === day && [styles.dropTarget, { borderColor: colors.accent }],
                 ]}>
+                <DropRing day={day} over={overDay} />
                 <View style={styles.dayHeader}>
                   <Text variant="label" color="textMuted" accessibilityRole="header">
                     {dayName}
@@ -383,6 +400,18 @@ export function WeekSchedule({
         }}
       />
     </GestureHandlerRootView>
+  );
+}
+
+// The ring on the day card a dragged row is over.
+function DropRing({ day, over }: { day: Weekday; over: SharedValue<number> }) {
+  const { colors } = useTheme();
+  const style = useAnimatedStyle(() => ({ opacity: over.get() === day ? 1 : 0 }));
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.dropRing, { borderColor: colors.accent }, style]}
+    />
   );
 }
 
@@ -495,8 +524,17 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginVertical: spacing.sm,
   },
-  dropTarget: {
-    borderWidth: 1.5,
+  // Around the card a dragged row would land on; it takes no room, so
+  // nothing below it moves.
+  dropRing: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderWidth: 2,
+    borderRadius: radius.card,
+    borderCurve: 'continuous',
   },
   day: {
     gap: spacing.xs,

@@ -15,6 +15,8 @@ export default function PlanScreen() {
   const { t } = useTranslation();
   const [section, setSection] = useState<Section>('routines');
   const scroll = useAnimatedRef<Animated.ScrollView>();
+  // While a line in the week strip is dragged, the screen keeps still.
+  const [dragging, setDragging] = useState(false);
   const insets = useSafeAreaInsets();
 
   const sections = [
@@ -24,7 +26,7 @@ export default function PlanScreen() {
   ] as const;
 
   return (
-    <Screen title={t('tabs.plan')} ref={scroll}>
+    <Screen title={t('tabs.plan')} ref={scroll} scrollEnabled={!dragging}>
       <SegmentedControl
         label={t('tabs.plan')}
         options={sections}
@@ -36,6 +38,7 @@ export default function PlanScreen() {
       {section === 'week' ? (
         <WeekSchedule
           scrollableRef={scroll}
+          onDragChange={setDragging}
           // A day tapped in the week strip: its card just under the status bar.
           onScrollTo={(y) =>
             scroll.current?.scrollTo({ y: y - insets.top - spacing.lg, animated: true })
