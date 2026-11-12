@@ -84,10 +84,13 @@ export function WeekSchedule({
   const [sheet, setSheet] = useState<{ mode: ActivitySheetMode; visible: boolean; opened: number }>(
     { mode: { kind: 'add', day: 1 }, visible: false, opened: 0 },
   );
-  // Where the week and each day's card are, for a tap in the strip: the
-  // week within the screen's scroll, each day within the week.
-  const weekTop = useRef(0);
-  const dayTops = useRef<Partial<Record<Weekday, number>>>({});
+  // Where the week and each day's card are: the week within the screen's
+  // scroll, each day within the week. For a tap in the strip, and for how
+  // far a dragged row may scroll the screen.
+  const [week, setWeek] = useState({ y: 0, height: 0 });
+  const [dayBoxes, setDayBoxes] = useState<Partial<Record<Weekday, { y: number; height: number }>>>(
+    {},
+  );
 
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
@@ -124,6 +127,14 @@ export function WeekSchedule({
         action: { label: t('common.undo'), onPress: () => addSport.mutate(sport) },
       });
     }
+  }
+
+  // How far past a day's own rows the screen may scroll while one is
+  // dragged: up to the top of the screen, down to the end of the week.
+  function dragReach(day: Weekday): [number, number] {
+    const box = dayBoxes[day];
+    if (!box) return [0, 0];
+    return [week.y + box.y + touch.min, Math.max(week.height - box.y - box.height, 0)];
   }
 
   // To another day, at the end of it, with "Desfés" back to where it was.
@@ -204,7 +215,8 @@ export function WeekSchedule({
     <GestureHandlerRootView
       style={styles.week}
       onLayout={(event) => {
-        weekTop.current = event.nativeEvent.layout.y;
+        const { y, height } = event.nativeEvent.layout;
+        setWeek({ y, height });
       }}>
       <View>
         <Text variant="label" color="textMuted" accessibilityRole="header">
@@ -225,7 +237,7 @@ export function WeekSchedule({
         routines={routines}
         sports={sports}
         today={today}
-        onDayPress={(day) => onScrollTo?.(weekTop.current + (dayTops.current[day] ?? 0))}
+        onDayPress={(day) => onScrollTo?.(week.y + (dayBoxes[day]?.y ?? 0))}
         onMove={move}
       />
 
@@ -245,7 +257,8 @@ export function WeekSchedule({
             <Sortable.BaseZone
               key={day}
               onLayout={(event) => {
-                dayTops.current[day] = event.nativeEvent.layout.y;
+                const { y, height } = event.nativeEvent.layout;
+                setDayBoxes((current) => ({ ...current, [day]: { y, height } }));
               }}
               // Not its own day: nothing would move.
               onItemEnter={() => {
@@ -327,6 +340,10 @@ export function WeekSchedule({
                     // Only the handle starts a drag, so scrolling never moves anything.
                     customHandle
                     scrollableRef={scrollableRef}
+                    // A row dragged to the screen's edge scrolls it, as far as
+                    // the week goes (by default only a little past its own
+                    // day), so Monday's can reach Friday.
+                    autoScrollMaxOverscroll={dragReach(day)}
                     rowGap={0}
                   />
                 )}
