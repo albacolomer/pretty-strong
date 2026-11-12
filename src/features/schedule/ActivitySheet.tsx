@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { NumberInput, SegmentedControl, Sheet, Text, TextField } from '@/components/ui';
+import { Button, NumberInput, SegmentedControl, Sheet, Text, TextField } from '@/components/ui';
 import type { Routine, Weekday } from '@/features/routines/routine';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { readMinutes } from '@/features/workout/session';
@@ -34,12 +34,15 @@ type ActivitySheetProps = {
   anyRoutines: boolean;
   onClose: () => void;
   onAddRoutine: (routine: Routine, day: Weekday) => void;
+  // "+ Crea una rutina nova": the editor, with that day already chosen.
+  onCreateRoutine: (day: Weekday) => void;
   // A new sport (id made here), or the one edited with its new time.
   onSaveSport: (sport: WeeklySport) => void;
 };
 
-// Pla → Setmana → "+ Afegeix" (US-09): a routine, or a sport with an
-// optional time and duration, for that day. Also changes a planned
+// Pla → Setmana → "+ Afegeix" (US-09): a routine (or a new one, made in
+// the editor with that day chosen), or a sport with an optional time and
+// duration, for that day. Also changes a planned
 // sport's time and duration. Give it a new key for each opening, so it
 // starts afresh.
 export function ActivitySheet({
@@ -49,6 +52,7 @@ export function ActivitySheet({
   anyRoutines,
   onClose,
   onAddRoutine,
+  onCreateRoutine,
   onSaveSport,
 }: ActivitySheetProps) {
   const { t } = useTranslation();
@@ -125,24 +129,33 @@ export function ActivitySheet({
       )}
 
       {tab === 'routine' ? (
-        routines.length === 0 ? (
-          <Text color="textMuted">
-            {anyRoutines ? t('schedule.noRoutinesLeft') : t('schedule.noRoutines')}
-          </Text>
-        ) : (
-          <View role="radiogroup" aria-label={t('schedule.routine')} style={styles.list}>
-            {routines.map((item) => (
-              <IconChoice
-                key={item.id}
-                icon={ROUTINE_ICONS[item.label]}
-                label={item.name}
-                selected={item.id === routineId}
-                onPress={() => setRoutineId(item.id)}
-                wide
-              />
-            ))}
-          </View>
-        )
+        <>
+          {routines.length === 0 ? (
+            <Text color="textMuted">
+              {anyRoutines ? t('schedule.noRoutinesLeft') : t('schedule.noRoutinesYet')}
+            </Text>
+          ) : (
+            <View role="radiogroup" aria-label={t('schedule.routine')} style={styles.list}>
+              {routines.map((item) => (
+                <IconChoice
+                  key={item.id}
+                  icon={ROUTINE_ICONS[item.label]}
+                  label={item.name}
+                  selected={item.id === routineId}
+                  onPress={() => setRoutineId(item.id)}
+                  wide
+                />
+              ))}
+            </View>
+          )}
+          <Button
+            label={t('workout.newRoutine')}
+            aria-label={t('schedule.newRoutineFor', { day: dayName })}
+            icon="plus"
+            variant="ghost"
+            onPress={() => onCreateRoutine(day)}
+          />
+        </>
       ) : (
         <>
           {editing ? null : (

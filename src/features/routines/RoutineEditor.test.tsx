@@ -155,6 +155,18 @@ describe('<RoutineEditor />', () => {
     expect(onSaved).toHaveBeenCalled();
   });
 
+  test('a new routine from Setmana starts on that day, and untouched asks nothing on leaving', async () => {
+    const user = userEvent.setup();
+    await render(<RoutineEditor routineId={null} onSaved={jest.fn()} initialWeekdays={[2]} />, {
+      wrapper: createAppWrapper(),
+    });
+
+    expect(guardsUnsavedChanges()).toBe(false);
+    await user.type(screen.getByLabelText('Nom'), 'Core');
+    await user.press(screen.getByRole('button', { name: 'Desa la rutina' }));
+    expect(mockSaveRoutine.mock.lastCall?.[0]).toMatchObject({ name: 'Core', weekdays: [2] });
+  });
+
   test('leaving with unsaved changes asks once; Descarta leaves with the guard off', async () => {
     const user = userEvent.setup();
     await render(<RoutineEditor routineId={null} onSaved={jest.fn()} />, {

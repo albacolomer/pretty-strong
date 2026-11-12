@@ -343,6 +343,10 @@ export function WeekSchedule({
         routines={routines.filter((routine) => !routine.weekdays.includes(sheetDay))}
         anyRoutines={routines.length > 0}
         onClose={() => setSheet((current) => ({ ...current, visible: false }))}
+        onCreateRoutine={(day) => {
+          setSheet((current) => ({ ...current, visible: false }));
+          router.push({ pathname: '/plan/routines/new', params: { weekday: String(day) } });
+        }}
         onAddRoutine={(routine, day) =>
           addToDay.mutate({
             routineId: routine.id,

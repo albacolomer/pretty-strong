@@ -34,6 +34,7 @@ import {
   usesPlannedDuration,
   type Routine,
   type RoutineLabel,
+  type Weekday,
 } from './routine';
 import { ExerciseGroup } from './ExerciseGroup';
 import { PlannedDurationField } from './PlannedDurationField';
@@ -83,6 +84,8 @@ type RoutineEditorProps = {
   routineId: string | null;
   // With the routine's id, new or not.
   onSaved: (routineId: string) => void;
+  // A new routine already planned on these days (from Setmana's "+").
+  initialWeekdays?: Weekday[];
   // Given for a saved routine: offers "Arxiva la rutina" and "Esborra la
   // rutina", then leaves.
   onRemoved?: () => void;
@@ -90,12 +93,19 @@ type RoutineEditorProps = {
 
 // Create or edit a routine (US-07, US-10). Waits for the routine to load,
 // then edits a draft that is only saved with "Desa la rutina".
-export function RoutineEditor({ routineId, onSaved, onRemoved }: RoutineEditorProps) {
+export function RoutineEditor({
+  routineId,
+  onSaved,
+  onRemoved,
+  initialWeekdays,
+}: RoutineEditorProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { data: routines, isPending } = useRoutines();
 
-  if (routineId === null) return <RoutineForm routine={null} onSaved={onSaved} />;
+  if (routineId === null) {
+    return <RoutineForm routine={null} onSaved={onSaved} initialWeekdays={initialWeekdays} />;
+  }
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   const routine = routines?.find((r) => r.id === routineId);
   if (!routine) return <Text color="textMuted">{t('routines.editor.notFound')}</Text>;
@@ -104,7 +114,7 @@ export function RoutineEditor({ routineId, onSaved, onRemoved }: RoutineEditorPr
 
 type RoutineFormProps = Omit<RoutineEditorProps, 'routineId'> & { routine: Routine | null };
 
-function RoutineForm({ routine, onSaved, onRemoved }: RoutineFormProps) {
+function RoutineForm({ routine, onSaved, onRemoved, initialWeekdays }: RoutineFormProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const showActionSheet = useActionSheet();
@@ -114,7 +124,12 @@ function RoutineForm({ routine, onSaved, onRemoved }: RoutineFormProps) {
   const archiveRoutine = useArchiveRoutineWithUndo();
   const deleteRoutine = useDeleteRoutineWithUndo();
   // What's saved now; the draft is compared with it to spot changes.
-  const [saved] = useState(() => (routine ? draftFromRoutine(routine) : emptyRoutineDraft()));
+  // A new one already on its days counts as unchanged: leaving asks nothing.
+  const [saved] = useState(() =>
+    routine
+      ? draftFromRoutine(routine)
+      : { ...emptyRoutineDraft(), weekdays: initialWeekdays ?? [] },
+  );
   const [draft, setDraft] = useState(saved);
   const [errors, setErrors] = useState<RoutineDraftErrors>({});
   // Set once leaving is decided (saved, archived or discarded), so the

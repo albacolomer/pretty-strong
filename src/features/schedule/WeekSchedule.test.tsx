@@ -224,6 +224,18 @@ describe('<WeekSchedule />', () => {
     expect(await screen.findByText('Dilluns ja té «Tren superior»')).toBeOnTheScreen();
   });
 
+  test('+ Afegeix → "Crea una rutina nova": the editor, with that day chosen', async () => {
+    const user = userEvent.setup();
+    await render(<WeekSchedule />, { wrapper: createAppWrapper() });
+
+    await user.press(await screen.findByRole('button', { name: 'Dimarts: afegeix una activitat' }));
+    await user.press(screen.getByRole('button', { name: 'Crea una rutina nova per al Dimarts' }));
+    expect(router.push).toHaveBeenCalledWith({
+      pathname: '/plan/routines/new',
+      params: { weekday: '2' },
+    });
+  });
+
   test('+ Afegeix a routine: only the ones not on that day, after what is there', async () => {
     const user = userEvent.setup();
     await render(<WeekSchedule />, { wrapper: createAppWrapper() });
