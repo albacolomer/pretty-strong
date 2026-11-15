@@ -44,8 +44,8 @@ export type StripDay = {
 type WeekStripProps = {
   // Monday to Sunday.
   days: StripDay[];
-  // Whether a line can be dragged (in a dated week, only routines from
-  // today on); all of them by default.
+  // Whether a line can be dragged (in the week being planned, only
+  // routines); all of them by default.
   canDrag?: (activity: DayActivity, day: Weekday) => boolean;
   onDayPress: (day: Weekday) => void;
   // A line dropped on another day.

@@ -11,8 +11,6 @@ import { upperBody } from '@/features/routines/testData';
 import { drop, startDrag } from '@/test-utils/sortablesMock';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 
-import { fetchSessions } from '@/features/workout/api';
-
 import { addToDay, moveToDay, removeFromDay } from './api';
 import { fetchMoves, replaceMoves } from './movesApi';
 import type { WeeklySport } from './sports';
@@ -41,7 +39,6 @@ jest.mock('./movesApi', () => ({
   fetchMoves: jest.fn(),
   replaceMoves: jest.fn(() => Promise.resolve()),
 }));
-jest.mock('@/features/workout/api', () => ({ fetchSessions: jest.fn() }));
 // Wednesday 21 October 2026.
 jest.mock('./useToday', () => ({ useToday: () => new Date(2026, 9, 21) }));
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
@@ -105,7 +102,6 @@ beforeEach(() => {
   jest.mocked(reorderDay).mockClear();
   jest.mocked(fetchMoves).mockReset().mockResolvedValue([]);
   jest.mocked(replaceMoves).mockClear();
-  jest.mocked(fetchSessions).mockReset().mockResolvedValue([]);
   sheetChoices.length = 0;
   actionSheet = jest
     .spyOn(menus, 'show')
@@ -117,7 +113,7 @@ beforeEach(() => {
 afterEach(() => actionSheet.mockRestore());
 
 const rows = () =>
-  screen.getAllByRole('button', { name: /^Opcions de/ }).map((row) => row.props.accessibilityLabel);
+  screen.getAllByRole('button', { name: /^Opcions de «/ }).map((row) => row.props.accessibilityLabel);
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<WeekSchedule />', () => {
@@ -238,7 +234,8 @@ describe('<WeekSchedule />', () => {
     const user = userEvent.setup();
     await render(<WeekSchedule />, { wrapper: createAppWrapper() });
 
-    await user.press(await screen.findByRole('radio', { name: 'La que ve' }));
+    sheetChoices.push('Planifica la setmana que ve');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de la setmana' }));
     expect(screen.getByRole('header', { name: /^La setmana que ve · / })).toBeOnTheScreen();
     expect(fetchMoves).toHaveBeenLastCalledWith('2026-10-26', '2026-11-01');
     expect(screen.getByRole('header', { name: 'Dilluns 26' })).toBeOnTheScreen();
@@ -262,42 +259,6 @@ describe('<WeekSchedule />', () => {
     expect(moveToDay).not.toHaveBeenCalled();
   });
 
-  test('this week: gone days and done routines stay put', async () => {
-    const user = userEvent.setup();
-    jest.mocked(fetchSessions).mockResolvedValue([
-      {
-        id: 'done',
-        date: '2026-10-22',
-        plannedRoutineId: 'upper',
-        routineId: 'upper',
-        status: 'completed',
-        logMode: 'live',
-        durationS: 3600,
-        startedAt: null,
-        notes: null,
-        changeReason: null,
-        plannedSportId: null,
-        sport: null,
-        sportName: null,
-        plannedEventId: null,
-        eventKind: null,
-        eventName: null,
-      },
-    ]);
-    await render(<WeekSchedule />, { wrapper: createAppWrapper() });
-    await user.press(await screen.findByRole('radio', { name: 'Aquesta' }));
-
-    // Monday has gone: only to look at.
-    sheetChoices.push('');
-    await user.press(screen.getByRole('button', { name: 'Opcions de «Sèries», Dilluns 19' }));
-    expect(actionSheet.mock.lastCall?.[0].options).toEqual(['Obre la rutina', 'Cancel·la']);
-    // Thursday's Tren superior is done already.
-    await waitFor(() => expect(fetchSessions).toHaveBeenCalledWith('2026-10-19', '2026-10-25'));
-    sheetChoices.push('');
-    await user.press(screen.getByRole('button', { name: 'Opcions de «Tren superior», Dijous 22' }));
-    expect(actionSheet.mock.lastCall?.[0].options).toEqual(['Obre la rutina', 'Cancel·la']);
-  });
-
   test('a week\'s changes are counted, and "Torna a l\'habitual" undoes them all', async () => {
     const user = userEvent.setup();
     jest
@@ -306,7 +267,8 @@ describe('<WeekSchedule />', () => {
         { routineId: 'upper', plannedDate: '2026-10-29', movedTo: '2026-10-30', position: 1 },
       ]);
     await render(<WeekSchedule />, { wrapper: createAppWrapper() });
-    await user.press(await screen.findByRole('radio', { name: 'La que ve' }));
+    sheetChoices.push('Planifica la setmana que ve');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de la setmana' }));
 
     expect(await screen.findByText("1 canvi respecte a l'habitual")).toBeOnTheScreen();
     expect(
@@ -316,10 +278,28 @@ describe('<WeekSchedule />', () => {
     await waitFor(() => expect(replaceMoves).toHaveBeenCalledWith('2026-10-26', '2026-11-01', []));
   });
 
+  test('the ⋮ plans next week; "La teva setmana" goes back', async () => {
+    const user = userEvent.setup();
+    await render(<WeekSchedule />, { wrapper: createAppWrapper() });
+
+    sheetChoices.push('Planifica la setmana que ve');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de la setmana' }));
+    expect(actionSheet.mock.lastCall?.[0].options).toEqual([
+      'Planifica la setmana que ve',
+      'Cancel·la',
+    ]);
+    expect(screen.getByRole('header', { name: /^La setmana que ve · / })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'La teva setmana' }));
+    expect(screen.getByRole('header', { name: 'La teva setmana' })).toBeOnTheScreen();
+    expect(screen.getByRole('header', { name: 'Dilluns' })).toBeOnTheScreen();
+  });
+
   test('in a dated week, a sport is changed in the usual week', async () => {
     const user = userEvent.setup();
     await render(<WeekSchedule />, { wrapper: createAppWrapper() });
-    await user.press(await screen.findByRole('radio', { name: 'La que ve' }));
+    sheetChoices.push('Planifica la setmana que ve');
+    await user.press(await screen.findByRole('button', { name: 'Opcions de la setmana' }));
 
     sheetChoices.push('Ves a la setmana habitual');
     await user.press(screen.getByRole('button', { name: 'Opcions de «Pàdel», Dilluns 26' }));
