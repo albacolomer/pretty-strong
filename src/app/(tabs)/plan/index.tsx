@@ -1,7 +1,10 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Sortable from 'react-native-sortables';
 
 import { Screen, SegmentedControl } from '@/components/ui';
 import { ExerciseLibrary } from '@/features/exercises/ExerciseLibrary';
@@ -26,25 +29,38 @@ export default function PlanScreen() {
   ] as const;
 
   return (
-    <Screen title={t('tabs.plan')} ref={scroll} scrollEnabled={!dragging}>
-      <SegmentedControl
-        label={t('tabs.plan')}
-        options={sections}
-        value={section}
-        onChange={setSection}
-      />
-      {section === 'routines' ? <RoutineList /> : null}
-      {section === 'exercises' ? <ExerciseLibrary /> : null}
-      {section === 'week' ? (
-        <WeekSchedule
-          scrollableRef={scroll}
-          onDragChange={setDragging}
-          // A day tapped in the week strip: its card just under the status bar.
-          onScrollTo={(y) =>
-            scroll.current?.scrollTo({ y: y - insets.top - spacing.lg, animated: true })
-          }
-        />
-      ) : null}
-    </Screen>
+    // A row dragged in Setmana is drawn over the screen here, outside the
+    // scroll: inside it, it would drift from the finger as the screen
+    // scrolls by itself.
+    <GestureHandlerRootView style={styles.root}>
+      <Sortable.PortalProvider>
+        <Screen title={t('tabs.plan')} ref={scroll} scrollEnabled={!dragging}>
+          <SegmentedControl
+            label={t('tabs.plan')}
+            options={sections}
+            value={section}
+            onChange={setSection}
+          />
+          {section === 'routines' ? <RoutineList /> : null}
+          {section === 'exercises' ? <ExerciseLibrary /> : null}
+          {section === 'week' ? (
+            <WeekSchedule
+              scrollableRef={scroll}
+              onDragChange={setDragging}
+              // A day tapped in the week strip: its card just under the status bar.
+              onScrollTo={(y) =>
+                scroll.current?.scrollTo({ y: y - insets.top - spacing.lg, animated: true })
+              }
+            />
+          ) : null}
+        </Screen>
+      </Sortable.PortalProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+});
