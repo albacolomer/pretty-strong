@@ -15,12 +15,11 @@ import Animated, {
 import { scheduleOnRN } from 'react-native-worklets';
 
 import { Card, Text } from '@/components/ui';
-import { WEEKDAYS, type Routine, type Weekday } from '@/features/routines/routine';
+import { WEEKDAYS, type Weekday } from '@/features/routines/routine';
 import { radius, spacing, useTheme } from '@/theme';
 
-import type { WeeklySport } from './sports';
 import { useActivityName } from './useActivityName';
-import { activitiesOnDay, type DayActivity } from './week';
+import type { DayActivity } from './week';
 
 // Lines a day shows before "+2".
 const MAX_LINES = 3;
@@ -33,10 +32,21 @@ const DAYS = WEEKDAYS.length;
 // No day under the finger.
 const NONE = -1;
 
+// One day of the strip: its title ("Dl", or "Dl 17" in a dated week) and
+// what's on it.
+export type StripDay = {
+  day: Weekday;
+  title: string;
+  activities: DayActivity[];
+  isToday: boolean;
+};
+
 type WeekStripProps = {
-  routines: readonly Routine[];
-  sports: readonly WeeklySport[];
-  today: Weekday;
+  // Monday to Sunday.
+  days: StripDay[];
+  // Whether a line can be dragged (in a dated week, only routines from
+  // today on); all of them by default.
+  canDrag?: (activity: DayActivity, day: Weekday) => boolean;
   onDayPress: (day: Weekday) => void;
   // A line dropped on another day.
   onMove: (activity: DayActivity, from: Weekday, to: Weekday) => void;
@@ -55,9 +65,8 @@ type WeekStripProps = {
 // the day under it is marked the same way: nothing re-renders while it
 // moves, only when it's lifted and let go.
 export function WeekStrip({
-  routines,
-  sports,
-  today,
+  days,
+  canDrag = () => true,
   onDayPress,
   onMove,
   onDragChange,
@@ -98,9 +107,7 @@ export function WeekStrip({
   return (
     <View ref={strip} onLayout={(event) => setWidth(event.nativeEvent.layout.width)}>
       <Card style={styles.strip}>
-        {WEEKDAYS.map((day, index) => {
-          const activities = activitiesOnDay(routines, sports, day);
-          const isToday = day === today;
+        {days.map(({ day, title, activities, isToday }, index) => {
           const hidden = activities.length - MAX_LINES;
           const names = activities.map(nameOf);
           return (
@@ -131,7 +138,7 @@ export function WeekStrip({
                 color={isToday ? 'accent' : 'textMuted'}
                 style={styles.weekday}
                 aria-hidden>
-                {t(`weekdays.short.${day}`)}
+                {title}
               </Text>
               {activities.length === 0 ? (
                 <View style={styles.rest} aria-hidden>
@@ -143,6 +150,7 @@ export function WeekStrip({
                     key={activity.key}
                     activity={activity}
                     name={names[line]}
+                    draggable={canDrag(activity, day)}
                     faded={lifted?.activity.key === activity.key && lifted.from === day}
                     strip={strip}
                     fingerX={fingerX}
@@ -224,6 +232,7 @@ function DropMark({
 function DraggableLine({
   activity,
   name,
+  draggable,
   faded,
   strip,
   fingerX,
@@ -234,6 +243,7 @@ function DraggableLine({
 }: {
   activity: DayActivity;
   name: string;
+  draggable: boolean;
   faded: boolean;
   strip: AnimatedRef<View>;
   fingerX: SharedValue<number>;
@@ -248,6 +258,7 @@ function DraggableLine({
   const origin = useSharedValue({ x: 0, y: 0, width: 0 });
 
   const pan = usePanGesture({
+    enabled: draggable,
     activateAfterLongPress: LIFT_AFTER_MS,
     onActivate: (event) => {
       'worklet';
