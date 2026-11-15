@@ -242,8 +242,8 @@ describe('<RoutineEditor />', () => {
     expect(screen.getByText('Encara no hi ha exercicis')).toBeOnTheScreen();
     expect(screen.getByText('0 afegits')).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: 'Afegeix exercicis' }));
-    await user.press(await screen.findByRole('checkbox', { name: /Pes mort romanès/ }));
-    await user.press(screen.getByRole('checkbox', { name: /Esquat amb barra/ }));
+    await user.press(await screen.findByRole('button', { name: /Pes mort romanès/ }));
+    await user.press(screen.getByRole('button', { name: /Esquat amb barra/ }));
     await user.press(screen.getByRole('button', { name: 'Afegeix (2)' }));
     expect(screen.getByText('2 afegits')).toBeOnTheScreen();
     expect(screen.queryByText('Encara no hi ha exercicis')).not.toBeOnTheScreen();

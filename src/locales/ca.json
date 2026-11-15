@@ -131,7 +131,11 @@
       "add": "Afegeix ({{count}})",
       "backToList": "Torna a la llista",
       "swapTitle": "Canvia l'exercici",
-      "swap": "Canvia"
+      "swap": "Canvia",
+      "repeatHint": "Per repetir un exercici, toca'l més d'un cop.",
+      "removePicked": "Treu «{{name}}», el número {{position}}",
+      "timesAdded_one": "Afegit",
+      "timesAdded_other": "Afegit {{count}} cops"
     },
     "deleted": "S'ha esborrat «{{name}}»",
     "deleteError": "No s'ha pogut esborrar. Torna-ho a provar.",

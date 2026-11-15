@@ -1,11 +1,20 @@
-import { useState } from 'react';
+import { SymbolView } from 'expo-symbols';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  type ScrollViewInstance,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Card, MenuHost, Text } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
-import { radius, spacing, useTheme } from '@/theme';
+import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { exerciseName, type Exercise } from './exercise';
 import { ExerciseFilterBar, useExerciseSearch } from './ExerciseFilterBar';
@@ -17,7 +26,8 @@ import { useExercises } from './useExercises';
 type ExercisePickerProps = {
   visible: boolean;
   onClose: () => void;
-  // The ticked exercises' ids, in the order they were ticked.
+  // The picked exercises' ids, in the order they were picked. One can come
+  // more than once (HYROX: run, ski, run, row…).
   onAdd: (exerciseIds: string[]) => void;
   // Picks one exercise to swap in (mid-workout), instead of adding several.
   single?: boolean;
@@ -27,8 +37,10 @@ type ExercisePickerProps = {
 
 // A sheet to pick one or more exercises from the library (spec: "Exercise
 // picker"), with the same search and filters. A missing exercise can be
-// created right here (US-04). Used by the routine editor now and by
-// workouts later.
+// created right here (US-04). Used by the routine editor, the workout and
+// past workouts. Adding, each tap on a row adds it once more, so one can
+// be repeated (US-07); the strip above the buttons lists the picks in
+// order and takes one out. Swapping, a row is ticked and unticked.
 export function ExercisePicker({
   visible,
   onClose,
@@ -67,16 +79,23 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
   const [newName, setNewName] = useState<string | null>(null);
   const creating = newName !== null;
 
-  function toggle(id: string) {
+  function pick(id: string) {
     setSelected((current) => {
-      if (current.includes(id)) return current.filter((item) => item !== id);
-      return single ? [id] : [...current, id];
+      if (!single) return [...current, id];
+      return current.includes(id) ? [] : [id];
     });
+  }
+
+  function unpick(position: number) {
+    setSelected((current) => current.filter((_, index) => index !== position));
   }
 
   // Back to the list, searching for the new exercise so it shows, ticked.
   function handleCreated(exercise: Exercise) {
-    search.setFilters({ ...NO_FILTERS, query: exerciseName(exercise, language) });
+    search.setFilters({
+      ...NO_FILTERS,
+      query: exerciseName(exercise, language),
+    });
     setSelected((current) => (single ? [exercise.id] : [...current, exercise.id]));
     setNewName(null);
   }
@@ -92,6 +111,11 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
               ? t('exercises.picker.swapTitle')
               : t('exercises.picker.title')}
         </Text>
+        {!creating && !single ? (
+          <Text variant="caption" color="textMuted">
+            {t('exercises.picker.repeatHint')}
+          </Text>
+        ) : null}
       </View>
 
       <ScrollView
@@ -125,16 +149,17 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
             ) : (
               <Card style={styles.list}>
                 {search.results.map((exercise, index) => {
-                  const order = selected.indexOf(exercise.id);
+                  const count = selected.filter((id) => id === exercise.id).length;
                   return (
                     <ExerciseRow
                       key={exercise.id}
                       exercise={exercise}
                       language={language}
                       separator={index > 0}
-                      selected={order !== -1}
-                      onPress={() => toggle(exercise.id)}
-                      accessory={<OrderBadge order={order} />}
+                      // Swapping, a checkbox; adding, a button that adds it again.
+                      selected={single ? count > 0 : undefined}
+                      onPress={() => pick(exercise.id)}
+                      accessory={<CountBadge count={count} announce={!single} />}
                     />
                   );
                 })}
@@ -159,20 +184,33 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
           />
         ) : (
           <>
-            <Button
-              label={t('common.cancel')}
-              variant="secondary"
-              onPress={onClose}
-              style={styles.footerButton}
-            />
-            <Button
-              label={
-                single ? t('exercises.picker.swap') : t('exercises.picker.add', { count: selected.length })
-              }
-              onPress={() => onAdd(selected)}
-              disabled={selected.length === 0}
-              style={styles.footerButton}
-            />
+            {!single && selected.length > 0 ? (
+              <PickedStrip
+                picked={selected.map((id) => {
+                  const exercise = exercises.find((item) => item.id === id);
+                  return exercise ? exerciseName(exercise, language) : '';
+                })}
+                onRemove={unpick}
+              />
+            ) : null}
+            <View style={styles.buttons}>
+              <Button
+                label={t('common.cancel')}
+                variant="secondary"
+                onPress={onClose}
+                style={styles.footerButton}
+              />
+              <Button
+                label={
+                  single
+                    ? t('exercises.picker.swap')
+                    : t('exercises.picker.add', { count: selected.length })
+                }
+                onPress={() => onAdd(selected)}
+                disabled={selected.length === 0}
+                style={styles.footerButton}
+              />
+            </View>
           </>
         )}
       </View>
@@ -180,24 +218,78 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
   );
 }
 
-// 1, 2, 3… in the order exercises were ticked; an empty ring otherwise.
-// Decorative: the row already says whether it's ticked.
-function OrderBadge({ order }: { order: number }) {
+// The picks in order, e.g. "1 Córrer · 2 SkiErg · 3 Córrer"; a tap takes
+// that one out. It follows the newest pick.
+function PickedStrip({
+  picked,
+  onRemove,
+}: {
+  picked: readonly string[];
+  onRemove: (position: number) => void;
+}) {
+  const { t } = useTranslation();
   const { colors } = useTheme();
-  const ticked = order !== -1;
+  const strip = useRef<ScrollViewInstance>(null);
+
+  return (
+    <ScrollView
+      ref={strip}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={styles.strip}
+      onContentSizeChange={() => strip.current?.scrollToEnd()}>
+      {picked.map((name, index) => (
+        <Pressable
+          // The same exercise can be here twice: the position tells them apart.
+          key={`${index}-${name}`}
+          role="button"
+          aria-label={t('exercises.picker.removePicked', {
+            name,
+            position: index + 1,
+          })}
+          onPress={() => onRemove(index)}
+          style={({ pressed }) => [
+            styles.chip,
+            { backgroundColor: colors.surfaceRaised },
+            pressed && styles.pressed,
+          ]}>
+          <Text variant="captionMedium" color="accent">
+            {index + 1}
+          </Text>
+          <Text variant="captionMedium" numberOfLines={1} style={styles.chipName}>
+            {name}
+          </Text>
+          <SymbolView name="xmark" size={11} weight="semibold" tintColor={colors.textMuted} />
+        </Pressable>
+      ))}
+    </ScrollView>
+  );
+}
+
+// How many times a row has been picked: an empty ring, a tick, or ×2, ×3…
+// Adding, screen readers hear it ("Afegit 2 cops"); swapping, the row
+// already says whether it's ticked.
+function CountBadge({ count, announce }: { count: number; announce: boolean }) {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const ticked = count > 0;
+  const heard = announce && ticked;
 
   return (
     <View
-      aria-hidden
+      aria-hidden={!heard}
+      aria-label={heard ? t('exercises.picker.timesAdded', { count }) : undefined}
       style={[
         styles.badge,
         ticked
           ? { backgroundColor: colors.accent, borderColor: colors.accent }
           : { borderColor: colors.textMuted },
       ]}>
-      {ticked ? (
+      {count === 1 ? (
+        <SymbolView name="checkmark" size={13} weight="bold" tintColor={colors.onAccent} />
+      ) : count > 1 ? (
         <Text variant="caption" color="onAccent">
-          {order + 1}
+          {`×${count}`}
         </Text>
       ) : null}
     </View>
@@ -244,11 +336,32 @@ const styles = StyleSheet.create({
     marginHorizontal: spacing.sm,
   },
   footer: {
-    flexDirection: 'row',
-    gap: spacing.sm,
+    gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  buttons: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+  },
+  strip: {
+    gap: spacing.sm,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    minHeight: touch.min,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+  },
+  // A long custom name doesn't push the rest of the strip away.
+  chipName: {
+    maxWidth: 160,
+  },
+  pressed: {
+    opacity: 0.75,
   },
   footerButton: {
     flex: 1,

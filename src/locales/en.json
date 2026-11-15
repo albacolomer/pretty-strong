@@ -131,7 +131,11 @@
       "add": "Add ({{count}})",
       "backToList": "Back to the list",
       "swapTitle": "Swap exercise",
-      "swap": "Swap"
+      "swap": "Swap",
+      "repeatHint": "To repeat an exercise, tap it more than once.",
+      "removePicked": "Remove “{{name}}”, number {{position}}",
+      "timesAdded_one": "Added",
+      "timesAdded_other": "Added {{count}} times"
     },
     "deleted": "“{{name}}” deleted",
     "deleteError": "Couldn't delete it. Try again.",

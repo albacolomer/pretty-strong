@@ -131,7 +131,11 @@
       "add": "Añadir ({{count}})",
       "backToList": "Volver a la lista",
       "swapTitle": "Cambiar el ejercicio",
-      "swap": "Cambiar"
+      "swap": "Cambiar",
+      "repeatHint": "Para repetir un ejercicio, tócalo más de una vez.",
+      "removePicked": "Quitar «{{name}}», el número {{position}}",
+      "timesAdded_one": "Añadido",
+      "timesAdded_other": "Añadido {{count}} veces"
     },
     "deleted": "Se ha borrado «{{name}}»",
     "deleteError": "No se ha podido borrar. Vuelve a intentarlo.",

@@ -442,7 +442,7 @@ describe('<ActiveWorkoutView />', () => {
     await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
 
     await user.press(screen.getByRole('button', { name: '+ Afegeix exercicis' }));
-    await user.press(await screen.findByRole('checkbox', { name: /Esquat/ }));
+    await user.press(await screen.findByRole('button', { name: /Esquat/ }));
     await user.press(screen.getByRole('button', { name: 'Afegeix (1)' }));
 
     expect(screen.getByRole('header', { name: 'Esquat' })).toBeOnTheScreen();

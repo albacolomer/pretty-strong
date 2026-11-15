@@ -55,37 +55,87 @@ async function renderPicker(props: Partial<Parameters<typeof ExercisePicker>[0]>
     wrapper: createAppWrapper(),
   });
   // Wait for the library to load.
-  await screen.findByRole('checkbox', { name: /Esquat amb barra/ });
+  await screen.findByRole(props.single ? 'checkbox' : 'button', { name: /^Esquat amb barra/ });
 }
+
+// A library row while adding: a tap adds it once more. (Anchored, so it
+// isn't the strip's "Treu «…»".)
+const row = (name: string) => screen.getByRole('button', { name: new RegExp(`^${name}`) });
 
 // The app starts in Catalan, so the tests use the Catalan texts.
 describe('<ExercisePicker />', () => {
-  test('adds the ticked exercises in the order they were ticked', async () => {
+  test('adds the picked exercises in the order they were picked', async () => {
     const user = userEvent.setup();
     const onAdd = jest.fn();
     await renderPicker({ onAdd });
 
     expect(screen.getByRole('button', { name: 'Afegeix (0)' })).toBeDisabled();
 
-    await user.press(screen.getByRole('checkbox', { name: /Esquat amb barra/ }));
-    await user.press(screen.getByRole('checkbox', { name: /Hip thrust amb barra/ }));
+    await user.press(row('Esquat amb barra'));
+    await user.press(row('Hip thrust amb barra'));
 
-    expect(screen.getByRole('checkbox', { name: /Esquat amb barra/ })).toBeChecked();
+    expect(screen.getAllByLabelText('Afegit')).toHaveLength(2);
     await user.press(screen.getByRole('button', { name: 'Afegeix (2)' }));
 
     expect(onAdd).toHaveBeenCalledWith(['back_squat', 'hip_thrust']);
   });
 
-  test('a second tap unticks', async () => {
+  test('a second tap adds it again, e.g. HYROX runs between stations (US-07)', async () => {
     const user = userEvent.setup();
-    await renderPicker();
+    const onAdd = jest.fn();
+    await renderPicker({ onAdd });
+
+    await user.press(row('Esquat amb barra'));
+    await user.press(row('Hip thrust amb barra'));
+    await user.press(row('Esquat amb barra'));
+
+    expect(screen.getByLabelText('Afegit 2 cops')).toBeOnTheScreen();
+    // The strip lists them in order.
+    expect(
+      screen.getByRole('button', { name: 'Treu «Esquat amb barra», el número 3' }),
+    ).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Afegeix (3)' }));
+
+    expect(onAdd).toHaveBeenCalledWith(['back_squat', 'hip_thrust', 'back_squat']);
+  });
+
+  test('the strip takes out one pick, and only that one', async () => {
+    const user = userEvent.setup();
+    const onAdd = jest.fn();
+    await renderPicker({ onAdd });
+
+    await user.press(row('Esquat amb barra'));
+    await user.press(row('Hip thrust amb barra'));
+    await user.press(row('Esquat amb barra'));
+    await user.press(screen.getByRole('button', { name: 'Treu «Esquat amb barra», el número 1' }));
+
+    // The other one moves up to number 2.
+    expect(
+      screen.getByRole('button', { name: 'Treu «Esquat amb barra», el número 2' }),
+    ).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Afegeix (2)' }));
+
+    expect(onAdd).toHaveBeenCalledWith(['hip_thrust', 'back_squat']);
+  });
+
+  test('swapping picks one, and a second tap unticks', async () => {
+    const user = userEvent.setup();
+    const onAdd = jest.fn();
+    await renderPicker({ onAdd, single: true });
     const squat = screen.getByRole('checkbox', { name: /Esquat amb barra/ });
+    const hipThrust = screen.getByRole('checkbox', { name: /Hip thrust amb barra/ });
 
     await user.press(squat);
     await user.press(squat);
-
     expect(squat).not.toBeChecked();
-    expect(screen.getByRole('button', { name: 'Afegeix (0)' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Canvia' })).toBeDisabled();
+
+    await user.press(squat);
+    await user.press(hipThrust);
+    expect(squat).not.toBeChecked();
+    await user.press(screen.getByRole('button', { name: 'Canvia' }));
+
+    expect(onAdd).toHaveBeenCalledWith(['hip_thrust']);
   });
 
   test('searches like the library, and can be cancelled', async () => {
@@ -95,13 +145,13 @@ describe('<ExercisePicker />', () => {
 
     await user.type(screen.getByLabelText('Cerca'), 'esquat');
 
-    expect(screen.queryByRole('checkbox', { name: /Hip thrust/ })).not.toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: /^Hip thrust/ })).not.toBeOnTheScreen();
 
     await user.press(screen.getByRole('button', { name: 'Cancel·la' }));
     expect(onClose).toHaveBeenCalled();
   });
 
-  test('creates a missing exercise and comes back with it ticked', async () => {
+  test('creates a missing exercise and comes back with it picked', async () => {
     const user = userEvent.setup();
     const onAdd = jest.fn();
     mockCreateExercise.mockResolvedValue({
@@ -114,8 +164,8 @@ describe('<ExercisePicker />', () => {
     });
     await renderPicker({ onAdd });
 
-    // Tick one first: it stays ticked while creating.
-    await user.press(screen.getByRole('checkbox', { name: /Hip thrust amb barra/ }));
+    // Pick one first: it stays picked while creating.
+    await user.press(row('Hip thrust amb barra'));
     await user.type(screen.getByLabelText('Cerca'), 'Pont de glutis');
     await user.press(screen.getByRole('button', { name: 'Crea «Pont de glutis»' }));
 
@@ -133,8 +183,8 @@ describe('<ExercisePicker />', () => {
     await user.press(screen.getByRole('button', { name: "Desa l'exercici" }));
 
     expect(
-      await screen.findByRole('checkbox', { name: /Pont de glutis/ }),
-    ).toBeChecked();
+      await screen.findByRole('button', { name: 'Treu «Pont de glutis», el número 2' }),
+    ).toBeOnTheScreen();
     await user.press(screen.getByRole('button', { name: 'Afegeix (2)' }));
     expect(onAdd).toHaveBeenCalledWith(['hip_thrust', 'new-1']);
   });
@@ -148,7 +198,7 @@ describe('<ExercisePicker />', () => {
 
     await user.press(screen.getByRole('button', { name: 'Torna a la llista' }));
 
-    expect(screen.getByRole('checkbox', { name: /Esquat amb barra/ })).toBeOnTheScreen();
+    expect(row('Esquat amb barra')).toBeOnTheScreen();
     expect(mockCreateExercise).not.toHaveBeenCalled();
   });
 });
