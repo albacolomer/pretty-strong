@@ -214,16 +214,23 @@
     "usernameHint": "De 3 a 20 caràcters: minúscules, números o _.",
     "email": "Correu electrònic",
     "password": "Contrasenya",
+    "confirmPassword": "Repeteix la contrasenya",
+    "showPassword": "Mostra la contrasenya",
+    "hidePassword": "Amaga la contrasenya",
     "passwordHint": "Almenys {{min}} caràcters.",
     "signIn": {
-      "title": "Inicia la sessió",
+      "title": "Hola de nou",
+      "subtitle": "Entra per començar l'entrenament d'avui",
       "submit": "Entra",
-      "noAccount": "No tens compte? Crea'n un"
+      "noAccount": "Encara no tens compte?",
+      "createAccount": "Crea'n un"
     },
     "signUp": {
       "title": "Crea el teu compte",
+      "subtitle": "Només et cal un correu i una contrasenya",
       "submit": "Crea el compte",
-      "haveAccount": "Ja tens compte? Inicia la sessió",
+      "haveAccount": "Ja tens compte?",
+      "signIn": "Entra",
       "checkEmail": "T'hem enviat un correu. Obre l'enllaç per activar el compte i després inicia la sessió."
     },
     "signOut": "Tanca la sessió",
@@ -239,8 +246,10 @@
       "rateLimited": "Massa intents. Espera una mica i torna-ho a provar.",
       "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
       "unknown": "Alguna cosa ha fallat. Torna-ho a provar.",
-      "samePassword": "La contrasenya nova ha de ser diferent de l'actual."
-    }
+      "samePassword": "La contrasenya nova ha de ser diferent de l'actual.",
+      "passwordsDontMatch": "Les contrasenyes no coincideixen."
+    },
+    "tagline": "Entrena a la teva manera. Registra cada repetició."
   },
   "setup": {
     "progress": "Pas {{step}} de {{total}}",

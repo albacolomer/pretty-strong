@@ -214,16 +214,23 @@
     "usernameHint": "3–20 characters: lowercase letters, numbers or _.",
     "email": "Email",
     "password": "Password",
+    "confirmPassword": "Repeat password",
+    "showPassword": "Show password",
+    "hidePassword": "Hide password",
     "passwordHint": "At least {{min}} characters.",
     "signIn": {
-      "title": "Sign in",
-      "submit": "Sign in",
-      "noAccount": "No account? Create one"
+      "title": "Welcome back",
+      "subtitle": "Log in to start today's workout",
+      "submit": "Log in",
+      "noAccount": "New here?",
+      "createAccount": "Create an account"
     },
     "signUp": {
       "title": "Create your account",
+      "subtitle": "All you need is an email and a password",
       "submit": "Create account",
-      "haveAccount": "Have an account? Sign in",
+      "haveAccount": "Already have an account?",
+      "signIn": "Log in",
       "checkEmail": "We've sent you an email. Open the link to activate your account, then sign in."
     },
     "signOut": "Sign out",
@@ -239,8 +246,10 @@
       "rateLimited": "Too many attempts. Wait a moment and try again.",
       "network": "No connection. Check it and try again.",
       "unknown": "Something went wrong. Try again.",
-      "samePassword": "The new password must be different from the current one."
-    }
+      "samePassword": "The new password must be different from the current one.",
+      "passwordsDontMatch": "The passwords don't match."
+    },
+    "tagline": "Train your way. Track every rep."
   },
   "setup": {
     "progress": "Step {{step}} of {{total}}",

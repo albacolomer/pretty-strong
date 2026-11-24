@@ -5,16 +5,16 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { IconButton, Text } from '@/components/ui';
+import { Text } from '@/components/ui';
 import { languages, setAppLanguage, useAppLanguage, type Language } from '@/lib/i18n';
 import { inset, radius, spacing, touch, useTheme } from '@/theme';
 
-// The icon button's size (IconButton draws it at 44).
-const BUTTON = 44;
+// The pill's height; its tap area is grown to touch.min.
+const PILL = 36;
 const MENU_WIDTH = 200;
 
-// The 🌐 in the corner of sign-in and sign-up (US-02). It opens a small
-// menu right under it (not at the bottom of the screen, far from the
+// "🌐 CA", a frosted pill in the corner of sign-in and sign-up, over the
+// steel panel (US-02). It opens a small menu right under it (not at the bottom of the screen, far from the
 // icon): Català, Español and English, the current one ticked. A tap
 // outside closes it. It only switches the app: a new account is created in
 // it, and once signed in the profile's language wins.
@@ -41,13 +41,21 @@ export function LanguageButton() {
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <View style={[styles.corner, { top }]}>
-        <IconButton
-          icon="globe"
-          label={`${t('profile.language')}, ${t(`languages.${language}`)}`}
-          onPress={() => setOpen(!open)}
-        />
-      </View>
+      <Pressable
+        role="button"
+        aria-label={`${t('profile.language')}, ${t(`languages.${language}`)}`}
+        onPress={() => setOpen(!open)}
+        hitSlop={(touch.min - PILL) / 2}
+        style={({ pressed }) => [
+          styles.pill,
+          { top, backgroundColor: colors.glass, borderColor: colors.glassBorder },
+          pressed && styles.pressed,
+        ]}>
+        <SymbolView name="globe" size={15} weight="medium" tintColor={colors.onHero} />
+        <Text variant="control" color="onHero">
+          {language.toUpperCase()}
+        </Text>
+      </Pressable>
       {open ? (
         <Animated.View
           entering={FadeIn.duration(120)}
@@ -57,7 +65,7 @@ export function LanguageButton() {
           style={[
             styles.menu,
             {
-              top: top + BUTTON + spacing.xs,
+              top: top + PILL + spacing.sm,
               backgroundColor: colors.surface,
               boxShadow: shadows.card,
             },
@@ -99,9 +107,16 @@ export function LanguageButton() {
 }
 
 const styles = StyleSheet.create({
-  corner: {
+  pill: {
     position: 'absolute',
     right: inset.screenX,
+    height: PILL,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    borderRadius: radius.pill,
+    borderWidth: 1,
   },
   // Right under the icon, lined up with its right edge.
   menu: {

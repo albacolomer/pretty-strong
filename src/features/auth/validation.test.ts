@@ -63,22 +63,29 @@ describe('validateUsername', () => {
 });
 
 describe('validateSignUp', () => {
-  const valid = { email: 'alba@gmail.com', password: '12345678' };
+  const valid = { email: 'alba@gmail.com', password: '12345678', confirmPassword: '12345678' };
 
   test('accepts valid values', () => {
     expect(validateSignUp(valid)).toEqual({});
   });
 
   test('flags every field when empty', () => {
-    expect(validateSignUp({ email: '', password: '' })).toEqual({
+    expect(validateSignUp({ email: '', password: '', confirmPassword: '' })).toEqual({
       email: 'required',
       password: 'required',
+      confirmPassword: 'required',
     });
   });
 
   test('needs a password of at least 8 characters', () => {
-    expect(validateSignUp({ ...valid, password: '1234567' })).toEqual({
+    expect(validateSignUp({ ...valid, password: '1234567', confirmPassword: '1234567' })).toEqual({
       password: 'passwordTooShort',
+    });
+  });
+
+  test('needs the same password twice', () => {
+    expect(validateSignUp({ ...valid, confirmPassword: '12345679' })).toEqual({
+      confirmPassword: 'passwordsDontMatch',
     });
   });
 });

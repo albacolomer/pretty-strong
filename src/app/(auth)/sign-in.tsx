@@ -1,22 +1,24 @@
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Screen } from '@/components/ui';
-import { AuthHeader } from '@/features/auth/AuthHeader';
+import { AuthScreen, AuthSwitch } from '@/features/auth/AuthScreen';
 import { SignInForm } from '@/features/auth/SignInForm';
 
 export default function SignInScreen() {
   const { t } = useTranslation();
 
   return (
-    <Screen centered>
-      <AuthHeader subtitle={t('auth.signIn.title')} />
+    <AuthScreen
+      title={t('auth.signIn.title')}
+      subtitle={t('auth.signIn.subtitle')}
+      footer={
+        <AuthSwitch
+          question={t('auth.signIn.noAccount')}
+          action={t('auth.signIn.createAccount')}
+          onPress={() => router.push('/sign-up')}
+        />
+      }>
       <SignInForm />
-      <Button
-        label={t('auth.signIn.noAccount')}
-        variant="ghost"
-        onPress={() => router.push('/sign-up')}
-      />
-    </Screen>
+    </AuthScreen>
   );
 }

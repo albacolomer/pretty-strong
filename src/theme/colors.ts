@@ -38,6 +38,13 @@ const light = {
   gold: '#B8860B',
   // #B8860B at 12%
   goldSoft: 'rgba(184, 134, 11, 0.12)',
+  // On the steel panel of sign-in and sign-up: the name, the line under
+  // it, the language pill (a pane of frosted glass) and the rings.
+  onHero: '#F4F8FB',
+  onHeroSoft: 'rgba(244, 248, 251, 0.85)',
+  glass: 'rgba(255, 255, 255, 0.14)',
+  glassBorder: 'rgba(255, 255, 255, 0.4)',
+  heroRing: 'rgba(255, 255, 255, 0.22)',
 };
 
 export type ColorToken = keyof typeof light;
@@ -67,6 +74,12 @@ const dark: Colors = {
   gold: '#E6C25A',
   // #E6C25A at 16%
   goldSoft: 'rgba(230, 194, 90, 0.16)',
+  // The steel panel is the same in both schemes, so these are too.
+  onHero: '#F4F8FB',
+  onHeroSoft: 'rgba(244, 248, 251, 0.85)',
+  glass: 'rgba(255, 255, 255, 0.14)',
+  glassBorder: 'rgba(255, 255, 255, 0.4)',
+  heroRing: 'rgba(255, 255, 255, 0.22)',
 };
 
 export const colors: Record<ColorScheme, Colors> = { light, dark };
@@ -113,6 +126,13 @@ const lightGradients = {
     colors: ['#1E3A52', '#7FA6C4', '#A9C6DC'],
     locations: [0, 0.6, 1],
   },
+  // The steel panel at the top of sign-in and sign-up: dusky at the top
+  // left, deep in the middle, lighter at the bottom right.
+  hero: {
+    angle: 150,
+    colors: ['#5B7189', '#2E5573', '#35607F', '#6E93B3'],
+    locations: [0, 0.38, 0.7, 1],
+  },
   // The week ring's done segments (SVG x1 0 y1 0 → x2 1 y2 1, which is
   // 135deg on a square).
   ring: {
@@ -134,6 +154,7 @@ const darkGradients: Record<GradientName, Gradient> = {
   metal: lightGradients.metal,
   gold: lightGradients.gold,
   live: lightGradients.live,
+  hero: lightGradients.hero,
   bar: {
     angle: 90,
     colors: ['#4A7192', '#A9C6DC', '#DCE8F1'],

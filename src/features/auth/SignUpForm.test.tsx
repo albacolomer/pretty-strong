@@ -20,10 +20,13 @@ beforeEach(() => {
 });
 
 // The app starts in Catalan, so the tests use the Catalan texts.
-async function fillAndSubmit(values: { email?: string; password?: string }) {
+// The password is repeated as typed, unless `confirm` says otherwise.
+async function fillAndSubmit(values: { email?: string; password?: string; confirm?: string }) {
   const user = userEvent.setup();
+  const confirm = values.confirm ?? values.password;
   if (values.email) await user.type(screen.getByLabelText('Correu electrònic'), values.email);
   if (values.password) await user.type(screen.getByLabelText('Contrasenya'), values.password);
+  if (confirm) await user.type(screen.getByLabelText('Repeteix la contrasenya'), confirm);
   await user.press(screen.getByRole('button', { name: 'Crea el compte' }));
 }
 
@@ -41,10 +44,34 @@ describe('<SignUpForm />', () => {
     expect(mockSignUp).not.toHaveBeenCalled();
   });
 
-  test('asks only for an email and a password', async () => {
+  test('asks only for an email and a password, typed twice', async () => {
     await render(<SignUpForm />);
 
+    expect(screen.getByLabelText('Correu electrònic')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Contrasenya')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Repeteix la contrasenya')).toBeOnTheScreen();
     expect(screen.queryByLabelText("Nom d'usuari")).toBeNull();
+  });
+
+  test('two different passwords: says so, and no account is made', async () => {
+    await render(<SignUpForm />);
+
+    await fillAndSubmit({ ...valid, confirm: 'secret124' });
+
+    expect(screen.getByText('Les contrasenyes no coincideixen.')).toBeOnTheScreen();
+    expect(mockSignUp).not.toHaveBeenCalled();
+  });
+
+  test('the eye shows the password, and hides it again', async () => {
+    const user = userEvent.setup();
+    await render(<SignUpForm />);
+
+    const password = screen.getByLabelText('Contrasenya');
+    expect(password.props.secureTextEntry).toBe(true);
+    await user.press(screen.getAllByRole('button', { name: 'Mostra la contrasenya' })[0]);
+    expect(screen.getByLabelText('Contrasenya').props.secureTextEntry).toBe(false);
+    await user.press(screen.getByRole('button', { name: 'Amaga la contrasenya' }));
+    expect(screen.getByLabelText('Contrasenya').props.secureTextEntry).toBe(true);
   });
 
   test('creates the account with a username made from the email, and the app language', async () => {

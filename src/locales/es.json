@@ -214,16 +214,23 @@
     "usernameHint": "De 3 a 20 caracteres: minúsculas, números o _.",
     "email": "Correo electrónico",
     "password": "Contraseña",
+    "confirmPassword": "Repite la contraseña",
+    "showPassword": "Mostrar la contraseña",
+    "hidePassword": "Ocultar la contraseña",
     "passwordHint": "Al menos {{min}} caracteres.",
     "signIn": {
-      "title": "Inicia sesión",
+      "title": "Hola de nuevo",
+      "subtitle": "Entra para empezar el entrenamiento de hoy",
       "submit": "Entrar",
-      "noAccount": "¿No tienes cuenta? Crea una"
+      "noAccount": "¿Aún no tienes cuenta?",
+      "createAccount": "Crea una"
     },
     "signUp": {
       "title": "Crea tu cuenta",
-      "submit": "Crear cuenta",
-      "haveAccount": "¿Ya tienes cuenta? Inicia sesión",
+      "subtitle": "Solo necesitas un correo y una contraseña",
+      "submit": "Crear la cuenta",
+      "haveAccount": "¿Ya tienes cuenta?",
+      "signIn": "Entra",
       "checkEmail": "Te hemos enviado un correo. Abre el enlace para activar la cuenta y luego inicia sesión."
     },
     "signOut": "Cerrar sesión",
@@ -239,8 +246,10 @@
       "rateLimited": "Demasiados intentos. Espera un poco y vuelve a intentarlo.",
       "network": "No hay conexión. Compruébala y vuelve a intentarlo.",
       "unknown": "Algo ha fallado. Vuelve a intentarlo.",
-      "samePassword": "La contraseña nueva tiene que ser distinta de la actual."
-    }
+      "samePassword": "La contraseña nueva tiene que ser distinta de la actual.",
+      "passwordsDontMatch": "Las contraseñas no coinciden."
+    },
+    "tagline": "Entrena a tu manera. Registra cada repetición."
   },
   "setup": {
     "progress": "Paso {{step}} de {{total}}",

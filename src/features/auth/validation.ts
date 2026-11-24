@@ -1,11 +1,16 @@
 // Each error is also the last part of its translation key: auth.errors.<error>.
-export type ValidationError = 'required' | 'invalidEmail' | 'invalidUsername' | 'passwordTooShort';
+export type ValidationError =
+  | 'required'
+  | 'invalidEmail'
+  | 'invalidUsername'
+  | 'passwordTooShort'
+  | 'passwordsDontMatch';
 
 export type SignInValues = { email: string; password: string };
 export type SignInErrors = Partial<Record<keyof SignInValues, ValidationError>>;
 
 // The username is made from the email, and changed in the setup after.
-export type SignUpValues = { email: string; password: string };
+export type SignUpValues = { email: string; password: string; confirmPassword: string };
 export type SignUpErrors = Partial<Record<keyof SignUpValues, ValidationError>>;
 
 export const PASSWORD_MIN_LENGTH = 8;
@@ -43,12 +48,15 @@ export function validateSignIn({ email, password }: SignInValues): SignInErrors 
   return errors;
 }
 
-export function validateSignUp({ email, password }: SignUpValues): SignUpErrors {
+export function validateSignUp({ email, password, confirmPassword }: SignUpValues): SignUpErrors {
   const errors: SignUpErrors = {};
   const emailError = validateEmail(email);
   if (emailError) errors.email = emailError;
   if (password === '') errors.password = 'required';
   else if (password.length < PASSWORD_MIN_LENGTH) errors.password = 'passwordTooShort';
+  // The same password twice, so a typo can't lock you out.
+  if (confirmPassword === '') errors.confirmPassword = 'required';
+  else if (confirmPassword !== password) errors.confirmPassword = 'passwordsDontMatch';
   return errors;
 }
 

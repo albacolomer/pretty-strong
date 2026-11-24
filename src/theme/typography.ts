@@ -32,6 +32,15 @@ export const typography = {
     letterSpacing: em(0.01, 44),
     textTransform: 'uppercase',
   },
+  // The app's name on sign-in and sign-up, "PRETTY STRONG", one word a
+  // line.
+  brand: {
+    fontFamily: fonts.condensedItalic,
+    fontSize: 68,
+    lineHeight: 64,
+    letterSpacing: em(0.01, 68),
+    textTransform: 'uppercase',
+  },
   // A state in big italic capitals next to its icon, e.g. "TOT FET".
   heroTitle: {
     fontFamily: fonts.condensedItalic,

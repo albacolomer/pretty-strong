@@ -1,13 +1,14 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { View, type TextInputInstance } from 'react-native';
+import { StyleSheet, View, type TextInputInstance } from 'react-native';
 
-import { Button, Text, TextField } from '@/components/ui';
+import { Button, Text } from '@/components/ui';
 import { useSetupStore } from '@/features/onboarding/setupStore';
 import { appLanguage } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
 import { isUsernameAvailable, signUp } from './api';
+import { AuthField } from './AuthField';
 import { authErrorReason, type AuthErrorReason } from './authErrors';
 import {
   hasErrors,
@@ -33,12 +34,13 @@ async function freeUsername(email: string): Promise<string | undefined> {
 }
 type FieldErrors = Partial<Record<keyof SignUpValues, FieldError>>;
 
-// Just an email and a password: everything else is asked in the setup
-// that follows (US-01).
+// Just an email and a password, typed twice: everything else is asked in
+// the setup that follows (US-01).
 export function SignUpForm() {
   const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<AuthErrorReason | null>(null);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
@@ -46,12 +48,13 @@ export function SignUpForm() {
   const beginSetup = useSetupStore((state) => state.begin);
   const cancelSetup = useSetupStore((state) => state.finish);
   const passwordRef = useRef<TextInputInstance>(null);
+  const confirmRef = useRef<TextInputInstance>(null);
 
   const errorText = (error: FieldError | undefined) =>
     error && t(`auth.errors.${error}`, { min: PASSWORD_MIN_LENGTH });
 
   async function handleSubmit() {
-    const errors = validateSignUp({ email, password });
+    const errors = validateSignUp({ email, password, confirmPassword });
     setFieldErrors(errors);
     setFormError(null);
     if (hasErrors(errors)) return;
@@ -86,9 +89,10 @@ export function SignUpForm() {
   }
 
   return (
-    <View style={{ gap: spacing.lg }}>
-      <TextField
+    <View style={styles.form}>
+      <AuthField
         label={t('auth.email')}
+        icon="envelope"
         value={email}
         onChangeText={setEmail}
         error={errorText(fieldErrors.email)}
@@ -101,14 +105,29 @@ export function SignUpForm() {
         submitBehavior="submit"
         onSubmitEditing={() => passwordRef.current?.focus()}
       />
-      <TextField
+      <AuthField
         ref={passwordRef}
         label={t('auth.password')}
+        icon="lock"
+        password
         hint={t('auth.passwordHint', { min: PASSWORD_MIN_LENGTH })}
         value={password}
         onChangeText={setPassword}
         error={errorText(fieldErrors.password)}
-        secureTextEntry
+        autoComplete="new-password"
+        textContentType="newPassword"
+        returnKeyType="next"
+        submitBehavior="submit"
+        onSubmitEditing={() => confirmRef.current?.focus()}
+      />
+      <AuthField
+        ref={confirmRef}
+        label={t('auth.confirmPassword')}
+        icon="lock"
+        password
+        value={confirmPassword}
+        onChangeText={setConfirmPassword}
+        error={errorText(fieldErrors.confirmPassword)}
         autoComplete="new-password"
         textContentType="newPassword"
         returnKeyType="go"
@@ -121,7 +140,29 @@ export function SignUpForm() {
         </Text>
       ) : null}
 
-      <Button label={t('auth.signUp.submit')} onPress={handleSubmit} disabled={isSubmitting} />
+      {/* The button at the bottom, in reach of the thumb. */}
+      <View style={styles.spacer} />
+      <Button
+        label={t('auth.signUp.submit')}
+        caps
+        onPress={handleSubmit}
+        disabled={isSubmitting}
+        style={styles.submit}
+      />
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  form: {
+    flexGrow: 1,
+    gap: spacing.md,
+  },
+  spacer: {
+    flexGrow: 1,
+    minHeight: spacing.lg,
+  },
+  submit: {
+    minHeight: 58,
+  },
+});
