@@ -11,7 +11,7 @@ import {
 } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { ChangePasswordSheet } from '@/features/auth/ChangePasswordSheet';
-import { SignOutRow } from '@/features/auth/SignOutRow';
+import { SignOutButton } from '@/features/auth/SignOutButton';
 import { HidePhotosSetting } from '@/features/body/HidePhotosSetting';
 import { languages, useAppLanguage } from '@/lib/i18n';
 import { DISTANCE_UNITS, LENGTH_UNITS, WEIGHT_UNITS, type Units } from '@/lib/units';
@@ -20,9 +20,9 @@ import { spacing } from '@/theme';
 import { useUnits, useUpdateUnits } from './useUnits';
 import { useUpdateLanguage } from './useUpdateLanguage';
 
-// Profile → Configuració: your account (email, password, sign out), your
-// preferences (language, units) and privacy (hide progress photos). Each
-// change is saved as soon as it's made.
+// Profile → Configuració: your account (email, password), your preferences
+// (language, units) and privacy (hide progress photos), each saved as soon
+// as it's changed; then "Tanca la sessió" on its own at the bottom.
 export function Settings() {
   const { t } = useTranslation();
   const { session } = useAuth();
@@ -73,7 +73,6 @@ export function Settings() {
             label={t('settings.changePassword')}
             onPress={() => setChangingPassword(true)}
           />
-          <SignOutRow />
         </SettingsCard>
       </View>
 
@@ -119,10 +118,13 @@ export function Settings() {
         </SettingsCard>
       </View>
 
-      {/* RepDB's licence asks for this exact line, so it isn't translated. */}
-      <Text variant="caption" color="textMuted" style={styles.credit}>
-        {t('profile.repdbCredit')}
-      </Text>
+      <View style={styles.bottom}>
+        <SignOutButton />
+        {/* RepDB's licence asks for this exact line, so it isn't translated. */}
+        <Text variant="caption" color="textMuted" style={styles.credit}>
+          {t('profile.repdbCredit')}
+        </Text>
+      </View>
 
       <ChangePasswordSheet visible={changingPassword} onClose={() => setChangingPassword(false)} />
     </View>
@@ -135,6 +137,11 @@ const styles = StyleSheet.create({
   },
   section: {
     gap: spacing.sm,
+  },
+  // Apart from the settings above.
+  bottom: {
+    marginTop: spacing.lg,
+    gap: spacing.lg,
   },
   credit: {
     textAlign: 'center',

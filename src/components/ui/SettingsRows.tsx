@@ -50,8 +50,6 @@ type SettingsRowProps = {
   error?: string;
   // Makes the row a button with a ›.
   onPress?: () => void;
-  // False: a button with no ›, e.g. "Tanca la sessió", which opens nothing.
-  chevron?: boolean;
   // What VoiceOver says for the button; its label and value unless said.
   'aria-label'?: string;
   // A small button of its own at the end of the row, instead of the ›.
@@ -73,7 +71,6 @@ export function SettingsRow({
   accessory,
   error,
   onPress,
-  chevron = true,
   'aria-label': ariaLabel,
   trailing,
   children,
@@ -127,7 +124,7 @@ export function SettingsRow({
               {t('common.optional')}
             </Text>
           ) : null}
-          {onPress && chevron && !trailing ? (
+          {onPress && !trailing ? (
             <SymbolView
               name="chevron.right"
               size={13}
