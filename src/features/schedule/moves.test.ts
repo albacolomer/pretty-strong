@@ -1,13 +1,16 @@
 import type { Routine } from '@/features/routines/routine';
 import { upperBody } from '@/features/routines/testData';
 
+import type { Addition } from './additions';
 import {
   dropInWeek,
   moveInWeek,
   nextRestDate,
+  plannedRoutineOf,
   rearranged,
   shiftWeek,
   withMove,
+  withPlannedMove,
   type Move,
   type WeekListItem,
 } from './moves';
@@ -127,7 +130,7 @@ describe('Reprograma la setmana', () => {
       { planned: { routineId: 'run', plannedDate: '2026-11-01' }, was: '2026-11-01', now: '2026-11-01' },
       { planned: { routineId: 'legs', plannedDate: '2026-10-27' }, was: '2026-10-27', now: '2026-10-28' },
     ];
-    expect(rearranged(routines, sports, [], placed)).toEqual([
+    expect(rearranged(routines, sports, [], placed).moves).toEqual([
       { routineId: 'upper', plannedDate: '2026-10-29', movedTo: '2026-10-31', position: 0 },
       // Wednesday has the padel at 0: after it.
       { routineId: 'legs', plannedDate: '2026-10-27', movedTo: '2026-10-28', position: 1 },
@@ -206,5 +209,111 @@ describe('shiftWeek', () => {
     expect(moves.filter((move) => move.routineId === 'legs')).toEqual([
       { routineId: 'legs', plannedDate: '2026-10-27', movedTo: '2026-10-31', position: 0 },
     ]);
+  });
+});
+
+describe('added to one week only', () => {
+  // Legs added on Friday 30, a climbing class on Saturday 31.
+  const addedLegs: Addition = {
+    id: 'add-legs',
+    date: '2026-10-30',
+    routineId: 'legs',
+    sport: null,
+    customName: null,
+    startTime: null,
+    durationS: null,
+    position: 0,
+  };
+  const climbing: Addition = {
+    id: 'add-climb',
+    date: '2026-10-31',
+    routineId: null,
+    sport: 'climbing',
+    customName: null,
+    startTime: '18:00',
+    durationS: 3600,
+    position: 0,
+  };
+  const additions = [addedLegs, climbing];
+  const keys = (date: Date, list: readonly Addition[] = additions, moves: Move[] = []) =>
+    activitiesOnDate(routines, sports, moves, date, list).map((a) => a.key);
+
+  test('shows on its date, after what the usual week has there', () => {
+    expect(keys(day(30))).toEqual(['addition:add-legs']);
+    expect(keys(day(31))).toEqual(['addition:add-climb']);
+    const [sport] = activitiesOnDate(routines, sports, [], day(31), additions);
+    expect(sport).toMatchObject({
+      kind: 'sport',
+      addedId: 'add-climb',
+      sport: { id: 'add-climb', weekday: 6, sport: 'climbing', startTime: '18:00' },
+    });
+    // Not the usual week's.
+    expect(keys(day(23))).toEqual([]);
+  });
+
+  test('a routine already there that day is not shown twice', () => {
+    const onTuesday = { ...addedLegs, date: '2026-10-27' };
+    expect(keys(tuesday, [onTuesday])).toEqual(['routine:legs']);
+  });
+
+  test('a usual sport dropped that week is gone from that date only', () => {
+    const drops = [{ sportId: 'padel', date: '2026-10-28' }];
+    expect(activitiesOnDate(routines, sports, [], day(28), [], drops)).toEqual([]);
+    expect(activitiesOnDate(routines, sports, [], new Date(2026, 10, 4), [], drops)).toHaveLength(1);
+    expect(nextRestDate(routines, sports, [], tuesday, sunday, [], drops)).toEqual(day(28));
+  });
+
+  test('makes its day no rest day', () => {
+    expect(nextRestDate(routines, sports, [], tuesday, sunday)).toEqual(day(30));
+    expect(nextRestDate(routines, sports, [], tuesday, sunday, additions)).toBeNull();
+  });
+
+  test('an added routine moves by changing its date, not with a move', () => {
+    const [activity] = activitiesOnDate(routines, sports, [], day(30), additions);
+    if (activity.kind !== 'routine') throw new Error('Expected a routine.');
+    const planned = plannedRoutineOf(activity, '2026-10-30');
+    expect(planned).toEqual({ routineId: 'legs', plannedDate: '2026-10-30', addedId: 'add-legs' });
+
+    const moved = withPlannedMove({ moves: [], additions, drops: [] }, planned, '2026-10-31', 1);
+    expect(moved.moves).toEqual([]);
+    expect(moved.additions).toContainEqual({ ...addedLegs, date: '2026-10-31', position: 1 });
+
+    const dropped = withPlannedMove({ moves: [], additions, drops: [] }, planned, null);
+    expect(dropped.additions).toEqual([climbing]);
+  });
+
+  test('a shift moves added routines a day on too; added sports stay', () => {
+    const { moves, additions: after } = shiftWeek(
+      routines,
+      sports,
+      [],
+      { routineId: 'legs', plannedDate: '2026-10-27' },
+      tuesday,
+      sunday,
+      () => false,
+      additions,
+    );
+    expect(after).toEqual([{ ...addedLegs, date: '2026-10-31' }, climbing]);
+    expect(moves.some((move) => move.plannedDate === '2026-10-30' && move.routineId === 'legs')).toBe(
+      false,
+    );
+  });
+
+  test('Reprograma moves an added routine by its date', () => {
+    const plan = rearranged(
+      routines,
+      sports,
+      [],
+      [
+        {
+          planned: { routineId: 'legs', plannedDate: '2026-10-30', addedId: 'add-legs' },
+          was: '2026-10-30',
+          now: '2026-10-29',
+        },
+      ],
+      additions,
+    );
+    expect(plan.moves).toEqual([]);
+    expect(plan.additions[0]).toMatchObject({ id: 'add-legs', date: '2026-10-29' });
   });
 });

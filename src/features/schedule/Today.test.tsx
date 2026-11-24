@@ -22,6 +22,7 @@ import { ensureNotificationPermission } from '@/lib/notifications';
 import { createAppWrapper } from '@/test-utils/appWrapper';
 import { drop } from '@/test-utils/sortablesMock';
 
+import { fetchAdditions } from './additionsApi';
 import { fetchMoves, replaceMoves } from './movesApi';
 import type { WeeklySport } from './sports';
 import { fetchWeeklySports } from './sportsApi';
@@ -71,6 +72,14 @@ jest.mock('expo-router', () => ({
 jest.mock('./useToday', () => ({ useToday: () => new Date(2026, 9, 20) }));
 jest.mock('./sportsApi', () => ({ fetchWeeklySports: jest.fn() }));
 jest.mock('./movesApi', () => ({ fetchMoves: jest.fn(), replaceMoves: jest.fn() }));
+jest.mock('./sportDropsApi', () => ({
+  fetchSportDrops: jest.fn(() => Promise.resolve([])),
+  replaceSportDrops: jest.fn(() => Promise.resolve()),
+}));
+jest.mock('./additionsApi', () => ({
+  fetchAdditions: jest.fn(() => Promise.resolve([])),
+  replaceAdditions: jest.fn(() => Promise.resolve()),
+}));
 jest.mock('react-native-sortables', () => jest.requireActual('@/test-utils/sortablesMock'));
 
 const routine = (
@@ -201,6 +210,7 @@ beforeEach(() => {
   jest.mocked(fetchWeeklySports).mockResolvedValue([]);
   jest.mocked(fetchEvents).mockResolvedValue([]);
   jest.mocked(fetchMoves).mockReset().mockResolvedValue([]);
+  jest.mocked(fetchAdditions).mockReset().mockResolvedValue([]);
   jest.mocked(replaceMoves).mockReset().mockResolvedValue();
   jest.mocked(logQuickSession).mockReset().mockResolvedValue();
   jest.mocked(deleteSession).mockReset().mockResolvedValue();
@@ -416,6 +426,39 @@ describe('<Today />', () => {
         durationS: 5400,
         plannedSportId: 'padel',
         sport: 'padel',
+      }),
+    );
+  });
+
+  test('a sport added to this week only: on its day, and marked done for its addition', async () => {
+    const user = userEvent.setup();
+    jest.mocked(fetchAdditions).mockResolvedValue([
+      {
+        id: 'add-climb',
+        date: '2026-10-20',
+        routineId: null,
+        sport: 'climbing',
+        customName: null,
+        startTime: '18:00',
+        durationS: 3600,
+        position: 0,
+      },
+    ]);
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('18:00')).toBeOnTheScreen();
+    await user.press(screen.getByRole('checkbox', { name: 'Marca «Escalada» com a fet' }));
+    expect(screen.getByLabelText('Durada (min)').props.value).toBe('60');
+    await user.press(screen.getByRole('button', { name: 'Desa' }));
+
+    expect(logQuickSession).toHaveBeenCalledWith(
+      session({
+        plannedRoutineId: null,
+        routineId: null,
+        durationS: 3600,
+        plannedSportId: null,
+        plannedAdditionId: 'add-climb',
+        sport: 'climbing',
       }),
     );
   });

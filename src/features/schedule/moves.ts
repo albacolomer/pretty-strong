@@ -1,5 +1,6 @@
 import type { Routine } from '@/features/routines/routine';
 
+import { withAdditionMoved, type Addition, type SportDrop } from './additions';
 import { addDays, dateKey, fromDateKey, weekdayOf } from './dates';
 import type { WeeklySport } from './sports';
 import { activitiesOnDate, nextDayPosition, type DayActivity } from './week';
@@ -8,7 +9,8 @@ import { activitiesOnDate, nextDayPosition, type DayActivity } from './week';
 // takes one routine from the day it's planned on to another day, or off
 // the week (movedTo null). Skipping to the next rest day, shifting the
 // week and "Reprograma la setmana" are all made of these. Sports never
-// move. No React here.
+// move. A routine added to the week only (additions.ts) moves by changing
+// its addition's date instead. No React here.
 
 export type Move = {
   routineId: string;
@@ -20,14 +22,34 @@ export type Move = {
   position: number;
 };
 
-// One routine on the day the usual week has it: what a move moves.
-export type PlannedRoutine = { routineId: string; plannedDate: string };
+// One routine on the day the usual week has it: what a move moves. Or one
+// added to the week only (`addedId`): then its addition moves.
+export type PlannedRoutine = { routineId: string; plannedDate: string; addedId?: string };
+
+// A week's changes: the usual week's routines moved, what's added, and
+// the usual week's sports dropped.
+export type WeekPlan = { moves: Move[]; additions: Addition[]; drops: SportDrop[] };
 
 export type RoutineActivity = Extract<DayActivity, { kind: 'routine' }>;
 
 // A routine on a day, as planned: its own day, or the one it was moved from.
 export function plannedRoutineOf(activity: RoutineActivity, date: string): PlannedRoutine {
-  return { routineId: activity.routine.id, plannedDate: activity.from ?? date };
+  return activity.addedId
+    ? { routineId: activity.routine.id, plannedDate: date, addedId: activity.addedId }
+    : { routineId: activity.routine.id, plannedDate: activity.from ?? date };
+}
+
+// The plan with `planned` put on `to` (null: off the week): a move for one
+// of the usual week's, the addition's new date for an added one.
+export function withPlannedMove(
+  plan: WeekPlan,
+  planned: PlannedRoutine,
+  to: string | null,
+  position = 0,
+): WeekPlan {
+  return planned.addedId
+    ? { ...plan, additions: withAdditionMoved(plan.additions, planned.addedId, to, position) }
+    : { ...plan, moves: withMove(plan.moves, planned, to, position) };
 }
 
 // The moves with `planned` put on `to` (null: off the week). Back on its
@@ -45,16 +67,18 @@ export function withMove(
 }
 
 // The first day after `today`, up to `weekEnd`, with nothing planned
-// (moves counted). Null if there's none.
+// (moves and additions counted). Null if there's none.
 export function nextRestDate(
   routines: readonly Routine[],
   sports: readonly WeeklySport[],
   moves: readonly Move[],
   today: Date,
   weekEnd: Date,
+  additions: readonly Addition[] = [],
+  drops: readonly SportDrop[] = [],
 ): Date | null {
   for (let date = addDays(today, 1); date.getTime() <= weekEnd.getTime(); date = addDays(date, 1)) {
-    if (activitiesOnDate(routines, sports, moves, date).length === 0) return date;
+    if (activitiesOnDate(routines, sports, moves, date, additions, drops).length === 0) return date;
   }
   return null;
 }
@@ -111,30 +135,33 @@ export function moveInWeek(
 
 // "Desa" on "Reprograma la setmana": a move for each routine put on
 // another day than it was (`was` → `now`), after what's already on its new
-// day, in the order they were put there. The others keep theirs.
+// day, in the order they were put there (an added one's addition changes
+// date instead). The others keep theirs.
 export function rearranged(
   routines: readonly Routine[],
   sports: readonly WeeklySport[],
   moves: readonly Move[],
   placed: readonly { planned: PlannedRoutine; was: string; now: string }[],
-): Move[] {
-  let next = [...moves];
+  additions: readonly Addition[] = [],
+  drops: readonly SportDrop[] = [],
+): WeekPlan {
+  let next: WeekPlan = { moves: [...moves], additions: [...additions], drops: [...drops] };
   const added: Record<string, number> = {};
   for (const { planned, was, now } of placed) {
     if (now === was) continue;
     const position =
       nextDayPosition(routines, sports, weekdayOf(fromDateKey(now))) + (added[now] ?? 0);
     added[now] = (added[now] ?? 0) + 1;
-    next = withMove(next, planned, now, position);
+    next = withPlannedMove(next, planned, now, position);
   }
   return next;
 }
 
 // "Desplaça la setmana": `planned`, on `from`, goes to the next day, and so
-// does every routine on the days after it; what's on `weekEnd` drops off
-// the week. The other routines on `from`, the ones `stays` keeps (already
-// logged) and all the sports stay put. Returns the new moves and the
-// routines dropped.
+// does every routine on the days after it (added ones too); what's on
+// `weekEnd` drops off the week. The other routines on `from`, the ones
+// `stays` keeps (already logged) and all the sports stay put. Returns the
+// new moves and additions, and the routines dropped.
 export function shiftWeek(
   routines: readonly Routine[],
   sports: readonly WeeklySport[],
@@ -143,29 +170,37 @@ export function shiftWeek(
   from: Date,
   weekEnd: Date,
   stays: (activity: RoutineActivity, date: string) => boolean = () => false,
-): { moves: Move[]; dropped: Routine[] } {
+  additions: readonly Addition[] = [],
+  drops: readonly SportDrop[] = [],
+): WeekPlan & { dropped: Routine[] } {
   const start = dateKey(from);
-  let next = [...moves];
+  let next: WeekPlan = { moves: [...moves], additions: [...additions], drops: [...drops] };
   const dropped: Routine[] = [];
   for (let date = from; date.getTime() <= weekEnd.getTime(); date = addDays(date, 1)) {
     const key = dateKey(date);
     // Where things are before the shift, so nothing moves twice.
-    const there = activitiesOnDate(routines, sports, moves, date).filter(
+    const there = activitiesOnDate(routines, sports, moves, date, additions, drops).filter(
       (activity): activity is RoutineActivity => activity.kind === 'routine',
     );
     for (const activity of there) {
       const which = plannedRoutineOf(activity, key);
-      const chosen = which.routineId === planned.routineId && which.plannedDate === planned.plannedDate;
+      const chosen =
+        which.routineId === planned.routineId &&
+        which.plannedDate === planned.plannedDate &&
+        which.addedId === planned.addedId;
       if ((key === start && !chosen) || (!chosen && stays(activity, key))) continue;
       const to = date.getTime() < weekEnd.getTime() ? dateKey(addDays(date, 1)) : null;
       if (to === null) dropped.push(activity.routine);
-      const position = activity.from
-        ? (moves.find(
-            (move) => move.routineId === which.routineId && move.plannedDate === which.plannedDate,
-          )?.position ?? 0)
-        : (activity.routine.dayPositions[weekdayOf(date)] ?? 0);
-      next = withMove(next, which, to, position);
+      const position = activity.addedId
+        ? (additions.find((addition) => addition.id === activity.addedId)?.position ?? 0)
+        : activity.from
+          ? (moves.find(
+              (move) =>
+                move.routineId === which.routineId && move.plannedDate === which.plannedDate,
+            )?.position ?? 0)
+          : (activity.routine.dayPositions[weekdayOf(date)] ?? 0);
+      next = withPlannedMove(next, which, to, position);
     }
   }
-  return { moves: next, dropped };
+  return { ...next, dropped };
 }

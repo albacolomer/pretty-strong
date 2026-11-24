@@ -6,7 +6,7 @@ import { toFinishPayload, type FinishedWorkout, type LastTime } from './activeWo
 import { liveDuration, type ChangeReason, type SessionStatus, type WorkoutSession } from './session';
 
 const SESSION_COLUMNS =
-  'id, date, planned_routine_id, routine_id, status, log_mode, started_at, ended_at, duration_s, notes, change_reason, planned_sport_id, sport, sport_name, planned_event_id, event_kind, event_name';
+  'id, date, planned_routine_id, routine_id, status, log_mode, started_at, ended_at, duration_s, notes, change_reason, planned_sport_id, sport, sport_name, planned_event_id, event_kind, event_name, planned_addition_id';
 
 // Your sessions from `from` to `to` (both "2026-10-20" dates, included),
 // oldest first. RLS only returns your own.
@@ -37,6 +37,7 @@ export async function fetchSessions(from: string, to: string): Promise<WorkoutSe
     plannedEventId: row.planned_event_id,
     eventKind: row.event_kind as EventKind | null,
     eventName: row.event_name,
+    plannedAdditionId: row.planned_addition_id,
   }));
 }
 
@@ -61,6 +62,7 @@ export async function logQuickSession(session: WorkoutSession): Promise<void> {
       planned_event_id: session.plannedEventId,
       event_kind: session.eventKind,
       event_name: session.eventName,
+      planned_addition_id: session.plannedAdditionId ?? null,
     },
     { onConflict: 'id', ignoreDuplicates: true },
   );

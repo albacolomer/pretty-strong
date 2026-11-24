@@ -62,6 +62,9 @@ export type WorkoutSession = {
   plannedEventId: string | null;
   eventKind: EventKind | null;
   eventName: string | null;
+  // A sport added to that week only (US-29): the addition it was for (its
+  // plannedSportId is null). Left out for everything else.
+  plannedAdditionId?: string | null;
 };
 
 // For a session that isn't an event's.

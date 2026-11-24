@@ -61,6 +61,8 @@ export type PastWorkout = {
   plannedEventId: string | null;
   eventKind: EventKind | null;
   eventName: string | null;
+  // A sport added to one week only: the addition it was for.
+  plannedAdditionId: string | null;
   exercises: PastExercise[];
 };
 
@@ -169,6 +171,7 @@ export function toSavePayload(workout: PastWorkout) {
     planned_event_id: workout.plannedEventId,
     event_kind: workout.eventKind,
     event_name: workout.eventName,
+    planned_addition_id: workout.plannedAdditionId,
     exercises: workout.exercises.map((exercise) => ({
       id: exercise.id,
       exercise_id: exercise.exerciseId,

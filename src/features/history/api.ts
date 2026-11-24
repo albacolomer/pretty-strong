@@ -50,7 +50,7 @@ export async function fetchPastWorkout(id: string): Promise<PastWorkout | null> 
   const { data, error } = await supabase
     .from('workout_sessions')
     .select(
-      `id, date, planned_routine_id, routine_id, change_reason, log_mode, started_at, ended_at, duration_s, feeling, notes, planned_sport_id, sport, sport_name, planned_event_id, event_kind, event_name,
+      `id, date, planned_routine_id, routine_id, change_reason, log_mode, started_at, ended_at, duration_s, feeling, notes, planned_sport_id, sport, sport_name, planned_event_id, event_kind, event_name, planned_addition_id,
       routine:routines!workout_sessions_routine_id_fkey(name),
       session_exercises(id, exercise_id, routine_exercise_id, position, group_key, rest_s, change, change_reason, notes,
         exercise:exercises!session_exercises_exercise_id_fkey(${EXERCISE_COLUMNS}),
@@ -82,6 +82,7 @@ export async function fetchPastWorkout(id: string): Promise<PastWorkout | null> 
     plannedEventId: data.planned_event_id,
     eventKind: data.event_kind as EventKind | null,
     eventName: data.event_name,
+    plannedAdditionId: data.planned_addition_id,
     exercises: [...data.session_exercises]
       .sort((a, b) => a.position - b.position)
       .map((row) => ({

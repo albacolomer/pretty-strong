@@ -19,6 +19,10 @@ import {
 import { IconChoice, SportGrid } from './SportGrid';
 import { useActivityName } from './useActivityName';
 
+// Whether something added is for that week only, or every week (the
+// usual one).
+export type Scope = 'week' | 'every';
+
 export type ActivitySheetMode =
   | { kind: 'add'; day: Weekday }
   // A planned sport's time and duration.
@@ -33,16 +37,17 @@ type ActivitySheetProps = {
   // Whether you have any routine at all.
   anyRoutines: boolean;
   onClose: () => void;
-  onAddRoutine: (routine: Routine, day: Weekday) => void;
-  // "+ Crea una rutina nova": the editor, with that day already chosen.
-  onCreateRoutine: (day: Weekday) => void;
-  // A new sport (id made here), or the one edited with its new time.
-  onSaveSport: (sport: WeeklySport) => void;
+  onAddRoutine: (routine: Routine, day: Weekday, scope: Scope) => void;
+  // "+ Crea una rutina nova": the editor (every week: with that day chosen).
+  onCreateRoutine: (day: Weekday, scope: Scope) => void;
+  // A new sport (id made here), or the one edited with its new time (its
+  // scope is asked after).
+  onSaveSport: (sport: WeeklySport, scope: Scope) => void;
 };
 
-// Pla → Setmana → "+ Afegeix" (US-09): a routine (or a new one, made in
-// the editor with that day chosen), or a sport with an optional time and
-// duration, for that day. Also changes a planned
+// Pla → Setmana → "+ Afegeix" (US-09, US-29): a routine (or a new one,
+// made in the editor), or a sport with an optional time and duration, for
+// that day: that week only, or every week. Also changes a planned
 // sport's time and duration. Give it a new key for each opening, so it
 // starts afresh.
 export function ActivitySheet({
@@ -59,6 +64,8 @@ export function ActivitySheet({
   const nameOf = useActivityName();
   const editing = mode.kind === 'edit' ? mode.sport : null;
   const [tab, setTab] = useState<'routine' | 'sport'>(editing ? 'sport' : 'routine');
+  // The week on screen, unless said.
+  const [scope, setScope] = useState<Scope>('week');
   const [routineId, setRoutineId] = useState<string | null>(null);
   const [sport, setSport] = useState<Sport | null>(editing?.sport ?? null);
   const [customName, setCustomName] = useState(editing?.customName ?? '');
@@ -89,7 +96,7 @@ export function ActivitySheet({
 
   function save() {
     if (tab === 'routine') {
-      if (routine) onAddRoutine(routine, day);
+      if (routine) onAddRoutine(routine, day, scope);
     } else if (sport && sportReady) {
       const details = { startTime: readTime(time), durationS: readMinutes(minutes) };
       onSaveSport(
@@ -103,6 +110,7 @@ export function ActivitySheet({
               position: 0,
               ...details,
             },
+        scope,
       );
     }
     onClose();
@@ -117,15 +125,26 @@ export function ActivitySheet({
       saveLabel={saveLabel}
       saveDisabled={tab === 'routine' ? routine === null : !sportReady}>
       {editing ? null : (
-        <SegmentedControl
-          label={t('schedule.kind')}
-          value={tab}
-          onChange={setTab}
-          options={[
-            { value: 'routine', label: t('schedule.routine') },
-            { value: 'sport', label: t('schedule.sport') },
-          ]}
-        />
+        <>
+          <SegmentedControl
+            label={t('schedule.scope')}
+            value={scope}
+            onChange={setScope}
+            options={[
+              { value: 'week', label: t('schedule.onlyThisWeek') },
+              { value: 'every', label: t('schedule.everyWeek') },
+            ]}
+          />
+          <SegmentedControl
+            label={t('schedule.kind')}
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'routine', label: t('schedule.routine') },
+              { value: 'sport', label: t('schedule.sport') },
+            ]}
+          />
+        </>
       )}
 
       {tab === 'routine' ? (
@@ -153,7 +172,7 @@ export function ActivitySheet({
             aria-label={t('schedule.newRoutineFor', { day: dayName })}
             icon="plus"
             variant="ghost"
-            onPress={() => onCreateRoutine(day)}
+            onPress={() => onCreateRoutine(day, scope)}
           />
         </>
       ) : (

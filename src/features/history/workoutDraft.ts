@@ -189,6 +189,7 @@ export function toPastWorkout(
     plannedEventId: original?.plannedEventId ?? null,
     eventKind: original?.eventKind ?? null,
     eventName: original?.eventName ?? null,
+    plannedAdditionId: original?.plannedAdditionId ?? null,
     exercises,
   };
 }

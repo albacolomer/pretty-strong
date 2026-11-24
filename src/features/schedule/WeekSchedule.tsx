@@ -1,3 +1,4 @@
+import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useRef, useState } from 'react';
@@ -12,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 
-import { Button, Card, MenuButton, Text, useActionSheet, useToast } from '@/components/ui';
+import { Button, Card, IconButton, Text, useActionSheet, useToast } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import {
@@ -27,14 +28,15 @@ import { useRoutines } from '@/features/routines/useRoutines';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
-import { ActivitySheet, type ActivitySheetMode } from './ActivitySheet';
-import { addDays, dateKey, startOfWeek, weekdayOf } from './dates';
-import { plannedRoutineOf, withMove, type Move } from './moves';
+import { ActivitySheet, type ActivitySheetMode, type Scope } from './ActivitySheet';
+import { withAdditionMoved, type Addition } from './additions';
+import { addDays, dateKey, startOfWeek } from './dates';
+import { plannedRoutineOf, withPlannedMove, type WeekPlan } from './moves';
 import { SPORT_ICONS, type WeeklySport } from './sports';
 import { useActivityName } from './useActivityName';
 import { useToday } from './useToday';
 import { useAddToDay, useMoveToDay, useRemoveFromDay } from './useWeekSchedule';
-import { useSetWeekMoves, useWeekMoves } from './useWeekMoves';
+import { useChangeWeek, useWeekPlan } from './useWeekPlan';
 import { WeekStrip, type StripDay } from './WeekStrip';
 import {
   useAddSport,
@@ -44,35 +46,29 @@ import {
   useUpdateSport,
   useWeeklySports,
 } from './useWeeklySports';
-import {
-  activitiesOnDate,
-  activitiesOnDay,
-  nextDayPosition,
-  weekSummary,
-  type DayActivity,
-} from './week';
+import { activitiesOnDate, nextDatePosition, nextDayPosition, type DayActivity } from './week';
 
-// Your usual week, or the next one being planned.
-type WeekView = 'usual' | 'next';
+// How far ahead the arrows go: this week and the next four. Further would
+// be a program (weeks and progressions), out of scope for Phase 1.
+const WEEKS_AHEAD = 4;
 
 function openRoutine(routine: Routine) {
   router.push({ pathname: '/plan/routines/[id]', params: { id: routine.id } });
 }
 
-// Plan → Setmana (US-09): "La teva setmana", your usual week, Monday to
-// Sunday. First the whole week at a glance (WeekStrip): a tap on a day
-// scrolls down to it, and a line held and dragged to another day moves it
-// there. Then, under a divider, day by day: each day's routines and sports
-// in the order you drag them into; drag one onto another day's card to
+// Plan → Setmana (US-09, US-29): a real week, Monday to Sunday, with its
+// dates; ‹ › go from this week up to four ahead. First the whole week at a
+// glance (WeekStrip): a tap on a day scrolls down to it, and a line held
+// and dragged to another day moves it there. Then, under a divider, day by
+// day: each day's routines and sports; drag one onto another day's card to
 // move it (or use its menu: "Mou a un altre dia…"). "+ Afegeix" adds
 // either. A day with neither is a rest day.
 //
-// For those who plan week by week, the ⋮ by "La teva setmana" has
-// "Planifica la setmana que ve": that week, with its dates, starting from
-// the usual one. Moving or taking off a routine there changes that week
-// only (its moves, as Avui's "Salta" makes), and "Torna a l'habitual"
-// undoes them all. Sports, and adding things just for one week, stay in
-// the usual week for now.
+// Each week starts as your usual one (weekly_schedule and weekly_sports),
+// so someone who always does the same just never changes it. Adding,
+// moving or taking something off asks whether it's for that week only (its
+// moves, additions and sport drops) or every week (the usual one).
+// "Desfés els canvis" undoes that week's own.
 export function WeekSchedule({
   onScrollTo,
   scrollableRef,
@@ -92,17 +88,16 @@ export function WeekSchedule({
   const nameOf = useActivityName();
   const language = useAppLanguage();
   const todayDate = useToday();
-  const today = weekdayOf(todayDate);
   const todayKey = dateKey(todayDate);
-  const [view, setView] = useState<WeekView>('usual');
-  const dated = view !== 'usual';
-  // The week being planned (fetched on the usual week too, so it's ready).
-  const weekStart = addDays(startOfWeek(todayDate), 7);
+  // Weeks from this one: 0 is this week.
+  const [offset, setOffset] = useState(0);
+  const weekStart = addDays(startOfWeek(todayDate), 7 * offset);
   const weekEnd = addDays(weekStart, 6);
   const from = dateKey(weekStart);
   const to = dateKey(weekEnd);
-  const { data: moves = [] } = useWeekMoves(from, to);
-  const setMoves = useSetWeekMoves(from, to);
+  const { plan } = useWeekPlan(from, to);
+  const { moves, additions, drops } = plan;
+  const changeWeekPlan = useChangeWeek(from, to);
   const { data: routines, isPending, isError } = useRoutines();
   const { data: sports = [] } = useWeeklySports();
   const addToDay = useAddToDay();
@@ -133,68 +128,99 @@ export function WeekSchedule({
   if (isPending) return <ActivityIndicator color={colors.accent} />;
   if (isError) return <Text color="danger">{t('routines.loadError')}</Text>;
 
-  const summary = weekSummary(routines, sports);
   // Loaded by now; named again because TypeScript forgets that inside the
   // functions below.
   const planned = routines;
   const sheetDay = sheet.mode.kind === 'add' ? sheet.mode.day : sheet.mode.sport.weekday;
-  const dateOf = (day: Weekday) => addDays(weekStart, day - 1);
-  // Monday to Sunday, as the view shows them.
+  // Monday to Sunday, with that week's changes.
   const days = WEEKDAYS.map((day) => {
-    const date = dateOf(day);
+    const date = addDays(weekStart, day - 1);
     const key = dateKey(date);
     return {
       day,
       date,
       key,
-      activities: dated
-        ? activitiesOnDate(planned, sports, moves, date)
-        : activitiesOnDay(planned, sports, day),
-      isToday: dated ? key === todayKey : day === today,
+      activities: activitiesOnDate(planned, sports, moves, date, additions, drops),
+      isToday: key === todayKey,
     };
   });
   const dayOf = (day: Weekday) => days[day - 1];
-  // This week's own changes.
-  const changes = moves.filter((move) => move.plannedDate >= from && move.plannedDate <= to);
+  // That week's own changes.
+  const ownMoves = moves.filter((move) => move.plannedDate >= from && move.plannedDate <= to);
+  const changed = ownMoves.length + additions.length + drops.length > 0;
   const stripDays: StripDay[] = days.map(({ day, date, activities, isToday }) => ({
     day,
-    title: dated ? `${t(`weekdays.short.${day}`)} ${date.getDate()}` : t(`weekdays.short.${day}`),
+    title: `${t(`weekdays.short.${day}`)} ${date.getDate()}`,
     activities,
     isToday,
   }));
+  const all = days.flatMap(({ activities }) => activities);
+  const summary = [
+    t('schedule.workouts', { count: all.filter((activity) => activity.kind === 'routine').length }),
+    t('schedule.sports', { count: all.filter((activity) => activity.kind === 'sport').length }),
+    t('schedule.restDays', {
+      count: days.filter(({ activities }) => activities.length === 0).length,
+    }),
+  ].join(' · ');
   // "17–23 de novembre", or across two months "29 de setembre – 5 d'octubre".
   const dayMonth = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long' });
   const range =
     weekStart.getMonth() === weekEnd.getMonth()
       ? `${weekStart.getDate()}–${dayMonth.format(weekEnd)}`
       : `${dayMonth.format(weekStart)} – ${dayMonth.format(weekEnd)}`;
+  const weekTitle =
+    offset === 0
+      ? t('schedule.thisWeek')
+      : offset === 1
+        ? t('schedule.nextWeek')
+        : t('schedule.inWeeks', { count: offset });
 
   function open(mode: ActivitySheetMode) {
     setSheet((current) => ({ mode, visible: true, opened: current.opened + 1 }));
   }
 
-  function remove(activity: DayActivity, day: Weekday) {
-    const dayName = t(`weekdays.long.${day}`);
-    const name = nameOf(activity);
-    if (activity.kind === 'routine') {
-      const entry = {
-        routineId: activity.routine.id,
-        weekday: day,
-        position: activity.routine.dayPositions[day] ?? 0,
-      };
-      removeFromDay.mutate(entry);
-      showToast({
-        message: t('schedule.removed', { day: dayName, name }),
-        action: { label: t('common.undo'), onPress: () => addToDay.mutate(entry) },
-      });
-    } else {
-      const sport = activity.sport;
-      removeSport.mutate(sport);
-      showToast({
-        message: t('schedule.removed', { day: dayName, name }),
-        action: { label: t('common.undo'), onPress: () => addSport.mutate(sport) },
-      });
-    }
+  function changeWeek(next: WeekPlan, message: string) {
+    changeWeekPlan(plan, next, message);
+  }
+
+  // "Només aquesta setmana" or "Cada setmana", before a change.
+  function askScope(title: string, run: (scope: Scope) => void) {
+    showActionSheet(
+      {
+        title,
+        options: [t('schedule.onlyThisWeek'), t('schedule.everyWeek'), t('common.cancel')],
+        cancelButtonIndex: 2,
+      },
+      (index) => {
+        if (index === 0) run('week');
+        if (index === 1) run('every');
+      },
+    );
+  }
+
+  // Only in this week already (added to it, or a routine moved within it):
+  // nothing to ask, it's changed there.
+  function onlyThisWeek(activity: DayActivity): boolean {
+    return activity.addedId !== undefined || (activity.kind === 'routine' && !!activity.from);
+  }
+
+  // A usual week's sport as this week's own, on `date`.
+  function sportCopy(
+    sport: WeeklySport,
+    date: string,
+    position: number,
+    times: Pick<WeeklySport, 'startTime' | 'durationS'> = sport,
+  ): Addition {
+    return {
+      id: randomUUID(),
+      date,
+      routineId: null,
+      sport: sport.sport,
+      customName: sport.customName,
+      startTime: times.startTime,
+      durationS: times.durationS,
+      position,
+    };
   }
 
   // How far past a day's own rows the screen may scroll while one is
@@ -205,10 +231,110 @@ export function WeekSchedule({
     return [week.y + box.y + touch.min, Math.max(week.height - box.y - box.height, 0)];
   }
 
-  // To another day, at the end of it, with "Desfés" back to where it was.
-  // A routine can't go to a day that already has it.
+  // "Treu-ho d'aquest dia".
+  function remove(activity: DayActivity, day: Weekday) {
+    const dayName = t(`weekdays.long.${day}`);
+    const name = nameOf(activity);
+    const key = dayOf(day).key;
+    const offThisWeek = () => {
+      const message = t('schedule.droppedThisWeek', { day: dayName, name });
+      if (activity.addedId) {
+        changeWeek(
+          { ...plan, additions: withAdditionMoved(additions, activity.addedId, null, 0) },
+          message,
+        );
+      } else if (activity.kind === 'routine') {
+        changeWeek(withPlannedMove(plan, plannedRoutineOf(activity, key), null), message);
+      } else {
+        changeWeek({ ...plan, drops: [...drops, { sportId: activity.sport.id, date: key }] }, message);
+      }
+    };
+    if (onlyThisWeek(activity)) {
+      offThisWeek();
+      return;
+    }
+    askScope(t('schedule.scopeRemove', { name }), (scope) =>
+      scope === 'week' ? offThisWeek() : removeEveryWeek(activity, day),
+    );
+  }
+
+  // Off the usual week, with "Desfés" to put it back.
+  function removeEveryWeek(activity: DayActivity, day: Weekday) {
+    const message = t('schedule.removed', { day: t(`weekdays.long.${day}`), name: nameOf(activity) });
+    if (activity.kind === 'routine') {
+      const entry = {
+        routineId: activity.routine.id,
+        weekday: day,
+        position: activity.routine.dayPositions[day] ?? 0,
+      };
+      removeFromDay.mutate(entry);
+      showToast({
+        message,
+        action: { label: t('common.undo'), onPress: () => addToDay.mutate(entry) },
+      });
+    } else {
+      const sport = activity.sport;
+      removeSport.mutate(sport);
+      showToast({
+        message,
+        action: { label: t('common.undo'), onPress: () => addSport.mutate(sport) },
+      });
+    }
+  }
+
+  // To another day, at the end of it. A routine can't go to a day that
+  // already has it.
   function move(activity: DayActivity, from: Weekday, to: Weekday) {
     if (from === to) return;
+    const name = nameOf(activity);
+    const toName = t(`weekdays.long.${to}`);
+    const toKey = dayOf(to).key;
+    const position = nextDatePosition(dayOf(to).activities, to);
+    const message = t('schedule.moved', { day: toName, name });
+    const thereThisWeek =
+      activity.kind === 'routine' &&
+      dayOf(to).activities.some(
+        (other) => other.kind === 'routine' && other.routine.id === activity.routine.id,
+      );
+    // Already there that week: nothing to ask.
+    if (thereThisWeek) {
+      showToast({ message: t('schedule.alreadyOn', { day: toName, name }) });
+      return;
+    }
+    const moveThisWeek = () => {
+      if (activity.addedId) {
+        changeWeek(
+          { ...plan, additions: withAdditionMoved(additions, activity.addedId, toKey, position) },
+          message,
+        );
+      } else if (activity.kind === 'routine') {
+        changeWeek(
+          withPlannedMove(plan, plannedRoutineOf(activity, dayOf(from).key), toKey, position),
+          message,
+        );
+      } else {
+        // Off its day, and a copy on the new one.
+        changeWeek(
+          {
+            ...plan,
+            drops: [...drops, { sportId: activity.sport.id, date: dayOf(from).key }],
+            additions: [...additions, sportCopy(activity.sport, toKey, position)],
+          },
+          message,
+        );
+      }
+    };
+    if (onlyThisWeek(activity)) {
+      moveThisWeek();
+      return;
+    }
+    askScope(t('schedule.scopeMove', { name, day: toName, dayLower: toName.toLocaleLowerCase() }), (scope) =>
+      scope === 'week' ? moveThisWeek() : moveEveryWeek(activity, from, to),
+    );
+  }
+
+  // In the usual week, with "Desfés" back to where it was.
+  function moveEveryWeek(activity: DayActivity, from: Weekday, to: Weekday) {
     const name = nameOf(activity);
     const toName = t(`weekdays.long.${to}`);
     const position = nextDayPosition(planned, sports, to);
@@ -231,81 +357,22 @@ export function WeekSchedule({
         message: t('schedule.moved', { day: toName, name }),
         action: {
           label: t('common.undo'),
-          onPress: () =>
-            moveSport.mutate({ id: sport.id, weekday: from, position: sport.position }),
+          onPress: () => moveSport.mutate({ id: sport.id, weekday: from, position: sport.position }),
         },
       });
     }
   }
 
-  // A change to the dated week only, with "Desfés" to put it back.
-  function changeWeek(next: Move[], message: string) {
-    const previous = moves;
-    setMoves.mutate(next);
-    showToast({
-      message,
-      action: { label: t('common.undo'), onPress: () => setMoves.mutate(previous) },
-    });
-  }
-
-  // Whether it can be dragged: anything in the usual week; in the week
-  // being planned, its routines.
-  function canDrag(activity: DayActivity): boolean {
-    return !dated || activity.kind === 'routine';
-  }
-
-  // In the week being planned: a routine to another day of it, not one
-  // that has it already.
-  function moveInWeek(activity: DayActivity, from: Weekday, to: Weekday) {
-    if (from === to) return;
-    if (activity.kind !== 'routine') {
-      showToast({ message: t('schedule.sportsInUsualWeek') });
-      return;
-    }
-    const name = nameOf(activity);
-    const toName = t(`weekdays.long.${to}`);
-    if (
-      dayOf(to).activities.some(
-        (other) => other.kind === 'routine' && other.routine.id === activity.routine.id,
-      )
-    ) {
-      showToast({ message: t('schedule.alreadyOn', { day: toName, name }) });
-      return;
-    }
-    changeWeek(
-      withMove(
-        moves,
-        plannedRoutineOf(activity, dayOf(from).key),
-        dayOf(to).key,
-        nextDayPosition(planned, sports, to),
-      ),
-      t('schedule.moved', { day: toName, name }),
-    );
-  }
-
-  // In a dated week: off it, that week only.
-  function dropFromWeek(activity: DayActivity, day: Weekday) {
-    if (activity.kind !== 'routine') return;
-    const name = nameOf(activity);
-    changeWeek(
-      withMove(moves, plannedRoutineOf(activity, dayOf(day).key), null),
-      t('schedule.droppedThisWeek', { day: t(`weekdays.long.${day}`), name }),
-    );
-  }
-
-  // The move this view makes.
-  const moveActivity = dated ? moveInWeek : move;
-
   // "Mou a un altre dia…": the days it isn't on yet.
   function moveMenu(activity: DayActivity, from: Weekday) {
-    const targets = WEEKDAYS.filter((day) => {
-      if (day === from) return false;
-      if (activity.kind !== 'routine') return true;
-      if (!dated) return !activity.routine.weekdays.includes(day);
-      return !dayOf(day).activities.some(
-        (other) => other.kind === 'routine' && other.routine.id === activity.routine.id,
-      );
-    });
+    const targets = WEEKDAYS.filter(
+      (day) =>
+        day !== from &&
+        (activity.kind !== 'routine' ||
+          !dayOf(day).activities.some(
+            (other) => other.kind === 'routine' && other.routine.id === activity.routine.id,
+          )),
+    );
     showActionSheet(
       {
         title: t('schedule.moveTitle', { name: nameOf(activity) }),
@@ -314,69 +381,78 @@ export function WeekSchedule({
       },
       (index) => {
         const to = targets[index];
-        if (to) moveActivity(activity, from, to);
+        if (to) move(activity, from, to);
       },
     );
   }
 
-  // The ⋮ by the week's title: plan the next week, or (planning it) back
-  // to your week, and back to the usual plan if it has changes.
-  function weekMenu() {
-    const actions = dated
-      ? [
-          { label: t('schedule.backToYourWeek'), run: () => setView('usual') },
-          ...(changes.length > 0
-            ? [{ label: t('schedule.backToUsual'), run: clearChanges }]
-            : []),
-        ]
-      : [{ label: t('schedule.planNextWeek'), run: () => setView('next') }];
-    showActionSheet(
-      {
-        title: dated ? t('schedule.nextWeekOf', { range }) : t('schedule.usualWeek'),
-        options: [...actions.map((action) => action.label), t('common.cancel')],
-        cancelButtonIndex: actions.length,
-      },
-      (index) => actions[index]?.run(),
-    );
-  }
-
-  // "Torna a l'habitual": none of the week's own changes.
-  function clearChanges() {
-    changeWeek(
-      moves.filter((move) => move.plannedDate < from || move.plannedDate > to),
-      t('schedule.backToUsualDone'),
-    );
-  }
-
-  // A dated week's menu: a routine opens, moves or comes off that week; a
-  // sport is changed in the usual week.
-  function datedMenu(activity: DayActivity, day: Weekday) {
-    if (activity.kind === 'sport') {
-      showActionSheet(
+  // A sport's new time and duration: this week's own changes there; the
+  // usual week's asks.
+  function changeTime(sport: WeeklySport) {
+    const name = nameOf({ kind: 'sport', sport });
+    const message = t('schedule.timeChanged', { name });
+    if (additions.some((addition) => addition.id === sport.id)) {
+      changeWeek(
         {
-          title: nameOf(activity),
-          message: t('schedule.sportsInUsualWeek'),
-          options: [t('schedule.toUsualWeek'), t('common.cancel')],
-          cancelButtonIndex: 1,
+          ...plan,
+          additions: additions.map((addition) =>
+            addition.id === sport.id
+              ? { ...addition, startTime: sport.startTime, durationS: sport.durationS }
+              : addition,
+          ),
         },
-        (index) => {
-          if (index === 0) setView('usual');
-        },
+        message,
       );
       return;
     }
-    const actions = [
-      { label: t('schedule.open'), run: () => openRoutine(activity.routine) },
-      { label: t('schedule.moveTo'), run: () => moveMenu(activity, day) },
-      { label: t('schedule.dropThisWeek'), run: () => dropFromWeek(activity, day) },
-    ];
-    showActionSheet(
+    const key = dayOf(sport.weekday).key;
+    askScope(t('schedule.scopeTime', { name }), (scope) => {
+      if (scope === 'every') {
+        updateSport.mutate({
+          id: sport.id,
+          change: { startTime: sport.startTime, durationS: sport.durationS },
+        });
+        return;
+      }
+      // Off that day, and a copy at the new time.
+      changeWeek(
+        {
+          ...plan,
+          drops: [...drops, { sportId: sport.id, date: key }],
+          additions: [...additions, sportCopy(sport, key, sport.position, sport)],
+        },
+        message,
+      );
+    });
+  }
+
+  // "+ Afegeix" for this week only: on that date, after what's there.
+  function addThisWeek(
+    day: Weekday,
+    thing: Pick<Addition, 'routineId' | 'sport' | 'customName' | 'startTime' | 'durationS'>,
+    name: string,
+  ) {
+    const addition: Addition = {
+      id: randomUUID(),
+      date: dayOf(day).key,
+      position: nextDatePosition(dayOf(day).activities, day),
+      ...thing,
+    };
+    changeWeek(
+      { ...plan, additions: [...additions, addition] },
+      t('schedule.addedThisWeek', { day: t(`weekdays.long.${day}`), name }),
+    );
+  }
+
+  // "Desfés els canvis": the week as it started, the usual one.
+  function undoChanges() {
+    changeWeek(
       {
-        title: nameOf(activity),
-        options: [...actions.map((action) => action.label), t('common.cancel')],
-        cancelButtonIndex: actions.length,
+        moves: moves.filter((move) => move.plannedDate < from || move.plannedDate > to),
+        additions: [],
+        drops: [],
       },
-      (index) => actions[index]?.run(),
+      t('schedule.changesUndone'),
     );
   }
 
@@ -384,10 +460,6 @@ export function WeekSchedule({
   // to another day, or take it off the day (with "Desfés", so it isn't
   // shown as destructive).
   function openMenu(activity: DayActivity, day: Weekday) {
-    if (dated) {
-      datedMenu(activity, day);
-      return;
-    }
     const first =
       activity.kind === 'routine'
         ? { label: t('schedule.open'), run: () => openRoutine(activity.routine) }
@@ -416,59 +488,47 @@ export function WeekSchedule({
           current.y === y && current.height === height ? current : { y, height },
         );
       }}>
-      {dated ? (
-        <Button
-          label={t('schedule.backToYourWeek')}
-          icon="chevron.left"
-          variant="ghost"
-          onPress={() => setView('usual')}
-          style={styles.back}
-        />
-      ) : null}
-
       <View style={styles.titleRow}>
-        {dated ? (
-          <View style={styles.title}>
-            <Text variant="label" color="textMuted" accessibilityRole="header">
-              {t('schedule.nextWeekOf', { range })}
-            </Text>
-            <Text variant="caption" color="textMuted">
-              {t('schedule.datedNote')}
-            </Text>
-          </View>
-        ) : (
-          <View style={styles.title}>
-            <Text variant="label" color="textMuted" accessibilityRole="header">
-              {t('schedule.usualWeek')}
-            </Text>
-            <Text variant="caption" color="textMuted">
-              {[
-                t('schedule.workouts', { count: summary.workouts }),
-                t('schedule.sports', { count: summary.sports }),
-                t('schedule.restDays', { count: summary.restDays }),
-              ].join(' · ')}
-              {'. '}
-              {t('schedule.repeats')}
-            </Text>
-          </View>
-        )}
-        <MenuButton label={t('schedule.weekMenu')} onPress={weekMenu} />
+        <IconButton
+          icon="chevron.left"
+          label={t('schedule.previousWeek')}
+          onPress={() => setOffset(offset - 1)}
+          disabled={offset === 0}
+        />
+        <View style={styles.title}>
+          <Text variant="label" color="textMuted" accessibilityRole="header" style={styles.centered}>
+            {weekTitle}
+          </Text>
+          <Text variant="bodyStrong" style={styles.centered}>
+            {range}
+          </Text>
+          <Text variant="caption" color="textMuted" style={styles.centered}>
+            {summary}
+          </Text>
+        </View>
+        <IconButton
+          icon="chevron.right"
+          label={t('schedule.followingWeek')}
+          onPress={() => setOffset(offset + 1)}
+          disabled={offset === WEEKS_AHEAD}
+        />
       </View>
 
-      {dated && changes.length > 0 ? (
-        <Card raised style={styles.changes}>
-          <Text variant="captionMedium" style={styles.changesText}>
-            {t('schedule.changes', { count: changes.length })}
-          </Text>
-          <Button label={t('schedule.backToUsual')} variant="ghost" onPress={clearChanges} />
-        </Card>
+      {changed ? (
+        <Button
+          label={t('schedule.undoChanges')}
+          icon="arrow.uturn.backward"
+          variant="ghost"
+          onPress={undoChanges}
+          style={styles.undo}
+        />
       ) : null}
 
       <WeekStrip
         days={stripDays}
-        canDrag={canDrag}
+        canDrag={() => true}
         onDayPress={(day) => onScrollTo?.(week.y + (dayBoxes[day]?.y ?? 0))}
-        onMove={moveActivity}
+        onMove={move}
         onDragChange={onDragChange}
       />
 
@@ -477,13 +537,9 @@ export function WeekSchedule({
       <Text variant="label" color="textMuted" accessibilityRole="header">
         {t('schedule.dayByDay')}
       </Text>
-
       <Sortable.MultiZoneProvider>
-
         {days.map(({ day, date, activities, isToday }) => {
-          const dayName = dated
-            ? `${t(`weekdays.long.${day}`)} ${date.getDate()}`
-            : t(`weekdays.long.${day}`);
+          const dayName = `${t(`weekdays.long.${day}`)} ${date.getDate()}`;
           const rest = activities.length === 0;
           return (
             <Sortable.BaseZone
@@ -508,7 +564,7 @@ export function WeekSchedule({
                 const dragged = dragging.current;
                 dragging.current = null;
                 if (dragged && dragged.day !== day) {
-                  moveActivity(dragged.activity, dragged.day, day);
+                  move(dragged.activity, dragged.day, day);
                 }
               }}>
               <Card
@@ -541,19 +597,16 @@ export function WeekSchedule({
                     </View>
                   ) : null}
                   <View style={styles.spacer} />
-                  {/* Adding just for one week comes later: the usual week's. */}
-                  {dated ? null : (
-                    <Pressable
-                      role="button"
-                      aria-label={t('schedule.addFor', { day: dayName })}
-                      onPress={() => open({ kind: 'add', day })}
-                      hitSlop={8}
-                      style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
-                      <Text variant="bodyStrong" color="accent">
-                        {t('schedule.add')}
-                      </Text>
-                    </Pressable>
-                  )}
+                  <Pressable
+                    role="button"
+                    aria-label={t('schedule.addFor', { day: dayName })}
+                    onPress={() => open({ kind: 'add', day })}
+                    hitSlop={8}
+                    style={({ pressed }) => [styles.add, pressed && styles.pressed]}>
+                    <Text variant="bodyStrong" color="accent">
+                      {t('schedule.add')}
+                    </Text>
+                  </Pressable>
                 </View>
 
                 {rest ? null : (
@@ -565,17 +618,21 @@ export function WeekSchedule({
                         activity={item}
                         dayName={dayName}
                         // Its handle drags it within the day or to another.
-                        draggable={canDrag(item)}
+                        draggable
                         onPress={() => openMenu(item, day)}
                       />
                     )}
                     onDragEnd={({ fromIndex, toIndex }) => {
-                      // A dated week keeps the usual order within a day.
-                      if (dated || fromIndex === toIndex) return;
+                      if (fromIndex === toIndex) return;
                       const order = [...activities];
                       const [moved] = order.splice(fromIndex, 1);
                       order.splice(toIndex, 0, moved);
-                      reorderDay.mutate({ day, order });
+                      // The order within a day is the usual week's, so
+                      // only its own activities are put in order.
+                      reorderDay.mutate({
+                        day,
+                        order: order.filter((activity) => !onlyThisWeek(activity)),
+                      });
                     }}
                     onDragStart={({ fromIndex }) => {
                       const activity = activities[fromIndex];
@@ -601,26 +658,67 @@ export function WeekSchedule({
         key={sheet.opened}
         mode={sheet.mode}
         visible={sheet.visible}
-        routines={routines.filter((routine) => !routine.weekdays.includes(sheetDay))}
+        // Not the ones on that day this week.
+        routines={routines.filter(
+          (routine) =>
+            !dayOf(sheetDay).activities.some(
+              (other) => other.kind === 'routine' && other.routine.id === routine.id,
+            ),
+        )}
         anyRoutines={routines.length > 0}
         onClose={() => setSheet((current) => ({ ...current, visible: false }))}
-        onCreateRoutine={(day) => {
+        onCreateRoutine={(day, scope) => {
           setSheet((current) => ({ ...current, visible: false }));
-          router.push({ pathname: '/plan/routines/new', params: { weekday: String(day) } });
+          // Every week: planned on that weekday once made. This week only:
+          // made first, then added.
+          router.push(
+            scope === 'every'
+              ? { pathname: '/plan/routines/new', params: { weekday: String(day) } }
+              : '/plan/routines/new',
+          );
         }}
-        onAddRoutine={(routine, day) =>
+        onAddRoutine={(routine, day, scope) => {
+          if (scope === 'week') {
+            addThisWeek(
+              day,
+              {
+                routineId: routine.id,
+                sport: null,
+                customName: null,
+                startTime: null,
+                durationS: null,
+              },
+              routine.name,
+            );
+            return;
+          }
+          if (routine.weekdays.includes(day)) {
+            showToast({
+              message: t('schedule.alreadyOn', { day: t(`weekdays.long.${day}`), name: routine.name }),
+            });
+            return;
+          }
           addToDay.mutate({
             routineId: routine.id,
             weekday: day,
             position: nextDayPosition(routines, sports, day),
-          })
-        }
-        onSaveSport={(sport: WeeklySport) => {
+          });
+        }}
+        onSaveSport={(sport, scope) => {
           if (sheet.mode.kind === 'edit') {
-            updateSport.mutate({
-              id: sport.id,
-              change: { startTime: sport.startTime, durationS: sport.durationS },
-            });
+            changeTime(sport);
+          } else if (scope === 'week') {
+            addThisWeek(
+              sport.weekday,
+              {
+                routineId: null,
+                sport: sport.sport,
+                customName: sport.customName,
+                startTime: sport.startTime,
+                durationS: sport.durationS,
+              },
+              nameOf({ kind: 'sport', sport }),
+            );
           } else {
             addSport.mutate({ ...sport, position: nextDayPosition(routines, sports, sport.weekday) });
           }
@@ -751,13 +849,6 @@ const styles = StyleSheet.create({
     height: StyleSheet.hairlineWidth,
     marginVertical: spacing.sm,
   },
-  // Around the card a dragged row would land on; it takes no room, so
-  // nothing below it moves.
-  // "‹ La teva setmana", at the start of the line.
-  back: {
-    alignSelf: 'flex-start',
-    marginLeft: -spacing.md,
-  },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -765,16 +856,17 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
+    gap: 2,
   },
-  changes: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-    paddingVertical: spacing.xs,
+  centered: {
+    textAlign: 'center',
   },
-  changesText: {
-    flex: 1,
+  // "Desfés els canvis", under the week's title.
+  undo: {
+    alignSelf: 'center',
   },
+  // Around the card a dragged row would land on; it takes no room, so
+  // nothing below it moves.
   dropRing: {
     position: 'absolute',
     top: 0,

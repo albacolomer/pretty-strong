@@ -51,10 +51,10 @@ import {
   plannedRoutineOf,
   rearranged,
   shiftWeek,
-  withMove,
-  type Move,
+  withPlannedMove,
   type PlannedRoutine,
   type RoutineActivity,
+  type WeekPlan,
 } from './moves';
 import { ReprogramSheet, type ReprogramDay, type ReprogramRoutine } from './ReprogramSheet';
 import { RestDay } from './RestDay';
@@ -67,7 +67,7 @@ import { TomorrowCard } from './TomorrowCard';
 import type { Swap } from './swaps';
 import { useSwaps } from './useSwaps';
 import { useToday } from './useToday';
-import { useSetWeekMoves, useWeekMoves } from './useWeekMoves';
+import { useChangeWeek, useWeekPlan } from './useWeekPlan';
 import { useWeeklySports } from './useWeeklySports';
 import {
   activitiesOnDate,
@@ -122,8 +122,10 @@ export function Today() {
   // This week's changes and sessions, from last Sunday on: on a Monday,
   // yesterday's routine can still be missed, and come into this week.
   const movesFrom = dateKey(addDays(weekStart, -1));
-  const { data: moves = [], isSuccess: movesLoaded } = useWeekMoves(movesFrom, to);
-  const setMoves = useSetWeekMoves(movesFrom, to);
+  // Its routines moved, what's added and the sports dropped.
+  const { plan, isSuccess: planLoaded } = useWeekPlan(movesFrom, to);
+  const { moves, additions, drops } = plan;
+  const changeWeekPlan = useChangeWeek(movesFrom, to);
   const goal = useWeeklyGoal();
   const { data: profile } = useProfile();
   const { data: savedSessions = [], isSuccess: sessionsLoaded } = useWeekSessions(movesFrom, to);
@@ -166,7 +168,7 @@ export function Today() {
   // event.
   const [logging, setLogging] = useState<
     | { kind: 'routine'; planned: Routine; shown: Routine }
-    | { kind: 'sport'; sport: WeeklySport }
+    | { kind: 'sport'; sport: WeeklySport; addedId?: string }
     | { kind: 'event'; event: CalendarEvent }
     | { kind: 'swappedSport'; planned: Routine; sport: SportChoice }
     | { kind: 'recovery'; sport: Sport }
@@ -295,7 +297,7 @@ export function Today() {
   }));
   const planned: TodayActivity[] = [
     ...todayEvents,
-    ...activitiesOnDate(routines, sports, moves, today),
+    ...activitiesOnDate(routines, sports, moves, today, additions, drops),
   ];
   const weekIsEmpty = WEEKDAYS.every(
     (other) => activitiesOnDay(routines, sports, other).length === 0,
@@ -328,7 +330,9 @@ export function Today() {
           (activity.kind === 'routine'
             ? session.plannedRoutineId === activity.routine.id
             : activity.kind === 'sport'
-              ? session.plannedSportId === activity.sport.id
+              ? activity.addedId
+                ? session.plannedAdditionId === activity.addedId
+                : session.plannedSportId === activity.sport.id
               : session.plannedEventId === activity.event.id),
       )
       .at(-1);
@@ -454,6 +458,14 @@ export function Today() {
 
   const noSport = { plannedSportId: null, sport: null, sportName: null };
 
+  // What a sport's session was planned as: one of the usual week's, or one
+  // added to this week only.
+  function sportPlan(sport: WeeklySport, addedId: string | undefined) {
+    return addedId
+      ? { plannedSportId: null, plannedAdditionId: addedId }
+      : { plannedSportId: sport.id };
+  }
+
   function skip(activity: TodayActivity) {
     askReason(
       t('today.skipReasonTitle'),
@@ -471,7 +483,7 @@ export function Today() {
             changeReason: reason,
             ...(activity.kind === 'sport'
               ? {
-                  plannedSportId: activity.sport.id,
+                  ...sportPlan(activity.sport, activity.addedId),
                   sport: activity.sport.sport,
                   sportName: activity.sport.customName,
                   ...NO_EVENT,
@@ -487,13 +499,8 @@ export function Today() {
   }
 
   // A change to this week, with "Desfés" to put it back as it was.
-  function changeWeek(next: Move[], message: string) {
-    const previous = moves;
-    setMoves.mutate(next);
-    showToast({
-      message,
-      action: { label: t('common.undo'), onPress: () => setMoves.mutate(previous) },
-    });
+  function changeWeek(next: WeekPlan, message: string) {
+    changeWeekPlan(plan, next, message);
   }
 
   // Already logged today, or going now: it stays where it is.
@@ -513,7 +520,7 @@ export function Today() {
     const key = dateKey(date);
     const planned = plannedRoutineOf(activity, key);
     const { name } = activity.routine;
-    const free = nextRestDate(allRoutines, sports, moves, today, weekEnd);
+    const free = nextRestDate(allRoutines, sports, moves, today, weekEnd, additions, drops);
     return [
       ...(free
         ? [
@@ -521,7 +528,7 @@ export function Today() {
               label: t('today.moveTo', { day: formatWeekday(free, language) }),
               run: () =>
                 changeWeek(
-                  withMove(moves, planned, dateKey(free)),
+                  withPlannedMove(plan, planned, dateKey(free)),
                   t('today.moved', { name, day: formatWeekday(free, language) }),
                 ),
             },
@@ -540,9 +547,11 @@ export function Today() {
                   date,
                   weekEnd,
                   isLogged,
+                  additions,
+                  drops,
                 );
                 changeWeek(
-                  shifted.moves,
+                  { moves: shifted.moves, additions: shifted.additions, drops },
                   shifted.dropped.length > 0
                     ? t('today.shiftedDropped', {
                         count: shifted.dropped.length,
@@ -582,8 +591,8 @@ export function Today() {
   const yesterdayKey = dateKey(yesterday);
   const since = profile ? dateKey(new Date(profile.created_at)) : null;
   const missed =
-    sessionsLoaded && movesLoaded && since !== null && since <= yesterdayKey
-      ? activitiesOnDate(allRoutines, sports, moves, yesterday).find(
+    sessionsLoaded && planLoaded && since !== null && since <= yesterdayKey
+      ? activitiesOnDate(allRoutines, sports, moves, yesterday, additions, drops).find(
           (activity): activity is RoutineActivity =>
             activity.kind === 'routine' &&
             !sessions.some(
@@ -597,8 +606,8 @@ export function Today() {
   // "Fes-la avui": after today's own.
   function doMissedToday(activity: RoutineActivity) {
     changeWeek(
-      withMove(
-        moves,
+      withPlannedMove(
+        plan,
         plannedRoutineOf(activity, yesterdayKey),
         day,
         nextDayPosition(allRoutines, sports, weekdayOf(today)),
@@ -641,7 +650,7 @@ export function Today() {
       return;
     }
     if (activity.kind === 'sport') {
-      setLogging({ kind: 'sport', sport: activity.sport });
+      setLogging({ kind: 'sport', sport: activity.sport, addedId: activity.addedId });
       return;
     }
     const sport = sportFor(activity.routine, undefined);
@@ -699,7 +708,7 @@ export function Today() {
       return;
     }
     if (logging.kind === 'sport') {
-      const { sport } = logging;
+      const { sport, addedId } = logging;
       log(
         {
           id: randomUUID(),
@@ -711,7 +720,7 @@ export function Today() {
           durationS,
           notes,
           changeReason: null,
-          plannedSportId: sport.id,
+          ...sportPlan(sport, addedId),
           sport: sport.sport,
           sportName: sport.customName,
           ...NO_EVENT,
@@ -1156,7 +1165,8 @@ export function Today() {
       session.status === 'completed' &&
       session.plannedRoutineId === null &&
       session.plannedSportId === null &&
-      session.plannedEventId === null,
+      session.plannedEventId === null &&
+      !session.plannedAdditionId,
   );
 
   function unplannedName(session: WorkoutSession): string {
@@ -1190,7 +1200,7 @@ export function Today() {
 
   // A rest day: what's next, "Demà" or its weekday, as
   // "Tren inferior 1 · Pàdel 19:00".
-  const next = nextPlannedDay(routines, sports, today, moves);
+  const next = nextPlannedDay(routines, sports, today, moves, additions, drops);
   const nextPlan = next && {
     day: next.inDays === 1 ? t('today.tomorrow') : t(`weekdays.long.${next.weekday}`),
     plan: next.activities
@@ -1325,7 +1335,7 @@ export function Today() {
   }
   for (let date = today, index = 0; date.getTime() <= weekEnd.getTime(); index += 1) {
     const key = dateKey(date);
-    const activities = activitiesOnDate(allRoutines, sports, moves, date);
+    const activities = activitiesOnDate(allRoutines, sports, moves, date, additions, drops);
     reprogramDays.push({
       date: key,
       title:
@@ -1362,7 +1372,10 @@ export function Today() {
       return item && item.was !== date ? [{ ...item, now: date }] : [];
     });
     if (changes.length === 0) return;
-    changeWeek(rearranged(allRoutines, sports, moves, changes), t('today.reprogrammed'));
+    changeWeek(
+      { ...rearranged(allRoutines, sports, moves, changes, additions), drops },
+      t('today.reprogrammed'),
+    );
   }
 
   return (

@@ -26,6 +26,12 @@ import { PastWorkoutView } from './PastWorkoutView';
 jest.mock('expo-router', () => ({ router: { push: jest.fn() } }));
 jest.mock('@/features/schedule/sportsApi', () => ({ fetchWeeklySports: jest.fn(() => Promise.resolve([])) }));
 jest.mock('@/features/schedule/movesApi', () => ({ fetchMoves: jest.fn(() => Promise.resolve([])) }));
+jest.mock('@/features/schedule/sportDropsApi', () => ({
+  fetchSportDrops: jest.fn(() => Promise.resolve([])),
+}));
+jest.mock('@/features/schedule/additionsApi', () => ({
+  fetchAdditions: jest.fn(() => Promise.resolve([])),
+}));
 jest.mock('@/features/auth/AuthProvider', () => ({
   useAuth: () => ({ session: { user: { id: 'user-1' } }, isLoading: false }),
 }));
@@ -121,6 +127,7 @@ const workout: PastWorkout = {
   plannedEventId: null,
   eventKind: null,
   eventName: null,
+  plannedAdditionId: null,
   exercises: [
     {
       id: 'se-1',

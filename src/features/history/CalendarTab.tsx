@@ -18,7 +18,7 @@ import {
   startOfWeek,
 } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
-import { useWeekMoves } from '@/features/schedule/useWeekMoves';
+import { useWeekPlan } from '@/features/schedule/useWeekPlan';
 import { useWeeklySports } from '@/features/schedule/useWeeklySports';
 import { activitiesOnDate } from '@/features/schedule/week';
 import { DaySteps } from '@/features/steps/DaySteps';
@@ -62,10 +62,11 @@ export function CalendarTab() {
   const { data: sports = [] } = useWeeklySports();
   // The picked day's week changes (the same days Avui asks for).
   const weekStart = startOfWeek(fromDateKey(selected));
-  const { data: moves = [] } = useWeekMoves(
-    dateKey(addDays(weekStart, -1)),
-    dateKey(addDays(weekStart, 6)),
-  );
+  const weekFrom = dateKey(addDays(weekStart, -1));
+  const weekTo = dateKey(addDays(weekStart, 6));
+  const {
+    plan: { moves, additions, drops },
+  } = useWeekPlan(weekFrom, weekTo);
 
   const workouts = new Map<string, number>();
   for (const entry of history.entries) {
@@ -79,13 +80,15 @@ export function CalendarTab() {
   const dayEvents = eventsOn(events, selected);
   const isToday = selected === todayKey;
   const future = selected > todayKey;
-  // A rest day: nothing planned that day (that week's moves counted), when
-  // there is a plan. A competition or special date counts as something, so
+  // A rest day: nothing planned that day (that week's changes counted),
+  // when there is a plan. A competition or special date counts as something, so
   // its day is never a rest day (US-30).
   const restDay =
     dayEvents.length === 0 &&
-    (routines.some((routine) => routine.weekdays.length > 0) || sports.length > 0) &&
-    activitiesOnDate(routines, sports, moves, fromDateKey(selected)).length === 0;
+    (routines.some((routine) => routine.weekdays.length > 0) ||
+      sports.length > 0 ||
+      additions.length > 0) &&
+    activitiesOnDate(routines, sports, moves, fromDateKey(selected), additions, drops).length === 0;
 
   // Logging an activity done that day (US-24): which routine, then the
   // editor.

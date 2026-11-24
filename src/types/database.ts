@@ -428,6 +428,53 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_additions: {
+        Row: {
+          created_at: string
+          custom_name: string | null
+          date: string
+          duration_s: number | null
+          id: string
+          position: number
+          routine_id: string | null
+          sport: string | null
+          start_time: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          custom_name?: string | null
+          date: string
+          duration_s?: number | null
+          id?: string
+          position?: number
+          routine_id?: string | null
+          sport?: string | null
+          start_time?: string | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          custom_name?: string | null
+          date?: string
+          duration_s?: number | null
+          id?: string
+          position?: number
+          routine_id?: string | null
+          sport?: string | null
+          start_time?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_additions_routine_id_fkey"
+            columns: ["routine_id"]
+            isOneToOne: false
+            referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       schedule_overrides: {
         Row: {
           created_at: string
@@ -462,6 +509,38 @@ export type Database = {
             columns: ["routine_id"]
             isOneToOne: false
             referencedRelation: "routines"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      schedule_sport_drops: {
+        Row: {
+          created_at: string
+          date: string
+          id: string
+          user_id: string
+          weekly_sport_id: string
+        }
+        Insert: {
+          created_at?: string
+          date: string
+          id?: string
+          user_id?: string
+          weekly_sport_id: string
+        }
+        Update: {
+          created_at?: string
+          date?: string
+          id?: string
+          user_id?: string
+          weekly_sport_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_sport_drops_weekly_sport_id_fkey"
+            columns: ["weekly_sport_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_sports"
             referencedColumns: ["id"]
           },
         ]
@@ -714,6 +793,7 @@ export type Database = {
           id: string
           log_mode: string
           notes: string | null
+          planned_addition_id: string | null
           planned_event_id: string | null
           planned_routine_id: string | null
           planned_sport_id: string | null
@@ -739,6 +819,7 @@ export type Database = {
           id: string
           log_mode?: string
           notes?: string | null
+          planned_addition_id?: string | null
           planned_event_id?: string | null
           planned_routine_id?: string | null
           planned_sport_id?: string | null
@@ -764,6 +845,7 @@ export type Database = {
           id?: string
           log_mode?: string
           notes?: string | null
+          planned_addition_id?: string | null
           planned_event_id?: string | null
           planned_routine_id?: string | null
           planned_sport_id?: string | null
@@ -776,6 +858,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "workout_sessions_planned_addition_id_fkey"
+            columns: ["planned_addition_id"]
+            isOneToOne: false
+            referencedRelation: "schedule_additions"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "workout_sessions_planned_event_id_fkey"
             columns: ["planned_event_id"]
@@ -839,8 +928,16 @@ export type Database = {
         Args: { p_items: Json; p_weekday: number }
         Returns: undefined
       }
+      replace_schedule_additions: {
+        Args: { p_additions: Json; p_from: string; p_to: string }
+        Returns: undefined
+      }
       replace_schedule_overrides: {
         Args: { p_from: string; p_moves: Json; p_to: string }
+        Returns: undefined
+      }
+      replace_sport_drops: {
+        Args: { p_drops: Json; p_from: string; p_to: string }
         Returns: undefined
       }
       save_daily_steps: { Args: { p_days: Json }; Returns: undefined }

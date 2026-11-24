@@ -26,6 +26,7 @@ const past: PastWorkout = {
   plannedEventId: null,
   eventKind: null,
   eventName: null,
+  plannedAdditionId: null,
   exercises: [
     {
       id: 'se-1',
