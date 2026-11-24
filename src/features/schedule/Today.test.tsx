@@ -342,6 +342,20 @@ describe('<Today />', () => {
     });
   });
 
+  test('with no routines yet: a button to create one, and only "+ Registra una altra activitat"', async () => {
+    jest.mocked(fetchRoutines).mockResolvedValue([]);
+    const user = userEvent.setup();
+    await render(<Today />, { wrapper: createAppWrapper() });
+
+    expect(await screen.findByText('Encara no tens rutines.')).toBeOnTheScreen();
+    // Nothing else on the day: no "També avui" card, just its button.
+    expect(screen.queryByRole('header', { name: 'També avui' })).not.toBeOnTheScreen();
+    expect(screen.getByRole('button', { name: 'Registra una altra activitat' })).toBeOnTheScreen();
+
+    await user.press(screen.getByRole('button', { name: 'Crea una rutina' }));
+    expect(router.push).toHaveBeenCalledWith('/plan/routines/new');
+  });
+
   test('the date, the routine to start in the big button, and the rest "també avui"', async () => {
     await render(<Today />, { wrapper: createAppWrapper() });
 

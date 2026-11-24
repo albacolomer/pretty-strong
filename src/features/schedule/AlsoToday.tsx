@@ -2,7 +2,7 @@ import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, GradientText, Text } from '@/components/ui';
+import { Button, Card, GradientText, Text } from '@/components/ui';
 import { gaps, radius, spacing, touch, useTheme } from '@/theme';
 
 export type AlsoTodayItem = {
@@ -32,24 +32,32 @@ const CHECK_EDGE = 6;
 
 // "També avui": a card with the day's other activities, each with its
 // time (if it has one), its name and a circle to mark it done, and a last
-// row to log another one.
+// row to log another one. With nothing else on the day, just that button.
 export function AlsoToday({ items, onAdd }: { items: AlsoTodayItem[]; onAdd: () => void }) {
   const { t } = useTranslation();
   // A column for start times when any has one, so the names line up.
   const timed = items.some((item) => item.time !== null);
+
+  if (items.length === 0) {
+    return (
+      <Button
+        label={t('today.addActivity')}
+        icon="plus"
+        variant="secondary"
+        caps
+        onPress={onAdd}
+      />
+    );
+  }
 
   return (
     <Card style={styles.card}>
       <Text variant="label" color="textMuted" accessibilityRole="header">
         {t('today.alsoToday')}
       </Text>
-      {items.length === 0 ? (
-        <View style={styles.row}>
-          <Text color="textMuted">{t('today.nothingElse')}</Text>
-        </View>
-      ) : (
-        items.map((item) => <Row key={item.key} item={item} timed={timed} />)
-      )}
+      {items.map((item) => (
+        <Row key={item.key} item={item} timed={timed} />
+      ))}
       <AddActivityRow onPress={onAdd} />
     </Card>
   );

@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Card, ScreenTitle, Text, useActionSheet, useToast } from '@/components/ui';
+import { Button, Card, ScreenTitle, Text, useActionSheet, useToast } from '@/components/ui';
 import { EventCountdown } from '@/features/events/EventCountdown';
 import { EVENT_ICONS, eventsOn, type CalendarEvent } from '@/features/events/events';
 import { useEvents } from '@/features/events/useEvents';
@@ -1382,8 +1382,13 @@ export function Today() {
       {active && goingElsewhere ? (
         renderGoingHero(active)
       ) : todayEvents.length === 0 && allRoutines.length === 0 && sports.length === 0 ? (
-        <Card>
-          <Text color="textMuted">{t('schedule.noRoutines')}</Text>
+        <Card style={styles.noRoutines}>
+          <Text color="textMuted">{t('schedule.noRoutinesYet')}</Text>
+          <Button
+            label={t('today.createRoutine')}
+            icon="plus"
+            onPress={() => router.push('/plan/routines/new')}
+          />
         </Card>
       ) : todayEvents.length === 0 && weekIsEmpty ? (
         <Card>
@@ -1532,5 +1537,8 @@ export function Today() {
 const styles = StyleSheet.create({
   today: {
     gap: spacing.lg,
+  },
+  noRoutines: {
+    gap: spacing.md,
   },
 });
