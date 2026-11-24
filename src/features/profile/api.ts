@@ -38,9 +38,14 @@ export type ProfileDetails = Pick<
   | 'distance_unit'
 >;
 
+// What the setup after sign-up can change, a few at a time: the details,
+// and the username made from the email.
+export type ProfileChanges = Partial<ProfileDetails & Pick<Profile, 'username'>>;
+
+// Only the details given change.
 export async function updateProfileDetails(
   userId: string,
-  details: ProfileDetails,
+  details: ProfileChanges,
 ): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')

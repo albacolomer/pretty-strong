@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { View, type TextInputInstance } from 'react-native';
 
 import { Button, Text, TextField } from '@/components/ui';
+import { useSetupStore } from '@/features/onboarding/setupStore';
 import { appLanguage } from '@/lib/i18n';
 import { spacing } from '@/theme';
 
@@ -10,8 +11,8 @@ import { isUsernameAvailable, signUp } from './api';
 import { authErrorReason, type AuthErrorReason } from './authErrors';
 import {
   hasErrors,
-  normalizeUsername,
   PASSWORD_MIN_LENGTH,
+  usernameCandidates,
   validateSignUp,
   type SignUpValues,
   type ValidationError,
@@ -19,46 +20,58 @@ import {
 
 // Errors shown under a field: the form's own checks plus the ones only the
 // server can know.
-type FieldError = ValidationError | 'usernameTaken' | 'emailTaken' | 'weakPassword';
+type FieldError = ValidationError | 'emailTaken' | 'weakPassword';
+
+// The first free username made from the email; none if all are taken (the
+// database then makes one up). It can be changed in the setup straight
+// after.
+async function freeUsername(email: string): Promise<string | undefined> {
+  for (const candidate of usernameCandidates(email)) {
+    if (await isUsernameAvailable(candidate)) return candidate;
+  }
+  return undefined;
+}
 type FieldErrors = Partial<Record<keyof SignUpValues, FieldError>>;
 
+// Just an email and a password: everything else is asked in the setup
+// that follows (US-01).
 export function SignUpForm() {
   const { t } = useTranslation();
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [formError, setFormError] = useState<AuthErrorReason | null>(null);
   const [needsEmailConfirmation, setNeedsEmailConfirmation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const emailRef = useRef<TextInputInstance>(null);
+  const beginSetup = useSetupStore((state) => state.begin);
+  const cancelSetup = useSetupStore((state) => state.finish);
   const passwordRef = useRef<TextInputInstance>(null);
 
   const errorText = (error: FieldError | undefined) =>
     error && t(`auth.errors.${error}`, { min: PASSWORD_MIN_LENGTH });
 
   async function handleSubmit() {
-    const errors = validateSignUp({ username, email, password });
+    const errors = validateSignUp({ email, password });
     setFieldErrors(errors);
     setFormError(null);
     if (hasErrors(errors)) return;
 
-    const normalizedUsername = normalizeUsername(username);
     setIsSubmitting(true);
     try {
-      if (!(await isUsernameAvailable(normalizedUsername))) {
-        setFieldErrors({ username: 'usernameTaken' });
-        return;
-      }
+      const username = await freeUsername(email);
+      // Before the account exists: its session arrives while signUp is
+      // still running, and must go straight to the setup, not the tabs.
+      beginSetup(email);
       const result = await signUp({
-        username: normalizedUsername,
+        username,
         email,
         password,
         language: appLanguage(),
       });
-      // With a session, the router swaps this screen for the tabs.
+      // With a session, the router swaps this screen for the setup.
       setNeedsEmailConfirmation(result.needsEmailConfirmation);
     } catch (error) {
+      cancelSetup();
       const reason = authErrorReason(error);
       if (reason === 'emailTaken') setFieldErrors({ email: reason });
       else if (reason === 'weakPassword') setFieldErrors({ password: reason });
@@ -75,22 +88,6 @@ export function SignUpForm() {
   return (
     <View style={{ gap: spacing.lg }}>
       <TextField
-        label={t('auth.username')}
-        hint={t('auth.usernameHint')}
-        value={username}
-        onChangeText={setUsername}
-        error={errorText(fieldErrors.username)}
-        autoCapitalize="none"
-        autoCorrect={false}
-        autoComplete="off"
-        // Not "username": iOS should pair the saved password with the email.
-        textContentType="none"
-        returnKeyType="next"
-        submitBehavior="submit"
-        onSubmitEditing={() => emailRef.current?.focus()}
-      />
-      <TextField
-        ref={emailRef}
         label={t('auth.email')}
         value={email}
         onChangeText={setEmail}

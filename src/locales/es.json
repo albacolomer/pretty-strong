@@ -241,6 +241,50 @@
       "unknown": "Algo ha fallado. Vuelve a intentarlo."
     }
   },
+  "setup": {
+    "progress": "Paso {{step}} de {{total}}",
+    "progressLabel": "Progreso de la configuración",
+    "continue": "Continuar",
+    "skip": "Omitir",
+    "saveError": "No se ha podido guardar. Puedes cambiarlo más tarde en Editar el perfil.",
+    "name": {
+      "title": "¿Cómo te llamas?",
+      "subtitle": "Tu nombre, tu nombre de usuario y una foto, si quieres.",
+      "photoHint": "Toca la cámara para añadir una foto"
+    },
+    "about": {
+      "title": "Sobre ti",
+      "subtitle": "Solo lo ves tú.",
+      "pickDate": "Elige la fecha"
+    },
+    "units": {
+      "title": "Tus unidades",
+      "subtitle": "¿Cómo quieres ver los pesos, las medidas y las distancias?"
+    },
+    "weight": {
+      "title": "¿Cuánto pesas?",
+      "subtitle": "Será el primer punto de tu gráfica de peso. Solo lo ves tú.",
+      "label": "Peso ({{unit}})",
+      "outOfRange": "Escribe un peso entre {{min}} y {{max}} {{unit}}."
+    },
+    "measurements": {
+      "title": "Tus medidas",
+      "subtitle": "Opcional. Rellena solo las que quieras, para ver cómo cambias con el tiempo.",
+      "value": "{{name}} ({{unit}})",
+      "outOfRange": "Las medidas deben estar entre {{min}} y {{max}} {{unit}}."
+    },
+    "goals": {
+      "title": "Tus objetivos",
+      "subtitle": "¿Cuántos entrenamientos a la semana y cuántos pasos al día?",
+      "later": "Puedes cambiarlo todo cuando quieras en Perfil → Editar el perfil."
+    },
+    "ready": {
+      "title": "¡Todo listo!",
+      "titleNamed": "¡Todo listo, {{name}}!",
+      "subtitle": "Crea tu primera rutina en Plan y empieza a entrenar desde Hoy.",
+      "start": "Vamos"
+    }
+  },
   "profile": {
     "loadError": "No se ha podido cargar el perfil.",
     "language": "Idioma",

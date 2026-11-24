@@ -19,7 +19,13 @@ export async function isUsernameAvailable(username: string): Promise<boolean> {
   return data;
 }
 
-type SignUpInput = { username: string; email: string; password: string; language: Language };
+type SignUpInput = {
+  // None if no free one was found: the database then makes one up.
+  username: string | undefined;
+  email: string;
+  password: string;
+  language: Language;
+};
 
 // The database trigger creates the profile from `username` and `language`.
 // Returns true when Supabase wants the email confirmed before the first
@@ -31,7 +37,7 @@ export async function signUp({ username, email, password, language }: SignUpInpu
   const { data, error } = await supabase.auth.signUp({
     email: email.trim(),
     password,
-    options: { data: { username, language } },
+    options: { data: username ? { username, language } : { language } },
   });
   if (error) throw error;
   // With email confirmation on, Supabase hides that an email is already

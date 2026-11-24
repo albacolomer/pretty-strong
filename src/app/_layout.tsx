@@ -6,6 +6,7 @@ import { Stack, ThemeProvider } from 'expo-router';
 import { MenuHost, ToastProvider } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { SplashScreenController } from '@/features/auth/SplashScreenController';
+import { useNeedsSetup } from '@/features/onboarding/setupStore';
 import { useAppFonts } from '@/lib/fonts';
 import { configureNotifications } from '@/lib/notifications';
 import { queryClient } from '@/lib/queryClient';
@@ -40,22 +41,30 @@ export default function RootLayout() {
   );
 }
 
-// Signed in: only the tabs exist. Signed out: only the auth screens exist.
-// When the session changes, the router moves to the group that is allowed.
-// redirectTo names the screen: left to itself the router would go to
-// "/(auth)", which has no index screen, and show "Unmatched route".
+// Signed in: only the tabs exist, or, just after signing up, only the
+// setup. Signed out: only the auth screens exist. When the session changes,
+// the router moves to the group that is allowed. redirectTo names the
+// screen: left to itself the router would go to "/(auth)", which has no
+// index screen, and show "Unmatched route".
 function RootNavigator() {
   const { session } = useAuth();
+  const needsSetup = useNeedsSetup(session);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Protected guard={!!session} redirectTo="/sign-in">
+      <Stack.Protected
+        guard={!!session && !needsSetup}
+        redirectTo={session ? '/onboarding' : '/sign-in'}>
         <Stack.Screen name="(tabs)" />
         {/* Over the tabs, so nothing outside it is tapped by accident mid-set. */}
         <Stack.Screen
           name="workout"
           options={{ presentation: 'fullScreenModal', gestureEnabled: false }}
         />
+      </Stack.Protected>
+      <Stack.Protected guard={needsSetup} redirectTo={session ? '/' : '/sign-in'}>
+        {/* Its own ‹ goes back a step; a swipe would leave the setup. */}
+        <Stack.Screen name="onboarding" options={{ gestureEnabled: false, animation: 'fade' }} />
       </Stack.Protected>
       <Stack.Protected guard={!session}>
         <Stack.Screen name="(auth)" />

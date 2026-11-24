@@ -1,6 +1,7 @@
 import {
   hasErrors,
   normalizeUsername,
+  usernameCandidates,
   validateEmail,
   validateSignIn,
   validateSignUp,
@@ -62,15 +63,14 @@ describe('validateUsername', () => {
 });
 
 describe('validateSignUp', () => {
-  const valid = { username: 'alba', email: 'alba@gmail.com', password: '12345678' };
+  const valid = { email: 'alba@gmail.com', password: '12345678' };
 
   test('accepts valid values', () => {
     expect(validateSignUp(valid)).toEqual({});
   });
 
   test('flags every field when empty', () => {
-    expect(validateSignUp({ username: '', email: '', password: '' })).toEqual({
-      username: 'required',
+    expect(validateSignUp({ email: '', password: '' })).toEqual({
       email: 'required',
       password: 'required',
     });
@@ -80,6 +80,34 @@ describe('validateSignUp', () => {
     expect(validateSignUp({ ...valid, password: '1234567' })).toEqual({
       password: 'passwordTooShort',
     });
+  });
+});
+
+describe('usernameCandidates', () => {
+  const digits = () => '4821';
+
+  test("starts with the email's name, made to fit the rule", () => {
+    expect(usernameCandidates(' Alba.Colomer@Gmail.com ', digits)[0]).toBe('albacolomer');
+    expect(usernameCandidates('núria-p@gmail.com', digits)[0]).toBe('nuriap');
+  });
+
+  test('then the same with digits, still 20 characters at most', () => {
+    expect(usernameCandidates('alba@gmail.com', digits)).toEqual([
+      'alba',
+      'alba4821',
+      'alba4821',
+      'alba4821',
+      'alba4821',
+    ]);
+    const long = usernameCandidates('averyveryverylongemailname@gmail.com', digits);
+    expect(long[0]).toBe('averyveryverylongema');
+    expect(long[1]).toBe('averyveryverylon4821');
+    expect(long.every((candidate) => candidate.length <= 20)).toBe(true);
+  });
+
+  test('skips a name too short for the rule', () => {
+    expect(usernameCandidates('al@gmail.com', digits)[0]).toBe('al4821');
+    expect(usernameCandidates('...@gmail.com', digits)[0]).toBe('user');
   });
 });
 

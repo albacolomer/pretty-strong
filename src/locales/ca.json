@@ -241,6 +241,50 @@
       "unknown": "Alguna cosa ha fallat. Torna-ho a provar."
     }
   },
+  "setup": {
+    "progress": "Pas {{step}} de {{total}}",
+    "progressLabel": "Progrés de la configuració",
+    "continue": "Continua",
+    "skip": "Omet",
+    "saveError": "No s'ha pogut desar. Ho pots canviar més tard a Edita el perfil.",
+    "name": {
+      "title": "Com et diuen?",
+      "subtitle": "El teu nom, el teu nom d'usuari i una foto, si vols.",
+      "photoHint": "Toca la càmera per afegir una foto"
+    },
+    "about": {
+      "title": "Sobre tu",
+      "subtitle": "Només ho veus tu.",
+      "pickDate": "Tria la data"
+    },
+    "units": {
+      "title": "Les teves unitats",
+      "subtitle": "Com vols veure els pesos, les mides i les distàncies?"
+    },
+    "weight": {
+      "title": "Quant peses?",
+      "subtitle": "Serà el primer punt de la teva gràfica de pes. Només ho veus tu.",
+      "label": "Pes ({{unit}})",
+      "outOfRange": "Escriu un pes entre {{min}} i {{max}} {{unit}}."
+    },
+    "measurements": {
+      "title": "Les teves mesures",
+      "subtitle": "Opcional. Omple només les que vulguis, per veure com canvies amb el temps.",
+      "value": "{{name}} ({{unit}})",
+      "outOfRange": "Les mesures han de ser entre {{min}} i {{max}} {{unit}}."
+    },
+    "goals": {
+      "title": "Els teus objectius",
+      "subtitle": "Quants entrenaments a la setmana i quants passos al dia?",
+      "later": "Pots canviar-ho tot quan vulguis a Perfil → Edita el perfil."
+    },
+    "ready": {
+      "title": "Tot a punt!",
+      "titleNamed": "Tot a punt, {{name}}!",
+      "subtitle": "Crea la teva primera rutina a Pla i comença a entrenar des d'Avui.",
+      "start": "Som-hi"
+    }
+  },
   "profile": {
     "loadError": "No s'ha pogut carregar el perfil.",
     "language": "Idioma",

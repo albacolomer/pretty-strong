@@ -4,7 +4,8 @@ export type ValidationError = 'required' | 'invalidEmail' | 'invalidUsername' | 
 export type SignInValues = { email: string; password: string };
 export type SignInErrors = Partial<Record<keyof SignInValues, ValidationError>>;
 
-export type SignUpValues = { username: string; email: string; password: string };
+// The username is made from the email, and changed in the setup after.
+export type SignUpValues = { email: string; password: string };
 export type SignUpErrors = Partial<Record<keyof SignUpValues, ValidationError>>;
 
 export const PASSWORD_MIN_LENGTH = 8;
@@ -42,15 +43,30 @@ export function validateSignIn({ email, password }: SignInValues): SignInErrors 
   return errors;
 }
 
-export function validateSignUp({ username, email, password }: SignUpValues): SignUpErrors {
+export function validateSignUp({ email, password }: SignUpValues): SignUpErrors {
   const errors: SignUpErrors = {};
-  const usernameError = validateUsername(username);
-  if (usernameError) errors.username = usernameError;
   const emailError = validateEmail(email);
   if (emailError) errors.email = emailError;
   if (password === '') errors.password = 'required';
   else if (password.length < PASSWORD_MIN_LENGTH) errors.password = 'passwordTooShort';
   return errors;
+}
+
+// Usernames to try for a new account, best first: the email's name, made
+// to fit the username rule ("Alba.Colomer@…" → "albacolomer"), then the
+// same with four digits in case it's taken. `digits` gives "4821".
+export function usernameCandidates(
+  email: string,
+  digits: () => string = () => String(1000 + Math.floor(Math.random() * 9000)),
+): string[] {
+  const name = (email.trim().toLowerCase().split('@')[0] ?? '')
+    .normalize('NFD')
+    // The accents split off by NFD ("è" → "e" + "`").
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9_]/g, '');
+  const base = name === '' ? 'user' : name.slice(0, 20);
+  const numbered = Array.from({ length: 4 }, () => `${base.slice(0, 16)}${digits()}`);
+  return [base, ...numbered].filter((candidate) => USERNAME_PATTERN.test(candidate));
 }
 
 export function hasErrors(errors: object): boolean {

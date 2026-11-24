@@ -241,6 +241,50 @@
       "unknown": "Something went wrong. Try again."
     }
   },
+  "setup": {
+    "progress": "Step {{step}} of {{total}}",
+    "progressLabel": "Setup progress",
+    "continue": "Continue",
+    "skip": "Skip",
+    "saveError": "Couldn't save. You can change it later in Edit profile.",
+    "name": {
+      "title": "What's your name?",
+      "subtitle": "Your name, your username, and a photo if you like.",
+      "photoHint": "Tap the camera to add a photo"
+    },
+    "about": {
+      "title": "About you",
+      "subtitle": "Only you can see this.",
+      "pickDate": "Pick the date"
+    },
+    "units": {
+      "title": "Your units",
+      "subtitle": "How do you want to see weights, measurements and distances?"
+    },
+    "weight": {
+      "title": "How much do you weigh?",
+      "subtitle": "It'll be the first point on your weight chart. Only you can see it.",
+      "label": "Weight ({{unit}})",
+      "outOfRange": "Enter a weight between {{min}} and {{max}} {{unit}}."
+    },
+    "measurements": {
+      "title": "Your measurements",
+      "subtitle": "Optional. Fill in only the ones you want, to see how you change over time.",
+      "value": "{{name}} ({{unit}})",
+      "outOfRange": "Measurements must be between {{min}} and {{max}} {{unit}}."
+    },
+    "goals": {
+      "title": "Your goals",
+      "subtitle": "How many workouts a week, and how many steps a day?",
+      "later": "You can change all of this any time in Profile → Edit profile."
+    },
+    "ready": {
+      "title": "All set!",
+      "titleNamed": "All set, {{name}}!",
+      "subtitle": "Create your first routine in Plan and start training from Today.",
+      "start": "Let's go"
+    }
+  },
   "profile": {
     "loadError": "Couldn't load your profile.",
     "language": "Language",
