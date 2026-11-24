@@ -238,7 +238,8 @@
       "invalidCredentials": "El correu o la contrasenya no són correctes.",
       "rateLimited": "Massa intents. Espera una mica i torna-ho a provar.",
       "network": "No hi ha connexió. Comprova-la i torna-ho a provar.",
-      "unknown": "Alguna cosa ha fallat. Torna-ho a provar."
+      "unknown": "Alguna cosa ha fallat. Torna-ho a provar.",
+      "samePassword": "La contrasenya nova ha de ser diferent de l'actual."
     }
   },
   "setup": {
@@ -289,7 +290,6 @@
     "loadError": "No s'ha pogut carregar el perfil.",
     "language": "Idioma",
     "languageSaveError": "No s'ha pogut desar l'idioma. Torna-ho a provar.",
-    "credits": "Crèdits",
     "repdbCredit": "Exercise data by RepDB (repdb.co)",
     "workouts": "Entrenaments",
     "streak": "Ratxa",
@@ -332,7 +332,6 @@
     "save": "Desa",
     "saved": "Perfil desat ✓",
     "saveError": "No s'ha pogut desar el perfil. Torna-ho a provar.",
-    "units": "Unitats",
     "unitKinds": {
       "weight": "Pes",
       "length": "Mides",
@@ -947,7 +946,16 @@
     "daysUnit_other": "dies"
   },
   "settings": {
-    "title": "Configuració"
+    "title": "Configuració",
+    "account": "Compte",
+    "preferences": "Preferències",
+    "privacy": "Privadesa",
+    "changePassword": "Canvia la contrasenya",
+    "currentPassword": "Contrasenya actual",
+    "newPassword": "Contrasenya nova",
+    "currentPasswordWrong": "La contrasenya actual no és correcta.",
+    "passwordChanged": "Contrasenya canviada ✓",
+    "save": "Desa"
   },
   "progress": {
     "perWeek": "Entrenaments per setmana",
@@ -1047,7 +1055,6 @@
     "avatarSaved": "Foto del perfil desada ✓",
     "saveError": "No s'ha pogut desar la foto. Torna-ho a provar.",
     "hide": "Amaga les fotos de progrés",
-    "hideHint": "Es veuran borroses fins que les desbloquegis amb Face ID o el codi de l'iPhone, com l'àlbum Ocult. Es tornen a amagar quan surts de l'app.",
     "unlock": "Desbloqueja",
     "unlockPrompt": "Desbloqueja les fotos de progrés",
     "hiddenOn": "Foto amagada del {{date}}",

@@ -5,7 +5,7 @@ import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { isNetworkError } from '@/lib/errors';
 
-import { updateProfileDetails, type ProfileDetails } from './api';
+import { updateProfileDetails, type ProfileChanges } from './api';
 import { profileQueryKey } from './useProfile';
 
 // Saves Edita el perfil. Messages live here, so they show after the screen
@@ -18,7 +18,7 @@ export function useUpdateProfile() {
   const userId = session?.user.id;
 
   return useMutation({
-    mutationFn: (details: ProfileDetails) => {
+    mutationFn: (details: ProfileChanges) => {
       if (!userId) throw new Error('Not signed in.');
       return updateProfileDetails(userId, details);
     },

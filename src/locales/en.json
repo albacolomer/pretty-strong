@@ -238,7 +238,8 @@
       "invalidCredentials": "Wrong email or password.",
       "rateLimited": "Too many attempts. Wait a moment and try again.",
       "network": "No connection. Check it and try again.",
-      "unknown": "Something went wrong. Try again."
+      "unknown": "Something went wrong. Try again.",
+      "samePassword": "The new password must be different from the current one."
     }
   },
   "setup": {
@@ -289,7 +290,6 @@
     "loadError": "Couldn't load your profile.",
     "language": "Language",
     "languageSaveError": "Couldn't save the language. Try again.",
-    "credits": "Credits",
     "repdbCredit": "Exercise data by RepDB (repdb.co)",
     "workouts": "Workouts",
     "streak": "Streak",
@@ -332,7 +332,6 @@
     "save": "Save",
     "saved": "Profile saved ✓",
     "saveError": "Couldn't save your profile. Try again.",
-    "units": "Units",
     "unitKinds": {
       "weight": "Weight",
       "length": "Measurements",
@@ -947,7 +946,16 @@
     "daysUnit_other": "days"
   },
   "settings": {
-    "title": "Settings"
+    "title": "Settings",
+    "account": "Account",
+    "preferences": "Preferences",
+    "privacy": "Privacy",
+    "changePassword": "Change password",
+    "currentPassword": "Current password",
+    "newPassword": "New password",
+    "currentPasswordWrong": "That isn't your current password.",
+    "passwordChanged": "Password changed ✓",
+    "save": "Save"
   },
   "progress": {
     "perWeek": "Workouts per week",
@@ -1047,7 +1055,6 @@
     "avatarSaved": "Profile picture saved ✓",
     "saveError": "Couldn't save the photo. Try again.",
     "hide": "Hide progress photos",
-    "hideHint": "They show blurred until you unlock them with Face ID or your iPhone passcode, like the Hidden album. They hide again when you leave the app.",
     "unlock": "Unlock",
     "unlockPrompt": "Unlock your progress photos",
     "hiddenOn": "Hidden photo from {{date}}",

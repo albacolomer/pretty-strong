@@ -49,6 +49,21 @@ export async function signUp({ username, email, password, language }: SignUpInpu
   return { needsEmailConfirmation: data.session === null };
 }
 
+// Settings → "Canvia la contrasenya". Supabase would change it with the
+// session alone, so anyone holding an unlocked phone could: the current
+// one is checked first, by signing in with it again. Throws the Supabase
+// error (invalid_credentials: the current one is wrong).
+export async function changePassword(
+  email: string,
+  current: string,
+  next: string,
+): Promise<void> {
+  const check = await supabase.auth.signInWithPassword({ email, password: current });
+  if (check.error) throw check.error;
+  const { error } = await supabase.auth.updateUser({ password: next });
+  if (error) throw error;
+}
+
 // 'local' signs out this phone only, not every device.
 export async function signOut(): Promise<void> {
   const { error } = await supabase.auth.signOut({ scope: 'local' });

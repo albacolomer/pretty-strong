@@ -17,7 +17,6 @@ import { useToday } from '@/features/schedule/useToday';
 import { useWeeklySports } from '@/features/schedule/useWeeklySports';
 import { changeStepGoal, STEP_GOAL_MAX, STEP_GOAL_MIN } from '@/features/steps/steps';
 import { useAppLanguage } from '@/lib/i18n';
-import { DISTANCE_UNITS, LENGTH_UNITS, readUnits, WEIGHT_UNITS } from '@/lib/units';
 import { spacing, useTheme } from '@/theme';
 
 import { ageOn } from './age';
@@ -36,10 +35,9 @@ type Gender = (typeof GENDERS)[number];
 
 type OpenSheet = 'name' | 'bio' | 'city' | 'birthDate';
 
-// Profile → Edita el perfil: about you (name, bio, city, gender, age), your
-// goals (workouts a week, steps a day) and your units (weight, measurements,
-// distance). Each row opens its sheet;
-// nothing is saved until Desa.
+// Profile → Edita el perfil: about you (name, bio, city, gender, age) and
+// your goals (workouts a week, steps a day). Each row opens its sheet;
+// nothing is saved until Desa. Units are in Configuració.
 export function EditProfile({ onClose }: { onClose: () => void }) {
   const { colors } = useTheme();
   const { data: profile } = useProfile();
@@ -66,13 +64,6 @@ function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
   const shown = goal ?? planned;
   const [stepGoal, setStepGoal] = useState(profile.daily_step_goal);
   const stepCount = new Intl.NumberFormat(language).format(stepGoal);
-  const [units, setUnits] = useState(() =>
-    readUnits({
-      weight: profile.weight_unit,
-      length: profile.length_unit,
-      distance: profile.distance_unit,
-    }),
-  );
   const [openSheet, setOpenSheet] = useState<OpenSheet | null>(null);
   const close = () => setOpenSheet(null);
 
@@ -97,21 +88,6 @@ function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
     );
   }
 
-  // One unit out of two, from a menu that names them in full.
-  function pickUnit<K extends keyof typeof units>(kind: K, options: readonly (typeof units)[K][]) {
-    showActionSheet(
-      {
-        title: t(`profile.unitKinds.${kind}`),
-        options: [...options.map((unit) => t(`units.names.${unit}`)), t('common.cancel')],
-        cancelButtonIndex: options.length,
-      },
-      (index) => {
-        const unit = options[index];
-        if (unit) setUnits((current) => ({ ...current, [kind]: unit }));
-      },
-    );
-  }
-
   function submit() {
     save.mutate(
       {
@@ -122,9 +98,6 @@ function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
         birth_date: birthDate,
         weekly_goal: goal,
         daily_step_goal: stepGoal,
-        weight_unit: units.weight,
-        length_unit: units.length,
-        distance_unit: units.distance,
       },
       { onSuccess: onClose },
     );
@@ -214,30 +187,6 @@ function Form({ profile, onClose }: { profile: Profile; onClose: () => void }) {
               />
             </View>
           </SettingsRow>
-        </SettingsCard>
-      </View>
-
-      <View style={styles.section}>
-        <SectionHeader title={t('profile.units')} />
-        <SettingsCard>
-          <SettingsRow
-            icon="scalemass"
-            label={t('profile.unitKinds.weight')}
-            value={t(`units.short.${units.weight}`)}
-            onPress={() => pickUnit('weight', WEIGHT_UNITS)}
-          />
-          <SettingsRow
-            icon="ruler"
-            label={t('profile.unitKinds.length')}
-            value={t(`units.short.${units.length}`)}
-            onPress={() => pickUnit('length', LENGTH_UNITS)}
-          />
-          <SettingsRow
-            icon="map"
-            label={t('profile.unitKinds.distance')}
-            value={t(`units.short.${units.distance}`)}
-            onPress={() => pickUnit('distance', DISTANCE_UNITS)}
-          />
         </SettingsCard>
       </View>
 

@@ -7,6 +7,7 @@ export type AuthErrorReason =
   | 'invalidCredentials'
   | 'emailTaken'
   | 'weakPassword'
+  | 'samePassword'
   | 'rateLimited'
   | 'network'
   | 'unknown';
@@ -24,6 +25,8 @@ export function authErrorReason(error: unknown): AuthErrorReason {
         return 'emailTaken';
       case 'weak_password':
         return 'weakPassword';
+      case 'same_password':
+        return 'samePassword';
       case 'over_request_rate_limit':
       case 'over_email_send_rate_limit':
         return 'rateLimited';

@@ -1,20 +1,22 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
-import { StyleSheet, Switch, View } from 'react-native';
+import { Switch } from 'react-native';
 
-import { Card, Text, useToast } from '@/components/ui';
+import { SettingsRow, useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { updateHidePhotos, type Profile } from '@/features/profile/api';
 import { profileQueryKey, useProfile } from '@/features/profile/useProfile';
 import { authenticate, canAuthenticate } from '@/lib/deviceAuth';
 import { isNetworkError } from '@/lib/errors';
-import { spacing, useTheme } from '@/theme';
+import { useTheme } from '@/theme';
 
 import { lockPhotos } from './usePhotoLock';
 
-// Settings → "Amaga les fotos de progrés" (US-28). Turning it on needs a
-// passcode on the phone (or the photos couldn't be unlocked); turning it
-// off asks for Face ID first, or anyone holding the phone could.
+// Settings → Privadesa → "Amaga les fotos de progrés" (US-28), a row with
+// a switch for a SettingsCard. Hidden photos show blurred until unlocked
+// with Face ID or the passcode. Turning it on needs a passcode on the
+// phone (or the photos couldn't be unlocked); turning it off asks for
+// Face ID first, or anyone holding the phone could.
 export function HidePhotosSetting() {
   const { t } = useTranslation();
   const { colors } = useTheme();
@@ -60,11 +62,10 @@ export function HidePhotosSetting() {
   }
 
   return (
-    <Card style={styles.card}>
-      <View style={styles.row}>
-        <Text variant="bodyStrong" style={styles.label}>
-          {t('photos.hide')}
-        </Text>
+    <SettingsRow
+      icon="eye.slash"
+      label={t('photos.hide')}
+      accessory={
         <Switch
           accessibilityLabel={t('photos.hide')}
           value={profile?.hide_progress_photos ?? false}
@@ -72,24 +73,7 @@ export function HidePhotosSetting() {
           disabled={!profile || save.isPending}
           trackColor={{ true: colors.accent, false: colors.surfaceRaised }}
         />
-      </View>
-      <Text variant="caption" color="textMuted">
-        {t('photos.hideHint')}
-      </Text>
-    </Card>
+      }
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    gap: spacing.xs,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-  },
-  label: {
-    flex: 1,
-  },
-});

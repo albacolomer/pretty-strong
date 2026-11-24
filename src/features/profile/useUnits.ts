@@ -1,11 +1,17 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import Storage from 'expo-sqlite/kv-store';
 import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
+import { useToast } from '@/components/ui';
+import { useAuth } from '@/features/auth/AuthProvider';
+import { isNetworkError } from '@/lib/errors';
 import { METRIC_UNITS, readUnits, type Units } from '@/lib/units';
 
-import { useProfile } from './useProfile';
+import { updateProfileDetails } from './api';
+import { profileQueryKey, useProfile } from './useProfile';
 
 type UnitsState = {
   units: Units;
@@ -45,4 +51,38 @@ export function useSyncProfileUnits() {
   useEffect(() => {
     if (weight && length && distance) setUnits(readUnits({ weight, length, distance }));
   }, [weight, length, distance, setUnits]);
+}
+
+// Settings → Preferències: a new unit, used at once (on the phone too) and
+// saved to the profile in the background; put back if saving fails.
+export function useUpdateUnits() {
+  const { t } = useTranslation();
+  const showToast = useToast();
+  const queryClient = useQueryClient();
+  const { session } = useAuth();
+  const userId = session?.user.id;
+  const setUnits = useUnitsStore((state) => state.setUnits);
+
+  return useMutation({
+    mutationFn: (units: Units) => {
+      if (!userId) throw new Error('Not signed in.');
+      return updateProfileDetails(userId, {
+        weight_unit: units.weight,
+        length_unit: units.length,
+        distance_unit: units.distance,
+      });
+    },
+    onMutate: (units) => {
+      const previous = useUnitsStore.getState().units;
+      setUnits(units);
+      return { previous };
+    },
+    onError: (error, _units, context) => {
+      if (context) setUnits(context.previous);
+      showToast({
+        message: isNetworkError(error) ? t('workout.noSignal') : t('profile.saveError'),
+      });
+    },
+    onSuccess: (profile) => queryClient.setQueryData(profileQueryKey(userId), profile),
+  });
 }
