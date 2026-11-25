@@ -40,10 +40,13 @@ npx supabase secrets set --env-file ${envFile}
 
    then delete ${envFile}.
 
-3. Supabase dashboard > SQL Editor (replace <project-ref> with yours):
+3. After \`npx supabase db push\`, in Supabase dashboard > SQL Editor
+   (replace <project-ref> with yours, as in EXPO_PUBLIC_SUPABASE_URL):
 
-select vault.create_secret('https://<project-ref>.supabase.co', 'project_url');
-select vault.create_secret('${token}', 'rest_alerts_token');
+insert into private.settings (name, value) values
+  ('project_url', 'https://<project-ref>.supabase.co'),
+  ('rest_alerts_token', '${token}')
+on conflict (name) do update set value = excluded.value;
 
 Keep the private key and the token out of git; if they leak, run this again
 and replace all three.
