@@ -24,6 +24,9 @@ export const inset = {
   // top of the phone (status bar included).
   screenX: 20,
   screenTop: 58,
+  // Above the title in Safari, where the page already starts below the
+  // status bar.
+  safariTop: 22,
   screenBottom: 30,
   // Inside a card.
   cardX: 16,

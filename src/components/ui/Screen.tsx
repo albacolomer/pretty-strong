@@ -60,7 +60,7 @@ export function Screen({
                   ? Math.max(inset.screenTop - insets.top, 0)
                   : insets.top > 0
                     ? Math.max(inset.screenTop, insets.top)
-                    : spacing.lg + spacing.xs,
+                    : inset.safariTop,
             },
       ]}
       // Centred screens add the safe-area space themselves (above), so iOS
