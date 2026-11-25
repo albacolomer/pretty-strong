@@ -57,6 +57,38 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(request.mode === 'navigate' ? page(request) : saved(request));
 });
 
+// A rest alert from the send-rest-alerts function ({ title, body }, already
+// translated). iOS requires every push to show a notification, even with
+// the app open, or it stops sending them.
+self.addEventListener('push', (event) => {
+  let alert = {};
+  try {
+    alert = event.data ? event.data.json() : {};
+  } catch {
+    alert = { title: event.data ? event.data.text() : '' };
+  }
+  event.waitUntil(
+    self.registration.showNotification(alert.title || 'Pretty Strong', {
+      body: alert.body || '',
+      icon: '/icon-192.png',
+      // A newer alert replaces the last one instead of piling up.
+      tag: 'rest',
+      renotify: true,
+    }),
+  );
+});
+
+// Tapping it opens the app (at the workout, if it was closed).
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+      const open = windows[0];
+      return open ? open.focus() : self.clients.openWindow('/workout');
+    }),
+  );
+});
+
 async function page(request) {
   try {
     const response = await Promise.race([
