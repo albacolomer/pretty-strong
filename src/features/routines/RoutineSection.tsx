@@ -1,11 +1,10 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text } from '@/components/ui';
+import { Button, Card, Text, Icon, type IconName } from '@/components/ui';
 import { gaps, radius, spacing, useTheme } from '@/theme';
 
 type EmptySectionCardProps = {
-  icon: SFSymbol;
+  icon: IconName;
   title: string;
   hint: string;
   actionLabel: string;
@@ -28,7 +27,7 @@ export function EmptySectionCard({
   return (
     <Card style={styles.empty}>
       <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-        <SymbolView name={icon} size={24} weight="medium" tintColor={colors.accent} />
+        <Icon name={icon} size={24} weight="medium" tintColor={colors.accent} />
       </View>
       <View style={styles.text}>
         <Text variant="bodyStrong" style={styles.centered}>

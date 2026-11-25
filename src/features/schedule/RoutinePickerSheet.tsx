@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, Sheet, Text } from '@/components/ui';
+import { Card, Sheet, Text, Icon } from '@/components/ui';
 import type { Routine } from '@/features/routines/routine';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { useRoutineSummary } from '@/features/routines/useRoutineSummary';
@@ -56,7 +55,7 @@ export function RoutinePickerSheet({
               pressed && styles.pressed,
             ]}>
             <View style={styles.icon}>
-              <SymbolView name="plus" size={18} weight="medium" tintColor={colors.accent} />
+              <Icon name="plus" size={18} weight="medium" tintColor={colors.accent} />
             </View>
             <Text variant="label" color="accent" style={styles.text}>
               {t('workout.newRoutine')}
@@ -90,7 +89,7 @@ function RoutineOption({
         pressed && styles.pressed,
       ]}>
       <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-        <SymbolView
+        <Icon
           name={ROUTINE_ICONS[routine.label]}
           size={20}
           weight="light"
@@ -107,7 +106,7 @@ function RoutineOption({
           </Text>
         ) : null}
       </View>
-      <SymbolView name="chevron.right" size={12} weight="light" tintColor={colors.textMuted} />
+      <Icon name="chevron.right" size={12} weight="light" tintColor={colors.textMuted} />
     </Pressable>
   );
 }

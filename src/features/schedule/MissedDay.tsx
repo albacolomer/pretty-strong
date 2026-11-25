@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Button, Card, Text } from '@/components/ui';
+import { Button, Card, Text, Icon } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
 const ICON = 40;
@@ -26,7 +25,7 @@ export function MissedDay({ name, onDoToday, onOtherOptions }: MissedDayProps) {
     <Card style={styles.card}>
       <View style={styles.top}>
         <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-          <SymbolView name="arrow.uturn.forward" size={18} weight="light" tintColor={colors.accent} />
+          <Icon name="arrow.uturn.forward" size={18} weight="light" tintColor={colors.accent} />
         </View>
         <View style={styles.text}>
           <Text variant="bodyStrong" accessibilityRole="header">

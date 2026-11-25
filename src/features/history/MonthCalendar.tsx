@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, Text } from '@/components/ui';
+import { Card, Text, Icon } from '@/components/ui';
 import { WEEKDAYS } from '@/features/routines/routine';
 import { dateKey, formatDayTitle } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
@@ -120,7 +119,7 @@ export function MonthCalendar({
                   )}
                   {eventCount > 0 ? (
                     <View style={[styles.star, { backgroundColor: colors.surface }]}>
-                      <SymbolView name="star.fill" size={11} tintColor={colors.gold} />
+                      <Icon name="star.fill" size={11} tintColor={colors.gold} />
                     </View>
                   ) : null}
                 </View>

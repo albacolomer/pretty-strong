@@ -1,4 +1,4 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { Icon, type IconName } from './Icon';
 import { Children, Fragment, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -32,7 +32,7 @@ export function SettingsCard({ children }: { children: ReactNode }) {
 }
 
 type SettingsRowProps = {
-  icon: SFSymbol;
+  icon: IconName;
   // Blue for what the row is mainly about; grey for extras; red to delete.
   tone?: 'accent' | 'muted' | 'danger';
   label: string;
@@ -85,7 +85,7 @@ export function SettingsRow({
           styles.icon,
           { backgroundColor: tone === 'accent' ? colors.accentSoft : colors.surfaceRaised },
         ]}>
-        <SymbolView
+        <Icon
           name={icon}
           size={17}
           weight="medium"
@@ -125,7 +125,7 @@ export function SettingsRow({
             </Text>
           ) : null}
           {onPress && !trailing ? (
-            <SymbolView
+            <Icon
               name="chevron.right"
               size={13}
               weight="semibold"

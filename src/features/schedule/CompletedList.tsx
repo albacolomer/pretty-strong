@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, MetalFill, Text } from '@/components/ui';
+import { Card, MetalFill, Text, Icon } from '@/components/ui';
 import { gaps, radius, spacing, useTheme } from '@/theme';
 
 import { AddActivityRow } from './AlsoToday';
@@ -57,12 +56,12 @@ function Row({ item, separator }: { item: CompletedItem; separator: boolean }) {
       ]}>
       {item.skipped ? (
         <View style={[styles.check, styles.skipped, { borderColor: colors.control }]}>
-          <SymbolView name="forward.end" size={9} tintColor={colors.textMuted} />
+          <Icon name="forward.end" size={9} tintColor={colors.textMuted} />
         </View>
       ) : (
         <View style={[styles.check, { boxShadow: shadows.control }]}>
           <MetalFill borderRadius={CHECK / 2} />
-          <SymbolView name="checkmark" size={10} weight="bold" tintColor={colors.onMetal} />
+          <Icon name="checkmark" size={10} weight="bold" tintColor={colors.onMetal} />
         </View>
       )}
       <View style={styles.text}>
@@ -82,7 +81,7 @@ function Row({ item, separator }: { item: CompletedItem; separator: boolean }) {
         ) : null}
       </View>
       {item.onPress ? (
-        <SymbolView name="chevron.right" size={12} weight="light" tintColor={colors.textMuted} />
+        <Icon name="chevron.right" size={12} weight="light" tintColor={colors.textMuted} />
       ) : null}
     </Pressable>
   );

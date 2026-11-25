@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import { Icon } from './Icon';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet } from 'react-native';
 
@@ -22,7 +22,7 @@ export function HeaderBackButton({ onPress }: { onPress: () => void }) {
       onPress={onPress}
       hitSlop={(touch.min - SIZE) / 2}
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-      <SymbolView name="chevron.left" size={18} weight="semibold" tintColor={colors.text} />
+      <Icon name="chevron.left" size={18} weight="semibold" tintColor={colors.text} />
     </Pressable>
   );
 }

@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, Text } from '@/components/ui';
+import { Card, Text, Icon } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { dayNumber } from './dates';
@@ -34,7 +33,7 @@ export function RestDay({ today, next, onLog }: RestDayProps) {
       <Card style={styles.card}>
         <View style={styles.title}>
           <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-            <SymbolView name="moon.zzz" size={20} weight="light" tintColor={colors.accent} />
+            <Icon name="moon.zzz" size={20} weight="light" tintColor={colors.accent} />
           </View>
           <Text variant="cardTitle" accessibilityRole="header">
             {t('today.rest')}
@@ -69,7 +68,7 @@ export function RestDay({ today, next, onLog }: RestDayProps) {
                   { backgroundColor: colors.surface, boxShadow: shadows.control },
                   pressed && styles.pressed,
                 ]}>
-                <SymbolView name={SPORT_ICONS[sport]} size={22} weight="light" tintColor={colors.accent} />
+                <Icon name={SPORT_ICONS[sport]} size={22} weight="light" tintColor={colors.accent} />
                 <Text variant="bodyStrong">{name}</Text>
               </Pressable>
             );

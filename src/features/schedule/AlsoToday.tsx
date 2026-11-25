@@ -1,13 +1,12 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, GradientText, Text } from '@/components/ui';
+import { Button, Card, GradientText, Text, Icon, type IconName } from '@/components/ui';
 import { gaps, radius, spacing, touch, useTheme } from '@/theme';
 
 export type AlsoTodayItem = {
   key: string;
-  icon: SFSymbol;
+  icon: IconName;
   // When it starts, e.g. "20:30", if it has a set time.
   time: string | null;
   name: string;
@@ -79,7 +78,7 @@ export function AddActivityRow({ onPress }: { onPress: () => void }) {
         { borderTopColor: colors.separator },
         pressed && styles.pressed,
       ]}>
-      <SymbolView name="plus" size={14} weight="medium" tintColor={colors.textMuted} />
+      <Icon name="plus" size={14} weight="medium" tintColor={colors.textMuted} />
       <Text variant="label" color="textMuted" numberOfLines={1} style={styles.addLabel}>
         {t('today.addActivity')}
       </Text>
@@ -111,7 +110,7 @@ function Row({ item, timed }: { item: AlsoTodayItem; timed: boolean }) {
           </>
         ) : null}
         <View style={styles.name}>
-          <SymbolView name={item.icon} size={18} weight="light" tintColor={colors.textMuted} />
+          <Icon name={item.icon} size={18} weight="light" tintColor={colors.textMuted} />
           <View style={styles.text}>
             <Text variant="name" color="textMuted" numberOfLines={1}>
               {item.name}
@@ -138,9 +137,9 @@ function Row({ item, timed }: { item: AlsoTodayItem; timed: boolean }) {
             item.state === 'done' && { backgroundColor: colors.accent },
           ]}>
           {item.state === 'done' ? (
-            <SymbolView name="checkmark" size={11} weight="bold" tintColor={colors.onAccent} />
+            <Icon name="checkmark" size={11} weight="bold" tintColor={colors.onAccent} />
           ) : item.state === 'skipped' ? (
-            <SymbolView name="forward.end" size={9} tintColor={colors.textMuted} />
+            <Icon name="forward.end" size={9} tintColor={colors.textMuted} />
           ) : null}
         </View>
       </Pressable>

@@ -1,9 +1,8 @@
-import { SymbolView } from 'expo-symbols';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, TextInput, View, type TextInputInstance } from 'react-native';
 
-import { MetalFill, Text } from '@/components/ui';
+import { MetalFill, Text, Icon } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, typography, useTheme } from '@/theme';
 
@@ -70,7 +69,7 @@ export function ExerciseFilterBar({ exercises, search, onCreate }: ExerciseFilte
         onPress={() => input.current?.focus()}
         hitSlop={HIT_SLOP}
         style={[styles.search, { backgroundColor: colors.surface, boxShadow: shadows.control }]}>
-        <SymbolView name="magnifyingglass" size={16} weight="light" tintColor={colors.textMuted} />
+        <Icon name="magnifyingglass" size={16} weight="light" tintColor={colors.textMuted} />
         <TextInput
           ref={input}
           aria-label={t('exercises.search')}
@@ -102,7 +101,7 @@ export function ExerciseFilterBar({ exercises, search, onCreate }: ExerciseFilte
           },
           pressed && styles.pressed,
         ]}>
-        <SymbolView
+        <Icon
           name="slider.horizontal.3"
           size={17}
           weight="light"
@@ -126,7 +125,7 @@ export function ExerciseFilterBar({ exercises, search, onCreate }: ExerciseFilte
           pressed && styles.pressed,
         ]}>
         <MetalFill borderRadius={HEIGHT / 2} />
-        <SymbolView name="plus" size={18} weight="medium" tintColor={colors.onMetal} />
+        <Icon name="plus" size={18} weight="medium" tintColor={colors.onMetal} />
       </Pressable>
 
       <OptionSheetFrame

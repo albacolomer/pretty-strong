@@ -1,6 +1,5 @@
 import { randomUUID } from 'expo-crypto';
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
@@ -13,7 +12,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Sortable from 'react-native-sortables';
 
-import { Button, Card, IconButton, Text, useActionSheet, useToast } from '@/components/ui';
+import { Button, Card, IconButton, Text, useActionSheet, useToast, Icon } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { APP_DEFAULT_REST_S } from '@/features/exercises/rest';
 import {
@@ -579,7 +578,7 @@ export function WeekSchedule({
                   </Text>
                   {rest ? (
                     <View style={styles.restTag}>
-                      <SymbolView name="moon" size={14} weight="light" tintColor={colors.textMuted} />
+                      <Icon name="moon" size={14} weight="light" tintColor={colors.textMuted} />
                       <Text variant="caption" color="textMuted">
                         {t('schedule.restDay')}
                       </Text>
@@ -801,7 +800,7 @@ function ActivityRow({
               ? { backgroundColor: colors.accentSoft }
               : { borderWidth: 1.5, borderColor: colors.control },
           ]}>
-          <SymbolView
+          <Icon
             name={
               activity.kind === 'routine'
                 ? ROUTINE_ICONS[activity.routine.label]
@@ -827,7 +826,7 @@ function ActivityRow({
             style={styles.handle}
             aria-label={t('schedule.dragHandle', { name })}
             accessibilityHint={t('schedule.dragHint')}>
-            <SymbolView
+            <Icon
               name="line.3.horizontal"
               size={18}
               weight="light"

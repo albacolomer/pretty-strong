@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
+import { Icon } from '@/components/ui';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { radius, useTheme } from '@/theme';
@@ -44,7 +44,7 @@ export function ExercisePhotoTile({ base64, path, label, onPress }: ExercisePhot
       ) : path !== null ? (
         <ExercisePhoto path={path} size={SIZE} />
       ) : (
-        <SymbolView name="camera" size={22} weight="medium" tintColor={colors.accent} />
+        <Icon name="camera" size={22} weight="medium" tintColor={colors.accent} />
       )}
     </Pressable>
   );

@@ -1,11 +1,10 @@
-import { SymbolView } from 'expo-symbols';
 import { Fragment, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn, FadeOut } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Text } from '@/components/ui';
+import { Text, Icon } from '@/components/ui';
 import { languages, setAppLanguage, useAppLanguage, type Language } from '@/lib/i18n';
 import { inset, radius, spacing, touch, useTheme } from '@/theme';
 
@@ -51,7 +50,7 @@ export function LanguageButton() {
           { top, backgroundColor: colors.glass, borderColor: colors.glassBorder },
           pressed && styles.pressed,
         ]}>
-        <SymbolView name="globe" size={15} weight="medium" tintColor={colors.onHero} />
+        <Icon name="globe" size={15} weight="medium" tintColor={colors.onHero} />
         <Text variant="control" color="onHero">
           {language.toUpperCase()}
         </Text>
@@ -89,7 +88,7 @@ export function LanguageButton() {
                     {t(`languages.${option}`)}
                   </Text>
                   {selected ? (
-                    <SymbolView
+                    <Icon
                       name="checkmark"
                       size={14}
                       weight="semibold"

@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { Fragment } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, Text } from '@/components/ui';
+import { Card, Text, Icon } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 const CHECK = 24;
@@ -49,7 +48,7 @@ export function ChoiceList<T extends string>({
                     : { borderColor: colors.control },
                 ]}>
                 {selected ? (
-                  <SymbolView name="checkmark" size={12} weight="bold" tintColor={colors.onAccent} />
+                  <Icon name="checkmark" size={12} weight="bold" tintColor={colors.onAccent} />
                 ) : null}
               </View>
             </Pressable>

@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Card, GradientText, Text } from '@/components/ui';
+import { Card, GradientText, Text, Icon } from '@/components/ui';
 import { addDays, dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, useTheme } from '@/theme';
@@ -36,7 +35,7 @@ export function EventCountdown({ today }: { today: Date }) {
       aria-label={t('events.countdownAria', { name, date, when })}
       style={styles.card}>
       <View style={[styles.icon, { backgroundColor: colors.goldSoft }]}>
-        <SymbolView name={EVENT_ICONS[event.kind]} size={22} weight="light" tintColor={colors.gold} />
+        <Icon name={EVENT_ICONS[event.kind]} size={22} weight="light" tintColor={colors.gold} />
       </View>
       <View style={styles.text}>
         <Text variant="label" color="textMuted">

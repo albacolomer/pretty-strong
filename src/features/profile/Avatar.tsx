@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { GradientText, MetalFill } from '@/components/ui';
+import { GradientText, MetalFill, Icon } from '@/components/ui';
 import { PrivatePhoto } from '@/features/body/PrivatePhoto';
 import { usePhotoUrls, useSetAvatar } from '@/features/body/usePhotos';
 import { usePickPhoto } from '@/features/body/usePickPhoto';
@@ -61,7 +60,7 @@ export function Avatar({ profile }: { profile: Profile | undefined }) {
         {setAvatar.isPending ? (
           <ActivityIndicator size="small" color={colors.onMetal} />
         ) : (
-          <SymbolView name="camera.fill" size={16} tintColor={colors.onMetal} />
+          <Icon name="camera.fill" size={16} tintColor={colors.onMetal} />
         )}
       </Pressable>
     </View>

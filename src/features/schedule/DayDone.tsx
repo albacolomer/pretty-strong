@@ -1,9 +1,8 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 
-import { Card, GradientText, GradientView, MetalFill, Text } from '@/components/ui';
+import { Card, GradientText, GradientView, MetalFill, Text, Icon } from '@/components/ui';
 import { useProfile } from '@/features/profile/useProfile';
 import { formatDuration } from '@/features/routines/routine';
 import { DEFAULT_STEP_GOAL, stepProgress } from '@/features/steps/steps';
@@ -63,7 +62,7 @@ export function DayDone({ today, planned, week, totals }: DayDoneProps) {
                 : [styles.checkAlone, { boxShadow: shadows.hero }],
             ]}>
             <MetalFill borderRadius={(almost ? CHECK : CHECK_ALONE) / 2} />
-            <SymbolView name="checkmark" size={26} weight="semibold" tintColor={colors.onMetal} />
+            <Icon name="checkmark" size={26} weight="semibold" tintColor={colors.onMetal} />
           </View>
         </View>
         <View style={styles.heroText}>

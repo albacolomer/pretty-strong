@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { GradientText, Text } from '@/components/ui';
+import { GradientText, Text, Icon } from '@/components/ui';
 import { streakWeeks, weeklyCounts } from '@/features/history/entries';
 import { useHistoryEntries } from '@/features/history/useHistory';
 import { dateKey, startOfWeek } from '@/features/schedule/dates';
@@ -87,7 +86,7 @@ export function ProfileHeader({ onEdit }: { onEdit: () => void }) {
           { backgroundColor: colors.surface, borderColor: colors.border },
           pressed && styles.pressed,
         ]}>
-        <SymbolView name="pencil" size={14} weight="light" tintColor={colors.textSecondary} />
+        <Icon name="pencil" size={14} weight="light" tintColor={colors.textSecondary} />
         <Text variant="control">{t('profile.edit')}</Text>
       </Pressable>
     </View>

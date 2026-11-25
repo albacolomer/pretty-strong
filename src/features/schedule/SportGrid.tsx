@@ -1,8 +1,7 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text, Icon, type IconName } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { PLANNABLE_SPORTS, SPORT_ICONS, type Sport } from './sports';
@@ -44,7 +43,7 @@ export function IconChoice({
   onPress,
   wide = false,
 }: {
-  icon: SFSymbol;
+  icon: IconName;
   label: string;
   selected: boolean;
   onPress: () => void;
@@ -65,7 +64,7 @@ export function IconChoice({
         },
         pressed && styles.pressed,
       ]}>
-      <SymbolView
+      <Icon
         name={icon}
         size={22}
         weight="light"
@@ -76,7 +75,7 @@ export function IconChoice({
       </Text>
       {selected ? (
         <View style={[styles.check, { backgroundColor: colors.accent }]}>
-          <SymbolView name="checkmark" size={10} weight="bold" tintColor={colors.onAccent} />
+          <Icon name="checkmark" size={10} weight="bold" tintColor={colors.onAccent} />
         </View>
       ) : null}
     </Pressable>

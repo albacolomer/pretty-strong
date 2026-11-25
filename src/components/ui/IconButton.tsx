@@ -1,4 +1,4 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { Icon, type IconName } from './Icon';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { radius, touch, useTheme } from '@/theme';
@@ -7,7 +7,7 @@ import { radius, touch, useTheme } from '@/theme';
 const SIZE = 44;
 
 export type IconButtonProps = {
-  icon: SFSymbol;
+  icon: IconName;
   // What screen readers say, e.g. "Previsualitza «Tren superior 2»".
   label: string;
   onPress: () => void;
@@ -40,7 +40,7 @@ export function IconButton({
         pressed && styles.pressed,
         disabled && styles.disabled,
       ]}>
-      <SymbolView name={icon} size={iconSize} weight="light" tintColor={colors.textSecondary} />
+      <Icon name={icon} size={iconSize} weight="light" tintColor={colors.textSecondary} />
     </Pressable>
   );
 }

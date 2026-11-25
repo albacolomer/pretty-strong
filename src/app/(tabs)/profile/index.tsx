@@ -1,9 +1,8 @@
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { Screen } from '@/components/ui';
+import { Screen, Icon } from '@/components/ui';
 import { ProfileHeader } from '@/features/profile/ProfileHeader';
 import { ProfileTabs } from '@/features/profile/ProfileTabs';
 import { touch, useTheme } from '@/theme';
@@ -21,7 +20,7 @@ export default function ProfileScreen() {
           aria-label={t('settings.title')}
           onPress={() => router.push('/profile/settings')}
           style={({ pressed }) => [styles.settings, pressed && styles.pressed]}>
-          <SymbolView name="gearshape" size={24} tintColor={colors.text} />
+          <Icon name="gearshape" size={24} tintColor={colors.text} />
         </Pressable>
       }>
       <ProfileHeader onEdit={() => router.push('/profile/edit')} />

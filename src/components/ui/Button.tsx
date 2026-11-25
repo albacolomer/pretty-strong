@@ -1,4 +1,4 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
+import { Icon, type IconName } from './Icon';
 import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 import {
@@ -23,8 +23,8 @@ export type ButtonProps = {
   style?: StyleProp<ViewStyle>;
   // What screen readers say, when the visible label is shorter, e.g. "+ Nota".
   'aria-label'?: string;
-  // An SF Symbol before the label, e.g. "plus".
-  icon?: SFSymbol;
+  // An icon before the label, e.g. "plus".
+  icon?: IconName;
   // Small spaced capitals, like "+ AFEGEIX EXERCICIS".
   caps?: boolean;
 };
@@ -69,7 +69,7 @@ export function Button({
       ]}>
       {metal ? <MetalFill borderRadius={radius.pill} /> : null}
       {icon ? (
-        <SymbolView
+        <Icon
           name={icon}
           size={15}
           weight="semibold"

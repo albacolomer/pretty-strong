@@ -1,4 +1,4 @@
-import type { SFSymbol } from 'expo-symbols';
+import type { IconName } from '@/components/ui';
 
 import { dayNumber, fromDateKey } from '@/features/schedule/dates';
 
@@ -18,8 +18,8 @@ export const EVENT_KINDS = [
 ] as const;
 export type EventKind = (typeof EVENT_KINDS)[number];
 
-// Each kind's icon (SF Symbols, iOS's own).
-export const EVENT_ICONS: Record<EventKind, SFSymbol> = {
+// Each kind's icon (see components/ui/Icon).
+export const EVENT_ICONS: Record<EventKind, IconName> = {
   marathon: 'figure.run',
   half_marathon: 'figure.run.circle',
   race: 'flag.checkered',

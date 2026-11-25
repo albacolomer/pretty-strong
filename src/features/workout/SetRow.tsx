@@ -1,9 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { SymbolView } from 'expo-symbols';
 
-import { MetalFill, Text } from '@/components/ui';
+import { MetalFill, Text, Icon } from '@/components/ui';
 import { TargetInputField, type TargetsUpdate } from '@/features/routines/TargetFields';
 import { formatInput, inputValue, type TargetInput } from '@/features/routines/targets';
 import { useAppLanguage } from '@/lib/i18n';
@@ -120,7 +119,7 @@ export function SetRow({
           pressed && styles.pressed,
         ]}>
         {done ? <MetalFill borderRadius={touch.check / 2} /> : null}
-        <SymbolView
+        <Icon
           name="checkmark"
           size={22}
           weight="semibold"

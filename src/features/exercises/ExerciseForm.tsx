@@ -1,4 +1,3 @@
-import type { SFSymbol } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, Switch, View } from 'react-native';
@@ -13,6 +12,7 @@ import {
   TextField,
   TextSheet,
   useActionSheet,
+  type IconName,
 } from '@/components/ui';
 import { usePickPhoto } from '@/features/body/usePickPhoto';
 import { spacing, typography, useTheme } from '@/theme';
@@ -44,8 +44,8 @@ import { TRACKING_TYPES, type Muscle, type TrackingType } from './vocabulary';
 
 type Sheet = 'primary' | 'secondary' | 'equipment' | 'video' | 'note';
 
-// Each tracking type's icon (SF Symbols), on the "Què registres" row.
-const TRACKING_ICONS: Record<TrackingType, SFSymbol> = {
+// Each tracking type's icon, on the "Què registres" row.
+const TRACKING_ICONS: Record<TrackingType, IconName> = {
   weight_reps: 'dumbbell',
   bodyweight_reps: 'figure.strengthtraining.functional',
   duration: 'timer',

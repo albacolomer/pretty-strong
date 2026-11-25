@@ -1,9 +1,8 @@
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MenuButton, Text, useActionSheet } from '@/components/ui';
+import { Button, Card, MenuButton, Text, useActionSheet, Icon } from '@/components/ui';
 import { inset, radius, spacing, touch, useTheme } from '@/theme';
 
 import type { Routine } from './routine';
@@ -109,7 +108,7 @@ function RoutineCard({ routine, onPress, onMenu }: RoutineCardProps) {
         onPress={onPress}
         style={({ pressed }) => [styles.main, pressed && styles.pressed]}>
         <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
-          <SymbolView
+          <Icon
             name={ROUTINE_ICONS[routine.label]}
             size={20}
             weight="light"

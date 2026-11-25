@@ -1,9 +1,8 @@
-import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text, Icon } from '@/components/ui';
 import { EVENT_ICONS } from '@/features/events/events';
 import { ROUTINE_ICONS } from '@/features/routines/routineIcons';
 import { SPORT_ICONS } from '@/features/schedule/sports';
@@ -51,7 +50,7 @@ export function WorkoutRow({ entry }: { entry: HistoryEntry }) {
           styles.icon,
           { backgroundColor: entry.eventKind ? colors.goldSoft : colors.accentSoft },
         ]}>
-        <SymbolView
+        <Icon
           name={
             entry.eventKind
               ? EVENT_ICONS[entry.eventKind]

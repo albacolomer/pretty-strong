@@ -1,9 +1,8 @@
-import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Button, Card, MenuButton, Text, TextField } from '@/components/ui';
+import { Button, Card, MenuButton, Text, TextField, Icon } from '@/components/ui';
 import { exerciseName } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { AddNoteButton } from '@/features/routines/ExerciseNoteField';
@@ -91,7 +90,7 @@ export function WorkoutExerciseCard({
           <Text variant="cardTitle" style={styles.name} accessibilityRole="header">
             {name}
           </Text>
-          <SymbolView name="info.circle" size={16} tintColor={colors.textMuted} />
+          <Icon name="info.circle" size={16} tintColor={colors.textMuted} />
         </Pressable>
         {comparison ? (
           <VsLastTimeBadge comparison={comparison} />

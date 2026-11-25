@@ -1,5 +1,4 @@
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -14,7 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { Card, Text } from '@/components/ui';
+import { Card, Text, Icon } from '@/components/ui';
 import { WEEKDAYS, type Weekday } from '@/features/routines/routine';
 import { radius, spacing, useTheme } from '@/theme';
 
@@ -142,7 +141,7 @@ export function WeekStrip({
               </Text>
               {activities.length === 0 ? (
                 <View style={styles.rest} aria-hidden>
-                  <SymbolView name="moon" size={13} weight="light" tintColor={colors.control} />
+                  <Icon name="moon" size={13} weight="light" tintColor={colors.control} />
                 </View>
               ) : (
                 activities.slice(0, MAX_LINES).map((activity, line) => (

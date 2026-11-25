@@ -1,4 +1,3 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -10,7 +9,7 @@ import {
   type TextInputProps,
 } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text, Icon, type IconName } from '@/components/ui';
 import { radius, spacing, touch, typography, useTheme } from '@/theme';
 
 const HEIGHT = 58;
@@ -18,7 +17,7 @@ const HEIGHT = 58;
 type AuthFieldProps = Omit<TextInputProps, 'secureTextEntry' | 'placeholder'> & {
   // Shown inside the empty field, and what VoiceOver says.
   label: string;
-  icon: SFSymbol;
+  icon: IconName;
   // A password: hidden, with an eye to show it.
   password?: boolean;
   // Already translated, under the field in red.
@@ -55,7 +54,7 @@ export function AuthField({
             borderColor: error ? colors.danger : 'transparent',
           },
         ]}>
-        <SymbolView name={icon} size={18} weight="regular" tintColor={colors.textMuted} />
+        <Icon name={icon} size={18} weight="regular" tintColor={colors.textMuted} />
         <TextInput
           ref={ref}
           aria-label={label}
@@ -73,7 +72,7 @@ export function AuthField({
             onPress={() => setShown(!shown)}
             hitSlop={(touch.min - 24) / 2}
             style={({ pressed }) => pressed && styles.pressed}>
-            <SymbolView
+            <Icon
               name={shown ? 'eye.slash' : 'eye'}
               size={18}
               weight="regular"

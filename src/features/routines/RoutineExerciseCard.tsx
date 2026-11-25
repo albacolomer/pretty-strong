@@ -1,10 +1,9 @@
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Card, MenuButton, Text, useActionSheet } from '@/components/ui';
+import { Card, MenuButton, Text, useActionSheet, Icon } from '@/components/ui';
 import { exerciseName, type Exercise } from '@/features/exercises/exercise';
 import { ExercisePicture } from '@/features/exercises/ExerciseRow';
 import { useAppLanguage } from '@/lib/i18n';
@@ -151,7 +150,7 @@ export function RoutineExerciseCard({
             {name}
           </Text>
           {exercise ? (
-            <SymbolView name="info.circle" size={16} tintColor={colors.textMuted} />
+            <Icon name="info.circle" size={16} tintColor={colors.textMuted} />
           ) : null}
         </Pressable>
         <MenuButton label={t('exercises.menu.label', { name })} onPress={openMenu} />

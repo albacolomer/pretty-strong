@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text, Icon } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { EVENT_ICONS, type CalendarEvent } from './events';
@@ -27,7 +26,7 @@ export function EventRow({ event, onPress }: { event: CalendarEvent; onPress: ()
       onPress={onPress}
       style={({ pressed }) => [styles.row, pressed && styles.pressed]}>
       <View style={[styles.icon, { backgroundColor: colors.goldSoft }]}>
-        <SymbolView name={EVENT_ICONS[event.kind]} size={20} weight="light" tintColor={colors.gold} />
+        <Icon name={EVENT_ICONS[event.kind]} size={20} weight="light" tintColor={colors.gold} />
       </View>
       <View style={styles.text}>
         <Text variant="bodyStrong" numberOfLines={1}>

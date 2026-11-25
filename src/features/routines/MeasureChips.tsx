@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import { Text, useActionSheet } from '@/components/ui';
+import { Text, useActionSheet, Icon } from '@/components/ui';
 import type { TrackingType } from '@/features/exercises/vocabulary';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
@@ -76,7 +75,7 @@ export function MeasureChips({ trackingType, measures, exerciseName, onChange }:
             <Text variant="captionMedium" color="accent">
               {nameOf(measure)}
             </Text>
-            <SymbolView name="chevron.down" size={10} weight="semibold" tintColor={colors.accent} />
+            <Icon name="chevron.down" size={10} weight="semibold" tintColor={colors.accent} />
           </Pressable>
         ) : (
           <Pressable
@@ -101,7 +100,7 @@ export function MeasureChips({ trackingType, measures, exerciseName, onChange }:
             <Text variant="captionMedium" color="accent">
               {nameOf(measure)}
             </Text>
-            <SymbolView name="xmark" size={10} weight="semibold" tintColor={colors.accent} />
+            <Icon name="xmark" size={10} weight="semibold" tintColor={colors.accent} />
           </Pressable>
         ),
       )}
@@ -117,7 +116,7 @@ export function MeasureChips({ trackingType, measures, exerciseName, onChange }:
             { borderColor: colors.control },
             pressed && styles.pressed,
           ]}>
-          <SymbolView name="plus" size={12} weight="semibold" tintColor={colors.textSecondary} />
+          <Icon name="plus" size={12} weight="semibold" tintColor={colors.textSecondary} />
         </Pressable>
       ) : null}
     </View>

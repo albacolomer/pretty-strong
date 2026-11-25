@@ -1,4 +1,3 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Modal, Pressable, StyleSheet, View } from 'react-native';
@@ -7,7 +6,7 @@ import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sortable from 'react-native-sortables';
 
-import { Button, MenuHost, Text, useActionSheet } from '@/components/ui';
+import { Button, MenuHost, Text, useActionSheet, Icon, type IconName } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { dropInWeek, moveInWeek, type WeekListItem } from './moves';
@@ -17,7 +16,7 @@ import { dropInWeek, moveInWeek, type WeekListItem } from './moves';
 export type ReprogramDay = { date: string; title: string; sports: string[] };
 
 // A routine still to do this week, on the day it's on now.
-export type ReprogramRoutine = { key: string; date: string; name: string; icon: SFSymbol };
+export type ReprogramRoutine = { key: string; date: string; name: string; icon: IconName };
 
 type ReprogramSheetProps = {
   visible: boolean;
@@ -128,7 +127,7 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
               <View style={[styles.row, { backgroundColor: colors.surface }]}>
                 <View style={[styles.icon, { backgroundColor: colors.accentSoft }]}>
                   {routine ? (
-                    <SymbolView name={routine.icon} size={18} weight="light" tintColor={colors.accent} />
+                    <Icon name={routine.icon} size={18} weight="light" tintColor={colors.accent} />
                   ) : null}
                 </View>
                 <Text variant="name" numberOfLines={1} style={styles.name}>
@@ -139,11 +138,11 @@ function SheetContent({ days, routines, onClose, onSave }: Omit<ReprogramSheetPr
                   aria-label={t('today.moveRoutine', { name })}
                   onPress={() => moveMenu(item, name)}
                   style={({ pressed }) => [styles.handle, pressed && styles.pressed]}>
-                  <SymbolView name="ellipsis" size={18} weight="light" tintColor={colors.textMuted} />
+                  <Icon name="ellipsis" size={18} weight="light" tintColor={colors.textMuted} />
                 </Pressable>
                 <Sortable.Handle>
                   <View style={styles.handle} aria-label={t('today.reprogramHandle', { name })}>
-                    <SymbolView
+                    <Icon
                       name="line.3.horizontal"
                       size={18}
                       weight="light"

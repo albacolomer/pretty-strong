@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text, Icon } from '@/components/ui';
 import { addMonths, startOfMonth } from '@/features/history/calendar';
 import { addDays, dateKey, fromDateKey } from '@/features/schedule/dates';
 import { useAppLanguage } from '@/lib/i18n';
@@ -38,7 +37,7 @@ function StepsLine({ steps }: { steps: number }) {
 
   return (
     <View style={styles.line}>
-      <SymbolView name="figure.walk" size={18} tintColor={colors.textMuted} />
+      <Icon name="figure.walk" size={18} tintColor={colors.textMuted} />
       <Text color="textMuted">
         {t('steps.onDay', { count: steps, steps: new Intl.NumberFormat(language).format(steps) })}
       </Text>

@@ -1,4 +1,3 @@
-import { SymbolView, type SFSymbol } from 'expo-symbols';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -12,7 +11,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { GradientText, IconButton, MetalFill, Text } from '@/components/ui';
+import { GradientText, IconButton, MetalFill, Text, Icon, type IconName } from '@/components/ui';
 import { useElapsed } from '@/features/workout/useElapsed';
 import { gaps, metalTextShadows, spacing, useTheme } from '@/theme';
 
@@ -22,7 +21,7 @@ import { WeekRing } from './WeekRing';
 export const RING = 228;
 export const BUTTON = 182;
 
-export type HeroAction = { aria: string; icon: SFSymbol; onPress: () => void };
+export type HeroAction = { aria: string; icon: IconName; onPress: () => void };
 
 // The big button: GO (to start it) or a ✓ (a class, a sport or an event,
 // marked done), with a caption under it, gold for a competition or special
@@ -38,7 +37,7 @@ export type HeroMain =
   | { kind: 'resume'; name: string; startedAt: string; onPress: () => void };
 
 // The design's icons are a touch bigger for the eye than for the arrows.
-const ICON_SIZES: Partial<Record<SFSymbol, number>> = { eye: 18 };
+const ICON_SIZES: Partial<Record<IconName, number>> = { eye: 18 };
 
 type TodayHeroProps = {
   // The week ring: the goal's segments, and how many are done.
@@ -95,7 +94,7 @@ export function TodayHero({
                 {t('today.go')}
               </Text>
             ) : (
-              <SymbolView name="checkmark" size={52} weight="semibold" tintColor={colors.onMetal} />
+              <Icon name="checkmark" size={52} weight="semibold" tintColor={colors.onMetal} />
             )}
             <Text
               variant="label"
@@ -116,7 +115,7 @@ export function TodayHero({
               { backgroundColor: colors.surface, boxShadow: shadows.hero },
               pressed && styles.pressed,
             ]}>
-            <SymbolView
+            <Icon
               name={status.skipped ? 'forward.end' : 'checkmark'}
               size={44}
               weight="light"
@@ -202,7 +201,7 @@ function ResumeButton({
         ]}>
         <MetalFill borderRadius={BUTTON / 2} gradient="live" />
         <View style={styles.liveLabel}>
-          <SymbolView name="play.fill" size={11} tintColor={colors.onMetal} />
+          <Icon name="play.fill" size={11} tintColor={colors.onMetal} />
           <Text variant="label" color="onMetal" style={metalTextShadows.small}>
             {t('workout.inProgress')}
           </Text>

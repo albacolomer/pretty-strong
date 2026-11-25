@@ -1,4 +1,4 @@
-import type { SFSymbol } from 'expo-symbols';
+import type { IconName } from '@/components/ui';
 
 import type { Weekday } from '@/features/routines/routine';
 
@@ -38,8 +38,8 @@ export function countsAsWorkout(session: { sport: Sport | null }): boolean {
   return session.sport === null || !RECOVERY_SPORTS.includes(session.sport);
 }
 
-// Each sport's icon (SF Symbols, iOS's own).
-export const SPORT_ICONS: Record<Sport, SFSymbol> = {
+// Each sport's icon (see components/ui/Icon).
+export const SPORT_ICONS: Record<Sport, IconName> = {
   padel: 'tennis.racket',
   tennis: 'figure.tennis',
   football: 'soccerball',

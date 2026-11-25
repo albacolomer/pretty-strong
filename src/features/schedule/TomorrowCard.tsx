@@ -1,7 +1,6 @@
-import { SymbolView } from 'expo-symbols';
 import { Pressable, StyleSheet } from 'react-native';
 
-import { Text } from '@/components/ui';
+import { Text, Icon } from '@/components/ui';
 import { inset, radius, spacing, touch, useTheme } from '@/theme';
 
 type TomorrowCardProps = {
@@ -42,7 +41,7 @@ export function TomorrowCard({ day, name, details, onPress }: TomorrowCardProps)
         ) : null}
       </Text>
       {onPress ? (
-        <SymbolView name="chevron.right" size={12} weight="light" tintColor={colors.textMuted} />
+        <Icon name="chevron.right" size={12} weight="light" tintColor={colors.textMuted} />
       ) : null}
     </Pressable>
   );

@@ -1,8 +1,7 @@
-import { SymbolView } from 'expo-symbols';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { Card, GradientText, GradientView, Text } from '@/components/ui';
+import { Card, GradientText, GradientView, Text, Icon } from '@/components/ui';
 import { EVENT_ICONS } from '@/features/events/events';
 import { useHistoryEntries } from '@/features/history/useHistory';
 import { formatDuration } from '@/features/routines/routine';
@@ -204,7 +203,7 @@ function MixRow({ item, total, language }: { item: MixItem; total: number; langu
       accessible
       aria-label={t('progress.mixItem', { name, count: item.count })}>
       <View style={styles.mixLabel}>
-        <SymbolView
+        <Icon
           name={
             item.eventKind
               ? EVENT_ICONS[item.eventKind]

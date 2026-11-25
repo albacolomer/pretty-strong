@@ -1,4 +1,3 @@
-import { SymbolView } from 'expo-symbols';
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -12,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, MenuHost, Text } from '@/components/ui';
+import { Button, Card, MenuHost, Text, Icon } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
@@ -259,7 +258,7 @@ function PickedStrip({
           <Text variant="captionMedium" numberOfLines={1} style={styles.chipName}>
             {name}
           </Text>
-          <SymbolView name="xmark" size={11} weight="semibold" tintColor={colors.textMuted} />
+          <Icon name="xmark" size={11} weight="semibold" tintColor={colors.textMuted} />
         </Pressable>
       ))}
     </ScrollView>
@@ -286,7 +285,7 @@ function CountBadge({ count, announce }: { count: number; announce: boolean }) {
           : { borderColor: colors.textMuted },
       ]}>
       {count === 1 ? (
-        <SymbolView name="checkmark" size={13} weight="bold" tintColor={colors.onAccent} />
+        <Icon name="checkmark" size={13} weight="bold" tintColor={colors.onAccent} />
       ) : count > 1 ? (
         <Text variant="caption" color="onAccent">
           {`×${count}`}

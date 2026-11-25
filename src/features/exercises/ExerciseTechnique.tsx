@@ -1,9 +1,9 @@
-import { SymbolView } from 'expo-symbols';
 import { useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import {
+  Icon,
   SectionHeader,
   SettingsCard,
   SettingsRow,
@@ -143,7 +143,7 @@ function ChangeVideoButton({ onPress }: { onPress: () => void }) {
       aria-label={t('exercises.detail.changeVideo')}
       onPress={onPress}
       style={({ pressed }) => [styles.pencil, pressed && styles.pressed]}>
-      <SymbolView name="pencil" size={17} weight="medium" tintColor={colors.accent} />
+      <Icon name="pencil" size={17} weight="medium" tintColor={colors.accent} />
     </Pressable>
   );
 }

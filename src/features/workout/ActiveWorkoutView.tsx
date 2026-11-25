@@ -1,12 +1,11 @@
 import * as Haptics from 'expo-haptics';
 import { useKeepAwake } from 'expo-keep-awake';
-import { SymbolView } from 'expo-symbols';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Text, useActionSheet } from '@/components/ui';
+import { Button, Text, useActionSheet, Icon } from '@/components/ui';
 import { ExercisePicker } from '@/features/exercises/ExercisePicker';
 import { ExerciseInfoSheet } from '@/features/exercises/ExerciseInfoSheet';
 import { ReorderExercisesSheet } from '@/features/routines/ReorderExercisesSheet';
@@ -206,7 +205,7 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
           aria-label={t('workout.hide')}
           onPress={onClose}
           style={({ pressed }) => [styles.hide, pressed && styles.pressed]}>
-          <SymbolView name="chevron.down" size={20} weight="light" tintColor={colors.textMuted} />
+          <Icon name="chevron.down" size={20} weight="light" tintColor={colors.textMuted} />
         </Pressable>
         <View style={styles.title}>
           <Text variant="name" numberOfLines={1} accessibilityRole="header">

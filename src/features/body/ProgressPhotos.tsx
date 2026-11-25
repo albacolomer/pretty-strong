@@ -1,11 +1,10 @@
 import { router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, MenuHost, Text, useActionSheet } from '@/components/ui';
+import { Button, Card, MenuHost, Text, useActionSheet, Icon } from '@/components/ui';
 import { dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { useAppLanguage } from '@/lib/i18n';
@@ -92,7 +91,7 @@ export function ProgressPhotos() {
             <ActivityIndicator color={colors.accent} />
           ) : (
             <>
-              <SymbolView name="camera" size={22} weight="light" tintColor={colors.textSecondary} />
+              <Icon name="camera" size={22} weight="light" tintColor={colors.textSecondary} />
               <Text variant="caption">{t('photos.addShort')}</Text>
             </>
           )}

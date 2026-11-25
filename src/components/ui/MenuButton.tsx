@@ -1,4 +1,4 @@
-import { SymbolView } from 'expo-symbols';
+import { Icon } from './Icon';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { touch, useTheme } from '@/theme';
@@ -16,7 +16,7 @@ export function MenuButton({ label, onPress }: { label: string; onPress: () => v
       style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
       {/* iOS has no vertical ellipsis symbol: the horizontal one, turned. */}
       <View style={styles.vertical}>
-        <SymbolView name="ellipsis" size={18} weight="semibold" tintColor={colors.textMuted} />
+        <Icon name="ellipsis" size={18} weight="semibold" tintColor={colors.textMuted} />
       </View>
     </Pressable>
   );

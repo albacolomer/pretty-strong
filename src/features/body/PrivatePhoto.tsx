@@ -1,6 +1,6 @@
 import { BlurView } from 'expo-blur';
 import { Image } from 'expo-image';
-import { SymbolView } from 'expo-symbols';
+import { Icon } from '@/components/ui';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { useTheme } from '@/theme';
@@ -49,7 +49,7 @@ export function PrivatePhoto({
         <>
           <BlurView intensity={HIDDEN_GLASS} tint="systemThickMaterial" style={StyleSheet.absoluteFill} />
           <View style={styles.lock} aria-hidden>
-            <SymbolView name="lock.fill" size={22} tintColor={colors.text} />
+            <Icon name="lock.fill" size={22} tintColor={colors.text} />
           </View>
         </>
       ) : null}
