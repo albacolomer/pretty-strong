@@ -51,13 +51,16 @@ export function Screen({
               { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
             ]
           : // The status bar's height is added by iOS already: only the rest
-            // of the design's top inset. A browser adds nothing, so the web
-            // gives the whole inset (or the status bar, if it's taller).
+            // of the design's top inset. A browser adds nothing: under the
+            // status bar (a Home Screen app) the web gives the whole inset;
+            // in Safari the page already starts below it, so only a gap.
             {
               paddingTop:
-                Platform.OS === 'web'
-                  ? Math.max(inset.screenTop, insets.top)
-                  : Math.max(inset.screenTop - insets.top, 0),
+                Platform.OS !== 'web'
+                  ? Math.max(inset.screenTop - insets.top, 0)
+                  : insets.top > 0
+                    ? Math.max(inset.screenTop, insets.top)
+                    : spacing.lg,
             },
       ]}
       // Centred screens add the safe-area space themselves (above), so iOS
