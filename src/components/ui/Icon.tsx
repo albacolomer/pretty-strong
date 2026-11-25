@@ -73,7 +73,7 @@ import { UserCircleIcon } from 'phosphor-react-native/src/icons/UserCircle';
 import { UsersIcon } from 'phosphor-react-native/src/icons/Users';
 import { VolleyballIcon } from 'phosphor-react-native/src/icons/Volleyball';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
-import type { StyleProp, ViewStyle } from 'react-native';
+import { StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 
 // The app's icons, drawn as SVG (Phosphor, MIT) so the iPhone and the web
 // look the same: SF Symbols' licence keeps them off the web. Each icon is
@@ -198,7 +198,16 @@ export function Icon({ name, size, tintColor, weight = 'regular', style }: IconP
       size={size}
       color={tintColor}
       weight={name.endsWith('.fill') ? 'fill' : WEIGHTS[weight]}
-      style={style}
+      style={[styles.icon, style]}
     />
   );
 }
+
+const styles = StyleSheet.create({
+  // Over a MetalFill (absolutely positioned) on the web too: a browser
+  // paints positioned elements above plain ones whatever their order, so
+  // the icon must be positioned to stay on top. The phone draws in order.
+  icon: {
+    position: 'relative',
+  },
+});

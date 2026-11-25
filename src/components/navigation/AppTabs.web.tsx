@@ -14,7 +14,7 @@ export function AppTabs() {
 
   return (
     <Tabs style={styles.tabs}>
-      <TabSlot />
+      <TabSlot style={styles.slot} />
       <TabList asChild>
         <TabBar>
           <TabTrigger name="index" href="/" asChild>
@@ -69,10 +69,11 @@ function TabButton({ icon, label, isFocused = false, style, ref, ...rest }: TabB
       role="tab"
       aria-selected={isFocused}
       aria-label={label}
+      // The trigger's own style (a row) first, so the tab's wins.
       style={(state) => [
+        typeof style === 'function' ? style(state) : style,
         styles.tab,
         isFocused && { backgroundColor: colors.surfaceRaised },
-        typeof style === 'function' ? style(state) : style,
       ]}>
       <Icon name={isFocused ? filled : icon} size={24} tintColor={tint} />
       <Text variant="badge" style={{ color: tint }}>
@@ -86,6 +87,15 @@ const styles = StyleSheet.create({
   tabs: {
     flex: 1,
   },
+  // Expo Router's slot grows with its content (flexShrink 0), so a screen
+  // without a stack of its own (Avui) would grow past the window and never
+  // scroll. Held to the space above the bar instead.
+  slot: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minHeight: 0,
+  },
   bar: {
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.sm,
@@ -97,6 +107,7 @@ const styles = StyleSheet.create({
   },
   tab: {
     flex: 1,
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs / 2,

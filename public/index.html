@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ca">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      viewport-fit=cover: the page reaches under the notch and the home bar,
+      and the app adds the safe-area space itself, like on the iPhone.
+      maximum-scale=1: Safari doesn't zoom in when a field is tapped (iOS
+      still lets you pinch to zoom).
+    -->
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover"
+    />
+    <title>%WEB_TITLE%</title>
+    <!-- The theme's background colours (src/theme/colors.ts), light and dark. -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#FAFAF9" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#121416" />
+    <meta name="color-scheme" content="light dark" />
+    <style id="expo-reset">
+      html,
+      body {
+        height: 100%;
+      }
+      html {
+        /* Safari mustn't enlarge text by itself. */
+        -webkit-text-size-adjust: 100%;
+        text-size-adjust: 100%;
+        /* No double-tap zoom: quick taps on a stepper stay taps. */
+        touch-action: manipulation;
+      }
+      body {
+        /* Each screen scrolls inside itself, like the app; the page never
+           scrolls or bounces. */
+        overflow: hidden;
+        overscroll-behavior: none;
+        margin: 0;
+        background-color: #fafaf9;
+        -webkit-tap-highlight-color: transparent;
+      }
+      @media (prefers-color-scheme: dark) {
+        body {
+          background-color: #121416;
+        }
+      }
+      #root {
+        display: flex;
+        flex: 1;
+        height: 100%;
+        /* The visible height, whichever Safari bars are showing. */
+        height: 100dvh;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
