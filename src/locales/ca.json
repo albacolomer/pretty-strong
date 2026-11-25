@@ -717,7 +717,8 @@
     "weekDone_one": "{{count}} entrenament aquesta setmana",
     "weekDone_other": "{{count}} entrenaments aquesta setmana",
     "go": "GO",
-    "goCaption": "A entrenar"
+    "goCaption": "A entrenar",
+    "markMissedDone": "Marca-la com a feta"
   },
   "steps": {
     "title": "Passos d'avui",
@@ -823,7 +824,7 @@
     "removeRpe": "Treu l'RPE",
     "todaysNote": "Nota d'avui",
     "todaysNoteFor": "Nota d'avui per a «{{name}}»",
-    "saveNoteToRoutine": "Desa-la també a la rutina",
+    "saveNoteToRoutine": "Desa-la a la rutina",
     "noteSavedToRoutine": "Nota desada a la rutina ✓",
     "noSignal": "No hi ha connexió. Comprova-la i torna-ho a provar.",
     "summary": {
@@ -865,7 +866,9 @@
       "remove": "Treu el tram"
     },
     "allFields": "Mostra tots els camps",
-    "pace": "Ritme: {{pace}}"
+    "pace": "Ritme: {{pace}}",
+    "addDropSet": "+ Drop set",
+    "addDropSetFor": "Afegeix una sèrie de descàrrega a «{{name}}»"
   },
   "history": {
     "loadError": "No s'ha pogut carregar l'historial.",

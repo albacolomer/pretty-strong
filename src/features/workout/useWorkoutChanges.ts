@@ -316,6 +316,16 @@ export function useWorkoutChanges(workout: ActiveWorkout, source: WorkoutSource)
     closeInfo: () => setInfo(null),
     addSet: (exercise: ActiveExercise) =>
       update((current) => addSet(current, exercise.id, randomUUID())),
+    // Whether "+ Drop set" shows: exercises with weight or reps.
+    canDropSet: (exercise: ActiveExercise) =>
+      DROP_SET_TYPES.includes(exercise.exercise.trackingType),
+    // "+ Drop set": a new set, already a drop set (US-16), with the last
+    // set's numbers to lower.
+    addDropSet: (exercise: ActiveExercise) =>
+      update((current) => {
+        const id = randomUUID();
+        return setSetType(addSet(current, exercise.id, id), exercise.id, id, 'drop');
+      }),
     setNotes: (exercise: ActiveExercise, notes: string) =>
       update((current) => setExerciseNotes(current, exercise.id, notes)),
     saveNote,

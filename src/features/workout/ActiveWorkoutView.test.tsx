@@ -400,6 +400,23 @@ describe('<ActiveWorkoutView />', () => {
     expect(actionSheet.mock.lastCall?.[0].options).not.toContain('Treu la sèrie');
   });
 
+  test('"+ Drop set" adds a set that is already a drop set', async () => {
+    const user = userEvent.setup();
+    await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
+    const before = active()!.exercises[0].sets.length;
+
+    await user.press(
+      screen.getByRole('button', { name: 'Afegeix una sèrie de descàrrega a «Tracció al pit»' }),
+    );
+
+    const sets = active()!.exercises[0].sets;
+    expect(sets).toHaveLength(before + 1);
+    expect(sets.at(-1)).toMatchObject({ setType: 'drop', completedAt: null });
+    expect(
+      screen.getByRole('button', { name: `Opcions de la sèrie ${before + 1} de «Tracció al pit»` }),
+    ).toHaveTextContent('D');
+  });
+
   test('adds a set, pre-filled with the last one', async () => {
     const user = userEvent.setup();
     await render(<ActiveWorkoutView onClose={jest.fn()} />, { wrapper: createAppWrapper() });
@@ -462,7 +479,7 @@ describe('<ActiveWorkoutView />', () => {
 
     await user.press(screen.getByRole('button', { name: 'Afegeix una nota a «Tracció al pit»' }));
     await user.type(screen.getByLabelText("Nota d'avui per a «Tracció al pit»"), 'Agafada neutra');
-    await user.press(screen.getByRole('button', { name: 'Desa-la també a la rutina' }));
+    await user.press(screen.getByRole('button', { name: 'Desa-la a la rutina' }));
 
     expect(saveNoteToRoutine).toHaveBeenCalledWith('re-1', 'Agafada neutra');
     expect(await screen.findByText('Nota desada a la rutina ✓')).toBeOnTheScreen();

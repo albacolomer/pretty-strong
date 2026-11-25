@@ -89,7 +89,9 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   time: {
-    minWidth: 64,
+    // Fixed: a browser's input is about 20 characters wide by itself,
+    // which pushed + out of the card on the web. 10:00 fits.
+    width: 64,
     minHeight: touch.min,
     paddingHorizontal: spacing.sm,
     borderRadius: radius.input,

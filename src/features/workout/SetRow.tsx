@@ -70,15 +70,24 @@ export function SetRow({
         onPress={onNumberPress}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 4 }}
         style={({ pressed }) => [styles.number, pressed && styles.pressed]}>
-        {/* A drop set shows "D"; its RPE, when given, under it. */}
-        <Text variant="bodyStrong" color={set.setType === 'drop' ? 'accent' : 'textMuted'}>
-          {set.setType === 'drop' ? t('workout.dropShort') : number}
-        </Text>
-        {set.rpe !== null ? (
-          <Text variant="caption" color="textMuted">
-            {`@${formatInput(set.rpe, language)}`}
+        {/* On a small pill, so it reads as something to tap (drop set, RPE,
+            remove). A drop set shows "D"; its RPE, when given, under it. */}
+        <View
+          style={[
+            styles.numberPill,
+            {
+              backgroundColor: set.setType === 'drop' ? colors.accentSoft : colors.surfaceRaised,
+            },
+          ]}>
+          <Text variant="bodyStrong" color={set.setType === 'drop' ? 'accent' : 'textMuted'}>
+            {set.setType === 'drop' ? t('workout.dropShort') : number}
           </Text>
-        ) : null}
+          {set.rpe !== null ? (
+            <Text variant="caption" color="textMuted">
+              {`@${formatInput(set.rpe, language)}`}
+            </Text>
+          ) : null}
+        </View>
       </Pressable>
       <View style={styles.middle}>
         <View style={[styles.inputs, wraps && styles.wrapping]}>
@@ -141,8 +150,16 @@ const styles = StyleSheet.create({
     borderWidth: 2,
   },
   number: {
-    width: 28,
+    width: 32,
     minHeight: touch.min,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  numberPill: {
+    width: 32,
+    minHeight: 32,
+    paddingVertical: spacing.xs / 2,
+    borderRadius: radius.small * 2,
     alignItems: 'center',
     justifyContent: 'center',
   },

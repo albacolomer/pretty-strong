@@ -162,11 +162,9 @@ export function WeekSchedule({
     }),
   ].join(' · ');
   // "17–23 de novembre", or across two months "29 de setembre – 5 d'octubre".
-  const dayMonth = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'long' });
-  const range =
-    weekStart.getMonth() === weekEnd.getMonth()
-      ? `${weekStart.getDate()}–${dayMonth.format(weekEnd)}`
-      : `${dayMonth.format(weekStart)} – ${dayMonth.format(weekEnd)}`;
+  // "Nov 23 – Nov 29", "23 nov – 29 nov": the short month on both ends.
+  const dayMonth = new Intl.DateTimeFormat(language, { day: 'numeric', month: 'short' });
+  const range = `${dayMonth.format(weekStart)} – ${dayMonth.format(weekEnd)}`;
   const weekTitle =
     offset === 0
       ? t('schedule.thisWeek')

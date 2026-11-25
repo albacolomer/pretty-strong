@@ -646,6 +646,7 @@ describe('<Today />', () => {
       sheetChoices.push('Deixa-ho');
       await user.press(await screen.findByRole('button', { name: 'Altres opcions' }));
       expect(lastSheet()).toEqual([
+        'Marca-la com a feta',
         'Mou-la a dimecres',
         'Desplaça la setmana un dia',
         'Reprograma la setmana…',
@@ -654,6 +655,21 @@ describe('<Today />', () => {
       ]);
       expect(logQuickSession).toHaveBeenCalledWith(
         session({ date: '2026-10-19', plannedRoutineId: 'legs', routineId: null, status: 'skipped' }),
+      );
+      await waitFor(() => expect(screen.queryByText(/Ahir no vas fer/)).not.toBeOnTheScreen());
+    });
+
+    test('"Altres opcions" → "Marca-la com a feta" logs it done, yesterday', async () => {
+      const user = userEvent.setup();
+      keepLogged();
+      await render(<Today />, { wrapper: createAppWrapper() });
+
+      sheetChoices.push('Marca-la com a feta');
+      await user.press(await screen.findByRole('button', { name: 'Altres opcions' }));
+      await user.press(await screen.findByRole('button', { name: 'Desa' }));
+
+      expect(logQuickSession).toHaveBeenCalledWith(
+        session({ date: '2026-10-19', plannedRoutineId: 'legs', routineId: 'legs' }),
       );
       await waitFor(() => expect(screen.queryByText(/Ahir no vas fer/)).not.toBeOnTheScreen());
     });

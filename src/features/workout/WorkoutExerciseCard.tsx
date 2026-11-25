@@ -30,6 +30,8 @@ type WorkoutExerciseCardProps = {
   onMenu: () => void;
   onSetMenu: (setId: string) => void;
   onAddSet: () => void;
+  // "+ Drop set"; left out for exercises that can't have one.
+  onAddDropSet?: () => void;
   onNotesChange: (notes: string) => void;
   // Copies this workout's note into the routine; left out when the
   // exercise isn't from the routine.
@@ -37,7 +39,8 @@ type WorkoutExerciseCardProps = {
 };
 
 // One exercise in the workout (spec: ExerciseCard): picture, name and ⋯;
-// the routine's note on it; a row per set; then "+ Afegeix una sèrie" and
+// the routine's note on it; a row per set; then "+ Afegeix una sèrie",
+// "+ Drop set" (with weight or reps) and
 // "+ Nota". A skipped exercise shows why, without its sets. A cardio
 // machine's rows are segments; a run's show their pace (US-19).
 export function WorkoutExerciseCard({
@@ -49,6 +52,7 @@ export function WorkoutExerciseCard({
   onMenu,
   onSetMenu,
   onAddSet,
+  onAddDropSet,
   onNotesChange,
   onSaveNoteToRoutine,
 }: WorkoutExerciseCardProps) {
@@ -155,15 +159,28 @@ export function WorkoutExerciseCard({
           })}
 
           <View style={styles.bottomRow}>
-            <Button
-              label={segment ? t('workout.segments.add') : t('routines.sets.add')}
-              aria-label={
-                segment ? t('workout.segments.addFor', { name }) : t('routines.sets.addFor', { name })
-              }
-              variant="ghost"
-              onPress={onAddSet}
-              style={styles.bottomButton}
-            />
+            <View style={styles.addButtons}>
+              <Button
+                label={segment ? t('workout.segments.add') : t('routines.sets.add')}
+                aria-label={
+                  segment
+                    ? t('workout.segments.addFor', { name })
+                    : t('routines.sets.addFor', { name })
+                }
+                variant="ghost"
+                onPress={onAddSet}
+                style={styles.bottomButton}
+              />
+              {onAddDropSet ? (
+                <Button
+                  label={t('workout.addDropSet')}
+                  aria-label={t('workout.addDropSetFor', { name })}
+                  variant="ghost"
+                  onPress={onAddDropSet}
+                  style={styles.bottomButton}
+                />
+              ) : null}
+            </View>
             {noteOpen ? null : <AddNoteButton name={name} onPress={() => setNoteOpen(true)} />}
           </View>
 
@@ -237,6 +254,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     alignItems: 'center',
     justifyContent: 'space-between',
+  },
+  // "+ Afegeix una sèrie" and "+ Drop set" together, on the left.
+  addButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
   },
   bottomButton: {
     alignSelf: 'flex-start',

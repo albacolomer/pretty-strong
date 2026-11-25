@@ -137,7 +137,7 @@ describe('<WeekSchedule />', () => {
 
     expect(await screen.findByText('Pàdel')).toBeOnTheScreen();
     expect(screen.getByRole('header', { name: 'Aquesta setmana' })).toBeOnTheScreen();
-    expect(screen.getByText('19–25 d’octubre')).toBeOnTheScreen();
+    expect(screen.getByText('19 d’oct. – 25 d’oct.')).toBeOnTheScreen();
     expect(screen.getByText('3 entrenaments · 2 esports · 5 dies de descans')).toBeOnTheScreen();
     expect(fetchMoves).toHaveBeenLastCalledWith('2026-10-19', '2026-10-25');
     expect(rows()).toEqual([
@@ -165,7 +165,7 @@ describe('<WeekSchedule />', () => {
     expect(await screen.findByRole('button', { name: 'Setmana anterior' })).toBeDisabled();
     await user.press(screen.getByRole('button', { name: 'Setmana següent' }));
     expect(screen.getByRole('header', { name: 'La setmana que ve' })).toBeOnTheScreen();
-    expect(screen.getByText('26 d’octubre – 1 de novembre')).toBeOnTheScreen();
+    expect(screen.getByText('26 d’oct. – 1 de nov.')).toBeOnTheScreen();
     expect(fetchMoves).toHaveBeenLastCalledWith('2026-10-26', '2026-11-01');
     expect(fetchAdditions).toHaveBeenLastCalledWith('2026-10-26', '2026-11-01');
     expect(fetchSportDrops).toHaveBeenLastCalledWith('2026-10-26', '2026-11-01');

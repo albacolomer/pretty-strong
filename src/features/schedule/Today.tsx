@@ -163,11 +163,11 @@ export function Today() {
   const { swaps, setSwap } = useSwaps(from);
   // Your own default rest per exercise, fixed into the workout when it starts.
   const { data: settings } = useExerciseSettings();
-  // What the "Fet" sheet is open for: a routine (as shown), a sport, a
-  // sport swapped in for a routine, a rest day's walk or stretching, or an
-  // event.
+  // What the "Fet" sheet is open for: a routine (as shown; on `date` when
+  // it's yesterday's missed one), a sport, a sport swapped in for a routine,
+  // a rest day's walk or stretching, or an event.
   const [logging, setLogging] = useState<
-    | { kind: 'routine'; planned: Routine; shown: Routine }
+    | { kind: 'routine'; planned: Routine; shown: Routine; date?: string }
     | { kind: 'sport'; sport: WeeklySport; addedId?: string }
     | { kind: 'event'; event: CalendarEvent }
     | { kind: 'swappedSport'; planned: Routine; sport: SportChoice }
@@ -620,6 +620,17 @@ export function Today() {
   // (logged as skipped yesterday).
   function missedOptions(activity: RoutineActivity) {
     sheet(t('today.skipWhat', { name: activity.routine.name }), [
+      // Done after all, just not logged: the quick log, dated yesterday.
+      {
+        label: t('today.markMissedDone'),
+        run: () =>
+          setLogging({
+            kind: 'routine',
+            planned: activity.routine,
+            shown: activity.routine,
+            date: yesterdayKey,
+          }),
+      },
       ...moveOptions(activity, yesterday),
       {
         label: t('today.leaveIt'),
@@ -753,17 +764,18 @@ export function Today() {
       return;
     }
     const { planned: routine, shown } = logging;
+    const date = logging.date ?? day;
     log(
       {
         id: randomUUID(),
-        date: day,
+        date,
         plannedRoutineId: routine.id,
         routineId: shown.id,
         status: 'completed',
         logMode: 'quick',
         durationS,
         notes,
-        changeReason: swaps[day]?.[routine.id]?.reason ?? null,
+        changeReason: swaps[date]?.[routine.id]?.reason ?? null,
         ...noSport,
         ...NO_EVENT,
       },

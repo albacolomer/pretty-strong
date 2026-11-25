@@ -717,7 +717,8 @@
     "weekDone_one": "{{count}} entrenamiento esta semana",
     "weekDone_other": "{{count}} entrenamientos esta semana",
     "go": "GO",
-    "goCaption": "A entrenar"
+    "goCaption": "A entrenar",
+    "markMissedDone": "Marcarla como hecha"
   },
   "steps": {
     "title": "Pasos de hoy",
@@ -823,7 +824,7 @@
     "removeRpe": "Quitar el RPE",
     "todaysNote": "Nota de hoy",
     "todaysNoteFor": "Nota de hoy para «{{name}}»",
-    "saveNoteToRoutine": "Guardarla también en la rutina",
+    "saveNoteToRoutine": "Guardar en la rutina",
     "noteSavedToRoutine": "Nota guardada en la rutina ✓",
     "noSignal": "No hay conexión. Compruébala y vuelve a intentarlo.",
     "summary": {
@@ -865,7 +866,9 @@
       "remove": "Quitar el tramo"
     },
     "allFields": "Mostrar todos los campos",
-    "pace": "Ritmo: {{pace}}"
+    "pace": "Ritmo: {{pace}}",
+    "addDropSet": "+ Drop set",
+    "addDropSetFor": "Añade una serie descendente a «{{name}}»"
   },
   "history": {
     "loadError": "No se ha podido cargar el historial.",

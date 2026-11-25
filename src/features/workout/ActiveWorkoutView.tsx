@@ -118,6 +118,7 @@ function Workout({ workout, onClose }: { workout: ActiveWorkout; onClose: () => 
         onMenu={() => changes.openExerciseMenu(exercise)}
         onSetMenu={(setId) => changes.openSetMenu(exercise, setId)}
         onAddSet={() => changes.addSet(exercise)}
+        onAddDropSet={changes.canDropSet(exercise) ? () => changes.addDropSet(exercise) : undefined}
         onNotesChange={(notes) => changes.setNotes(exercise, notes)}
         onSaveNoteToRoutine={
           exercise.routineExerciseId ? () => changes.saveNote(exercise) : undefined

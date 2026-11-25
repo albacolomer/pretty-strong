@@ -717,7 +717,8 @@
     "weekDone_one": "{{count}} workout this week",
     "weekDone_other": "{{count}} workouts this week",
     "go": "GO",
-    "goCaption": "Start workout"
+    "goCaption": "Start workout",
+    "markMissedDone": "Mark it as done"
   },
   "steps": {
     "title": "Today's steps",
@@ -823,7 +824,7 @@
     "removeRpe": "Remove RPE",
     "todaysNote": "Today's note",
     "todaysNoteFor": "Today's note for “{{name}}”",
-    "saveNoteToRoutine": "Save it in the routine too",
+    "saveNoteToRoutine": "Save to routine",
     "noteSavedToRoutine": "Note saved in the routine ✓",
     "noSignal": "No connection. Check it and try again.",
     "summary": {
@@ -865,7 +866,9 @@
       "remove": "Remove segment"
     },
     "allFields": "Show all fields",
-    "pace": "Pace: {{pace}}"
+    "pace": "Pace: {{pace}}",
+    "addDropSet": "+ Drop set",
+    "addDropSetFor": "Add a drop set to “{{name}}”"
   },
   "history": {
     "loadError": "Couldn't load your history.",
