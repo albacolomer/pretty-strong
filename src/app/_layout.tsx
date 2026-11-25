@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { PasswordCheckHost } from '@/features/auth/PasswordCheckHost';
 import { SplashScreenController } from '@/features/auth/SplashScreenController';
 import { useNeedsSetup } from '@/features/onboarding/setupStore';
+import { useWorkoutStore } from '@/features/workout/workoutStore';
+import { useAppUpdates } from '@/lib/appUpdates';
 import { useAppFonts } from '@/lib/fonts';
 import { configureNotifications } from '@/lib/notifications';
 import { queryClient } from '@/lib/queryClient';
@@ -16,6 +18,11 @@ import { navigationThemes } from '@/theme/navigation';
 
 // Once, when the app starts: rest alerts don't pop up over the workout.
 configureNotifications();
+
+// The web app never reloads itself into a new version mid-workout.
+function workoutIsGoing() {
+  return useWorkoutStore.getState().active !== null;
+}
 
 export default function RootLayout() {
   const { scheme } = useTheme();
@@ -52,6 +59,8 @@ export default function RootLayout() {
 function RootNavigator() {
   const { session } = useAuth();
   const needsSetup = useNeedsSetup(session);
+  // The web app: offline copy and new deploys (nothing on the phone).
+  useAppUpdates({ isBusy: workoutIsGoing });
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

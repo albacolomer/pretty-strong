@@ -1088,5 +1088,9 @@
     "walking": "Caminar",
     "stretching": "Estiramientos",
     "other": "Otro"
+  },
+  "updates": {
+    "ready": "Hay una versión nueva de la app.",
+    "reload": "Actualizar"
   }
 }

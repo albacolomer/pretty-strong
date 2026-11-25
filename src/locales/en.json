@@ -1088,5 +1088,9 @@
     "walking": "Walking",
     "stretching": "Stretching",
     "other": "Other"
+  },
+  "updates": {
+    "ready": "A new version of the app is ready.",
+    "reload": "Update"
   }
 }

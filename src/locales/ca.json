@@ -1088,5 +1088,9 @@
     "walking": "Caminar",
     "stretching": "Estiraments",
     "other": "Altres"
+  },
+  "updates": {
+    "ready": "Hi ha una versió nova de l'app.",
+    "reload": "Actualitza"
   }
 }
