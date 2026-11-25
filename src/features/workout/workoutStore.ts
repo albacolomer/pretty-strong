@@ -1,6 +1,7 @@
-import Storage from 'expo-sqlite/kv-store';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { kvStorage } from '@/lib/kvStorage';
 
 import {
   upgradeFinished,
@@ -26,7 +27,7 @@ type WorkoutState = {
 };
 
 // The live workout (spec: "Offline-safe workout"). Saved on the phone on
-// every change (expo-sqlite's key-value store), so it survives the app
+// every change (lib/kvStorage), so it survives the app
 // closing or the phone dying, and works with no signal. Zustand rather
 // than React state, so the workout screen, Today and the saver share it.
 export const useWorkoutStore = create<WorkoutState>()(
@@ -51,7 +52,7 @@ export const useWorkoutStore = create<WorkoutState>()(
     }),
     {
       name: 'workout',
-      storage: createJSONStorage(() => Storage),
+      storage: createJSONStorage(() => kvStorage),
       // Only the data; the functions above aren't saved.
       partialize: ({ active, pending }) => ({ active, pending }),
       // Saved by an older version of the app: bring it up to date. Bump the

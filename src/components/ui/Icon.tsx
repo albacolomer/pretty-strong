@@ -13,6 +13,7 @@ import { CaretDownIcon } from 'phosphor-react-native/src/icons/CaretDown';
 import { CaretLeftIcon } from 'phosphor-react-native/src/icons/CaretLeft';
 import { CaretRightIcon } from 'phosphor-react-native/src/icons/CaretRight';
 import { CheckIcon } from 'phosphor-react-native/src/icons/Check';
+import { ClipboardTextIcon } from 'phosphor-react-native/src/icons/ClipboardText';
 import { ClockIcon } from 'phosphor-react-native/src/icons/Clock';
 import { DotsThreeIcon } from 'phosphor-react-native/src/icons/DotsThree';
 import { EnvelopeSimpleIcon } from 'phosphor-react-native/src/icons/EnvelopeSimple';
@@ -68,6 +69,7 @@ import { TennisBallIcon } from 'phosphor-react-native/src/icons/TennisBall';
 import { TimerIcon } from 'phosphor-react-native/src/icons/Timer';
 import { TrashIcon } from 'phosphor-react-native/src/icons/Trash';
 import { UserIcon } from 'phosphor-react-native/src/icons/User';
+import { UserCircleIcon } from 'phosphor-react-native/src/icons/UserCircle';
 import { UsersIcon } from 'phosphor-react-native/src/icons/Users';
 import { VolleyballIcon } from 'phosphor-react-native/src/icons/Volleyball';
 import { XIcon } from 'phosphor-react-native/src/icons/X';
@@ -98,6 +100,7 @@ const ICONS = {
   'chevron.right': CaretRightIcon,
   clock: ClockIcon,
   dumbbell: BarbellIcon,
+  'dumbbell.fill': BarbellIcon,
   ellipsis: DotsThreeIcon,
   envelope: EnvelopeSimpleIcon,
   eye: EyeIcon,
@@ -125,6 +128,8 @@ const ICONS = {
   key: KeyIcon,
   'line.3.horizontal': ListIcon,
   link: LinkIcon,
+  'list.bullet.clipboard': ClipboardTextIcon,
+  'list.bullet.clipboard.fill': ClipboardTextIcon,
   lock: LockIcon,
   'lock.fill': LockIcon,
   magnifyingglass: MagnifyingGlassIcon,
@@ -136,6 +141,8 @@ const ICONS = {
   'note.text': NoteIcon,
   pencil: PencilSimpleIcon,
   person: UserIcon,
+  'person.crop.circle': UserCircleIcon,
+  'person.crop.circle.fill': UserCircleIcon,
   'person.2': UsersIcon,
   'play.fill': PlayIcon,
   'play.rectangle': MonitorPlayIcon,

@@ -1,15 +1,12 @@
-import { DatePicker, Host } from '@expo/ui/swift-ui';
-import { datePickerStyle, environment, labelsHidden } from '@expo/ui/swift-ui/modifiers';
 import { randomUUID } from 'expo-crypto';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { StyleSheet, View } from 'react-native';
 
-import { Sheet, Text, TextField } from '@/components/ui';
+import { DateField, Sheet, Text, TextField } from '@/components/ui';
 import { dateKey, fromDateKey } from '@/features/schedule/dates';
 import { IconChoice } from '@/features/schedule/SportGrid';
-import { useAppLanguage } from '@/lib/i18n';
-import { spacing, touch, useTheme } from '@/theme';
+import { spacing, touch } from '@/theme';
 
 import {
   draftFrom,
@@ -43,8 +40,6 @@ export function EventSheet({
   onClose: () => void;
 }) {
   const { t } = useTranslation();
-  const { colors, scheme } = useTheme();
-  const language = useAppLanguage();
   const save = useSaveEvent();
   const [draft, setDraft] = useState<EventDraft>(() => (event ? draftFrom(event) : emptyDraft(date)));
   const change = (values: Partial<EventDraft>) => setDraft((current) => ({ ...current, ...values }));
@@ -82,17 +77,11 @@ export function EventSheet({
       />
       <View style={styles.dateRow}>
         <Text>{t('events.date')}</Text>
-        <Host matchContents alignment="trailing" colorScheme={scheme} seedColor={colors.accent}>
-          <DatePicker
-            selection={fromDateKey(draft.date)}
-            onDateChange={(picked) => change({ date: dateKey(picked) })}
-            modifiers={[
-              datePickerStyle('compact'),
-              labelsHidden(),
-              environment('locale', language),
-            ]}
-          />
-        </Host>
+        <DateField
+          value={fromDateKey(draft.date)}
+          onChange={(picked) => change({ date: dateKey(picked) })}
+          label={t('events.date')}
+        />
       </View>
       <TextField
         label={t('events.place')}

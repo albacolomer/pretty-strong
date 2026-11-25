@@ -5,6 +5,7 @@ import { Stack, ThemeProvider } from 'expo-router';
 
 import { MenuHost, ToastProvider } from '@/components/ui';
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
+import { PasswordCheckHost } from '@/features/auth/PasswordCheckHost';
 import { SplashScreenController } from '@/features/auth/SplashScreenController';
 import { useNeedsSetup } from '@/features/onboarding/setupStore';
 import { useAppFonts } from '@/lib/fonts';
@@ -33,6 +34,8 @@ export default function RootLayout() {
               <RootNavigator />
               {/* Menus on the app's own layer (sheets and the workout have theirs). */}
               <MenuHost />
+              {/* The web asks for the password where the phone uses Face ID. */}
+              <PasswordCheckHost />
             </ToastProvider>
           </ThemeProvider>
         ) : null}

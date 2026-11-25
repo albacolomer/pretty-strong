@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import {
   InputAccessoryView,
   Keyboard,
+  Platform,
   StyleSheet,
   TextInput,
   View,
@@ -70,6 +71,9 @@ export function NumberInput({
 export function KeyboardDoneBar({ nativeID }: { nativeID: string }) {
   const { t } = useTranslation();
   const { colors } = useTheme();
+
+  // Safari shows its own bar with Done above every keyboard.
+  if (Platform.OS === 'web') return null;
 
   return (
     <InputAccessoryView

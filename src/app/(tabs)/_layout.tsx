@@ -1,16 +1,11 @@
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
-import { useTranslation } from 'react-i18next';
-
+import { AppTabs } from '@/components/navigation/AppTabs';
 import { useSyncProfileLanguage } from '@/features/profile/useSyncProfileLanguage';
 import { useSyncProfileUnits } from '@/features/profile/useUnits';
 import { useLockPhotosInBackground } from '@/features/body/usePhotoLock';
 import { useSaveDailySteps } from '@/features/steps/useSaveDailySteps';
 import { useSaveFinishedWorkouts } from '@/features/workout/useSaveFinishedWorkouts';
-import { useTheme } from '@/theme';
 
 export default function TabsLayout() {
-  const { t } = useTranslation();
-  const { colors } = useTheme();
   useSyncProfileLanguage();
   useSyncProfileUnits();
   // Finished workouts reach the database whatever tab is open.
@@ -20,26 +15,5 @@ export default function TabsLayout() {
   // Hidden progress photos hide again when the app goes to the background.
   useLockPhotosInBackground();
 
-  return (
-    <NativeTabs tintColor={colors.accent}>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Label>{t('tabs.today')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf={{ default: 'dumbbell', selected: 'dumbbell.fill' }} />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="plan">
-        <NativeTabs.Trigger.Label>{t('tabs.plan')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'list.bullet.clipboard', selected: 'list.bullet.clipboard.fill' }}
-        />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Label>{t('tabs.profile')}</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon
-          sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
-        />
-      </NativeTabs.Trigger>
-    </NativeTabs>
-  );
+  return <AppTabs />;
 }

@@ -49,17 +49,23 @@ export async function signUp({ username, email, password, language }: SignUpInpu
   return { needsEmailConfirmation: data.session === null };
 }
 
+// Whether `password` is the signed-in account's, by signing in with it
+// again. Throws the Supabase error (invalid_credentials: it isn't).
+export async function checkPassword(email: string, password: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  if (error) throw error;
+}
+
 // Settings → "Canvia la contrasenya". Supabase would change it with the
 // session alone, so anyone holding an unlocked phone could: the current
-// one is checked first, by signing in with it again. Throws the Supabase
-// error (invalid_credentials: the current one is wrong).
+// one is checked first. Throws the Supabase error (invalid_credentials:
+// the current one is wrong).
 export async function changePassword(
   email: string,
   current: string,
   next: string,
 ): Promise<void> {
-  const check = await supabase.auth.signInWithPassword({ email, password: current });
-  if (check.error) throw check.error;
+  await checkPassword(email, current);
   const { error } = await supabase.auth.updateUser({ password: next });
   if (error) throw error;
 }

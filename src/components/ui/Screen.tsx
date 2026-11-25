@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { type AnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -51,8 +51,14 @@ export function Screen({
               { paddingTop: insets.top + spacing.lg, paddingBottom: insets.bottom + spacing.lg },
             ]
           : // The status bar's height is added by iOS already: only the rest
-            // of the design's top inset.
-            { paddingTop: Math.max(inset.screenTop - insets.top, 0) },
+            // of the design's top inset. A browser adds nothing, so the web
+            // gives the whole inset (or the status bar, if it's taller).
+            {
+              paddingTop:
+                Platform.OS === 'web'
+                  ? Math.max(inset.screenTop, insets.top)
+                  : Math.max(inset.screenTop - insets.top, 0),
+            },
       ]}
       // Centred screens add the safe-area space themselves (above), so iOS
       // must not add it again or the content would sit too low.

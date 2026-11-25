@@ -1,11 +1,9 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Button, Sheet } from '@/components/ui';
+import { Button, DateWheel, Sheet } from '@/components/ui';
 import { dateKey, fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
-import { useAppLanguage } from '@/lib/i18n';
 
 const EARLIEST = new Date(1900, 0, 1);
 
@@ -21,7 +19,6 @@ type BirthDateSheetProps = {
 // set, it can also be taken away.
 export function BirthDateSheet({ visible, value, onDone, onClose }: BirthDateSheetProps) {
   const { t } = useTranslation();
-  const language = useAppLanguage();
   const today = useToday();
   // With none yet, the wheels start thirty years back.
   const start = () => (value ? fromDateKey(value) : new Date(today.getFullYear() - 30, 0, 1));
@@ -40,16 +37,12 @@ export function BirthDateSheet({ visible, value, onDone, onClose }: BirthDateShe
       saveLabel={t('common.done')}
       onSave={() => onDone(dateKey(date))}
       onCancel={onClose}>
-      <DateTimePicker
+      <DateWheel
         value={date}
-        mode="date"
-        display="spinner"
-        locale={language}
+        onChange={setDate}
+        label={t('profile.birthDate')}
         minimumDate={EARLIEST}
         maximumDate={today}
-        onChange={(_event, picked) => {
-          if (picked) setDate(picked);
-        }}
       />
       {value ? (
         <Button label={t('profile.birthDateClear')} variant="ghost" onPress={() => onDone(null)} />

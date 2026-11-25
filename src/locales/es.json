@@ -249,6 +249,10 @@
       "samePassword": "La contraseña nueva tiene que ser distinta de la actual.",
       "passwordsDontMatch": "Las contraseñas no coinciden."
     },
+    "checkPassword": {
+      "submit": "Continuar",
+      "wrong": "La contraseña no es correcta."
+    },
     "tagline": "Entrena a tu manera. Registra cada repetición."
   },
   "setup": {

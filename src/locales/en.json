@@ -249,6 +249,10 @@
       "samePassword": "The new password must be different from the current one.",
       "passwordsDontMatch": "The passwords don't match."
     },
+    "checkPassword": {
+      "submit": "Continue",
+      "wrong": "That password isn't right."
+    },
     "tagline": "Train your way. Track every rep."
   },
   "setup": {

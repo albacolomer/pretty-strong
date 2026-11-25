@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import Storage from 'expo-sqlite/kv-store';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { create } from 'zustand';
@@ -8,6 +7,7 @@ import { createJSONStorage, persist } from 'zustand/middleware';
 import { useToast } from '@/components/ui';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { isNetworkError } from '@/lib/errors';
+import { kvStorage } from '@/lib/kvStorage';
 import { METRIC_UNITS, readUnits, type Units } from '@/lib/units';
 
 import { updateProfileDetails } from './api';
@@ -28,7 +28,7 @@ export const useUnitsStore = create<UnitsState>()(
     }),
     {
       name: 'units',
-      storage: createJSONStorage(() => Storage),
+      storage: createJSONStorage(() => kvStorage),
       partialize: ({ units }) => ({ units }),
     },
   ),

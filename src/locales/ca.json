@@ -249,6 +249,10 @@
       "samePassword": "La contrasenya nova ha de ser diferent de l'actual.",
       "passwordsDontMatch": "Les contrasenyes no coincideixen."
     },
+    "checkPassword": {
+      "submit": "Continua",
+      "wrong": "La contrasenya no és correcta."
+    },
     "tagline": "Entrena a la teva manera. Registra cada repetició."
   },
   "setup": {
