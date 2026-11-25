@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, MenuHost, Text } from '@/components/ui';
+import { Button, MenuHost, Text, PageSheet } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
 export type SheetOption<T extends string> = { value: T; label: string; icon: ReactNode };
@@ -68,10 +68,8 @@ export function OptionSheetFrame({
   const insets = useSafeAreaInsets();
 
   return (
-    <Modal
+    <PageSheet
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}>
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
         <View style={styles.header}>
@@ -101,7 +99,7 @@ export function OptionSheetFrame({
         {/* Menus opened while this sheet is up appear on it. */}
         <MenuHost />
       </View>
-    </Modal>
+    </PageSheet>
   );
 }
 

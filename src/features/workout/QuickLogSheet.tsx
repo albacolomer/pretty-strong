@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, MenuHost, NumberInput, Text, TextField } from '@/components/ui';
+import { Button, MenuHost, NumberInput, Text, TextField, PageSheet } from '@/components/ui';
 import { radius, spacing, useTheme } from '@/theme';
 
 import { readMinutes } from './session';
@@ -28,10 +28,8 @@ export function QuickLogSheet({ visible, ...props }: QuickLogSheetProps) {
   const { colors } = useTheme();
 
   return (
-    <Modal
+    <PageSheet
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={props.onCancel}>
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
         {/* Only mounted while open, so it starts from the plan each time. */}
@@ -39,7 +37,7 @@ export function QuickLogSheet({ visible, ...props }: QuickLogSheetProps) {
         {/* Menus opened while this sheet is up appear on it. */}
         <MenuHost />
       </View>
-    </Modal>
+    </PageSheet>
   );
 }
 

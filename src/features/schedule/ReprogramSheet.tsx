@@ -1,12 +1,12 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { useAnimatedRef } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Sortable from 'react-native-sortables';
 
-import { Button, MenuHost, Text, useActionSheet, Icon, type IconName } from '@/components/ui';
+import { Button, MenuHost, Text, useActionSheet, Icon, type IconName, PageSheet } from '@/components/ui';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
 import { dropInWeek, moveInWeek, type WeekListItem } from './moves';
@@ -34,10 +34,8 @@ export function ReprogramSheet({ visible, ...props }: ReprogramSheetProps) {
   const { colors } = useTheme();
 
   return (
-    <Modal
+    <PageSheet
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={props.onClose}>
       {/* A modal sits outside the app's root view, so dragging needs its own gesture root. */}
       <GestureHandlerRootView style={[styles.sheet, { backgroundColor: colors.background }]}>
@@ -46,7 +44,7 @@ export function ReprogramSheet({ visible, ...props }: ReprogramSheetProps) {
         {/* Menus opened while this sheet is up appear on it. */}
         <MenuHost />
       </GestureHandlerRootView>
-    </Modal>
+    </PageSheet>
   );
 }
 

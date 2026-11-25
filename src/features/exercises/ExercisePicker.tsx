@@ -1,17 +1,9 @@
 import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  ActivityIndicator,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-  type ScrollViewInstance,
-} from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View, type ScrollViewInstance } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, MenuHost, Text, Icon } from '@/components/ui';
+import { Button, Card, MenuHost, Text, Icon, PageSheet } from '@/components/ui';
 import { useAppLanguage } from '@/lib/i18n';
 import { radius, spacing, touch, useTheme } from '@/theme';
 
@@ -50,10 +42,8 @@ export function ExercisePicker({
   const { colors } = useTheme();
 
   return (
-    <Modal
+    <PageSheet
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onClose}
       onDismiss={onDismissed}>
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
@@ -62,7 +52,7 @@ export function ExercisePicker({
         {/* Menus opened while this sheet is up appear on it. */}
         <MenuHost />
       </View>
-    </Modal>
+    </PageSheet>
   );
 }
 

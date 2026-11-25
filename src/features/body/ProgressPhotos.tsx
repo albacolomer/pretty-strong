@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Button, Card, MenuHost, Text, useActionSheet, Icon } from '@/components/ui';
+import { Button, Card, MenuHost, Text, useActionSheet, Icon, PageSheet } from '@/components/ui';
 import { dateKey, formatDayTitle, fromDateKey } from '@/features/schedule/dates';
 import { useToday } from '@/features/schedule/useToday';
 import { useAppLanguage } from '@/lib/i18n';
@@ -170,7 +170,7 @@ function PhotoViewer({
   }
 
   return (
-    <Modal visible={photo !== null} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <PageSheet visible={photo !== null} onRequestClose={onClose}>
       <View style={[styles.viewer, { backgroundColor: colors.background, paddingBottom: insets.bottom + spacing.sm }]}>
         {photo ? (
           <>
@@ -199,7 +199,7 @@ function PhotoViewer({
         {/* Menus opened while this sheet is up appear on it. */}
         <MenuHost />
       </View>
-    </Modal>
+    </PageSheet>
   );
 }
 

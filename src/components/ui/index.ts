@@ -10,6 +10,7 @@ export { IconButton, type IconButtonProps } from './IconButton';
 export { Logo, type LogoProps } from './Logo';
 export { MenuHost, menus, type MenuOptions } from './Menu';
 export { MenuButton } from './MenuButton';
+export { PageSheet, type PageSheetProps } from './PageSheet';
 export { MetalFill } from './MetalFill';
 export { KeyboardDoneBar, NumberInput, type NumberInputProps } from './NumberInput';
 export { Screen, type ScreenProps } from './Screen';

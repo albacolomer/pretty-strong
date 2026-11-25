@@ -1,12 +1,13 @@
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { radius, spacing, useTheme } from '@/theme';
 
 import { Button } from './Button';
 import { MenuHost } from './Menu';
+import { PageSheet } from './PageSheet';
 import { Text } from './Text';
 
 export type SheetProps = {
@@ -42,10 +43,8 @@ export function Sheet({
   const insets = useSafeAreaInsets();
 
   return (
-    <Modal
+    <PageSheet
       visible={visible}
-      animationType="slide"
-      presentationStyle="pageSheet"
       onRequestClose={onCancel}>
       <View style={[styles.sheet, { backgroundColor: colors.background }]}>
         {visible ? (
@@ -87,7 +86,7 @@ export function Sheet({
         {/* Menus opened while this sheet is up appear on it. */}
         <MenuHost />
       </View>
-    </Modal>
+    </PageSheet>
   );
 }
 
