@@ -148,7 +148,13 @@ function PickerContent({ onClose, onAdd, single = false }: Omit<ExercisePickerPr
                       // Swapping, a checkbox; adding, a button that adds it again.
                       selected={single ? count > 0 : undefined}
                       onPress={() => pick(exercise.id)}
-                      accessory={<CountBadge count={count} announce={!single} />}
+                      accessory={
+                        <CountBadge
+                          count={count}
+                          announce={!single}
+                          onPress={() => pick(exercise.id)}
+                        />
+                      }
                     />
                   );
                 })}
@@ -257,31 +263,46 @@ function PickedStrip({
 
 // How many times a row has been picked: an empty ring, a tick, or ×2, ×3…
 // Adding, screen readers hear it ("Afegit 2 cops"); swapping, the row
-// already says whether it's ticked.
-function CountBadge({ count, announce }: { count: number; announce: boolean }) {
+// already says whether it's ticked. Tapping it does what tapping the row
+// does; screen readers have the row for that, so it isn't a second button.
+function CountBadge({
+  count,
+  announce,
+  onPress,
+}: {
+  count: number;
+  announce: boolean;
+  onPress: () => void;
+}) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const ticked = count > 0;
   const heard = announce && ticked;
 
   return (
-    <View
-      aria-hidden={!heard}
-      aria-label={heard ? t('exercises.picker.timesAdded', { count }) : undefined}
-      style={[
-        styles.badge,
-        ticked
-          ? { backgroundColor: colors.accent, borderColor: colors.accent }
-          : { borderColor: colors.textMuted },
-      ]}>
-      {count === 1 ? (
-        <Icon name="checkmark" size={13} weight="bold" tintColor={colors.onAccent} />
-      ) : count > 1 ? (
-        <Text variant="caption" color="onAccent">
-          {`×${count}`}
-        </Text>
-      ) : null}
-    </View>
+    <Pressable
+      accessible={false}
+      onPress={onPress}
+      hitSlop={(touch.min - BADGE_SIZE) / 2}
+      style={({ pressed }) => pressed && styles.pressed}>
+      <View
+        aria-hidden={!heard}
+        aria-label={heard ? t('exercises.picker.timesAdded', { count }) : undefined}
+        style={[
+          styles.badge,
+          ticked
+            ? { backgroundColor: colors.accent, borderColor: colors.accent }
+            : { borderColor: colors.textMuted },
+        ]}>
+        {count === 1 ? (
+          <Icon name="checkmark" size={13} weight="bold" tintColor={colors.onAccent} />
+        ) : count > 1 ? (
+          <Text variant="caption" color="onAccent">
+            {`×${count}`}
+          </Text>
+        ) : null}
+      </View>
+    </Pressable>
   );
 }
 

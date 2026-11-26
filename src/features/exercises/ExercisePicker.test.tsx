@@ -99,6 +99,19 @@ describe('<ExercisePicker />', () => {
     expect(onAdd).toHaveBeenCalledWith(['back_squat', 'hip_thrust', 'back_squat']);
   });
 
+  test('tapping the ring adds it too, like tapping the row', async () => {
+    const user = userEvent.setup();
+    const onAdd = jest.fn();
+    await renderPicker({ onAdd });
+
+    await user.press(row('Esquat amb barra'));
+    await user.press(screen.getByLabelText('Afegit'));
+
+    expect(screen.getByLabelText('Afegit 2 cops')).toBeOnTheScreen();
+    await user.press(screen.getByRole('button', { name: 'Afegeix (2)' }));
+    expect(onAdd).toHaveBeenCalledWith(['back_squat', 'back_squat']);
+  });
+
   test('the strip takes out one pick, and only that one', async () => {
     const user = userEvent.setup();
     const onAdd = jest.fn();
